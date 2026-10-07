@@ -1,0 +1,6 @@
+/vendor/
+.phpunit.result.cache
+phpunit.xml
+phpstan.cache
+/build/
+/tests/_output/

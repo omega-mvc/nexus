@@ -1,0 +1,23 @@
+parameters:
+    level: 10
+    paths:
+        - .
+    excludePaths:
+        - vendor/
+        - tests/
+    bootstrapFiles: []
+    checkMissingCallableSignature: true
+    checkUninitializedProperties: true
+    checkBenevolentUnionTypes: true
+    checkImplicitMixed: true
+    reportUnmatchedIgnoredErrors: false
+
+    type_coverage:
+        return_type: 100
+        param_type: 100
+        property_type: 100
+        constant_type: 100
+        declare: 100
+
+includes:
+    - vendor/tomasvotruba/type-coverage/config/extension.neon
