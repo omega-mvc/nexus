@@ -33,35 +33,35 @@ class ORMColumn
 	/**
 	 * Columns that should be formatted as email addresses
 	 *
-	 * @var array
+	 * @var array<string, array<string, bool>>
 	 */
 	static private array $email_columns = array();
 
 	/**
 	 * Columns that should be formatted as links
 	 *
-	 * @var array
+	 * @var array<string, array<string, bool>>
 	 */
 	static private array $link_columns = array();
 
 	/**
 	 * Columns that should be returned as Number objects
 	 *
-	 * @var array
+	 * @var array<string, array<string, bool>>
 	 */
 	static private array $number_columns = array();
 
 	/**
 	 * Columns that should store passwords
 	 *
-	 * @var array
+	 * @var array<string, array<string, array{min_length: int}>>
 	 */
 	static private array $password_columns = array();
 
 	/**
 	 * Columns that should be formatted as a random string
 	 *
-	 * @var array
+	 * @var array<string, array<string, array{type: string, length: int}>>
 	 */
 	static private array $random_columns = array();
 
@@ -74,7 +74,18 @@ class ORMColumn
 	 */
 	static private function compose(string $message): string
 	{
-		$args = array_slice(func_get_args(), 1);
+		$args = array_map(static function (mixed $arg): bool|float|int|string|null {
+			if ($arg === NULL || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
+				return $arg;
+			}
+			if ($arg instanceof Stringable) {
+				return (string) $arg;
+			}
+			throw new ProgrammerException(
+				'Only scalar values and NULL can be used to compose the message, %s given',
+				get_debug_type($arg)
+			);
+		}, array_slice(func_get_args(), 1));
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -231,8 +242,9 @@ class ORMColumn
 	 * @param  mixed    $class           The class name or instance of the class
 	 * @param  string   $column          The column to set as a password column
 	 * @param  integer  $minimum_length  The minimum password a user can use
+	 * @return void
 	 */
-	static function configurePasswordColumn(mixed $class, string $column, int $minimum_length): mixed
+	static function configurePasswordColumn(mixed $class, string $column, int $minimum_length): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -317,7 +329,7 @@ class ORMColumn
 			);
 		}
 
-		if (!is_numeric($length) || $length < 1) {
+		if ($length < 1) {
 			throw new ProgrammerException(
 				'The length specified, %s, needs to be an integer greater than zero.',
 				$length
@@ -350,19 +362,19 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name      The method that was called
-	 * @param  array         $parameters       The parameters passed to the method
+	 * @param  array<array-key, mixed> $parameters       The parameters passed to the method
 	 * @return string  The encoded number
 	 */
 	static public function encodeNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column      = Grammar::underscorize($subject);
+		$column      = Grammar::underscorize(is_string($subject) ? $subject : '');
 		$class       = get_class($object);
 		$schema      = ORMSchema::retrieve($class);
 		$table       = ORM::tablize($class);
@@ -370,13 +382,21 @@ class ORMColumn
 		$value       = $values[$column];
 
 		if ($value instanceof Number) {
-			if ($column_info['type'] == 'float') {
-				$decimal_places = (isset($parameters[0])) ? (int) $parameters[0] : $column_info['decimal_places'];
+			if (is_array($column_info) && ($column_info['type'] ?? NULL) == 'float') {
+				if (isset($parameters[0]) && is_scalar($parameters[0])) {
+					$decimal_places = (int) $parameters[0];
+				} elseif (isset($column_info['decimal_places']) && is_numeric($column_info['decimal_places'])) {
+					$decimal_places = (int) $column_info['decimal_places'];
+				} else {
+					$decimal_places = 0;
+				}
 				$value = $value->trunc($decimal_places)->__toString();
 			} else {
 				$value = $value->__toString();
 			}
 		}
+
+		$value = is_string($value) ? $value : (is_scalar($value) ? (string) $value : '');
 
 		return HTML::prepare($value);
 	}
@@ -388,19 +408,19 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The newly generated random value
 	 */
 	static public function generate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize($subject);
+		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
 		$class  = get_class($object);
 		$table  = ORM::tablize($class);
 
@@ -412,13 +432,14 @@ class ORMColumn
 		// Check to see if this is a unique column
 		$unique_keys      = $schema->getKeys($table, 'unique');
 		$is_unique_column = FALSE;
+		$value            = '';
 		foreach ($unique_keys as $unique_key) {
 			if ($unique_key == array($column)) {
 				$is_unique_column = TRUE;
 				$sql = "SELECT %r FROM %r WHERE %r = %s";
 				do {
 					$value = Cryptography::randomString($settings['length'], $settings['type']);
-				} while ($db->query($sql, $column, $table, $column, $value)->countReturnedRows());
+				} while (($result = $db->query($sql, $column, $table, $column, $value)) instanceof Result && $result->countReturnedRows());
 			}
 		}
 
@@ -440,7 +461,7 @@ class ORMColumn
 	 *
 	 * @param  string $class      The class being inspected
 	 * @param  string $column     The column being inspected
-	 * @param  array  &$metadata  The array of metadata about a column
+	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
 	static public function inspect(string $class, string $column, mixed &$metadata): void
@@ -479,12 +500,22 @@ class ORMColumn
 	 */
 	static public function objectifyNumber(string $class, string $column, mixed $value): mixed
 	{
-		if ((!is_string($value) && !is_numeric($value) && !is_object($value)) || !strlen(trim($value))) {
+		if (is_string($value)) {
+			$string_value = $value;
+		} elseif (is_numeric($value)) {
+			$string_value = (string) $value;
+		} elseif ($value instanceof Stringable) {
+			$string_value = (string) $value;
+		} else {
+			return $value;
+		}
+
+		if (!strlen(trim($string_value))) {
 			return $value;
 		}
 
 		try {
-			return new Number($value);
+			return new Number($string_value);
 
 		// If there was some error creating the number object, just return the raw value
 		} catch (ExpectedException $e) {
@@ -499,20 +530,21 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The formatted link
 	 */
 	static public function prepareLinkColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize($subject);
+		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
 		$value  = $values[$column];
+		$value  = is_string($value) ? $value : (is_scalar($value) ? (string) $value : '');
 
 		// Fix domains that don't have the protocol to start
 		if (strlen($value) && !preg_match('#^https?://|^/#iD', $value)) {
@@ -535,19 +567,19 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The formatted link
 	 */
 	static public function prepareNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column      = Grammar::underscorize($subject);
+		$column      = Grammar::underscorize(is_string($subject) ? $subject : '');
 		$class       = get_class($object);
 		$table       = ORM::tablize($class);
 		$schema      = ORMSchema::retrieve($class);
@@ -555,8 +587,14 @@ class ORMColumn
 		$value       = $values[$column];
 
 		if ($value instanceof Number) {
-			if ($column_info['type'] == 'float') {
-				$decimal_places = (isset($parameters[0])) ? (int) $parameters[0] : $column_info['decimal_places'];
+			if (is_array($column_info) && ($column_info['type'] ?? NULL) == 'float') {
+				if (isset($parameters[0]) && is_scalar($parameters[0])) {
+					$decimal_places = (int) $parameters[0];
+				} elseif (isset($column_info['decimal_places']) && is_numeric($column_info['decimal_places'])) {
+					$decimal_places = (int) $column_info['decimal_places'];
+				} else {
+					$decimal_places = NULL;
+				}
 				if ($decimal_places !== NULL) {
 					$value = $value->trunc($decimal_places)->format();
 				} else {
@@ -566,6 +604,8 @@ class ORMColumn
 				$value = $value->format();
 			}
 		}
+
+		$value = is_string($value) ? $value : (is_scalar($value) ? (string) $value : '');
 
 		return HTML::prepare($value);
 	}
@@ -577,7 +617,7 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  string  $class                 The class to reflect
-	 * @param  array   &$signatures           The associative array of `{method name} => {signature}`
+	 * @param  array<array-key, mixed>   &$signatures           The associative array of `{method name} => {signature}`
 	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
@@ -754,11 +794,11 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $self                  The object being stored
-	 * @param  array         &$values               The current values
-	 * @param  array         &$old_values           The old values
-	 * @param  array         &$related_records      Any records related to this record
-	 * @param  array         &$cache                The cache for the record
-	 * @param  array         &$validation_messages  An array of ordered validation messages
+	 * @param  array<array-key, mixed> &$values               The current values
+	 * @param  array<array-key, mixed> &$old_values           The old values
+	 * @param  array<array-key, mixed> &$related_records      Any records related to this record
+	 * @param  array<array-key, mixed> &$cache                The cache for the record
+	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
 	static function resetPasswordColumn(ActiveRecord $self, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
@@ -770,13 +810,15 @@ class ORMColumn
 		}
 
 		foreach(self::$password_columns[$class] as $column => $options) {
-			$has_value = !empty($values[$column]) && UTF8::len($values[$column]) > 0;
+			$password  = is_string($values[$column]) ? $values[$column] : '';
+			$has_value = !empty($password) && UTF8::len($password) > 0;
 
 			if ($has_value && array_key_exists($column, $old_values)) {
-				$values[$column] = Cryptography::hashPassword($values[$column]);
+				$values[$column] = Cryptography::hashPassword($password);
 			}
 			if (!$has_value) {
-				$values[$column] = $old_values[$column][0];
+				$old_value      = $old_values[$column] ?? NULL;
+				$values[$column] = is_array($old_value) ? ($old_value[0] ?? NULL) : NULL;
 			}
 		}
 	}
@@ -788,19 +830,19 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
 	static public function setEmailColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize($subject);
+		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
 		$class  = get_class($object);
 
 		if (count($parameters) < 1) {
@@ -810,7 +852,7 @@ class ORMColumn
 			);
 		}
 
-		$email = $parameters[0];
+		$email = is_string($parameters[0]) ? $parameters[0] : '';
 		if (preg_match('#^\s*[a-z0-9\\.\'_\\-\\+]+@(?:[a-z0-9\\-]+\.)+[a-z]{2,}\s*$#iD', $email)) {
 			$email = trim($email);
 		}
@@ -831,16 +873,16 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
-	 * @return string  The formatted link
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
+	 * @return void
 	 */
-	static public function setRandomStrings(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): mixed
+	static public function setRandomStrings(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		if ($object->exists()) {
-			return null;
+			return;
 		}
 
 		$class = get_class($object);
@@ -869,11 +911,11 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object                The ActiveRecord instance
-	 * @param  array         &$values               The current values
-	 * @param  array         &$old_values           The old values
-	 * @param  array         &$related_records      Any records related to this record
-	 * @param  array         &$cache                The cache array for the record
-	 * @param  array         &$validation_messages  An array of ordered validation messages
+	 * @param  array<array-key, mixed> &$values               The current values
+	 * @param  array<array-key, mixed> &$old_values           The old values
+	 * @param  array<array-key, mixed> &$related_records      Any records related to this record
+	 * @param  array<array-key, mixed> &$cache                The cache array for the record
+	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
 	static public function validateEmailColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
@@ -885,7 +927,7 @@ class ORMColumn
 		}
 
 		foreach (self::$email_columns[$class] as $column => $enabled) {
-			if (!strlen($values[$column])) {
+			if (!is_string($values[$column]) || !strlen($values[$column])) {
 				continue;
 			}
 			if (!preg_match('#^[a-z0-9\\.\'_\\-\\+]+@(?:[a-z0-9\\-]+\.)+[a-z]{2,}$#iD', $values[$column])) {
@@ -904,11 +946,11 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object                The ActiveRecord instance
-	 * @param  array         &$values               The current values
-	 * @param  array         &$old_values           The old values
-	 * @param  array         &$related_records      Any records related to this record
-	 * @param  array         &$cache                The cache array for the record
-	 * @param  array         &$validation_messages  An array of ordered validation messages
+	 * @param  array<array-key, mixed> &$values               The current values
+	 * @param  array<array-key, mixed> &$old_values           The old values
+	 * @param  array<array-key, mixed> &$related_records      Any records related to this record
+	 * @param  array<array-key, mixed> &$cache                The cache array for the record
+	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
 	static public function validateLinkColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
@@ -943,11 +985,11 @@ class ORMColumn
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object                The ActiveRecord instance
-	 * @param  array         &$values               The current values
-	 * @param  array         &$old_values           The old values
-	 * @param  array         &$related_records      Any records related to this record
-	 * @param  array         &$cache                The cache array for the record
-	 * @param  array         &$validation_messages  An array of ordered validation messages
+	 * @param  array<array-key, mixed> &$values               The current values
+	 * @param  array<array-key, mixed> &$old_values           The old values
+	 * @param  array<array-key, mixed> &$related_records      Any records related to this record
+	 * @param  array<array-key, mixed> &$cache                The cache array for the record
+	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
 	static public function validatePasswordColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
@@ -963,6 +1005,8 @@ class ORMColumn
 			$confirm_column_name = $column_name . ' Confirmation';
 			$request_value = Request::get($column);
 			$confirm_value = Request::get($column . '_confirmation');
+			$request_value = is_string($request_value) ? $request_value : '';
+			$confirm_value = is_string($confirm_value) ? $confirm_value : '';
 
 			if (UTF8::len($request_value) > 0 && ActiveRecord::changed($values, $old_values, $column)) {
 				if (UTF8::len($request_value) < $options['min_length']) {
@@ -997,22 +1041,27 @@ class ORMColumn
 	 * @throws NotFoundException  When the password is not valid
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return void
 	 */
 	static public function verifyPassword(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): void
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize($subject);
+		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
 		$value  = $values[$column];
 
-		if (isset($parameters[0]) && Cryptography::checkPasswordHash($parameters[0], $value)) {
+		if (
+			isset($parameters[0])
+			&& is_string($parameters[0])
+			&& is_string($value)
+			&& Cryptography::checkPasswordHash($parameters[0], $value)
+		) {
 			return;
 		}
 
