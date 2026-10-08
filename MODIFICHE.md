@@ -171,3 +171,24 @@
 - **Motivazione**: bug reali a runtime + deprecazioni PHP 8.5; la suite copre i path fixati dal refactoring.
 - **Impatto**: nessuna variazione API; `pluralize/singularize` ora dichiarano correttamente `string|false`.
 - **Verifica**: `vendor/bin/phpunit` → OK (42 tests, 65 assertions), 0 deprecations; `php -l` pulito su tutti i file toccati.
+
+### [2026-10-08 22:00] - Fase PHPStan livello 10: Database, Filesystem, fascia ORM core (0 errori)
+
+- **File**: `Database.php`, `Filesystem.php`, `Directory.php`, `File.php`, `ORMDatabase.php`, `ORMRelated.php`, `ORMValidation.php`, `ORMFile.php`, `ORMColumn.php`, `ORMOrdering.php`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: Obiettivo `phpstan analyse` a livello 10 + 100% type-coverage sui file più caldi. Metodo: narrowing con `is_*`/`instanceof`, `ProgrammerException` per valori impossibili, rimozione di codice morto/condizioni sempre vere, docblock nativi corretti dove la legacy era errata, pattern ricorrenti (`compose()` = `array_map` tipizzato, helper `runQuery()`, normalizzazione `is_string ? : ''`). `Database.php` ripulito (~328 righe morte, motori pre-PHP 8.4 rimossi). Vietati `@phpstan-ignore`, baseline e `@var`/cast di sola copertura.
+- **Motivazione**: riduzione blast PHPStan 3128 → 2598 nei primi 10 file; nessuna regola di silenziamento.
+- **Impatto**: nessuno (API invariata; solo il tipo di ritorno di alcuni metodi dichiarato correttamente).
+- **Verifica**: `php -l`; `phpstan analyse <file>` = 0 errori; blast full decrescente; `phpunit --testsuite Unit` 42/65 green dopo ogni commit.
+- **Commit**: `362c03a` (ORMValidation+ORMRelated), `ec9508e` (ORMDatabase), `8377d38` (Filesystem+Database purge), `6087b2d` (ORMFile), `af1ef05` (ORMColumn), `cff18bd` (ORMOrdering).
+
+### [2026-10-08 23:30] - Fase PHPStan: RecordSet e ActiveRecord a 0 errori (+10 file a zero)
+
+- **File**: `RecordSet.php`, `ActiveRecord.php`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: `RecordSet` (181 → 0): generici via `@implements IteratorAggregate<int, ActiveRecord>` / `ArrayAccess<int|string, mixed>` (i generici nativi in `implements` sono sintassi invalida), helper `runQuery()` e `getSingleClass()`, accumulatori query normalizzati, `getOrderBys()` con route non-nullable, `slice/count/getPages` con `(int)`. `ActiveRecord` (141 → 0): helper `relationshipString()` per gli array relationship, widening del docblock di `hash()` all'effettivo dominio, narrowing `__call` ecc., reshape onesto dei messaggi di validazione prima di `ORMValidation::replaceMessages()` (forma `string|array{name, errors}`), fix di bug legacy reali (es. `__construct` restituiva il risultato di `__call`, docblock `@return void` su `fetchResultFromUniqueKey` che ritorna `Result`). `ORM.php` lasciato intatto come da vincolo.
+- **Motivazione**: blast 2598 → 2458; file a zero errori passano da 8 a 10.
+- **Impatto**: nessuno (comportamento preservato; guardie rimosse solo dove provate morte da PHPStan e dal flusso reale).
+- **Verifica**: `php -l`; per-file 0; blast 2458 senza nuove hotspot; phpunit 42/65; commit con rimozione del symlink `vendor` accidentalmente in staging.
+- **Commit**: `7c2a981` (RecordSet), `2b5a2d8` (ActiveRecord).
+- **Prossimo**: coda hotspot Image 238, Mailbox 233, Number 214, Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106…
