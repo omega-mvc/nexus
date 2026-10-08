@@ -191,4 +191,15 @@
 - **Impatto**: nessuno (comportamento preservato; guardie rimosse solo dove provate morte da PHPStan e dal flusso reale).
 - **Verifica**: `php -l`; per-file 0; blast 2458 senza nuove hotspot; phpunit 42/65; commit con rimozione del symlink `vendor` accidentalmente in staging.
 - **Commit**: `7c2a981` (RecordSet), `2b5a2d8` (ActiveRecord).
-- **Prossimo**: coda hotspot Image 238, Mailbox 233, Number 214, Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106…
+- **Commit**: `79cea2291` (Image), `18f0376` (Mailbox).
+
+### [2026-10-09 00:30] - Fase PHPStan: Image e Mailbox a 0 errori (12 file a zero)
+
+- **File**: `Image.php`, `Mailbox.php`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: `Image` (238 → 0): `@phpstan-type Modification` disgiuntivo su literal `operation`, guardie GD `imagecreatetruecolor`/greyscale, `(int)` legittimi su numeric-string per gli int GD sotto `strict_types`. `Mailbox` (233 → 0): alias ricorsivo `MailboxStructure` **rotto** (PHPStan 2.2 non supporta type alias ricorsivi → `typeAlias.circular`); `parts` tipizzati `list<array<string, mixed>>|null`, consumer (`handlePart`, `handleSMIME*`) su `array<array-key, mixed>`; S/MIME con `array<string, mixed> &$info` (nativo `array &$info`); restyle completo `parseStructure` con loop `array<string, string>` espliciti per `type_fields`/`disposition_fields`; `connect()` con `fsockopen` → variabile locale + `(float)` timeout + `usleep(100000)` per `sleep(0.1)`; `read()/write()` con guardia `is_resource`, `str_pad((string) $this->command_num++)`, `Core::getDebug($this->debug === TRUE)`; `listMessages` con `is_numeric` prima dei `(int)` (**PHPStan 2.2 vieta `(int) mixed`** → `cast.int`), envelope `is_array`, subject `preg_replace(...) ?? $subject`; `deleteMessages` via `is_array` (rimosso `settype`); `fetchMessageSource` con `$byte_count`; `end()` su array non-vuoto tipizzato `string` (niente `is_string` — `function.alreadyNarrowedType`).
+- **Motivazione**: blast 2458 → 1987; file a zero passano da 10 a 12. Nessuna regola di silenziamento; tutti i cast premessi da narrowing.
+- **Impatto**: nessuno (comportamento preservato; malformed-response paths ora throw `ProgrammerException` espliciti invece di warning silenziosi).
+- **Verifica**: `php -l`; per-file 0; blast 1987 (`tail`: Number 214, Email 170, SQLSchemaTranslation 169, ORM 135, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67); phpunit 42/65 green.
+- **Commit**: `79cea2291` (Image), `18f0376` (Mailbox); verifica `vendor` non in stage pre-commit.
+- **Prossimo**: coda hotspot Number 214, Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79… (ORM 135 resta intoccabile come da vincolo).
