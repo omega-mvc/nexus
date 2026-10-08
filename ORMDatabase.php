@@ -50,7 +50,7 @@ class ORMDatabase
 	/**
 	 * An array of Database objects
 	 *
-	 * @var array
+	 * @var array<string, array<string, Database>>
 	 */
 	static private array $database_objects = array();
 
@@ -97,14 +97,56 @@ class ORMDatabase
 			self::$database_objects[$name] = array();
 		}
 
-		settype($role, 'array');
-		if ($role == array('both')) {
-			$role = array('write', 'read');
-		}
+		$roles = ($role == 'both') ? array('write', 'read') : array($role);
 
-		foreach ($role as $_role) {
+		foreach ($roles as $_role) {
 			self::$database_objects[$name][$_role] = $database;
 		}
+	}
+
+
+	/**
+	 * Escapes a single value for SQL, ensuring a string result
+	 *
+	 * @param  Database $db     The database to escape the value for
+	 * @param  string  $type   The type of escape to perform
+	 * @param  mixed   $value  The value to escape
+	 * @return string  The escaped value
+	 */
+	static private function escapeSql(Database $db, string $type, mixed $value): string
+	{
+		$escaped = $db->escape($type, $value);
+
+		if (!is_string($escaped)) {
+			throw new ProgrammerException(
+				'A single escaped %1$s value was expected, %2$s given',
+				$type,
+				get_debug_type($escaped)
+			);
+		}
+
+		return $escaped;
+	}
+
+
+	/**
+	 * Extracts the SQL statement from a query parameters array
+	 *
+	 * @param  array<array-key, mixed>  $params  The query parameters
+	 * @return string  The SQL statement portion of the query
+	 */
+	static private function initialSql(array $params): string
+	{
+		$sql = $params[0] ?? NULL;
+
+		if (!is_string($sql)) {
+			throw new ProgrammerException(
+				'The first query parameter must be the SQL statement, %1$s given',
+				get_debug_type($sql)
+			);
+		}
+
+		return $sql;
 	}
 
 
@@ -122,14 +164,21 @@ class ORMDatabase
 	 * @param  string    $placeholder     This allows overriding the placeholder
 	 * @return array  The modified parameters
 	 */
+	/**
+	 * @param array<array-key, mixed> $params
+	 * @return array<array-key, mixed>
+	 */
 	static private function addColumnCondition(Database $db, Schema $schema, array $params, string $table, string $column, string $operator, mixed $values, ?string $escaped_column=NULL, ?string $placeholder=NULL): array
 	{
 		// Some objects when cast to an array turn the members into array keys
-		if (!is_object($values)) {
-			settype($values, 'array');
+		if (is_array($values)) {
+			$values_array = $values;
+		} elseif (is_object($values)) {
+			$values_array = array($values);
 		} else {
-			$values = array($values);
+			$values_array = array($values);
 		}
+		$values = $values_array;
 		// Make sure we have an array with something in it to compare to
 		if (!$values) { $values = array(NULL); }
 
@@ -146,6 +195,9 @@ class ORMDatabase
 			$placeholder = $schema->getColumnInfo($table, $column, 'placeholder');
 		}
 
+		$ec = is_string($escaped_column) ? $escaped_column : (is_scalar($escaped_column) ? (string)$escaped_column : '');
+		$ph = is_string($placeholder) ? $placeholder : '%s';
+
 		// More than one value
 		if (sizeof($values) > 1) {
 			switch ($operator) {
@@ -160,12 +212,18 @@ class ORMDatabase
 						$non_null_values[] = $value;
 					}
 					if ($has_null) {
-						$params[0] .= '(' . $escaped_column . ' IS NULL OR ';
+						$sql_acc = self::initialSql($params);
+						$sql_acc .= '(' . $ec . ' IS NULL OR ';
+						$params[0] = $sql_acc;
 					}
-					$params[0] .= $escaped_column . ' IN (' . $placeholder . ')';
+					$sql_acc = self::initialSql($params);
+					$sql_acc .= $ec . ' IN (' . $ph . ')';
+					$params[0] = $sql_acc;
 					$params[]   = $non_null_values;
 					if ($has_null) {
-						$params[0] .= ')';
+						$sql_acc = self::initialSql($params);
+						$sql_acc .= ')';
+						$params[0] = $sql_acc;
 					}
 					break;
 
@@ -180,58 +238,83 @@ class ORMDatabase
 						$non_null_values[] = $value;
 					}
 					if ($has_null) {
-						$params[0] .= '(' . $escaped_column . ' IS NOT NULL AND ';
+						$sql_acc = self::initialSql($params);
+						$sql_acc .= '(' . $ec . ' IS NOT NULL AND ';
+						$params[0] = $sql_acc;
 					}
-					$params[0] .= $escaped_column . ' NOT IN (' . $placeholder . ')';
+					$sql_acc = self::initialSql($params);
+					$sql_acc .= $ec . ' NOT IN (' . $ph . ')';
+					$params[0] = $sql_acc;
 					$params[]   = $non_null_values;
 					if ($has_null) {
-						$params[0] .= ')';
+						$sql_acc = self::initialSql($params);
+						$sql_acc .= ')';
+						$params[0] = $sql_acc;
 					}
 					break;
 
 				case '~':
 					$condition = array();
 					foreach ($values as $value) {
-						$condition[] = $escaped_column . ' LIKE %s';
-						$params[] = '%' . $value . '%';
+						$sql_acc = self::initialSql($params);
+					$condition[] = $ec . ' LIKE %s';
+						if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[] = '%' . (string)$value . '%';
 					}
-					$params[0] .= '(' . join(' OR ', $condition) . ')';
+					$sql_acc = self::initialSql($params);
+					$sql_acc .= '(' . join(' OR ', $condition) . ')';
+					$params[0] = $sql_acc;
 					break;
 
 				case '^~':
 					$condition = array();
 					foreach ($values as $value) {
-						$condition[] = $escaped_column . ' LIKE %s';
-						$params[] = $value . '%';
+						$sql_acc = self::initialSql($params);
+					$condition[] = $ec . ' LIKE %s';
+						if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[] = (string)$value . '%';
 					}
-					$params[0] .= '(' . join(' OR ', $condition) . ')';
+					$sql_acc = self::initialSql($params);
+					$sql_acc .= '(' . join(' OR ', $condition) . ')';
+					$params[0] = $sql_acc;
 					break;
 
 				case '$~':
 					$condition = array();
 					foreach ($values as $value) {
-						$condition[] = $escaped_column . ' LIKE %s';
-						$params[] = '%' . $value;
+						$sql_acc = self::initialSql($params);
+					$condition[] = $ec . ' LIKE %s';
+						if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[] = '%' . (string)$value;
 					}
-					$params[0] .= '(' . join(' OR ', $condition) . ')';
+					$sql_acc = self::initialSql($params);
+					$sql_acc .= '(' . join(' OR ', $condition) . ')';
+					$params[0] = $sql_acc;
 					break;
 
 				case '&~':
 					$condition = array();
 					foreach ($values as $value) {
-						$condition[] = $escaped_column . ' LIKE %s';
-						$params[] = '%' . $value . '%';
+						$sql_acc = self::initialSql($params);
+					$condition[] = $ec . ' LIKE %s';
+						if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[] = '%' . (string)$value . '%';
 					}
-					$params[0] .= '(' . join(' AND ', $condition) . ')';
+					$sql_acc = self::initialSql($params);
+					$sql_acc .= '(' . join(' AND ', $condition) . ')';
+					$params[0] = $sql_acc;
 					break;
 
 				case '!~':
 					$condition = array();
 					foreach ($values as $value) {
-						$condition[] = $escaped_column . ' NOT LIKE %s';
-						$params[] = '%' . $value . '%';
+						$condition[] = $ec . ' NOT LIKE %s';
+						if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[] = '%' . (string)$value . '%';
 					}
-					$params[0] .= '(' . join(' AND ', $condition) . ')';
+					$sql_acc = self::initialSql($params);
+					$sql_acc .= '(' . join(' AND ', $condition) . ')';
+					$params[0] = $sql_acc;
 					break;
 
 				default:
@@ -239,16 +322,11 @@ class ORMDatabase
 						'An invalid array comparison operator, %s, was specified for an array of values',
 						$operator
 					);
-					break;
 			}
 
 		// A single value
 		} else {
-			if ($values === array()) {
-				$value = NULL;
-			} else {
-				$value = current($values);
-			}
+			$value = current($values);
 
 			switch ($operator) {
 				case '!:':
@@ -258,41 +336,68 @@ class ORMDatabase
 				case '<=:':
 				case '>:':
 				case '>=:':
-					$params[0] .= $escaped_column . ' ';
-					$params[0] .= substr($operator, 0, -1) . ' ';
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' ';
+$params[0] = $sql_acc;
+					$sql_acc = self::initialSql($params);
+$sql_acc .= substr($operator, 0, -1) . ' ';
+$params[0] = $sql_acc;
 
 					// If the column to match is a function, split the function
 					// name off so we can escape the column name
 					$prefix = '';
 					$suffix = '';
-					if (preg_match('#^([^(]+\()\s*([^\s]+)\s*(\))$#D', $value, $parts)) {
+					if (is_string($value) && preg_match('#^([^(]+\()\s*([^\s]+)\s*(\))$#D', $value, $parts)) {
 						 $prefix = $parts[1];
 						 $value  = $parts[2];
 						 $suffix = $parts[3];
 					}
 
-					$params[0] .= $prefix . $db->escape('%r', (strpos($value, '.') === FALSE) ? $table . '.' . $value : $value) . $suffix;
+					if ($value === NULL) {
+						$value = '';
+					} elseif (!is_string($value)) {
+						if (is_numeric($value) || $value instanceof Stringable) {
+							$value = (string) $value;
+						} else {
+							throw new ProgrammerException(
+								'An invalid value was specified for the %1$s column',
+								$column
+							);
+						}
+					}
+
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $prefix . self::escapeSql($db, '%r', (strpos($value, '.') === FALSE) ? $table . '.' . $value : $value) . $suffix;
+$params[0] = $sql_acc;
 					break;
 
 				case '=':
 					if ($value === NULL) {
 						$operator = 'IS';
 					}
-					$params[0] .= $escaped_column . ' ' . $operator . ' ' . $placeholder;
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' ' . (string)$operator . ' ' . $ph;
+$params[0] = $sql_acc;
 					$params[] = $value;
 					break;
 
 				case '!':
 					$operator = '<>';
 					if ($value !== NULL) {
-						$params[0] .= '(';
+						$sql_acc = self::initialSql($params);
+$sql_acc .= '(';
+$params[0] = $sql_acc;
 					} else {
 						$operator = 'IS NOT';
 					}
-					$params[0] .= $escaped_column . ' ' . $operator . ' ' . $placeholder;
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' ' . (string)$operator . ' ' . $ph;
+$params[0] = $sql_acc;
 					$params[] = $value;
 					if ($value !== NULL) {
-						$params[0] .= ' OR ' . $escaped_column . ' IS NULL)';
+						$sql_acc = self::initialSql($params);
+$sql_acc .= ' OR ' . $ec . ' IS NULL)';
+$params[0] = $sql_acc;
 					}
 					break;
 
@@ -300,28 +405,42 @@ class ORMDatabase
 				case '<=':
 				case '>':
 				case '>=':
-					$params[0] .= $escaped_column . ' ' . $operator . ' ' . $placeholder;
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' ' . (string)$operator . ' ' . $ph;
+$params[0] = $sql_acc;
 					$params[]   = $value;
 					break;
 
 				case '~':
-					$params[0] .= $escaped_column . ' LIKE %s';
-					$params[]   = '%' . $value . '%';
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' LIKE %s';
+$params[0] = $sql_acc;
+					if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[]   = '%' . (string)$value . '%';
 					break;
 
 				case '^~':
-					$params[0] .= $escaped_column . ' LIKE %s';
-					$params[]   = $value . '%';
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' LIKE %s';
+$params[0] = $sql_acc;
+					if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[]   = (string)$value . '%';
 					break;
 
 				case '$~':
-					$params[0] .= $escaped_column . ' LIKE %s';
-					$params[]   = '%' . $value;
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' LIKE %s';
+$params[0] = $sql_acc;
+					if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[]   = '%' . (string)$value;
 					break;
 
 				case '!~':
-					$params[0] .= $escaped_column . ' NOT LIKE %s';
-					$params[]   = '%' . $value . '%';
+					$sql_acc = self::initialSql($params);
+$sql_acc .= $ec . ' NOT LIKE %s';
+$params[0] = $sql_acc;
+					if (!is_scalar($value) && !($value instanceof Stringable)) { throw new ProgrammerException('Expected stringable value'); }
+						$params[]   = '%' . (string)$value . '%';
 					break;
 
 				default:
@@ -329,7 +448,6 @@ class ORMDatabase
 						'An invalid comparison operator, %s, was specified for a single value',
 						$operator
 					);
-					break;
 			}
 		}
 
@@ -349,12 +467,21 @@ class ORMDatabase
 	 * @param  array     $conditions  The array of conditions - see RecordSet::build() for format
 	 * @return array  The params with the `HAVING` clause added
 	 */
+	/**
+	 * @param array<array-key, mixed> $params
+	 * @param array<array-key, mixed> $conditions
+	 * @return array<array-key, mixed>
+	 */
 	static public function addHavingClause(Database $db, Schema $schema, array $params, string $table, array $conditions): array
 	{
 		$i = 0;
 		foreach ($conditions as $expression => $value) {
 			if ($i) {
-				$params[0] .= ' AND ';
+				$sql_acc = self::initialSql($params); $sql_acc .= ' AND '; $params[0] = $sql_acc;
+			}
+
+			if (!is_string($expression)) {
+				$expression = (string) $expression;
 			}
 
 			// Splits the operator off of the end of the expression
@@ -376,8 +503,12 @@ class ORMDatabase
 			}
 
 			// Quotes the identifier in the expression
-			preg_match('#^([^(]+\()\s*([^\s]+)\s*(\))$#D', $expression, $parts);
-			$expression = $parts[1] . $db->escape('%r', $parts[2]) . $parts[3];
+			if (preg_match('#^([^(]+\()\s*([^\s]+)\s*(\))$#D', $expression, $parts)) {
+				$expression = $parts[1] . self::escapeSql($db, '%r', $parts[2]) . $parts[3];
+			} else {
+				$parts = array('', $expression, '');
+				$expression = $parts[1];
+			}
 
 			// The AVG, SUM and COUNT functions all return a number
 			$function    = strtolower(substr($parts[2], 0, -1));
@@ -407,19 +538,30 @@ class ORMDatabase
 	 * @param  array     $order_bys  The array of order bys to use - see RecordSet::build() for format
 	 * @return array  The params with a SQL `ORDER BY` clause added
 	 */
+	/**
+	 * @param array<array-key, mixed> $params
+	 * @param array<array-key, mixed> $order_bys
+	 * @return array<array-key, mixed>
+	 */
 	static public function addOrderByClause(Database $db, Schema $schema, array $params, string $table, array $order_bys): array
 	{
 		$expressions = array();
 
 		foreach ($order_bys as $column => $direction) {
-			if ((!is_string($column) && !is_object($column) && !is_numeric($column)) || !strlen(trim($column))) {
+			if (!strlen(trim((string) $column))) {
 				throw new ProgrammerException(
 					'An invalid sort column, %s, was specified',
 					$column
 				);
 			}
 
-			$direction = strtoupper($direction);
+			if ($direction !== NULL && !is_string($direction) && !is_numeric($direction) && !($direction instanceof Stringable)) {
+				throw new ProgrammerException(
+					'An invalid direction, %s, was specified',
+					$direction
+				);
+			}
+			$direction = strtoupper((string) $direction);
 			if (!in_array($direction, array('ASC', 'DESC'))) {
 				throw new ProgrammerException(
 					'An invalid direction, %s, was specified',
@@ -427,7 +569,8 @@ class ORMDatabase
 				);
 			}
 
-			if (preg_match('#^((?:max|min|avg|sum|count)\()?((?:(?:(?:"?\w+"?\.)?"?\w+(?:\{[\w.]+\})?"?=>)?"?(?:(?:\w+"?\."?)?\w+)(?:\{[\w.]+\})?"?\.)?"?(?:\w+)"?)(?:\))?$#D', $column, $matches)) {
+			$col_str = is_string($column) ? $column : (string)$column;
+			if (preg_match('#^((?:max|min|avg|sum|count)\()?((?:(?:(?:"?\w+"?\.)?"?\w+(?:\{[\w.]+\})?"?=>)?"?(?:(?:\w+"?\."?)?\w+)(?:\{[\w.]+\})?"?\.)?"?(?:\w+)"?)(?:\))?$#D', $col_str, $matches)) {
 
 				// Parse the expression and get a table and column to determine the data type
 				list ($clause_table, $clause_column) = self::getTableAndColumn($schema, $table, $matches[2]);
@@ -438,7 +581,7 @@ class ORMDatabase
 					$matches[2] = $table . '.' . $matches[2];
 				}
 
-				$matches[2] = $db->escape('%r', $matches[2]);
+				$matches[2] = self::escapeSql($db, '%r', $matches[2]);
 
 				// Text columns are converted to lowercase for more accurate sorting
 				if (in_array($column_type, array('varchar', 'char', 'text'))) {
@@ -459,7 +602,9 @@ class ORMDatabase
 			}
 		}
 
-		$params[0] .= join(', ', $expressions);
+		$sql_acc = self::initialSql($params);
+		$sql_acc .= join(', ', $expressions);
+		$params[0] = $sql_acc;
 
 		return $params;
 	}
@@ -478,19 +623,29 @@ class ORMDatabase
 	 * @param  array   &$old_values   The old values array for the ActiveRecord object
 	 * @return array  The params to pass to Database::query(), including the new primary key where condition
 	 */
+	/**
+	 * @param array<array-key, mixed> $params
+	 * @param array<array-key, mixed> $values
+	 * @param array<array-key, mixed> $old_values
+	 * @return array<array-key, mixed>
+	 */
 	static public function addPrimaryKeyWhereParams(Schema $schema, array $params, string $table, string $table_alias, mixed &$values, mixed &$old_values): array
 	{
 		$pk_columns = $schema->getKeys($table, 'primary');
 
 		$column_info = $schema->getColumnInfo($table);
+		if (!is_array($column_info)) {
+			$column_info = array();
+		}
 
 		$conditions = array();
 		foreach ($pk_columns as $pk_column) {
-			$value = ActiveRecord::retrieveOld($old_values, $pk_column, $values[$pk_column]);
+			$value = ActiveRecord::retrieveOld($old_values, $pk_column, $values[$pk_column] ?? NULL);
 
 			// This makes sure the query performs the way an insert will
-			if ($value === NULL && $column_info[$pk_column]['not_null'] && $column_info[$pk_column]['default'] !== NULL) {
-				$value = $column_info[$pk_column]['default'];
+			$pk_info = $column_info[$pk_column] ?? NULL;
+			if ($value === NULL && is_array($pk_info) && !empty($pk_info['not_null']) && isset($pk_info['default'])) {
+				$value = $pk_info['default'];
 			}
 
 			$params[] = $table_alias . '.' . $pk_column;
@@ -499,7 +654,9 @@ class ORMDatabase
 			$conditions[] = self::makeCondition($schema, $table, $pk_column, '=', $value);
 		}
 
-		$params[0] .= join(' AND ', $conditions);
+		$sql_acc = self::initialSql($params);
+		$sql_acc .= join(' AND ', $conditions);
+		$params[0] = $sql_acc;
 
 		return $params;
 	}
@@ -517,12 +674,21 @@ class ORMDatabase
 	 * @param  array     $conditions  The array of conditions - see RecordSet::build() for format
 	 * @return array  The params with the SQL `WHERE` clause added
 	 */
+	/**
+	 * @param array<array-key, mixed> $params
+	 * @param array<array-key, mixed> $conditions
+	 * @return array<array-key, mixed>
+	 */
 	static public function addWhereClause(Database $db, Schema $schema, array $params, string $table, array $conditions): array
 	{
 		$i = 0;
 		foreach ($conditions as $column => $values) {
 			if ($i) {
-				$params[0] .= ' AND ';
+				$sql_acc = self::initialSql($params); $sql_acc .= ' AND '; $params[0] = $sql_acc;
+			}
+
+			if (!is_string($column)) {
+				$column = (string) $column;
 			}
 
 			if (in_array(substr($column, -3), array('!=:', '>=:', '<=:', '<>:'))) {
@@ -542,19 +708,24 @@ class ORMDatabase
 				$column   = substr($column, 0, -1);
 			}
 
-			if (!is_object($values)) {
-				settype($values, 'array');
+			if (is_array($values)) {
+				$values_array = $values;
+			} elseif (is_object($values)) {
+				$values_array = array($values);
 			} else {
-				$values = array($values);
+				$values_array = array($values);
 			}
+			$values = $values_array;
 			if (!$values) { $values = array(NULL); }
 
 			$new_values = array();
 			foreach ($values as $value) {
-				if (is_object($value) && is_callable(array($value, '__toString'))) {
-					$value = $value->__toString();
-				} elseif (is_object($value)) {
+				if ($value instanceof Stringable) {
 					$value = (string) $value;
+				} elseif (is_object($value)) {
+					throw new ProgrammerException(
+						'Expected a value that can be converted to a string'
+					);
 				}
 				$new_values[] = $value;
 			}
@@ -607,7 +778,7 @@ class ORMDatabase
 
 						// Skip fuzzy matches with no values to match
 						if ($values === array()) {
-							$params[0] .= ' 1 = 1 ';
+							$sql_acc = self::initialSql($params); $sql_acc .= ' 1 = 1 '; $params[0] = $sql_acc;
 							$i++;
 							continue;
 						}
@@ -616,12 +787,17 @@ class ORMDatabase
 						foreach ($values as $value) {
 							$sub_condition = array();
 							foreach ($columns as $column) {
-								$sub_condition[] = $db->escape('%r', $column) . ' LIKE %s';
-								$params[] = '%' . $value . '%';
+								$sub_condition[] = self::escapeSql($db, '%r', $column) . ' LIKE %s';
+								if (!is_scalar($value)) {
+									throw new ProgrammerException('Expected stringable value');
+								}
+								$params[] = '%' . (string)$value . '%';
 							}
 							$condition[] = '(' . join(' OR ', $sub_condition) . ')';
 						}
-						$params[0] .= ' (' . join(' AND ', $condition) . ') ';
+						$sql_acc = self::initialSql($params);
+						$sql_acc .= ' (' . join(' AND ', $condition) . ') ';
+						$params[0] = $sql_acc;
 
 					// Handle intersection
 					} elseif ($operator == '><') {
@@ -634,8 +810,8 @@ class ORMDatabase
 						}
 
 						$escaped_columns = array(
-							$db->escape('%r', $columns[0]),
-							$db->escape('%r', $columns[1])
+							self::escapeSql($db, '%r', $columns[0]),
+							self::escapeSql($db, '%r', $columns[1])
 						);
 
 						list($column_1_table, $column_1) = self::getTableAndColumn($schema, $table, $columns[0]);
@@ -646,22 +822,24 @@ class ORMDatabase
 						);
 
 						if ($values[1] === NULL) {
-							$part_1 = '(' . $escaped_columns[1] . ' IS NULL AND ' . $escaped_columns[0] . ' = ' . $placeholders[0] . ')';
-							$part_2 = '(' . $escaped_columns[1] . ' IS NOT NULL AND ' . $escaped_columns[0] . ' <= ' . $placeholders[0] . ' AND ' . $escaped_columns[1] . ' >= ' . $placeholders[1] . ')';
+							$part_1 = '(' . $escaped_columns[1] . ' IS NULL AND ' . $escaped_columns[0] . ' = ' . (is_string($placeholders[0]) ? $placeholders[0] : '%s') . ')';
+							$part_2 = '(' . $escaped_columns[1] . ' IS NOT NULL AND ' . $escaped_columns[0] . ' <= ' . (is_string($placeholders[0]) ? $placeholders[0] : '%s') . ' AND ' . $escaped_columns[1] . ' >= ' . (is_string($placeholders[1]) ? $placeholders[1] : '%s') . ')';
 							$params[] = $values[0];
 							$params[] = $values[0];
 							$params[] = $values[0];
 
 						} else {
-							$part_1 = '(' . $escaped_columns[0] . ' <= ' . $placeholders[0] . ' AND ' . $escaped_columns[1] . ' >= ' . $placeholders[1] . ')';
-							$part_2 = '(' . $escaped_columns[0] . ' >= ' . $placeholders[0] . ' AND ' . $escaped_columns[0] . ' <= ' . $placeholders[0] . ')';
+							$part_1 = '(' . $escaped_columns[0] . ' <= ' . (is_string($placeholders[0]) ? $placeholders[0] : '%s') . ' AND ' . $escaped_columns[1] . ' >= ' . (is_string($placeholders[1]) ? $placeholders[1] : '%s') . ')';
+							$part_2 = '(' . $escaped_columns[0] . ' >= ' . (is_string($placeholders[0]) ? $placeholders[0] : '%s') . ' AND ' . $escaped_columns[0] . ' <= ' . (is_string($placeholders[0]) ? $placeholders[0] : '%s') . ')';
 							$params[] = $values[0];
 							$params[] = $values[0];
 							$params[] = $values[0];
 							$params[] = $values[1];
 						}
 
-						$params[0] .= ' (' . $part_1 . ' OR ' . $part_2 . ') ';
+						$sql_acc = self::initialSql($params);
+						$sql_acc .= ' (' . $part_1 . ' OR ' . $part_2 . ') ';
+						$params[0] = $sql_acc;
 
 					} else {
 						throw new ProgrammerException(
@@ -688,15 +866,15 @@ class ORMDatabase
 						);
 					}
 
-					$params[0] .= ' (';
+					$sql_acc = self::initialSql($params); $sql_acc .= ' ('; $params[0] = $sql_acc;
 					$iterations = sizeof($columns);
 					for ($j=0; $j<$iterations; $j++) {
 						if ($j) {
-							$params[0] .= ' OR ';
+							$sql_acc = self::initialSql($params); $sql_acc .= ' OR '; $params[0] = $sql_acc;
 						}
 						$params = self::addColumnCondition($db, $schema, $params, $table, $columns[$j], $operators[$j], $values[$j]);
 					}
-					$params[0] .= ') ';
+					$sql_acc = self::initialSql($params); $sql_acc .= ') '; $params[0] = $sql_acc;
 				}
 
 
@@ -708,7 +886,7 @@ class ORMDatabase
 				foreach ($parts as $part) {
 					$part = trim($part);
 					if ($part[0] != "'") {
-						$new_parts[] = $db->escape('%r', $part);
+						$new_parts[] = self::escapeSql($db, '%r', $part);
 					} else {
 						$new_parts[] = $part;
 					}
@@ -743,7 +921,7 @@ class ORMDatabase
 		$tables = array_flip($schema->getTables());
 		if (!isset($tables[$table])) {
 			$short_table = preg_replace('#^\w\.#', '', $table);
-			if (isset($tables[$short_table])) {
+			if (is_string($short_table) && isset($tables[$short_table])) {
 				$table = $short_table;
 			}
 		}
@@ -757,7 +935,7 @@ class ORMDatabase
 	 * @internal
 	 *
 	 * @param  Database $db     The database the query will be run on
-	 * @param  array     $joins  The joins to create the `FROM` clause out of
+	 * @param  array<array-key, array{join_type: string, table_name: string, table_alias: string, on_clause_fields?: array<array-key, string>}>  $joins  The joins to create the `FROM` clause out of
 	 * @return string  The from clause (does not include the word `FROM`)
 	 */
 	static private function createFromClauseFromJoins(Database $db, array $joins): string
@@ -767,19 +945,19 @@ class ORMDatabase
 		foreach ($joins as $join) {
 			// Here we handle the first table in a join
 			if ($join['join_type'] == 'none') {
-				$sql .= $db->escape('%r', $join['table_name']);
+				$sql .= self::escapeSql($db, '%r', $join['table_name']);
 				if ($join['table_alias'] != $join['table_name']) {
-					$sql .= ' ' . $db->escape('%r', $join['table_alias']);
+					$sql .= ' ' . self::escapeSql($db, '%r', $join['table_alias']);
 				}
 
 			// Here we handle all other joins
 			} else {
-				$sql .= ' ' . strtoupper($join['join_type']) . ' ' . $db->escape('%r', $join['table_name']);
+				$sql .= ' ' . strtoupper($join['join_type']) . ' ' . self::escapeSql($db, '%r', $join['table_name']);
 				if ($join['table_alias'] != $join['table_name']) {
-					$sql .= ' ' . $db->escape('%r', $join['table_alias']);
+					$sql .= ' ' . self::escapeSql($db, '%r', $join['table_alias']);
 				}
-				if (!empty($join['on_clause_fields'])) {
-					$sql .= ' ON ' . $db->escape('%r', $join['on_clause_fields'][0]) . ' = ' . $db->escape('%r', $join['on_clause_fields'][1]);
+				if (!empty($join['on_clause_fields']) && isset($join['on_clause_fields'][0], $join['on_clause_fields'][1])) {
+					$sql .= ' ON ' . self::escapeSql($db, '%r', $join['on_clause_fields'][0]) . ' = ' . self::escapeSql($db, '%r', $join['on_clause_fields'][1]);
 				}
 			}
 		}
@@ -798,11 +976,11 @@ class ORMDatabase
 	 * @param  string  $table_alias    The primary table alias
 	 * @param  string  $related_table  The related table
 	 * @param  string  $route          The route to the related table
-	 * @param  array   &$joins         The names of the joins that have been created
-	 * @param  array   &$used_aliases  The aliases that have been used
+	 * @param  array<array-key, array{join_type: string, table_name: string, table_alias: string, on_clause_fields?: array<array-key, string>}>  &$joins  The names of the joins that have been created
+	 * @param  array<int, string>  &$used_aliases  The aliases that have been used
 	 * @return string  The name of the significant join created
 	 */
-	static private function createJoin(Schema $schema, string $table, string $table_alias, string $related_table, string $route, mixed &$joins, mixed &$used_aliases): string
+	static private function createJoin(Schema $schema, string $table, string $table_alias, string $related_table, string $route, array &$joins, array &$used_aliases): string
 	{
 		$routes = ORMSchema::getRoutes($schema, $table, $related_table);
 
@@ -819,12 +997,27 @@ class ORMDatabase
 			return  $table . '_' . $related_table . '{' . $route . '}';
 		}
 
+		$route_info = $routes[$route];
+		$join_table  = $route_info['join_table'] ?? NULL;
+		$column      = $route_info['column'] ?? NULL;
+		$join_column = $route_info['join_column'] ?? NULL;
+		$join_related_column = $route_info['join_related_column'] ?? NULL;
+		$related_column = $route_info['related_column'] ?? NULL;
+		if (!is_string($column) || !is_string($join_column) || !is_string($join_related_column) || !is_string($related_column)) {
+			throw new ProgrammerException(
+				'An invalid route, %1$s, was specified for the relationship from %2$s to %3$s',
+				$route,
+				$table,
+				$related_table
+			);
+		}
+
 		// If the route uses a join table
-		if (isset($routes[$route]['join_table'])) {
+		if (is_string($join_table)) {
 			$join = array(
 				'join_type'        => 'LEFT JOIN',
-				'table_name'       => $routes[$route]['join_table'],
-				'table_alias'      => self::createNewAlias($routes[$route]['join_table'], $used_aliases),
+				'table_name'       => $join_table,
+				'table_alias'      => self::createNewAlias($join_table, $used_aliases),
 				'on_clause_fields' => array()
 			);
 
@@ -836,15 +1029,15 @@ class ORMDatabase
 			);
 
 			if ($table != $related_table) {
-				$join['on_clause_fields'][]  = $table_alias . '.' . $routes[$route]['column'];
-				$join['on_clause_fields'][]  = $join['table_alias'] . '.' . $routes[$route]['join_column'];
-				$join2['on_clause_fields'][] = $join['table_alias'] . '.' . $routes[$route]['join_related_column'];
-				$join2['on_clause_fields'][] = $join2['table_alias'] . '.' . $routes[$route]['related_column'];
+				$join['on_clause_fields'][]  = $table_alias . '.' . $column;
+				$join['on_clause_fields'][]  = $join['table_alias'] . '.' . $join_column;
+				$join2['on_clause_fields'][] = $join['table_alias'] . '.' . $join_related_column;
+				$join2['on_clause_fields'][] = $join2['table_alias'] . '.' . $related_column;
 			} else {
-				$join['on_clause_fields'][]  = $table_alias . '.' . $routes[$route]['column'];
-				$join['on_clause_fields'][]  = $join['table_alias'] . '.' . $routes[$route]['join_related_column'];
-				$join2['on_clause_fields'][] = $join['table_alias'] . '.' . $routes[$route]['join_column'];
-				$join2['on_clause_fields'][] = $join2['table_alias'] . '.' . $routes[$route]['related_column'];
+				$join['on_clause_fields'][]  = $table_alias . '.' . $column;
+				$join['on_clause_fields'][]  = $join['table_alias'] . '.' . $join_related_column;
+				$join2['on_clause_fields'][] = $join['table_alias'] . '.' . $join_column;
+				$join2['on_clause_fields'][] = $join2['table_alias'] . '.' . $related_column;
 			}
 
 			$joins[$table . '_' . $related_table . '{' . $route . '}_join'] = $join;
@@ -861,11 +1054,11 @@ class ORMDatabase
 			);
 
 			if ($table != $related_table) {
-				$join['on_clause_fields'][] = $table_alias . '.' . $routes[$route]['column'];
-				$join['on_clause_fields'][] = $join['table_alias'] . '.' . $routes[$route]['related_column'];
+				$join['on_clause_fields'][] = $table_alias . '.' . $column;
+				$join['on_clause_fields'][] = $join['table_alias'] . '.' . $related_column;
 			} else {
-				$join['on_clause_fields'][] = $table_alias . '.' . $routes[$route]['related_column'];
-				$join['on_clause_fields'][] = $join['table_alias'] . '.' . $routes[$route]['column'];
+				$join['on_clause_fields'][] = $table_alias . '.' . $related_column;
+				$join['on_clause_fields'][] = $join['table_alias'] . '.' . $column;
 			}
 
 			$joins[$table . '_' . $related_table . '{' . $route . '}'] = $join;
@@ -882,10 +1075,10 @@ class ORMDatabase
 	 * @internal
 	 *
 	 * @param  string $table          The table to create an alias for
-	 * @param  array  &$used_aliases  The aliases that have been used
+	 * @param  array<int, string>  &$used_aliases  The aliases that have been used
 	 * @return string  The alias to use for the table
 	 */
-	static private function createNewAlias(string $table, mixed &$used_aliases): string
+	static private function createNewAlias(string $table, array &$used_aliases): string
 	{
 		if (!in_array($table, $used_aliases)) {
 			$used_aliases[] = $table;
@@ -893,7 +1086,10 @@ class ORMDatabase
 		}
 
 		// This will strip any schema name off the beginning
-		$table = preg_replace('#^\w+\.#', '', $table);
+		$cleaned_table = preg_replace('#^\w+\.#', '', $table);
+		if (is_string($cleaned_table)) {
+			$table = $cleaned_table;
+		}
 
 		$i = 1;
 		while(in_array($table . $i, $used_aliases)) {
@@ -910,7 +1106,7 @@ class ORMDatabase
 	 * @param  Schema $schema  The schema for the database
 	 * @param  string  $table   The table to use when no table is specified in the shorthand
 	 * @param  string  $column  The shorthand column definition - see RecordSet::build() for possible syntaxes
-	 * @return array  The $table and $column, suitable for use with Schema
+	 * @return array{0: string, 1: string}  The $table and $column, suitable for use with Schema
 	 */
 	static private function getTableAndColumn(Schema $schema, string $table, string $column): array
 	{
@@ -948,24 +1144,30 @@ class ORMDatabase
 	 * @param  string    $table   The main table to be queried
 	 * @return array  The params with the SQL `FROM` and `GROUP BY` clauses injected
 	 */
+	/**
+	 * @param array<array-key, mixed> $params
+	 * @return array<array-key, mixed>
+	 */
 	static public function injectFromAndGroupByClauses(Database $db, Schema $schema, array $params, string $table): array
 	{
 		$table_with_schema = $table;
 		$table = self::cleanTableName($schema, $table);
 		$joins = array();
 
-		if (strpos($params[0], ':from_clause') === FALSE) {
+		$sql = self::initialSql($params);
+
+		if (strpos($sql, ':from_clause') === FALSE) {
 			throw new ProgrammerException(
 				'No %1$s placeholder was found in:%2$s',
 				':from_clause',
-				"\n" . $params[0]
+				"\n" . $sql
 			);
 		}
 
-		$has_group_by_placeholder = (strpos($params[0], ':group_by_clause') !== FALSE) ? TRUE : FALSE;
+		$has_group_by_placeholder = strpos($sql, ':group_by_clause') !== FALSE;
 
 		// Separate the SQL from quoted values
-		preg_match_all("#(?:'(?:''|\\\\'|\\\\[^']|[^'\\\\])*')|(?:[^']+)#", $params[0], $matches);
+		preg_match_all("#(?:'(?:''|\\\\'|\\\\[^']|[^'\\\\])*')|(?:[^']+)#", $sql, $matches);
 
 		$table_alias = $table;
 
@@ -973,20 +1175,21 @@ class ORMDatabase
 		$table_map     = array();
 
 		// If we are not passing in existing joins, start with the specified table
-		if (!$joins) {
-			$joins[] = array(
-				'join_type'   => 'none',
-				'table_name'  => $table,
-				'table_alias' => $table_alias
-			);
-		}
+		$joins[] = array(
+			'join_type'   => 'none',
+			'table_name'  => $table,
+			'table_alias' => $table_alias
+		);
 
 		$used_aliases[] = $table_alias;
 
 		foreach ($matches[0] as $match) {
 			if ($match[0] != "'") {
 				// This removes quotes from around . in the {route} specified of a shorthand column name
-				$match = preg_replace('#(\{\w+)"\."(\w+\})#', '\1.\2', $match);
+				$cleaned_match = preg_replace('#(\{\w+)"\."(\w+\})#', '\1.\2', $match);
+				if (is_string($cleaned_match)) {
+					$match = $cleaned_match;
+				}
 
 				preg_match_all('#(?<!\w|"|=>)((?:"?((?:\w+"?\."?)?\w+)(?:\{([\w.]+)\})?"?=>)?("?(?:\w+"?\."?)?\w+)(?:\{([\w.]+)\})?"?)\."?\w+"?(?=[^\w".{])#m', $match, $table_matches, PREG_SET_ORDER);
 				foreach ($table_matches as $table_match) {
@@ -1031,7 +1234,7 @@ class ORMDatabase
 
 						$join_name = self::createJoin($schema, $related_table, $joins[$join_name]['table_alias'], $once_removed_table, $route, $joins, $used_aliases);
 
-						$table_map[$table_match[1]] = $db->escape('%r', $joins[$join_name]['table_alias']);
+						$table_map[$table_match[1]] = self::escapeSql($db, '%r', isset($joins[$join_name]['table_alias']) ? $joins[$join_name]['table_alias'] : $related_table);
 
 						// Remove the once removed table from the aliases so we also join directly to it without an alias
 						unset($used_aliases[array_search($once_removed_table, $used_aliases)]);
@@ -1044,7 +1247,7 @@ class ORMDatabase
 
 						$join_name = self::createJoin($schema, $table, $table_alias, $related_table, $route, $joins, $used_aliases);
 
-						$table_map[$table_match[1]] = $db->escape('%r', $joins[$join_name]['table_alias']);
+						$table_map[$table_match[1]] = self::escapeSql($db, '%r', isset($joins[$join_name]['table_alias']) ? $joins[$join_name]['table_alias'] : $related_table);
 					}
 				}
 			}
@@ -1066,6 +1269,12 @@ class ORMDatabase
 			$main_table   = preg_replace('#_' . $join['table_name'] . '{\w+}$#iD', '', $name);
 			$second_table = $join['table_name'];
 			$route        = preg_replace('#^[^{]+{([\w.]+)}$#D', '\1', $name);
+			if (!is_string($main_table)) {
+				$main_table = $name;
+			}
+			if (!is_string($route)) {
+				$route = $name;
+			}
 			$routes       = ORMSchema::getRoutes($schema, $main_table, $second_table, '*-to-many');
 			if (isset($routes[$route])) {
 				$joined_to_many = TRUE;
@@ -1079,15 +1288,22 @@ class ORMDatabase
 		// columns in the main table to prevent duplicate entries
 		if ($joined_to_many) {
 			$column_info     = $schema->getColumnInfo($table);
+			if (!is_array($column_info)) {
+				$column_info = array();
+			}
 			$columns         = array();
 			foreach ($column_info as $column => $info) {
 				$columns[] = $table . '.' . $column;
 			}
-			$group_by_columns = $db->escape('%r ', $columns);
-			$group_by_clause  = ' GROUP BY ' . $group_by_columns;
+			$escaped_group_columns = array();
+			foreach ($columns as $group_column) {
+				$escaped_group_columns[] = self::escapeSql($db, '%r', $group_column);
+			}
+			$group_by_columns_str = implode(', ', $escaped_group_columns);
+			$group_by_clause  = ' GROUP BY ' . $group_by_columns_str;
 		} else {
 			$group_by_clause = ' ';
-			$group_by_columns = '';
+			$group_by_columns_str = '';
 		}
 
 		// Put the SQL back together
@@ -1100,27 +1316,41 @@ class ORMDatabase
 			// Get rid of the => notation and the :from_clause placeholder
 			if ($match[0] !== "'") {
 				// This removes quotes from around . in the {route} specified of a shorthand column name
-				$temp_sql = preg_replace('#(\{\w+)"\."(\w+\})#', '\1.\2', $match);
+				$cleaned_temp = preg_replace('#(\{\w+)"\."(\w+\})#', '\1.\2', $match);
+				if (is_string($cleaned_temp)) {
+					$temp_sql = $cleaned_temp;
+				}
 
 				foreach ($table_map as $arrow_table => $alias) {
-					$temp_sql = preg_replace('#(?<![\w"])' . preg_quote($arrow_table, '#') . '(?!=[\w"])#', $alias, $temp_sql);
+					$replaced_temp = preg_replace('#(?<![\w"])' . preg_quote($arrow_table, '#') . '(?![\w"])#', $alias, $temp_sql);
+					if (is_string($replaced_temp)) {
+						$temp_sql = $replaced_temp;
+					}
 				}
 
 				// This automatically adds max() around column from other tables when a group by is used
 				if ($joined_to_many && preg_match('#order\s+by#i', $temp_sql)) {
-					$order_by_found = TRUE;
-
 					$parts = preg_split('#(order\s+by)#i', $temp_sql, -1, PREG_SPLIT_DELIM_CAPTURE);
-					$parts[2] = preg_replace('#(?<!avg\(|count\(|max\(|min\(|sum\(|cast\(|case |when |"|avg\("|count\("|max\("|min\("|sum\("|cast\("|case "|when "|\{|\.)((?!' . $preg_table_pattern . ')((?:"|\b)\w+"?\.)?(?:"|\b)\w+"?\."?\w+"?)(?![\w."])#i', 'max(\1)', $parts[2]);
-
-					$temp_sql = join('', $parts);
+					if (is_array($parts) && isset($parts[2])) {
+						$maxed_parts = preg_replace('#(?<!avg\(|count\(|max\(|min\(|sum\(|cast\(|case |when |"|avg\("|count\("|max\("|min\("|sum\("|cast\("|case "|when "|\{|\.)((?!' . $preg_table_pattern . ')((?:"|\b)\w+"?\.)?(?:"|\b)\w+"?\."?\w+"?)(?![\w."])#i', 'max(\1)', $parts[2]);
+						if (is_string($maxed_parts)) {
+							$parts[2] = $maxed_parts;
+						}
+						$temp_sql = join('', $parts);
+					}
 				}
 
 				$temp_sql = str_replace(':from_clause', $from_clause, $temp_sql);
 				if ($has_group_by_placeholder) {
-					$temp_sql = preg_replace('#\s:group_by_clause(\s|$)#', strtr($group_by_clause, array('\\' => '\\\\', '$' => '\\$')), $temp_sql);
-				} elseif ($group_by_columns) {
-					$temp_sql = preg_replace('#(\sGROUP\s+BY\s((?!HAVING|ORDER\s+BY).)*)\s#i', '\1, ' . strtr($group_by_columns, array('\\' => '\\\\', '$' => '\\$')), $temp_sql);
+					$group_by_temp = preg_replace('#\s:group_by_clause(\s|$)#', strtr($group_by_clause, array('\\' => '\\\\', '$' => '\\$')), $temp_sql);
+					if (is_string($group_by_temp)) {
+						$temp_sql = $group_by_temp;
+					}
+				} elseif (!empty($group_by_columns_str)) {
+					$group_by_temp = preg_replace('#(\sGROUP\s+BY\s((?!HAVING|ORDER\s+BY).)*)\s#i', '\1, ' . strtr($group_by_columns_str, array('\\' => '\\\\', '$' => '\\$')), $temp_sql);
+					if (is_string($group_by_temp)) {
+						$temp_sql = $group_by_temp;
+					}
 				}
 			}
 
@@ -1159,7 +1389,12 @@ class ORMDatabase
 			}
 		}
 
-		return '%r ' . $co . ' ' . $schema->getColumnInfo($table, $column, 'placeholder');
+		$placeholder = $schema->getColumnInfo($table, $column, 'placeholder');
+		if (!is_string($placeholder)) {
+			$placeholder = '%s';
+		}
+
+		return '%r ' . $co . ' ' . $placeholder;
 	}
 
 
@@ -1170,9 +1405,9 @@ class ORMDatabase
 	 *
 	 * @param  string  $terms              A text string from a form input to parse into search terms
 	 * @param  boolean $ignore_stop_words  If stop words should be ignored, this setting will be ignored if all words are stop words
-	 * @return void
+	 * @return array<int, string>  The parsed search terms
 	 */
-	static public function parseSearchTerms(string $terms, bool $ignore_stop_words=FALSE): mixed
+	static public function parseSearchTerms(string $terms, bool $ignore_stop_words=FALSE): array
 	{
 		$stop_words = array(
 			'i',     'a',     'an',    'are',   'as',    'at',    'be',
@@ -1199,10 +1434,16 @@ class ORMDatabase
 					self::$pcre_supports_unicode_character_properties = !((bool) Core::stopErrorCapture());
 				}
 				if (self::$pcre_supports_unicode_character_properties) {
-					$match = preg_replace('#(^[\pC\pC\pM\pP\pS\pZ]+|[\pC\pC\pM\pP\pS\pZ]+$)#iDu', '', $match);
+					$replacement = preg_replace('#(^[\pC\pC\pM\pP\pS\pZ]+|[\pC\pC\pM\pP\pS\pZ]+$)#iDu', '', $match);
+					if (is_string($replacement)) {
+						$match = $replacement;
+					}
 				} else {
 					// This just removes ascii non-alphanumeric characters, plus the unicode punctuation and supplemental punctuation blocks
-					$match = preg_replace('#(^[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F\x{2000}-\x{206F}\x{2E00}-\x{2E7F}\x{00A1}-\x{00A9}\x{00AB}-\x{00B1}\x{00B4}\x{00B6}-\x{00B8}\x{00BB}\x{00BF}\x{00D7}\x{00F7}]+|[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F\x{2000}-\x{206F}\x{2E00}-\x{2E7F}\x{00A1}-\x{00A9}\x{00AB}-\x{00B1}\x{00B4}\x{00B6}-\x{00B8}\x{00BB}\x{00BF}\x{00D7}\x{00F7}]+$)#iDu', '', $match);
+					$replacement = preg_replace('#(^[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F\x{2000}-\x{206F}\x{2E00}-\x{2E7F}\x{00A1}-\x{00A9}\x{00AB}-\x{00B1}\x{00B4}\x{00B6}-\x{00B8}\x{00BB}\x{00BF}\x{00D7}\x{00F7}]+|[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F\x{2000}-\x{206F}\x{2E00}-\x{2E7F}\x{00A1}-\x{00A9}\x{00AB}-\x{00B1}\x{00B4}\x{00B6}-\x{00B8}\x{00BB}\x{00BF}\x{00D7}\x{00F7}]+$)#iDu', '', $match);
+					if (is_string($replacement)) {
+						$match = $replacement;
+					}
 				}
 			}
 
@@ -1283,6 +1524,11 @@ class ORMDatabase
 		} elseif (isset(self::$database_objects[$database_name]['read'])) {
 			return self::$database_objects[$database_name]['read'];
 		}
+
+		throw new ProgrammerException(
+			'No database object is available for the named "%1$s" database',
+			$database_name
+		);
 	}
 
 
@@ -1291,14 +1537,17 @@ class ORMDatabase
 	 *
 	 * @internal
 	 *
-	 * @param  array &$where_conditions  The where conditions to look through for aggregate functions
-	 * @return array  The conditions to be put in a `HAVING` clause
+	 * @param  array<array-key, mixed>  &$where_conditions  The where conditions to look through for aggregate functions
+	 * @return array<string, mixed>  The conditions to be put in a `HAVING` clause
 	 */
-	static public function splitHavingConditions(mixed &$where_conditions): array
+	static public function splitHavingConditions(array &$where_conditions): array
 	{
 		$having_conditions = array();
 
 		foreach ($where_conditions as $column => $value) {
+			if (!is_string($column) || !is_string($value)) {
+				continue;
+			}
 			$column_has_aggregate             = preg_match('#^(count\(|max\(|avg\(|min\(|sum\()#i', $column);
 			$is_column_compare_with_aggregate = substr($column, -1) == ':' && preg_match('#^(count\(|max\(|avg\(|min\(|sum\()#i', $value);
 			if ($column_has_aggregate || $is_column_compare_with_aggregate) {
