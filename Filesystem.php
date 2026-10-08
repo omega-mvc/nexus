@@ -36,7 +36,7 @@ class Filesystem
 	/**
 	 * Stores the operations to perform when a commit occurs
 	 *
-	 * @var array
+	 * @var list<array{action: 'delete', filename?: string, object?: File|Directory}>|null
 	 */
 	static private ?array $commit_operations = NULL;
 
@@ -57,14 +57,14 @@ class Filesystem
 	/**
 	 * Stores the operations to perform if a rollback occurs
 	 *
-	 * @var array
+	 * @var list<array{action: 'append', filename: string, length: int}|array{action: 'delete', filename: string}|array{action: 'delete', object: File|Directory}|array{action: 'write', filename: string, old_data: string|false}|array{action: 'rename', old_name: string, new_name: string}>|null
 	 */
 	static private ?array $rollback_operations = NULL;
 
 	/**
 	 * Stores a list of search => replace strings for web path translations
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $web_path_translations = array();
 
@@ -123,13 +123,12 @@ class Filesystem
 	 */
 	static public function commit(): void
 	{
-		if (!self::isInsideTransaction()) {
+		$commit_operations = self::$commit_operations;
+		if ($commit_operations === NULL) {
 			throw new ProgrammerException(
 				'There is no filesystem transaction in progress to commit'
 			);
 		}
-
-		$commit_operations = self::$commit_operations;
 
 		self::$commit_operations   = NULL;
 		self::$rollback_operations = NULL;
@@ -140,7 +139,7 @@ class Filesystem
 			// Commit operations only include deletes, however it could be a filename or object
 			if (isset($operation['filename'])) {
 				unlink($operation['filename']);
-			} else {
+			} elseif (isset($operation['object'])) {
 				$operation['object']->delete();
 			}
 		}
@@ -174,7 +173,8 @@ class Filesystem
 						  'm' => 1048576,
 						  'g' => 1073741824,
 						  't' => 1099511627776);
-		return round($matches[1] * $size_map[$matches[2]]);
+		$multiplier = $size_map[$matches[2]];
+		return (int) round((float) $matches[1] * $multiplier);
 	}
 
 
@@ -227,7 +227,12 @@ class Filesystem
 		}
 		$suffixes  = array('B', 'K', 'M', 'G', 'T');
 		$sizes     = array(1, 1024, 1048576, 1073741824, 1099511627776);
-		$suffix    = (!$bytes) ? 0 : floor(log($bytes)/6.9314718);
+		$suffix    = (!$bytes) ? 0 : (int) floor(log($bytes) / 6.9314718);
+		if ($suffix < 0) {
+			$suffix = 0;
+		} elseif ($suffix > 4) {
+			$suffix = 4;
+		}
 		return number_format($bytes/$sizes[$suffix], ($suffix == 0) ? 0 : $decimal_places) . ' ' . $suffixes[$suffix];
 	}
 
@@ -235,11 +240,11 @@ class Filesystem
 	/**
 	 * Returns info about a path including dirname, basename, extension and filename
 	 *
-	 * @param  string $path     The file/directory path to retrieve information about
-	 * @param  string $element  The piece of information to return: `'dirname'`, `'basename'`, `'extension'`, or `'filename'`
-	 * @return array  The file's dirname, basename, extension and filename
+	 * @param  string   $path     The file/directory path to retrieve information about
+	 * @param  ?string  $element  The piece of information to return: `'dirname'`, `'basename'`, `'extension'`, or `'filename'`
+	 * @return ($element is null ? array{dirname: string, basename: string, extension: string, filename: string} : string)
 	 */
-	static public function getPathInfo(string $path, ?string $element=NULL): array
+	static public function getPathInfo(string $path, ?string $element=NULL): string|array
 	{
 		$valid_elements = array('dirname', 'basename', 'extension', 'filename');
 		if ($element !== NULL && !in_array($element, $valid_elements)) {
@@ -253,15 +258,15 @@ class Filesystem
 		$path_info = pathinfo($path);
 
 		if (!isset($path_info['extension'])) {
-			$path_info['extension'] = NULL;
+			$path_info['extension'] = '';
 		}
 
-		if (!isset($path_info['filename'])) {
-			$path_info['filename'] = preg_replace('#\.' . preg_quote($path_info['extension'], '#') . '$#D', '', $path_info['basename']);
+		if (!isset($path_info['dirname'])) {
+			$path_info['dirname'] = '';
 		}
 		$path_info['dirname'] .= DIRECTORY_SEPARATOR;
 
-		if ($element) {
+		if ($element !== NULL) {
 			return $path_info[$element];
 		}
 
@@ -312,9 +317,9 @@ class Filesystem
 	/**
 	 * Indicates if a transaction is in progress
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	static public function isInsideTransaction(): mixed
+	static public function isInsideTransaction(): bool
 	{
 		return is_array(self::$commit_operations);
 	}
@@ -330,7 +335,8 @@ class Filesystem
 	{
 		$filename = strtolower(trim($filename));
 		$filename = str_replace("'", '', $filename);
-		return preg_replace('#[^a-z0-9\-\.]+#', '_', $filename);
+		$safe     = preg_replace('#[^a-z0-9\-\.]+#', '_', $filename);
+		return is_string($safe) ? $safe : $filename;
 	}
 
 
@@ -356,13 +362,28 @@ class Filesystem
 		$extension = (!empty($info['extension'])) ? '.' . $info['extension'] : '';
 
 		// Remove _copy# from the filename to start
-		$file = preg_replace('#_copy(\d+)' . preg_quote($extension, '#') . '$#D', $extension, $file);
+		$pattern  = '#_copy(\d+)' . preg_quote($extension, '#') . '$#D';
+		$stripped = preg_replace($pattern, $extension, $file);
+		if ($stripped === NULL) {
+			throw new ProgrammerException(
+				'Unable to update the copy number of the filename %s',
+				$file
+			);
+		}
+		$file = $stripped;
 
 		// Look for a unique name by adding _copy# to the end of the file
 		while (file_exists($file)) {
 			$info = self::getPathInfo($file);
-			if (preg_match('#_copy(\d+)' . preg_quote($extension, '#') . '$#D', $file, $match)) {
-				$file = preg_replace('#_copy(\d+)' . preg_quote($extension, '#') . '$#D', '_copy' . ($match[1]+1) . $extension, $file);
+			if (preg_match($pattern, $file, $match)) {
+				$next = preg_replace($pattern, '_copy' . ((int) $match[1] + 1) . $extension, $file);
+				if ($next === NULL) {
+					throw new ProgrammerException(
+						'Unable to update the copy number of the filename %s',
+						$file
+					);
+				}
+				$file = $next;
 			} else {
 				$file = $info['dirname'] . $info['filename'] . '_copy1' . $extension;
 			}
@@ -440,6 +461,9 @@ class Filesystem
 
 		// Handle all of the directories and files inside this directory
 		foreach (self::$filename_map as $filename => $ignore) {
+			if (!is_string($filename)) {
+				continue;
+			}
 			if (preg_match('#^' . preg_quote($existing_dirname, '#') . '#', $filename)) {
 				$new_filename = preg_replace(
 					'#^' . preg_quote($existing_dirname, '#') . '#',
@@ -487,10 +511,10 @@ class Filesystem
 	 *
 	 * @internal
 	 *
-	 * @param  object $object  The new file or directory to get rid of on rollback
+	 * @param  File|Directory $object  The new file or directory to get rid of on rollback
 	 * @return void
 	 */
-	static public function recordCreate(object $object): void
+	static public function recordCreate(File|Directory $object): void
 	{
 		self::$rollback_operations[] = array(
 			'action' => 'delete',
@@ -507,7 +531,7 @@ class Filesystem
 	 * @param  File|Directory $object  The filesystem object to delete
 	 * @return void
 	 */
-	static public function recordDelete(mixed $object): void
+	static public function recordDelete(File|Directory $object): void
 	{
 		self::$commit_operations[] = array(
 			'action' => 'delete',
@@ -603,35 +627,40 @@ class Filesystem
 	 */
 	static public function rollback(): void
 	{
-		if (self::$rollback_operations === NULL) {
+		$rollback_operations = self::$rollback_operations;
+		if ($rollback_operations === NULL) {
 			return;
 		}
 
-		self::$rollback_operations = array_reverse(self::$rollback_operations);
+		$rollback_operations = array_reverse($rollback_operations);
 
 		$clear_cache = FALSE;
-		foreach (self::$rollback_operations as $operation) {
+		foreach ($rollback_operations as $operation) {
 			switch($operation['action']) {
 
 				case 'append':
 					$current_length = filesize($operation['filename']);
 					$handle         = fopen($operation['filename'], 'r+');
-					ftruncate($handle, $current_length - $operation['length']);
-					fclose($handle);
+					if (is_int($current_length) && is_resource($handle)) {
+						ftruncate($handle, max(0, $current_length - $operation['length']));
+						fclose($handle);
+					}
 					$clear_cache = TRUE;
 					break;
 
 				case 'delete':
-					self::updateDeletedMap(
-						$operation['filename'],
-						debug_backtrace()
-					);
-					unlink($operation['filename']);
-					Filesystem::updateFilenameMap($operation['filename'], '*DELETED at ' . time() . ' with token ' . uniqid('', TRUE) . '* ' . $operation['filename']);
+					if (isset($operation['filename'])) {
+						self::updateDeletedMap(
+							$operation['filename'],
+							debug_backtrace()
+						);
+						unlink($operation['filename']);
+						Filesystem::updateFilenameMap($operation['filename'], '*DELETED at ' . time() . ' with token ' . uniqid('', TRUE) . '* ' . $operation['filename']);
+					}
 					break;
 
 				case 'write':
-					file_put_contents($operation['filename'], $operation['old_data']);
+					file_put_contents($operation['filename'], is_string($operation['old_data']) ? $operation['old_data'] : '');
 					$clear_cache = TRUE;
 					break;
 
@@ -644,10 +673,13 @@ class Filesystem
 		}
 
 		// All files to be deleted should have their backtraces erased
-		foreach (self::$commit_operations as $operation) {
+		$commit_operations = self::$commit_operations ?? array();
+		foreach ($commit_operations as $operation) {
 			if (isset($operation['object'])) {
-				self::updateDeletedMap($operation['object']->getPath(), NULL);
-				Filesystem::updateFilenameMap($operation['object']->getPath(), preg_replace('#*DELETED at \d+ with token [\w.]+* #', '', $operation['filename']));
+				$path = $operation['object']->getPath();
+				self::updateDeletedMap($path, NULL);
+				$clean = preg_replace('#\*DELETED at \d+ with token [\w.]+\* #', '', $path);
+				Filesystem::updateFilenameMap($path, is_string($clean) ? $clean : $path);
 			}
 		}
 
@@ -668,14 +700,19 @@ class Filesystem
 	 */
 	static public function translateToWebPath(string $path): string
 	{
-		$translations = array(realpath(isset($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '') => '') + self::$web_path_translations;
+		$document_root = isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
+		$resolved      = realpath($document_root);
+		$translations  = array(($resolved === FALSE ? '' : $resolved) => '') + self::$web_path_translations;
 
 		foreach ($translations as $search => $replace) {
-			$path = preg_replace(
+			$translated = preg_replace(
 				'#^' . preg_quote($search, '#') . '#',
 				strtr($replace, array('\\' => '\\\\', '$' => '\\$')),
 				$path
 			);
+			if (is_string($translated)) {
+				$path = $translated;
+			}
 		}
 
 		return str_replace('\\', '/', $path);
