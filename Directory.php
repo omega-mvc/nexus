@@ -452,7 +452,7 @@ class Directory
 	 * comparing with the `$filter`.
 	 *
 	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - directories can be detected by checking for a trailing / (even on Windows)
-	 * @return array  The File (or Image) and Directory objects for the files/directories in this directory
+	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories in this directory
 	 */
 	public function scan(?string $filter=NULL): array
 	{

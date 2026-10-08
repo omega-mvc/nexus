@@ -58,35 +58,35 @@ class ORMFile
 	/**
 	 * Defines how columns can inherit uploaded files
 	 *
-	 * @var array
+	 * @var array<string, array<string, list<string>>>
 	 */
 	static private array $column_inheritence = array();
 
 	/**
 	 * Methods to be called on Upload before the file is uploaded
 	 *
-	 * @var array
+	 * @var array<string, array<string, list<array{method: string, parameters: array<array-key, mixed>}>>>
 	 */
 	static private array $fupload_method_calls = array();
 
 	/**
 	 * Columns that can be filled by file uploads
 	 *
-	 * @var array
+	 * @var array<string, array<string, Directory>>
 	 */
 	static private array $file_upload_columns = array();
 
 	/**
 	 * Methods to be called on the Image instance
 	 *
-	 * @var array
+	 * @var array<string, array<string, list<array{method: string, parameters: array<array-key, mixed>}>>>
 	 */
 	static private array $fimage_method_calls = array();
 
 	/**
 	 * Columns that can be filled by image uploads
 	 *
-	 * @var array
+	 * @var array<string, array<string, bool>>
 	 */
 	static private array $image_upload_columns = array();
 
@@ -108,7 +108,7 @@ class ORMFile
 	 * @param  mixed  $class       The class name or instance of the class
 	 * @param  string $column      The column to call the method for
 	 * @param  string $method      The Image method to call
-	 * @param  array  $parameters  The parameters to pass to the method
+	 * @param  array<array-key, mixed>  $parameters  The parameters to pass to the method
 	 * @return void
 	 */
 	static public function addFImageMethodCall(mixed $class, string $column, string $method, array $parameters=array()): void
@@ -142,7 +142,7 @@ class ORMFile
 	 * @param  mixed  $class       The class name or instance of the class
 	 * @param  string $column      The column to call the method for
 	 * @param  string $method      The Upload method to call
-	 * @param  array  $parameters  The parameters to pass to the method
+	 * @param  array<array-key, mixed>  $parameters  The parameters to pass to the method
 	 * @return void
 	 */
 	static public function addFUploadMethodCall(mixed $class, string $column, string $method, array $parameters=array()): void
@@ -230,7 +230,18 @@ class ORMFile
 	 */
 	static private function compose(string $message): string
 	{
-		$args = array_slice(func_get_args(), 1);
+		$args = array_map(static function (mixed $arg): bool|float|int|string|null {
+			if ($arg === NULL || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
+				return $arg;
+			}
+			if ($arg instanceof Stringable) {
+				return (string) $arg;
+			}
+			throw new ProgrammerException(
+				'Only scalar values and NULL can be used to compose the message, %s given',
+				get_debug_type($arg)
+			);
+		}, array_slice(func_get_args(), 1));
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -440,10 +451,10 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -458,7 +469,8 @@ class ORMFile
 			}
 
 			// Remove the old files for the column
-			foreach (ActiveRecord::retrieveOld($old_values, $column, array(), TRUE) as $file) {
+			$old_files = ActiveRecord::retrieveOld($old_values, $column, array(), TRUE);
+			foreach ((is_array($old_files) ? $old_files : array()) as $file) {
 				if ($file instanceof File) {
 					$file->delete();
 				}
@@ -473,10 +485,10 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function deleteOld(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -486,7 +498,8 @@ class ORMFile
 		// Remove the old files for the column
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
 			$current_file = $values[$column];
-			foreach (ActiveRecord::retrieveOld($old_values, $column, array(), TRUE) as $file) {
+			$old_files = ActiveRecord::retrieveOld($old_values, $column, array(), TRUE);
+			foreach ((is_array($old_files) ? $old_files : array()) as $file) {
 				if ($file instanceof File && (!$current_file instanceof File || $current_file->getPath() != $file->getPath())) {
 					$file->delete();
 				}
@@ -501,20 +514,20 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
-	 * @return void
+	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
+	 * @return string  The HTML form-ready filename
 	 */
 	static public function encode(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column   = Grammar::underscorize($subject);
-		$filename = ($values[$column] instanceof File) ? $values[$column]->getName() : NULL;
+		$column   = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$filename = ($values[$column] instanceof File) ? $values[$column]->getName() : '';
 		if ($filename && strpos($values[$column]->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename) !== FALSE) {
 			$filename = self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename;
 		}
@@ -530,7 +543,7 @@ class ORMFile
 	 *
 	 * @param  string $class      The class being inspected
 	 * @param  string $column     The column being inspected
-	 * @param  array  &$metadata  The array of metadata about a column
+	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
 	static public function inspect(string $class, string $column, mixed &$metadata): void
@@ -552,10 +565,10 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function moveFromTemp(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -587,11 +600,21 @@ class ORMFile
 	 */
 	static public function objectify(string $class, string $column, mixed $value): mixed
 	{
-		if ((!is_string($value) && !is_numeric($value) && !is_object($value)) || !strlen(trim($value))) {
+		if (is_string($value)) {
+			$string_value = $value;
+		} elseif (is_numeric($value)) {
+			$string_value = (string) $value;
+		} elseif ($value instanceof Stringable) {
+			$string_value = (string) $value;
+		} else {
 			return $value;
 		}
 
-		$path = self::$file_upload_columns[$class][$column]->getPath() . $value;
+		if (!strlen(trim($string_value))) {
+			return $value;
+		}
+
+		$path = self::$file_upload_columns[$class][$column]->getPath() . $string_value;
 
 		try {
 
@@ -610,10 +633,10 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function populate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -635,18 +658,18 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
-	 * @return void
+	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
+	 * @return string  The HTML-ready value for the file
 	 */
 	static public function prepare(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
-		$column = Grammar::underscorize($subject);
+		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
 
 		if (sizeof($parameters) > 1) {
 			throw new ProgrammerException(
@@ -661,7 +684,7 @@ class ORMFile
 		if ($value instanceof File) {
 			$path = ($translate_to_web_path) ? $value->getPath(TRUE) : $value->getName();
 		} else {
-			$path = NULL;
+			$path = '';
 		}
 
 		return HTML::prepare($path);
@@ -671,10 +694,10 @@ class ORMFile
 	/**
 	 * Takes a directory and creates a temporary directory inside of it - if the temporary folder exists, all files older than 6 hours will be deleted
 	 *
-	 * @param  string $folder  The folder to create a temporary directory inside of
+	 * @param  Directory $folder  The folder to create a temporary directory inside of
 	 * @return Directory  The temporary directory for the folder specified
 	 */
-	static private function prepareTempDir(string $folder): Directory
+	static private function prepareTempDir(Directory $folder): Directory
 	{
 		// Let's clean out the upload temp dir
 		try {
@@ -700,22 +723,24 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
 	static public function process(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize($subject);
+		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
 		$class  = get_class($object);
 
-		self::processImage($class, $column, $values[$column]);
+		if ($values[$column] instanceof File) {
+			self::processImage($class, $column, $values[$column]);
+		}
 
 		return $object;
 	}
@@ -759,7 +784,7 @@ class ORMFile
 		}
 
 		if (!$save_changes_called) {
-			call_user_func($image->saveChanges);
+			$image->saveChanges();
 		}
 	}
 
@@ -770,7 +795,7 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  string  $class                 The class to reflect
-	 * @param  array   &$signatures           The associative array of `{method name} => {signature}`
+	 * @param  array<array-key, mixed>   &$signatures           The associative array of `{method name} => {signature}`
 	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
@@ -973,12 +998,12 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
 	static public function set(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
@@ -987,8 +1012,8 @@ class ORMFile
 
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column   = Grammar::underscorize($subject);
-		$doc_root = realpath(isset($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '');
+		$column   = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$doc_root = realpath(isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '');
 
 		if (!array_key_exists(0, $parameters)) {
 			throw new ProgrammerException(
@@ -997,18 +1022,32 @@ class ORMFile
 			);
 		}
 
+		$file     = NULL;
 		$file_path = $parameters[0];
 
 		// Handle objects being passed in
 		if ($file_path instanceof File) {
 			$file_path = $file_path->getPath();
-		} elseif (is_object($file_path) && is_callable(array($file_path, '__toString'))) {
-			$file_path = $file_path->__toString();
-		} elseif (is_object($file_path)) {
+		} elseif ($file_path instanceof Stringable) {
 			$file_path = (string) $file_path;
+		} elseif (is_object($file_path)) {
+			throw new ProgrammerException(
+				'The file specified is an object of class %s that cannot be converted to a file path',
+				get_class($file_path)
+			);
 		}
 
 		if ($file_path !== NULL && $file_path !== '' && $file_path !== FALSE) {
+			if (!is_string($file_path)) {
+				if (!is_scalar($file_path)) {
+					throw new ProgrammerException(
+						'The file specified must be a file path string, %s given',
+						get_debug_type($file_path)
+					);
+				}
+				$file_path = (string) $file_path;
+			}
+
 			if (!$file_path || (!file_exists($file_path) && !file_exists($doc_root . $file_path))) {
 				throw new EnvironmentException(
 					'The file specified, %s, does not exist. This may indicate a missing enctype="multipart/form-data" attribute in form tag.',
@@ -1036,6 +1075,12 @@ class ORMFile
 			}
 
 			$file     = Filesystem::createObject($file_path);
+			if (!$file instanceof File) {
+				throw new ProgrammerException(
+					'The file specified, %s, could not be loaded as a file object',
+					$file_path
+				);
+			}
 			$new_file = $file->duplicate($temp_dir);
 
 		} else {
@@ -1093,20 +1138,20 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed> &$values           The current values
+	 * @param  array<array-key, mixed> &$old_values       The old values
+	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
-	 * @return File  The uploaded file
+	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
+	 * @return File|Directory|null  The uploaded file, or NULL if no new file was set
 	 */
 	static public function upload(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		$class = get_class($object);
 
 		list ($action, $subject) = ORM::parseMethod($method_name);
-		$column = Grammar::underscorize($subject);
+		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
 
 		$existing_temp_file = FALSE;
 
@@ -1136,7 +1181,7 @@ class ORMFile
 
 			} elseif ($existing_file) {
 
-				$file_path = $upload_dir->getPath() . $existing_file;
+				$file_path = $upload_dir->getPath() . (is_scalar($existing_file) ? (string) $existing_file : '');
 				$file      = Filesystem::createObject($file_path);
 
 				$current_file = $values[$column];
@@ -1172,8 +1217,13 @@ class ORMFile
 
 					if ($existing_temp_file) {
 						$other_file = Filesystem::createObject($other_temp_dir->getPath() . $file->getName());
-					} else {
+					} elseif ($file instanceof File) {
 						$other_file = $file->duplicate($other_temp_dir, FALSE);
+					} else {
+						throw new ProgrammerException(
+							'The existing file specified for the column %s is not a file object',
+							$other_column
+						);
 					}
 
 				} else {
@@ -1182,14 +1232,14 @@ class ORMFile
 
 				ActiveRecord::assign($values, $old_values, $other_column, $other_file);
 
-				if (!$existing_temp_file && $other_file) {
+				if (!$existing_temp_file && $other_file instanceof File) {
 					self::processImage($class, $other_column, $other_file);
 				}
 			}
 		}
 
 		// Process the file
-		if (!$existing_temp_file && $file) {
+		if (!$existing_temp_file && $file instanceof File) {
 			self::processImage($class, $column, $file);
 		}
 
@@ -1203,11 +1253,11 @@ class ORMFile
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object                The ActiveRecord instance
-	 * @param  array         &$values               The current values
-	 * @param  array         &$old_values           The old values
-	 * @param  array         &$related_records      Any records related to this record
-	 * @param  array         &$cache                The cache array for the record
-	 * @param  array         &$validation_messages  The existing validation messages
+	 * @param  array<array-key, mixed> &$values               The current values
+	 * @param  array<array-key, mixed> &$old_values           The old values
+	 * @param  array<array-key, mixed> &$related_records      Any records related to this record
+	 * @param  array<array-key, mixed> &$cache                The cache array for the record
+	 * @param  array<array-key, mixed> &$validation_messages  The existing validation messages
 	 * @return void
 	 */
 	static public function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
@@ -1217,7 +1267,7 @@ class ORMFile
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
 			$column_name = ORM::getColumnName($class, $column);
 
-			if (isset($validation_messages[$column])) {
+			if (isset($validation_messages[$column]) && is_string($validation_messages[$column])) {
 				$search_message  = self::compose('%sPlease enter a value', ValidationException::formatField($column_name));
 				$replace_message = self::compose('%sPlease upload a file', ValidationException::formatField($column_name));
 				$validation_messages[$column] = str_replace($search_message, $replace_message, $validation_messages[$column]);
