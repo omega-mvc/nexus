@@ -1852,7 +1852,7 @@ class ORMRelated
 	 * @param  string $class             The class to validate the related records for
 	 * @param  RelatedValues  &$values           The values for the object
 	 * @param  RelatedRecords  &$related_records  The related records for the object
-	 * @return array<string, mixed>  The validation messages for the related records
+	 * @return array<string, string|array{name: string, errors: array<string, string>}>  The validation messages for the related records
 	 */
 	static public function validate(string $class, array &$values, array &$related_records): array
 	{
@@ -1894,7 +1894,7 @@ class ORMRelated
 	 * @param  RelatedRecords  &$related_records  The related records for the object
 	 * @param  string $related_class     The name of the class for this record set
 	 * @param  string $route             The route between the table and related table
-	 * @return array<string, mixed>  An array of validation messages
+	 * @return array<string, string|array{name: string, errors: array<string, string>}>  An array of validation messages
 	 */
 	static private function validateOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route): array
 	{
@@ -1963,6 +1963,11 @@ class ORMRelated
 					if (!isset($messages[$main_key]) || !is_array($messages[$main_key])) {
 						if (isset(self::$validation_name_methods[$class][$related_class][$route])) {
 							$name = $record->{self::$validation_name_methods[$class][$related_class][$route]}($i+1);
+							if (is_scalar($name)) {
+								$name = (string) $name;
+							} else {
+								$name = '';
+							}
 						} else {
 							$name = $related_record_name . ' #' . ($i+1);
 						}
@@ -1991,7 +1996,7 @@ class ORMRelated
 	 * @param  string $related_class  The name of the class for this record set
 	 * @param  string $route          The route between the table and related table
 	 * @param  RelatedInfo  $related_info   The related info to validate
-	 * @return array<string, mixed>  An array of validation messages
+	 * @return array<string, string>  An array of validation messages
 	 */
 	static private function validateManyToMany(string $class, string $related_class, string $route, array $related_info): array
 	{

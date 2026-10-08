@@ -50,7 +50,7 @@ declare(strict_types=1);
  *
  * @phpstan-type ColumnsRule      array{columns: array<array-key, string>}
  * @phpstan-type ConditionalRule array{main_columns: array<array-key, string>, conditional_values: mixed, conditional_columns: array<array-key, string>}
- * @phpstan-type Replacements     array{search: list<string>, replace: list<string>}
+ * @phpstan-type Replacements     array{search: array<array-key, string>, replace: array<array-key, string>}
  * @phpstan-type RegexRule        array{regex: string, message: string}
  * @phpstan-type MessageText      string|array{name: string, errors: array<string, string>}
  * @phpstan-type Messages         array<array-key, MessageText>
@@ -143,9 +143,9 @@ class ORMValidation
 	 * `$conditional_columns` will also be required to have a value.
 	 *
 	 * @param  mixed         $class                The class name or instance of the class this rule applies to
-	 * @param  string|array  $main_columns         The column(s) to check for a value
+	 * @param  string|array<int, string>  $main_columns  The column(s) to check for a value
 	 * @param  mixed         $conditional_values   If `NULL`, any value in the main column will trigger the conditional column(s), otherwise the value must match this scalar value or be present in the array of values
-	 * @param  string|array  $conditional_columns  The column(s) that are to be required
+	 * @param  string|array<int, string>  $conditional_columns  The column(s) that are to be required
 	 * @return void
 	 */
 	static public function addConditionalRule(mixed $class, mixed $main_columns, mixed $conditional_values, mixed $conditional_columns): void
@@ -156,10 +156,14 @@ class ORMValidation
 			self::$conditional_rules[$class] = array();
 		}
 
-		settype($main_columns, 'array');
-		settype($conditional_columns, 'array');
-		if ($conditional_values !== NULL) {
-			settype($conditional_values, 'array');
+		if (!is_array($main_columns)) {
+			$main_columns = array($main_columns);
+		}
+		if (!is_array($conditional_columns)) {
+			$conditional_columns = array($conditional_columns);
+		}
+		if ($conditional_values !== NULL && !is_array($conditional_values)) {
+			$conditional_values = array($conditional_values);
 		}
 
 		$rule = array();
@@ -208,14 +212,16 @@ class ORMValidation
 	 * Adds a one-or-more rule that requires at least one of the columns specified has a value
 	 *
 	 * @param  mixed $class    The class name or instance of the class the columns exists in
-	 * @param  array $columns  The columns to check
+	 * @param  string|array<int, string> $columns  The column(s) to check
 	 * @return void
 	 */
-	static public function addOneOrMoreRule(mixed $class, array $columns): void
+	static public function addOneOrMoreRule(mixed $class, mixed $columns): void
 	{
 		$class = ORM::getClass($class);
 
-		settype($columns, 'array');
+		if (!is_array($columns)) {
+			$columns = array($columns);
+		}
 
 		if (!isset(self::$one_or_more_rules[$class])) {
 			self::$one_or_more_rules[$class] = array();
@@ -265,14 +271,16 @@ class ORMValidation
 	 * Add an only-one rule that requires exactly one of the columns must have a value
 	 *
 	 * @param  mixed $class    The class name or instance of the class the columns exists in
-	 * @param  array $columns  The columns to check
+	 * @param  string|array<int, string> $columns  The column(s) to check
 	 * @return void
 	 */
-	static public function addOnlyOneRule(mixed $class, array $columns): void
+	static public function addOnlyOneRule(mixed $class, mixed $columns): void
 	{
 		$class = ORM::getClass($class);
 
-		settype($columns, 'array');
+		if (!is_array($columns)) {
+			$columns = array($columns);
+		}
 
 		if (!isset(self::$only_one_rules[$class])) {
 			self::$only_one_rules[$class] = array();
@@ -348,14 +356,16 @@ class ORMValidation
 	 * level for any other code that queries it.
 	 *
 	 * @param  mixed $class    The class name or instance of the class the column(s) exists in
-	 * @param  array $columns  The column or columns to check - each column will require a value
+	 * @param  string|array<int, string> $columns  The column or columns to check - each column will require a value
 	 * @return void
 	 */
-	static public function addRequiredRule(mixed $class, array $columns): void
+	static public function addRequiredRule(mixed $class, mixed $columns): void
 	{
 		$class = ORM::getClass($class);
 
-		settype($columns, 'array');
+		if (!is_array($columns)) {
+			$columns = array($columns);
+		}
 
 		if (!isset(self::$required_rules[$class])) {
 			self::$required_rules[$class] = array();
@@ -408,10 +418,10 @@ class ORMValidation
 	 *
 	 * @param  mixed   $class         The class name or instance of the class this rule applies to
 	 * @param  string  $column        The column to validate
-	 * @param  array   $valid_values  The valid values to check - `NULL` values are always allows if the column is not set to `NOT NULL`
+	 * @param  string|array<array-key, mixed>  $valid_values  The valid values to check - `NULL` values are always allows if the column is not set to `NOT NULL`
 	 * @return void
 	 */
-	static public function addValidValuesRule(mixed $class, string $column, array $valid_values): void
+	static public function addValidValuesRule(mixed $class, string $column, mixed $valid_values): void
 	{
 		$class = ORM::getClass($class);
 
@@ -419,7 +429,9 @@ class ORMValidation
 			self::$valid_values_rules[$class] = array();
 		}
 
-		settype($valid_values, 'array');
+		if (!is_array($valid_values)) {
+			$valid_values = array($valid_values);
+		}
 
 		self::$valid_values_rules[$class][$column] = $valid_values;
 
@@ -432,17 +444,20 @@ class ORMValidation
 	 *
 	 * @param  Schema        $schema       The schema object for the object
 	 * @param  ActiveRecord  $object       The instance of the class the column is part of
-	 * @param  string         $column       The column to check
-	 * @param  array          &$values      An associative array of all values going into the row (needs all for multi-field unique constraint checking)
-	 * @param  array          &$old_values  The old values from the record
-	 * @return string  An error message for the column specified
+	 * @param  string  $column       The column to check
+	 * @param  array<array-key, mixed>  &$values      An associative array of all values going into the row (needs all for multi-field unique constraint checking)
+	 * @param  array<array-key, mixed>  &$old_values  The old values from the record
+	 * @return string|null  An error message for the column specified
 	 */
-	static private function checkAgainstSchema(Schema $schema, ActiveRecord $object, string $column, mixed &$values, mixed &$old_values): string
+	static private function checkAgainstSchema(Schema $schema, ActiveRecord $object, string $column, mixed &$values, mixed &$old_values): ?string
 	{
 		$class = get_class($object);
 		$table = ORM::tablize($class);
 
 		$info = $schema->getColumnInfo($table, $column);
+		if (!is_array($info)) {
+			return NULL;
+		}
 		// Make sure a value is provided for required columns
 		$schema_not_null = $info['not_null'] && $info['default'] === NULL && $info['auto_increment'] === FALSE;
 		$rule_not_null   = isset(self::$required_rules[$class][$column]);
@@ -457,11 +472,18 @@ class ORMValidation
 		if ($message) { return $message; }
 
 		// Make sure a valid value is chosen
-		if (isset($info['valid_values']) && $values[$column] !== NULL && !in_array($values[$column], $info['valid_values'])) {
+		$valid_values = $info['valid_values'] ?? NULL;
+		if (is_array($valid_values) && $values[$column] !== NULL && !in_array($values[$column], $valid_values)) {
+			$display_values = array();
+			foreach ($valid_values as $valid_value) {
+				if (is_scalar($valid_value)) {
+					$display_values[] = (string) $valid_value;
+				}
+			}
 			return self::compose(
 				'%1$sPlease choose from one of the following: %2$s',
 				ValidationException::formatField(ORM::getColumnName($class, $column)),
-				join(', ', $info['valid_values'])
+				join(', ', $display_values)
 			);
 		}
 
@@ -484,17 +506,21 @@ class ORMValidation
 		}
 
 		// Make sure the value fits in the numeric range
-		if (self::stringlike($values[$column]) && in_array($info['type'], array('integer', 'float')) && $info['min_value'] && $info['max_value'] && ($info['min_value']->gt($values[$column]) || $info['max_value']->lt($values[$column]))) {
+		$min_value = $info['min_value'] ?? NULL;
+		$max_value = $info['max_value'] ?? NULL;
+		$range_value = $values[$column];
+		if (self::stringlike($range_value) && in_array($info['type'], array('integer', 'float')) && $min_value instanceof Number && $max_value instanceof Number && (is_int($range_value) || is_float($range_value) || is_string($range_value)) && ($min_value->gt($range_value) || $max_value->lt($range_value))) {
 			return self::compose(
 				'%1$sPlease enter a number between %2$s and %3$s',
 				ValidationException::formatField(ORM::getColumnName($class, $column)),
-				$info['min_value']->__toString(),
-				$info['max_value']->__toString()
+				$min_value->__toString(),
+				$max_value->__toString()
 			);
 		}
 
 		$message = self::checkForeignKeyConstraints($schema, $class, $column, $values);
 		if ($message) { return $message; }
+		return NULL;
 	}
 
 
@@ -503,19 +529,26 @@ class ORMValidation
 	 *
 	 * @param  Schema $schema               The schema object for the class specified
 	 * @param  string  $class                The class this rule applies to
-	 * @param  array   &$values              An associative array of all values for the record
-	 * @param  array   $main_columns         The columns to check for a value
-	 * @param  array   $conditional_values   If `NULL`, any value in the main column will trigger the conditional columns, otherwise the value must match one of these
-	 * @param  array   $conditional_columns  The columns that are to be required
-	 * @return array  The error messages for the rule specified
+	 * @param  array<array-key, mixed>  &$values              An associative array of all values for the record
+	 * @param  string|array<array-key, string>  $main_columns       The columns to check for a value
+	 * @param  mixed                            $conditional_values  If `NULL`, any value in the main column will trigger the conditional columns, otherwise the value must match one of these
+	 * @param  string|array<array-key, string>  $conditional_columns  The columns that are to be required
+	 * @return array<string, string>|null  The error messages for the rule specified
 	 */
-	static private function checkConditionalRule(Schema $schema, string $class, mixed &$values, array $main_columns, array $conditional_values, array $conditional_columns): mixed
+	static private function checkConditionalRule(Schema $schema, string $class, mixed &$values, mixed $main_columns, mixed $conditional_values, mixed $conditional_columns): ?array
 	{
 		$check_for_missing_values = FALSE;
 
+		if (!is_array($main_columns)) {
+			$main_columns = array($main_columns);
+		}
+		if (!is_array($conditional_columns)) {
+			$conditional_columns = array($conditional_columns);
+		}
+
 		foreach ($main_columns as $main_column) {
-			$matches_conditional_value = $conditional_values !== NULL && in_array($values[$main_column], $conditional_values);
-			$has_some_value            = $conditional_values === NULL && strlen((string) $values[$main_column]);
+			$matches_conditional_value = is_array($conditional_values) && in_array($values[$main_column], $conditional_values);
+			$has_some_value            = $conditional_values === NULL && self::stringlike($values[$main_column]);
 			if ($matches_conditional_value || $has_some_value) {
 				$check_for_missing_values = TRUE;
 				break;
@@ -530,7 +563,7 @@ class ORMValidation
 		$messages = array();
 		foreach ($conditional_columns as $conditional_column) {
 			$default_is_space = $schema->getColumnInfo($table, $conditional_column, 'default') === '';
-			if ($values[$conditional_column] !== NULL && (!$default_is_space || ($default_is_space && $values[$conditional_column] !== ''))) { continue; }
+			if ($values[$conditional_column] !== NULL && (!$default_is_space || $values[$conditional_column] !== '')) { continue; }
 			$messages[$conditional_column] = self::compose(
 				'%sPlease enter a value',
 				ValidationException::formatField(ORM::getColumnName($class, $conditional_column))
@@ -539,6 +572,7 @@ class ORMValidation
 		if ($messages) {
 			return $messages;
 		}
+		return NULL;
 	}
 
 
@@ -549,12 +583,15 @@ class ORMValidation
 	 * @param  string  $class   The class the column is part of
 	 * @param  string  $column  The column to check
 	 * @param  mixed   $value   The value to check
-	 * @return string  An error message for the column specified
+	 * @return string|null  An error message for the column specified
 	 */
-	static private function checkDataType(Schema $schema, string $class, string $column, mixed $value): string
+	static private function checkDataType(Schema $schema, string $class, string $column, mixed $value): ?string
 	{
 		$table       = ORM::tablize($class);
 		$column_info = $schema->getColumnInfo($table, $column);
+		if (!is_array($column_info)) {
+			return NULL;
+		}
 
 		if ($value !== NULL) {
 			switch ($column_info['type']) {
@@ -586,6 +623,12 @@ class ORMValidation
 					}
 					break;
 				case 'timestamp':
+					if (!is_int($value) && !is_string($value) && !is_object($value)) {
+						return self::compose(
+							'%sPlease enter a date/time',
+							ValidationException::formatField(ORM::getColumnName($class, $column))
+						);
+					}
 					try {
 						new Timestamp($value);
 					} catch (ValidationException $e) {
@@ -596,6 +639,12 @@ class ORMValidation
 					}
 					break;
 				case 'date':
+					if (!is_int($value) && !is_string($value) && !is_object($value)) {
+						return self::compose(
+							'%sPlease enter a date',
+							ValidationException::formatField(ORM::getColumnName($class, $column))
+						);
+					}
 					try {
 						new Date($value);
 					} catch (ValidationException $e) {
@@ -606,6 +655,12 @@ class ORMValidation
 					}
 					break;
 				case 'time':
+					if (!is_int($value) && !is_string($value) && !is_object($value)) {
+						return self::compose(
+							'%sPlease enter a time',
+							ValidationException::formatField(ORM::getColumnName($class, $column))
+						);
+					}
 					try {
 						new Time($value);
 					} catch (ValidationException $e) {
@@ -618,6 +673,7 @@ class ORMValidation
 
 			}
 		}
+		return NULL;
 	}
 
 
@@ -627,10 +683,10 @@ class ORMValidation
 	 * @param  Schema $schema   The schema object for the class
 	 * @param  string  $class    The class to check the foreign keys for
 	 * @param  string  $column   The column to check
-	 * @param  array   &$values  The values to check
-	 * @return string  An error message for the column specified
+	 * @param  array<array-key, mixed>  &$values  The values to check
+	 * @return string|null  An error message for the column specified
 	 */
-	static private function checkForeignKeyConstraints(Schema $schema, string $class, string $column, mixed &$values): mixed
+	static private function checkForeignKeyConstraints(Schema $schema, string $class, string $column, mixed &$values): ?string
 	{
 		if ($values[$column] === NULL) {
 			return null;
@@ -651,7 +707,7 @@ class ORMValidation
 						$foreign_key['foreign_column'],
 						$values[$column]
 					);
-					$result = call_user_func_array($db->translatedQuery, $params);
+					$result = self::runQuery($db, $params);
 					$result->tossIfNoRows();
 
 				} catch (NoRowsException $e) {
@@ -662,6 +718,7 @@ class ORMValidation
 				}
 			}
 		}
+		return NULL;
 	}
 
 
@@ -670,14 +727,12 @@ class ORMValidation
 	 *
 	 * @param  Schema $schema   The schema object for the table
 	 * @param  string  $class    The class the columns are part of
-	 * @param  array   &$values  An associative array of all values for the record
-	 * @param  array   $columns  The columns to check
-	 * @return string  An error message for the rule
+	 * @param  array<array-key, mixed>  &$values  An associative array of all values for the record
+	 * @param  array<array-key, string>  $columns  The columns to check
+	 * @return string|null  An error message for the rule
 	 */
-	static private function checkOneOrMoreRule(Schema $schema, string $class, mixed &$values, array $columns): string
+	static private function checkOneOrMoreRule(Schema $schema, string $class, mixed &$values, array $columns): ?string
 	{
-		settype($columns, 'array');
-
 		$found_value = FALSE;
 		foreach ($columns as $column) {
 			if (self::hasValue($schema, $class, $values, $column)) {
@@ -695,6 +750,7 @@ class ORMValidation
 				ValidationException::formatField(join(', ', $column_names))
 			);
 		}
+		return NULL;
 	}
 
 
@@ -703,14 +759,12 @@ class ORMValidation
 	 *
 	 * @param  Schema $schema   The schema object for the table
 	 * @param  string  $class    The class the columns are part of
-	 * @param  array   &$values  An associative array of all values for the record
-	 * @param  array   $columns  The columns to check
-	 * @return string  An error message for the rule
+	 * @param  array<array-key, mixed>  &$values  An associative array of all values for the record
+	 * @param  array<array-key, string>  $columns  The columns to check
+	 * @return string|null  An error message for the rule
 	 */
-	static private function checkOnlyOneRule(Schema $schema, string $class, mixed &$values, array $columns): string
+	static private function checkOnlyOneRule(Schema $schema, string $class, mixed &$values, array $columns): ?string
 	{
-		settype($columns, 'array');
-
 		$column_names = array();
 		foreach ($columns as $column) {
 			$column_names[] = ORM::getColumnName($class, $column);
@@ -735,6 +789,7 @@ class ORMValidation
 				ValidationException::formatField(join(', ', $column_names))
 			);
 		}
+		return NULL;
 	}
 
 
@@ -743,11 +798,11 @@ class ORMValidation
 	 *
 	 * @param  Schema        $schema       The schema object for the object
 	 * @param  ActiveRecord  $object       The instance of the class to check
-	 * @param  array          &$values      An associative array of all values going into the row (needs all for multi-field unique constraint checking)
-	 * @param  array          &$old_values  The old values for the record
-	 * @return array  A single element associative array with the key being the primary keys joined by ,s and the value being the error message
+	 * @param  array<array-key, mixed>  &$values      An associative array of all values going into the row (needs all for multi-field unique constraint checking)
+	 * @param  array<array-key, mixed>  &$old_values  The old values for the record
+	 * @return array<string, string>|null  A single element associative array with the key being the primary keys joined by ,s and the value being the error message
 	 */
-	static private function checkPrimaryKeys(Schema $schema, ActiveRecord $object, mixed &$values, mixed &$old_values): mixed
+	static private function checkPrimaryKeys(Schema $schema, ActiveRecord $object, mixed &$values, mixed &$old_values): ?array
 	{
 		$class = get_class($object);
 		$table = ORM::tablize($class);
@@ -776,7 +831,7 @@ class ORMValidation
 			}
 			$old_value = ActiveRecord::retrieveOld($old_values, $pk_column);
 			$value     = $values[$pk_column];
-			if (self::isCaseInsensitive($class, $pk_column) && self::stringlike($value) && self::stringlike($old_value)) {
+			if (self::isCaseInsensitive($class, $pk_column) && is_string($value) && is_string($old_value)) {
 				if (UTF8::lower($value) != UTF8::lower($old_value)) {
 					$different = TRUE;
 				}
@@ -790,24 +845,27 @@ class ORMValidation
 		}
 
 		try {
+			$sql = "SELECT %r FROM %r WHERE ";
 			$params = array(
-				"SELECT %r FROM %r WHERE ",
+				$sql,
 				$pk_columns,
 				$table
 			);
 
 			$column_info = $schema->getColumnInfo($table);
+			$column_info = is_array($column_info) ? $column_info : array();
 
 			$conditions = array();
 			foreach ($pk_columns as $pk_column) {
 				$value = $values[$pk_column];
 
 				// This makes sure the query performs the way an insert will
-				if ($value === NULL && $column_info[$pk_column]['not_null'] && $column_info[$pk_column]['default'] !== NULL) {
-					$value = $column_info[$pk_column]['default'];
+				$column_info_row = $column_info[$pk_column] ?? NULL;
+				if ($value === NULL && is_array($column_info_row) && $column_info_row['not_null'] && $column_info_row['default'] !== NULL) {
+					$value = $column_info_row['default'];
 				}
 
-				if (self::isCaseInsensitive($class, $pk_column) && self::stringlike($value)) {
+				if (self::isCaseInsensitive($class, $pk_column) && is_string($value)) {
 					$condition    = ORMDatabase::makeCondition($schema, $table, $pk_column, '=', $value);
 					$conditions[] = str_replace('%r', 'LOWER(%r)', $condition);
 					$params[] = $pk_column;
@@ -819,9 +877,10 @@ class ORMValidation
 					$params[] = $value;
 				}
 			}
-			$params[0] .= join(' AND ', $conditions);
+			$sql .= join(' AND ', $conditions);
+			$params[0] = $sql;
 
-			$result = call_user_func_array($db->translatedQuery, $params);
+			$result = self::runQuery($db, $params);
 			$result->tossIfNoRows();
 
 			return array(join(',', $pk_columns) => self::compose(
@@ -831,6 +890,7 @@ class ORMValidation
 			));
 
 		} catch (NoRowsException $e) { }
+		return NULL;
 	}
 
 
@@ -838,19 +898,19 @@ class ORMValidation
 	 * Validates against a regex rule
 	 *
 	 * @param  string  $class    The class the column is part of
-	 * @param  array   &$values  An associative array of all values for the record
+	 * @param  array<array-key, mixed>  &$values  An associative array of all values for the record
 	 * @param  string  $column   The column to check
 	 * @param  string  $regex    The PCRE regular expression
 	 * @param  string  $message  The message to use if the value does not match the regular expression
-	 * @return string  An error message for the rule
+	 * @return string|null  An error message for the rule
 	 */
-	static private function checkRegexRule(string $class, mixed &$values, string $column, string $regex, string $message): mixed
+	static private function checkRegexRule(string $class, mixed &$values, string $column, string $regex, string $message): ?string
 	{
 		if ($values[$column] === NULL) {
 			return null;
 		}
 
-		if (preg_match($regex, $values[$column])) {
+		if (is_string($values[$column]) && preg_match($regex, $values[$column])) {
 			return null;
 		}
 
@@ -865,20 +925,20 @@ class ORMValidation
 	 * Validates against a *-to-many one or more rule
 	 *
 	 * @param  ActiveRecord $object            The object being checked
-	 * @param  array         &$values           The values for the object
-	 * @param  array         &$related_records  The related records for the object
-	 * @param  string        $related_class     The name of the related class
-	 * @param  string        $route             The name of the route from the class to the related class
-	 * @return string  An error message for the rule
+	 * @param  RelatedValues   &$values            The values for the object
+	 * @param  RelatedRecords  &$related_records  The related records for the object
+	 * @param  string         $related_class     The name of the related class
+	 * @param  string         $route             The name of the route from the class to the related class
+	 * @return string|null  An error message for the rule
 	 */
-	static private function checkRelatedOneOrMoreRule(ActiveRecord $object, mixed &$values, mixed &$related_records, string $related_class, string $route): mixed
+	static private function checkRelatedOneOrMoreRule(ActiveRecord $object, mixed &$values, mixed &$related_records, string $related_class, string $route): ?string
 	{
 		$related_table   = ORM::tablize($related_class);
 		$class           = get_class($object);
 
 		$exists          = $object->exists();
 		$records_are_set = isset($related_records[$related_table][$route]);
-		$has_records     = $records_are_set && $related_records[$related_table][$route]['count'];
+		$has_records     = $records_are_set && isset($related_records[$related_table][$route]['count']) && (bool) $related_records[$related_table][$route]['count'];
 
 		if ($exists && (!$records_are_set || $has_records)) {
 			return null;
@@ -888,9 +948,13 @@ class ORMValidation
 			return null;
 		}
 
+		$name = Grammar::pluralize(ORMRelated::getRelatedRecordName($class, $related_class, $route));
+		if ($name === FALSE) {
+			$name = '';
+		}
 		return self::compose(
 			'%sPlease select at least one',
-			ValidationException::formatField(Grammar::pluralize(ORMRelated::getRelatedRecordName($class, $related_class, $route)))
+			ValidationException::formatField($name)
 		);
 	}
 
@@ -900,25 +964,21 @@ class ORMValidation
 	 *
 	 * @param  Schema        $schema       The schema object for the object
 	 * @param  ActiveRecord  $object       The instance of the class to check
-	 * @param  array          &$values      The values to check
-	 * @param  array          &$old_values  The old values for the record
-	 * @return array  An aray of error messages for the unique constraints
+	 * @param  array<array-key, mixed>  &$values      The values to check
+	 * @param  array<array-key, mixed>  &$old_values  The old values for the record
+	 * @return array<string, string>  An aray of error messages for the unique constraints
 	 */
 	static private function checkUniqueConstraints(Schema $schema, ActiveRecord $object, mixed &$values, mixed &$old_values): array
 	{
 		$class = get_class($object);
 		$table = ORM::tablize($class);
 
-		$db       = ORMDatabase::retrieve($class, 'read');
-		$key_info = $schema->getKeys($table);
-
-		$pk_columns  = $key_info['primary'];
-		$unique_keys = $key_info['unique'];
+		$db          = ORMDatabase::retrieve($class, 'read');
+		$pk_columns  = $schema->getKeys($table, 'primary');
+		$unique_keys = $schema->getKeys($table, 'unique');
 
 		$messages = array();
 		foreach ($unique_keys AS $unique_columns) {
-			settype($unique_columns, 'array');
-
 			// NULL values are unique
 			$found_not_null = FALSE;
 			foreach ($unique_columns as $unique_column) {
@@ -930,24 +990,27 @@ class ORMValidation
 				continue;
 			}
 
+			$sql = "SELECT %r FROM %r WHERE ";
 			$params = array(
-				"SELECT %r FROM %r WHERE ",
-				$key_info['primary'],
+				$sql,
+				$pk_columns,
 				$table
 			);
 
 			$column_info = $schema->getColumnInfo($table);
+			$column_info = is_array($column_info) ? $column_info : array();
 
 			$conditions = array();
 			foreach ($unique_columns as $unique_column) {
 				$value = $values[$unique_column];
 
 				// This makes sure the query performs the way an insert will
-				if ($value === NULL && $column_info[$unique_column]['not_null'] && $column_info[$unique_column]['default'] !== NULL) {
-					$value = $column_info[$unique_column]['default'];
+				$column_info_row = $column_info[$unique_column] ?? NULL;
+				if ($value === NULL && is_array($column_info_row) && $column_info_row['not_null'] && $column_info_row['default'] !== NULL) {
+					$value = $column_info_row['default'];
 				}
 
-				if (self::isCaseInsensitive($class, $unique_column) && self::stringlike($value)) {
+				if (self::isCaseInsensitive($class, $unique_column) && is_string($value)) {
 					$condition    = ORMDatabase::makeCondition($schema, $table, $unique_column, '=', $value);
 					$conditions[] = str_replace('%r', 'LOWER(%r)', $condition);
 					$params[] = $table . '.' . $unique_column;
@@ -960,19 +1023,21 @@ class ORMValidation
 				}
 			}
 
-			$params[0] .= join(' AND ', $conditions);
+			$sql .= join(' AND ', $conditions);
 
 			if ($object->exists()) {
 				foreach ($pk_columns as $pk_column) {
 					$value = ActiveRecord::retrieveOld($old_values, $pk_column, $values[$pk_column]);
-					$params[0] .= ' AND ' . ORMDatabase::makeCondition($schema, $table, $pk_column, '<>', $value);
+					$sql .= ' AND ' . ORMDatabase::makeCondition($schema, $table, $pk_column, '<>', $value);
 					$params[] = $table . '.' . $pk_column;
 					$params[] = $value;
 				}
 			}
 
+			$params[0] = $sql;
+
 			try {
-				$result = call_user_func_array($db->translatedQuery, $params);
+				$result = self::runQuery($db, $params);
 				$result->tossIfNoRows();
 
 				// If an exception was not throw, we have existing values
@@ -1003,24 +1068,31 @@ class ORMValidation
 	 * Validates against a valid values rule
 	 *
 	 * @param  string $class         The class this rule applies to
-	 * @param  array  &$values       An associative array of all values for the record
+	 * @param  array<array-key, mixed>  &$values       An associative array of all values for the record
 	 * @param  string $column        The column the rule applies to
-	 * @param  array  $valid_values  An array of valid values to check the column against
-	 * @return string  The error message for the rule specified
+	 * @param  array<array-key, mixed>  $valid_values  An array of valid values to check the column against
+	 * @return string|null  The error message for the rule specified
 	 */
-	static private function checkValidValuesRule(string $class, mixed &$values, string $column, array $valid_values): mixed
+	static private function checkValidValuesRule(string $class, mixed &$values, string $column, array $valid_values): ?string
 	{
 		if ($values[$column] === NULL) {
 			return null;
 		}
 
 		if (!in_array($values[$column], $valid_values)) {
+			$display_values = array();
+			foreach ($valid_values as $valid_value) {
+				if (is_scalar($valid_value)) {
+					$display_values[] = (string) $valid_value;
+				}
+			}
 			return self::compose(
 				'%1$sPlease choose from one of the following: %2$s',
 				ValidationException::formatField(ORM::getColumnName($class, $column)),
-				join(', ', $valid_values)
+				join(', ', $display_values)
 			);
 		}
+		return NULL;
 	}
 
 
@@ -1032,7 +1104,16 @@ class ORMValidation
 	 */
 	static private function compose(string $message): string
 	{
-		$args = array_slice(func_get_args(), 1);
+		$args = array();
+		foreach (array_slice(func_get_args(), 1) as $arg) {
+			if ($arg !== NULL && !is_scalar($arg)) {
+				throw new ProgrammerException(
+					'Only scalar values or NULL can be composed into a message, %1$s given',
+					get_debug_type($arg)
+				);
+			}
+			$args[] = $arg;
+		}
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -1042,6 +1123,28 @@ class ORMValidation
 		} else {
 			return vsprintf($message, $args);
 		}
+	}
+
+
+	/**
+	 * Runs one or more translated statements and returns the single result
+	 *
+	 * @param  Database  $db      The database to run the statements through
+	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
+	 * @return Result  The result of the query
+	 */
+	static private function runQuery(Database $db, array $params): Result
+	{
+		$result = call_user_func_array($db->translatedQuery(...), $params);
+
+		if (!$result instanceof Result) {
+			throw new ProgrammerException(
+				'A single query result was expected, %1$s given',
+				get_debug_type($result)
+			);
+		}
+
+		return $result;
 	}
 
 
@@ -1071,7 +1174,7 @@ class ORMValidation
 	 *
 	 * @param  string $class      The class being inspected
 	 * @param  string $column     The column being inspected
-	 * @param  array  &$metadata  The array of metadata about a column
+	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
 	static public function inspect(string $class, string $column, mixed &$metadata): void
@@ -1104,10 +1207,11 @@ class ORMValidation
 	 *
 	 * @param  Schema $schema   The schema object for the table
 	 * @param  string  $class    The class the column is part of
-	 * @param  array   &$values  An associative array of all values for the record
-	 * @return string  An error message for the rule
+	 * @param  array<array-key, mixed>  &$values  An associative array of all values for the record
+	 * @param  string  $column   The column to check
+	 * @return boolean  If the column has a value
 	 */
-	static public function hasValue(Schema $schema, string $class, mixed &$values, mixed $column): string
+	static public function hasValue(Schema $schema, string $class, mixed &$values, string $column): bool
 	{
 		$value = $values[$column];
 
@@ -1146,7 +1250,7 @@ class ORMValidation
 				break;
 
 			case 'float':
-				if (preg_match('#^0(\.0*)?$|^\.0+$#D', $value)) {
+				if (is_numeric($value) && (float) $value == 0.0) {
 					return FALSE;
 				}
 				break;
@@ -1174,15 +1278,15 @@ class ORMValidation
 	/**
 	 * Returns FALSE if the string is empty - used for array filtering
 	 *
-	 * @param  string $string  The string to check
-	 * @return boolean  If the string is not blank
+	 * @param  mixed $string  The value to check
+	 * @return boolean  If the value is not blank
 	 */
-	static private function isNonBlankString(string $string): bool
+	static private function isNonBlankString(mixed $string): bool
 	{
 		if (is_array($string)) {
 			return TRUE;
 		}
-		return ((string) $string) !== '';
+		return is_string($string) && $string !== '';
 	}
 
 
@@ -1207,20 +1311,20 @@ class ORMValidation
 			);
 		}
 
-		$replacements = count(self::$regex_replacements[$class]['search']);
-
-		for ($i = 0; $i < $replacements; $i++) {
-			$match_search  = self::$regex_replacements[$class]['search'][$i] == $search;
-			$match_replace = self::$regex_replacements[$class]['replace'][$i] == $replace;
-			if ($match_search && $match_replace) {
-				unset(self::$regex_replacements[$class]['search'][$i]);
-				unset(self::$regex_replacements[$class]['replace'][$i]);
+		$search_values  = self::$regex_replacements[$class]['search'];
+		$replace_values = self::$regex_replacements[$class]['replace'];
+		$new_search     = array();
+		$new_replace    = array();
+		foreach ($search_values as $i => $match_search) {
+			if ($match_search != $search || $replace_values[$i] != $replace) {
+				$new_search[]  = $match_search;
+				$new_replace[] = $replace_values[$i];
 			}
 		}
-
-		// Remove the any gaps in the arrays
-		self::$regex_replacements[$class]['search']  = array_merge(self::$regex_replacements[$class]['search']);
-		self::$regex_replacements[$class]['replace'] = array_merge(self::$regex_replacements[$class]['replace']);
+		self::$regex_replacements[$class] = array(
+			'search'  => $new_search,
+			'replace' => $new_replace
+		);
 	}
 
 
@@ -1245,20 +1349,20 @@ class ORMValidation
 			);
 		}
 
-		$replacements = count(self::$string_replacements[$class]['search']);
-
-		for ($i = 0; $i < $replacements; $i++) {
-			$match_search  = self::$string_replacements[$class]['search'][$i] == $search;
-			$match_replace = self::$string_replacements[$class]['replace'][$i] == $replace;
-			if ($match_search && $match_replace) {
-				unset(self::$string_replacements[$class]['search'][$i]);
-				unset(self::$string_replacements[$class]['replace'][$i]);
+		$search_values  = self::$string_replacements[$class]['search'];
+		$replace_values = self::$string_replacements[$class]['replace'];
+		$new_search     = array();
+		$new_replace    = array();
+		foreach ($search_values as $i => $match_search) {
+			if ($match_search != $search || $replace_values[$i] != $replace) {
+				$new_search[]  = $match_search;
+				$new_replace[] = $replace_values[$i];
 			}
 		}
-
-		// Remove the any gaps in the arrays
-		self::$string_replacements[$class]['search']  = array_merge(self::$string_replacements[$class]['search']);
-		self::$string_replacements[$class]['replace'] = array_merge(self::$string_replacements[$class]['replace']);
+		self::$string_replacements[$class] = array(
+			'search'  => $new_search,
+			'replace' => $new_replace
+		);
 	}
 
 
@@ -1267,9 +1371,9 @@ class ORMValidation
 	 *
 	 * @internal
 	 *
-	 * @param  string $class     The class to reorder messages for
-	 * @param  array  $messages  An array of the messages
-	 * @return array  The reordered messages
+	 * @param  string   $class     The class to reorder messages for
+	 * @param  Messages $messages  An array of the messages
+	 * @return Messages  The reordered messages
 	 */
 	static public function reorderMessages(string $class, array $messages): array
 	{
@@ -1307,9 +1411,9 @@ class ORMValidation
 	 *
 	 * @internal
 	 *
-	 * @param  string $class     The class to reorder messages for
-	 * @param  array  $messages  The array of messages
-	 * @return array  The new array of messages
+	 * @param  string   $class     The class to reorder messages for
+	 * @param  Messages $messages  The array of messages
+	 * @return Messages  The new array of messages
 	 */
 	static public function replaceMessages(string $class, array $messages): array
 	{
@@ -1331,11 +1435,16 @@ class ORMValidation
 				if (is_array($message)) {
 					continue;
 				}
-				$messages[$key] = preg_replace(
+				$replacement = preg_replace(
 					self::$regex_replacements[$class]['search'],
 					self::$regex_replacements[$class]['replace'],
 					$message
 				);
+				if ($replacement !== NULL) {
+					$messages[$key] = $replacement;
+				} else {
+					unset($messages[$key]);
+				}
 			}
 		}
 
@@ -1405,10 +1514,10 @@ class ORMValidation
 	 * case-insensitive manner.
 	 *
 	 * @param  mixed $class    The class name or an instance of the class to set the message order for
-	 * @param  array $matches  This should be an ordered array of strings. If a line contains the string it will be displayed in the relative order it occurs in this array.
+	 * @param  string|array<array-key, string> $matches  This should be an ordered array of strings. If a line contains the string it will be displayed in the relative order it occurs in this array.
 	 * @return void
 	 */
-	static public function setMessageOrder(mixed $class, array $matches): void
+	static public function setMessageOrder(mixed $class, mixed $matches): void
 	{
 		$class = ORM::getClass($class);
 
@@ -1416,7 +1525,19 @@ class ORMValidation
 		$args = func_get_args();
 		array_shift($args);
 		if (count($args) != 1) {
-			$matches = $args;
+			$matches = array();
+			foreach ($args as $arg) {
+				if (!is_string($arg)) {
+					throw new ProgrammerException(
+						'Only strings can be used to order messages, %1$s given',
+						get_debug_type($arg)
+					);
+				}
+				$matches[] = $arg;
+			}
+		}
+		if (!is_array($matches)) {
+			$matches = array($matches);
 		}
 
 		uasort($matches, array(self::class, 'sortMessageMatches'));
@@ -1451,7 +1572,10 @@ class ORMValidation
 	 */
 	static private function stringlike(mixed $value): bool
 	{
-		if ((!is_string($value) && !is_object($value) && !is_numeric($value)) || !strlen(trim($value))) {
+		if (!is_string($value) && !is_object($value) && !is_numeric($value)) {
+			return FALSE;
+		}
+		if (is_string($value) && !strlen(trim($value))) {
 			return FALSE;
 		}
 
@@ -1465,9 +1589,9 @@ class ORMValidation
 	 * @internal
 	 *
 	 * @param  ActiveRecord  $object      The instance of the class to validate
-	 * @param  array          $values      The values to validate
-	 * @param  array          $old_values  The old values for the record
-	 * @return array  An array of messages
+	 * @param  array<array-key, mixed>  $values      The values to validate
+	 * @param  array<array-key, mixed>  $old_values  The old values for the record
+	 * @return array<string, string>  An array of messages
 	 */
 	static public function validate(ActiveRecord $object, array $values, array $old_values): array
 	{
@@ -1481,19 +1605,32 @@ class ORMValidation
 
 		// Convert objects into values for validation
 		foreach ($values as $column => $value) {
+			if (!is_string($column)) {
+				continue;
+			}
 			$values[$column] = ORM::scalarize($class, $column, $value);
 		}
 		foreach ($old_values as $column => $column_values) {
-			foreach ($column_values as $key => $value) {
-				$old_values[$column][$key] = ORM::scalarize($class, $column, $value);
+			if (!is_string($column) || !is_array($column_values)) {
+				continue;
 			}
+			foreach ($column_values as $key => $value) {
+				$column_values[$key] = ORM::scalarize($class, $column, $value);
+			}
+			$old_values[$column] = $column_values;
 		}
 
 		$message_array = self::checkPrimaryKeys($schema, $object, $values, $old_values);
 		if ($message_array) { $validation_messages[key($message_array)] = current($message_array); }
 
 		$column_info = $schema->getColumnInfo($table);
+		if (!is_array($column_info)) {
+			$column_info = array();
+		}
 		foreach ($column_info as $column => $info) {
+			if (!is_string($column)) {
+				continue;
+			}
 			$message = self::checkAgainstSchema($schema, $object, $column, $values, $old_values);
 			if ($message) { $validation_messages[$column] = $message; }
 		}
@@ -1538,7 +1675,7 @@ class ORMValidation
 	 * @param  ActiveRecord $object            The object to validate
 	 * @param  RelatedValues &$values           The values for the object
 	 * @param  RelatedRecords &$related_records  The related records for the object
-	 * @return array         An array of messages
+	 * @return array<string, string|array{name: string, errors: array<string, string>}>  An array of messages
 	 */
 	static public function validateRelated(ActiveRecord $object, mixed &$values, mixed &$related_records): array
 	{
