@@ -58,6 +58,9 @@ declare(strict_types=1);
  * @changes    1.0.0b3   ::sort() and ::sortByCallback() now return the record set to allow for method chaining [wb, 2009-03-23]
  * @changes    1.0.0b2   Added support for != and <> to ::build() and ::filter() [wb, 2008-12-04]
  * @changes    1.0.0b    The initial implementation [wb, 2007-08-04]
+ *
+ * @implements IteratorAggregate<int, ActiveRecord>
+ * @implements ArrayAccess<int|string, mixed>
  */
 class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 {
@@ -191,8 +194,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * }}}
 	 *
 	 * @param  string  $class             The class to create the RecordSet of
-	 * @param  array   $where_conditions  The `column => value` comparisons for the `WHERE` clause
-	 * @param  array   $order_bys         The `column => direction` values to use for the `ORDER BY` clause
+	 * @param  array<string, mixed>  $where_conditions  The `column => value` comparisons for the `WHERE` clause
+	 * @param  array<string, mixed>  $order_bys         The `column => direction` values to use for the `ORDER BY` clause
 	 * @param  integer $limit             The number of records to fetch
 	 * @param  integer $page              The page offset to use when limiting records
 	 * @return RecordSet  A set of ActiveRecord objects
@@ -215,11 +218,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		}
 
 		if ($where_conditions) {
-			$params[0] .= ' WHERE ';
+			$params[0] = (is_string($params[0]) ? $params[0] : '') . ' WHERE ';
 			$params = ORMDatabase::addWhereClause($db, $schema, $params, $table, $where_conditions);
 		}
 
-		$params[0] .= ' :group_by_clause ';
+		$params[0] = (is_string($params[0]) ? $params[0] : '') . ' :group_by_clause ';
 
 		if ($having_conditions) {
 			$params[0] .= ' HAVING ';
@@ -234,7 +237,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			}
 		}
 
-		$params[0] .= ' ORDER BY ';
+		$params[0] = (is_string($params[0]) ? $params[0] : '') . ' ORDER BY ';
 		$params = ORMDatabase::addOrderByClause($db, $schema, $params, $table, $order_bys);
 
 		$params = ORMDatabase::injectFromAndGroupByClauses($db, $schema, $params, $table);
@@ -247,19 +250,24 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 				$pk_columns[] = $table . '.' . $pk_column;
 			}
 
-			$non_limited_count_sql = str_replace(
-				$db->escape('SELECT %r.*', $table),
-				$db->escape('SELECT %r', $pk_columns),
-				$params[0]
-			);
-			$non_limited_count_sql = preg_replace('#\s+ORDER BY.*$#', '', $non_limited_count_sql);
-			$non_limited_count_sql = $db->escape('SELECT count(*) FROM (' . $non_limited_count_sql . ') subquery', array_slice($params, 1));
+			$count_search  = $db->escape('SELECT %r.*', $table);
+			$count_replace = $db->escape('SELECT %r', $pk_columns);
+			$count_subject = $params[0];
+			$count_search  = is_string($count_search) ? $count_search : '';
+			$count_replace = is_string($count_replace) ? $count_replace : '';
+			$count_subject = is_string($count_subject) ? $count_subject : '';
 
-			$params[0] .= ' LIMIT ' . $limit;
+			$non_limited_count_sql = str_replace($count_search, $count_replace, $count_subject);
+			$stripped_count_sql    = preg_replace('#\s+ORDER BY.*$#', '', $non_limited_count_sql);
+			$stripped_count_sql    = is_string($stripped_count_sql) ? $stripped_count_sql : '';
+			$count_sql             = $db->escape('SELECT count(*) FROM (' . $stripped_count_sql . ') subquery', array_slice($params, 1));
+			$non_limited_count_sql = is_string($count_sql) ? $count_sql : NULL;
+
+			$params[0] = (is_string($params[0]) ? $params[0] : '') . ' LIMIT ' . $limit;
 
 			if ($page !== NULL) {
 
-				if (!is_numeric($page) || $page < 1) {
+				if ($page < 1) {
 					$page = 1;
 				}
 
@@ -269,7 +277,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$page = 1;
 		}
 
-		return new RecordSet($class, call_user_func_array($db->translatedQuery, $params), $non_limited_count_sql, $limit, $page);
+		return new RecordSet($class, self::runQuery($db, $params), $non_limited_count_sql, $limit, $page ?? 1);
 	}
 
 
@@ -380,8 +388,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * }}}
 	 *
 	 * @param  string        $class                  The class to create the RecordSet of
-	 * @param  string|array  $sql                    The SQL to create the set from, or an array of the SQL statement plus values to escape
-	 * @param  string|array  $non_limited_count_sql  An SQL statement, or an array of the SQL statement plus values to escape, to get the total number of rows that would have been returned if a `LIMIT` clause had not been used. Should only be passed if a `LIMIT` clause is used in `$sql`.
+	 * @param  string|array<mixed>  $sql             The SQL to create the set from, or an array of the SQL statement plus values to escape
+	 * @param  string|array<mixed>|null  $non_limited_count_sql  An SQL statement, or an array of the SQL statement plus values to escape, to get the total number of rows that would have been returned if a `LIMIT` clause had not been used. Should only be passed if a `LIMIT` clause is used in `$sql`.
 	 * @param  integer       $limit                  The number of records the SQL statement was limited to - this is information only and does not affect the SQL
 	 * @param  integer       $page                   The page of records the SQL statement returned - this is information only and does not affect the SQL
 	 * @return RecordSet  A set of ActiveRecord objects
@@ -391,24 +399,30 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
 
-		if (!preg_match('#^\s*SELECT\s*(DISTINCT|ALL)?\s*(("?\w+"?\.)?"?\w+"?\.)?\*\s*FROM#i', is_array($sql) ? $sql[0] : $sql)) {
+		$sql_statement = is_array($sql) ? ($sql[0] ?? NULL) : $sql;
+		$sql_display   = is_string($sql_statement) ? $sql_statement : (is_scalar($sql_statement) ? (string) $sql_statement : '');
+
+		if (!is_string($sql_statement) || !preg_match('#^\s*SELECT\s*(DISTINCT|ALL)?\s*(("?\w+"?\.)?"?\w+"?\.)?\*\s*FROM#i', $sql_statement)) {
 			throw new ProgrammerException(
 				'The SQL statement specified, %s, does not appear to be in the form SELECT * FROM table',
-				$sql
+				$sql_display
 			);
 		}
 
 		$db = ORMDatabase::retrieve($class, 'read');
 
 		if (is_array($sql)) {
-			$result = call_user_func_array($db->translatedQuery, $sql);;
+			$result = self::runQuery($db, $sql);
 		} else {
-			$result = $db->translatedQuery($sql);
+			$result = self::runQuery($db, array($sql));
 		}
 
 		if (is_array($non_limited_count_sql)) {
-			$non_limited_count_sql = call_user_func_array($db->escape, $non_limited_count_sql);
+			$escaped_count = call_user_func_array($db->escape(...), $non_limited_count_sql);
+		} else {
+			$escaped_count = $non_limited_count_sql;
 		}
+		$non_limited_count_sql = (is_string($escaped_count) || is_int($escaped_count)) ? $escaped_count : NULL;
 
 		return new RecordSet(
 			$class,
@@ -428,7 +442,18 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 */
 	static protected function compose(string $message): string
 	{
-		$args = array_slice(func_get_args(), 1);
+		$args = array_map(static function (mixed $arg): bool|float|int|string|null {
+			if ($arg === NULL || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
+				return $arg;
+			}
+			if ($arg instanceof Stringable) {
+				return (string) $arg;
+			}
+			throw new ProgrammerException(
+				'Only scalar values and NULL can be used to compose the message, %s given',
+				get_debug_type($arg)
+			);
+		}, array_slice(func_get_args(), 1));
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -438,6 +463,50 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		} else {
 			return vsprintf($message, $args);
 		}
+	}
+
+
+	/**
+	 * Runs a single query and returns the Result object
+	 *
+	 * @param  Database                $db      The database to run the query on
+	 * @param  array<array-key, mixed> $params  The SQL statement and the values to escape into it
+	 * @return Result  The result of the query
+	 */
+	static private function runQuery(Database $db, array $params): Result
+	{
+		$result = call_user_func_array($db->translatedQuery(...), $params);
+
+		if (!$result instanceof Result) {
+			throw new ProgrammerException(
+				'A single query result was expected, %1$s given',
+				get_debug_type($result)
+			);
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * Converts the values of an array to strings for comparison purposes
+	 *
+	 * @param  array<array-key, mixed> $values  The values to convert
+	 * @return array<array-key, string>  The values converted to strings
+	 */
+	static private function stringifyValues(array $values): array
+	{
+		$output = array();
+		foreach ($values as $key => $value) {
+			if (is_string($value)) {
+				$output[$key] = $value;
+			} elseif (is_scalar($value)) {
+				$output[$key] = (string) $value;
+			} else {
+				$output[$key] = '';
+			}
+		}
+		return $output;
 	}
 
 
@@ -452,6 +521,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
     {
         ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
+
+		$where_conditions = is_array($where_conditions) ? $where_conditions : array();
 
 		$db     = ORMDatabase::retrieve($class, 'read');
 		$schema = ORMSchema::retrieve($class);
@@ -471,22 +542,22 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		}
 
 		if ($where_conditions) {
-			$params[0] .= ' WHERE ';
+			$params[0] = (is_string($params[0]) ? $params[0] : '') . ' WHERE ';
 			$params = ORMDatabase::addWhereClause($db, $schema, $params, $table, $where_conditions);
 		}
 
-		$params[0] .= ' :group_by_clause ';
+		$params[0] = (is_string($params[0]) ? $params[0] : '') . ' :group_by_clause ';
 
 		if ($having_conditions) {
 			$params[0] .= ' HAVING ';
 			$params = ORMDatabase::addHavingClause($db, $schema, $params, $table, $having_conditions);
 		}
 
-        $params[0] .= ') subquery';
+        $params[0] = (is_string($params[0]) ? $params[0] : '') . ') subquery';
 
 		$params = ORMDatabase::injectFromAndGroupByClauses($db, $schema, $params, $table);
 
-		return call_user_func_array($db->translatedQuery, $params)->fetchScalar();
+		return (int) self::runQuery($db, $params)->fetchScalar();
     }
 
 
@@ -495,7 +566,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @var string|array<string>
 	 */
-	private mixed $class = NULL;
+	private string|array $class = '';
 
 	/**
 	 * The limit that was used when creating the set
@@ -556,12 +627,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * for every record in the record set.
 	 *
 	 * @param  string $method_name  The name of the method called
-	 * @param  string $parameters   The parameters passed
-	 * @return void
+	 * @param  array<mixed> $parameters  The parameters passed
+	 * @return mixed  The result of the called method
 	 */
 	public function __call(mixed $method_name, mixed $parameters)
 	{
-		if ($callback = ORM::getRecordSetMethod($method_name)) {
+		$callback = ORM::getRecordSetMethod($method_name);
+		if ($callback && is_callable($callback)) {
 			return call_user_func_array(
 				$callback,
 				array(
@@ -576,11 +648,16 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		list($action, $subject) = ORM::parseMethod($method_name);
 
-		$route = ($parameters) ? $parameters[0] : NULL;
+		$route = (isset($parameters[0]) && is_string($parameters[0])) ? $parameters[0] : NULL;
 
 		// This check prevents Grammar exceptions being thrown when an unknown method is called
+		$related_class = '';
+		$related_class_sans_namespace = '';
 		if (in_array($action, array('build', 'prebuild', 'precount', 'precreate'))) {
-			$related_class = Grammar::singularize($subject);
+			$related_class = Grammar::singularize(is_string($subject) ? $subject : '');
+			if ($related_class === FALSE) {
+				$related_class = '';
+			}
 			$related_class_sans_namespace = $related_class;
 			if (!is_array($this->class)) {
 				$related_class = ORM::getRelatedClass($this->class, $related_class);
@@ -631,7 +708,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$this->non_limited_count = $non_limited_count;
 		}
 
-		if ($records && is_object($records) && $records instanceof Iterator) {
+		if ($records && $records instanceof Iterator) {
 			if (!is_string($class)) {
 				throw new ProgrammerException('Unable to build a record set from an iterator without a single class name, %1$s given', get_debug_type($class));
 			}
@@ -659,9 +736,27 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $method  The method to create a callback for
 	 * @return callable(mixed...):mixed  The callback for the method requested
 	 */
-	public function __get(mixed $method)
+	public function __get(mixed $method): callable
 	{
-		return array($this, $method);
+		return $this->$method(...);
+	}
+
+
+	/**
+	 * The single class of the record set
+	 *
+	 * @return string
+	 * @throws ProgrammerException  When the set contains multiple classes
+	 */
+	private function getSingleClass(): string
+	{
+		if (is_string($this->class)) {
+			return $this->class;
+		}
+		throw new ProgrammerException(
+			'A single class is required for this operation, %1$s given',
+			get_debug_type($this->class)
+		);
 	}
 
 
@@ -670,14 +765,14 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  Database $db             The database the query will be executed on
 	 * @param  Schema   $schema         The schema for the database
-	 * @param  array     $params         The parameters for the Database::query() call
+	 * @param  array<array-key, mixed>  $params  The parameters for the Database::query() call
 	 * @param  string    $related_class  The related class to add the order bys for
-	 * @param  string    $route          The route to this table from another table
-	 * @return array  The params with the `ORDER BY` clause added
+	 * @param  string|null  $route       The route to this table from another table
+	 * @return array<array-key, mixed>  The params with the `ORDER BY` clause added
 	 */
 	private function addOrderByParams(Database $db, Schema $schema, array $params, string $related_class, ?string $route=NULL): array
 	{
-		$table = ORM::tablize($this->class);
+		$table = ORM::tablize($this->getSingleClass());
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
 
 		$pk_columns      = $schema->getKeys($table, 'primary');
@@ -685,10 +780,12 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		$escaped_pk_columns = array();
 		foreach ($pk_columns as $pk_column) {
-			$escaped_pk_columns[$pk_column] = $db->escape('%r', $table_with_route . '.' . $pk_column);
+			$escaped_pk = $db->escape('%r', $table_with_route . '.' . $pk_column);
+			$escaped_pk_columns[$pk_column] = is_string($escaped_pk) ? $escaped_pk : '';
 		}
 
 		$column_info = $schema->getColumnInfo($table);
+		$column_info = is_array($column_info) ? $column_info : array();
 
 		$sql    = '';
 		$number = 0;
@@ -702,8 +799,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 					$value = $primary_key[$pk_column];
 
 					// This makes sure the query performs the way an insert will
-					if ($value === NULL && $column_info[$pk_column]['not_null'] && $column_info[$pk_column]['default'] !== NULL) {
-						$value = $column_info[$pk_column]['default'];
+					$pk_info = $column_info[$pk_column] ?? NULL;
+					if ($value === NULL && is_array($pk_info) && ($pk_info['not_null'] ?? NULL) && ($pk_info['default'] ?? NULL) !== NULL) {
+						$value = $pk_info['default'];
 					}
 
 					$conditions[] = str_replace(
@@ -729,9 +827,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$number++;
 		}
 
-		$params[0] .= 'CASE ' . $sql . 'END ASC';
+		$params[0] = (is_string($params[0]) ? $params[0] : '') . 'CASE ' . $sql . 'END ASC';
 
-		if ($related_order_bys = ORMRelated::getOrderBys($this->class, $related_class, $route)) {
+		if ($related_order_bys = ORMRelated::getOrderBys($this->getSingleClass(), $related_class, $route ?? '')) {
 			$params[0] .= ', ';
 			$params = ORMDatabase::addOrderByClause($db, $schema, $params, ORM::tablize($related_class), $related_order_bys);
 		}
@@ -745,13 +843,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  Database $db      The database the query will be executed on
 	 * @param  Schema   $schema  The schema for the database
-	 * @param  array     $params  The parameters for the Database::query() call
-	 * @param  string    $route   The route to this table from another table
-	 * @return array  The params with the `WHERE` clause added
+	 * @param  array<array-key, mixed> $params  The parameters for the Database::query() call
+	 * @param  string   $route   The route to this table from another table
+	 * @return array<array-key, mixed>  The params with the `WHERE` clause added
 	 */
 	private function addWhereParams(Database $db, Schema $schema, array $params, ?string $route=NULL): array
 	{
-		$table = ORM::tablize($this->class);
+		$table = ORM::tablize($this->getSingleClass());
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
 
 		$pk_columns = $schema->getKeys($table, 'primary');
@@ -759,41 +857,48 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		// We have a multi-field primary key, making things kinda ugly
 		if (sizeof($pk_columns) > 1) {
 
-			$escape_pk_columns = array();
+			$escaped_pk_columns = array();
 			foreach ($pk_columns as $pk_column) {
 				$escaped_pk_columns[$pk_column] = $db->escape('%r', $table_with_route . '.' . $pk_column);
 			}
 
 			$column_info = $schema->getColumnInfo($table);
+			$column_info = is_array($column_info) ? $column_info : array();
 
 			$conditions = array();
 
 			foreach ($this->getPrimaryKeys() as $primary_key) {
 				$sub_conditions = array();
 				foreach ($pk_columns as $pk_column) {
-					$value = $primary_key[$pk_column];
+					$pk_info = is_array($column_info[$pk_column] ?? NULL) ? $column_info[$pk_column] : array();
+					$value   = is_array($primary_key) ? ($primary_key[$pk_column] ?? NULL) : NULL;
 
 					// This makes sure the query performs the way an insert will
-					if ($value === NULL && $column_info[$pk_column]['not_null'] && $column_info[$pk_column]['default'] !== NULL) {
-						$value = $column_info[$pk_column]['default'];
+					if ($value === NULL && !empty($pk_info['not_null']) && array_key_exists('default', $pk_info) && $pk_info['default'] !== NULL) {
+						$value = $pk_info['default'];
 					}
+
+					$escaped_pk = $escaped_pk_columns[$pk_column] ?? NULL;
+					$escaped_pk = is_string($escaped_pk) ? $escaped_pk : '';
 
 					$sub_conditions[] = str_replace(
 						'%r',
-						$escaped_pk_columns[$pk_column],
+						$escaped_pk,
 						ORMDatabase::makeCondition($schema, $table, $pk_column, '=', $value)
 					);
 					$params[] = $value;
 				}
 				$conditions[] = join(' AND ', $sub_conditions);
 			}
-			$params[0] .= '(' . join(') OR (', $conditions) . ')';
+			$params[0] = (is_string($params[0]) ? $params[0] : '') . '(' . join(') OR (', $conditions) . ')';
 
 		// We have a single primary key field, making things nice and easy
 		} else {
 			$first_pk_column = $pk_columns[0];
-			$params[0] .= $db->escape('%r IN ', $table_with_route . '.' . $first_pk_column);
-			$params[0] .= '(' . $schema->getColumnInfo($table, $first_pk_column, 'placeholder') . ')';
+			$escaped_pk = $db->escape('%r IN ', $table_with_route . '.' . $first_pk_column);
+			$params[0] = (is_string($params[0]) ? $params[0] : '') . (is_string($escaped_pk) ? $escaped_pk : '');
+			$placeholder = $schema->getColumnInfo($table, $first_pk_column, 'placeholder');
+			$params[0] .= '(' . (is_string($placeholder) ? $placeholder : '') . ')';
 			$params[] = $this->getPrimaryKeys();
 		}
 
@@ -811,7 +916,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	{
 		$parameters = func_get_args();
 
-		$result = call_user_func_array($this->call, $parameters);
+		$result = call_user_func_array(array($this, 'call'), $parameters);
+		$result = is_array($result) ? $result : array();
 
 		$classes = array();
 		foreach ($result as $record) {
@@ -834,7 +940,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$classes = array('ActiveRecord' => TRUE);
 		}
 
-		return new RecordSet(array_keys($classes), $result);
+		return new RecordSet(array_keys($classes), array_values($result));
 	}
 
 
@@ -848,7 +954,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	{
 		$parameters = func_get_args();
 
-		$result = call_user_func_array($this->map, $parameters);
+		$result = call_user_func_array(array($this, 'map'), $parameters);
+		$result = is_array($result) ? $result : array();
 
 		$classes = array();
 		foreach ($result as $record) {
@@ -871,7 +978,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$classes = array('ActiveRecord' => TRUE);
 		}
 
-		return new RecordSet(array_keys($classes), $result);
+		return new RecordSet(array_keys($classes), array_values($result));
 	}
 
 
@@ -879,7 +986,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * Calls a specific method on each object, returning an array of the results
 	 *
 	 * @param  string $method     The method to call
-	 * @return array  An array the size of the record set with one result from each record/method
+	 * @return array<int, mixed>  An array the size of the record set with one result from each record/method
 	 */
 	public function call(string $method): array
 	{
@@ -887,10 +994,15 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		$output = array();
 		foreach ($this->records as $record) {
-			$output[] = call_user_func_array(
-				$record->$method,
-				$parameters
-			);
+			$callback = array($record, $method);
+			if (!is_callable($callback)) {
+				throw new ProgrammerException(
+					'The method %s() does not exist on the class %s',
+					$method,
+					get_class($record)
+				);
+			}
+			$output[] = call_user_func_array($callback, $parameters);
 		}
 		return $output;
 	}
@@ -903,7 +1015,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * which will contain between 1 and `$number` records.
 	 *
 	 * @param  integer $number  The number of ActiveRecord objects to place in each RecordSet
-	 * @return array  An array of RecordSet objects
+	 * @return array<int, RecordSet>  An array of RecordSet objects
 	 */
 	public function chunk(int $number): array
 	{
@@ -964,22 +1076,23 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		if (!is_numeric($this->non_limited_count)) {
 			try {
-				$db = ORMDatabase::retrieve($this->class, 'read');
+				$db = ORMDatabase::retrieve($this->getSingleClass(), 'read');
 				// The integer cast here is to solve issues with the broken dblib
 				// SQL Server driver that is sometimes present on Windows machines
-				$this->non_limited_count = (int) $db->translatedQuery($this->non_limited_count)->fetchScalar();
+				$result = self::runQuery($db, array($this->non_limited_count));
+				$this->non_limited_count = (int) $result->fetchScalar();
 			} catch (ExpectedException $e) {
 				$this->non_limited_count = $this->count();
 			}
 		}
-		return $this->non_limited_count;
+		return (int) $this->non_limited_count;
 	}
 
 
 	/**
 	 * Removes all passed records from the current record set
 	 *
-	 * @param  RecordSet|array|ActiveRecord $records                  The record set, array of records, or record to remove from the current record set, all instances will be removed
+	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of records, or record to remove from the current record set, all instances will be removed
 	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records not present in the passed records
 	 */
@@ -989,8 +1102,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		if ($records instanceof ActiveRecord) {
 			$records = array($records);
+		} elseif ($records instanceof RecordSet) {
+			$records = $records->getRecords();
 		}
 		foreach ($records as $record) {
+			if (!$record instanceof ActiveRecord) {
+				continue;
+			}
 			$class = get_class($record);
 			$hash  = ActiveRecord::hash($record);
 			$remove_records[$class . '::' . $hash] = TRUE;
@@ -1071,7 +1189,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * 'methodName|methodName2><'              => array($value, $value2) // If the range of values from the methods intersects the range of $value and $value2 - should be dates, times, timestamps or numbers
 	 * }}}
 	 *
-	 * @param  callable(mixed...):mixed|string|array $procedure                The way in which to filter the records - see method description for possible forms
+	 * @param  callable(mixed...):mixed|string|array<array-key, mixed> $procedure                The way in which to filter the records - see method description for possible forms
 	 * @param  boolean               $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  A new RecordSet with the filtered records
 	 */
@@ -1083,7 +1201,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		if (is_array($procedure) && is_string(key($procedure))) {
 			$type       = 'conditions';
-			$conditions = $procedure;
+			$conditions = array();
+			foreach ($procedure as $condition_key => $condition_value) {
+				$conditions[(string) $condition_key] = $condition_value;
+			}
 
 		} elseif (is_string($procedure) && preg_match('#^\{record\}::([a-z0-9_\-]+)$#iD', $procedure, $matches)) {
 			$type   = 'psuedo-callback';
@@ -1111,6 +1232,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 					break;
 
 				case 'callback':
+					if (!is_callable($callback)) {
+						throw new ProgrammerException(
+							'The callback specified is not callable'
+						);
+					}
 					$value = call_user_func($callback, $record);
 					break;
 			}
@@ -1159,9 +1285,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Returns the number of records the set was limited to
 	 *
-	 * @return integer  The number of records the set was limited to
+	 * @return integer|null  The number of records the set was limited to
 	 */
-	public function getLimit(): int
+	public function getLimit(): ?int
 	{
 		return (!$this->limit) ? NULL : $this->limit;
 	}
@@ -1188,7 +1314,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		if (!$this->limit) {
 			return 1;
 		}
-		return ceil($this->count(TRUE) / $this->limit);
+		return (int) ceil($this->count(TRUE) / $this->limit);
 	}
 
 
@@ -1209,7 +1335,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Returns all of the records in the set
 	 *
-	 * @return array  The records in the set
+	 * @return array<int, ActiveRecord>  The records in the set
 	 */
 	public function getRecords(): array
 	{
@@ -1220,7 +1346,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Returns the primary keys for all of the records in the set
 	 *
-	 * @return array  The primary keys of all the records in the set
+	 * @return array<int, mixed>  The primary keys of all the records in the set
 	 */
 	public function getPrimaryKeys(): array
 	{
@@ -1230,8 +1356,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		$this->validateSingleClass('get primary key');
 
-		$table           = ORM::tablize($this->class);
-		$schema          = ORMSchema::retrieve($this->class);
+		$table           = ORM::tablize($this->getSingleClass());
+		$schema          = ORMSchema::retrieve($this->getSingleClass());
 		$pk_columns      = $schema->getKeys($table, 'primary');
 		$first_pk_column = $pk_columns[0];
 
@@ -1255,7 +1381,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Returns all records in the current record set that are also present in the passed records
 	 *
-	 * @param  RecordSet|array|ActiveRecord $records                  The record set, array of records, or record to create an intersection of with the current record set
+	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of records, or record to create an intersection of with the current record set
 	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records present in the current record set that are also present in the passed records
 	 */
@@ -1265,8 +1391,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		if ($records instanceof ActiveRecord) {
 			$records = array($records);
+		} elseif ($records instanceof RecordSet) {
+			$records = $records->getRecords();
 		}
 		foreach ($records as $record) {
+			if (!$record instanceof ActiveRecord) {
+				continue;
+			}
 			$class = get_class($record);
 			$hash  = ActiveRecord::hash($record);
 			$hashes[$class . '::' . $hash] = TRUE;
@@ -1323,7 +1454,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * by passing a parameter that contains `'{index}'`.
 	 *
 	 * @param  callable(mixed...):mixed $callback   The callback to pass the values to
-	 * @return array  An array of the results from the callback
+	 * @return array<array-key, mixed>  An array of the results from the callback
 	 */
 	public function map(callable $callback): array
 	{
@@ -1339,7 +1470,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		foreach ($parameters as $parameter) {
 			if (!is_array($parameter)) {
-				if (preg_match('#^\{record\}::([a-z0-9_\-]+)$#iD', $parameter, $matches)) {
+				if (is_string($parameter) && preg_match('#^\{record\}::([a-z0-9_\-]+)$#iD', $parameter, $matches)) {
 					$parameters_array[] = $this->call($matches[1]);
 					$found_record = TRUE;
 				} elseif ($parameter === '{record}') {
@@ -1370,14 +1501,16 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		array_unshift($parameters_array, $callback);
 
-		return call_user_func_array('array_map', $parameters_array);
+		$result = call_user_func_array('array_map', $parameters_array);
+
+		return is_array($result) ? $result : array();
 	}
 
 
 	/**
 	 * Merges the record set with more records
 	 *
-	 * @param  RecordSet|array|ActiveRecord $records  The record set, array of records, or record to merge with the current record set, duplicates will **not** be removed
+	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records  The record set, array of records, or record to merge with the current record set, duplicates will **not** be removed
 	 * @return RecordSet  The merged record sets
 	 */
 	public function merge(mixed $records): RecordSet
@@ -1441,6 +1574,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 */
 	public function offsetExists(mixed $offset): bool
 	{
+		if (!is_int($offset) && !is_string($offset)) {
+			return FALSE;
+		}
 		return isset($this->records[$offset]);
 	}
 
@@ -1465,13 +1601,14 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 				$offset
 			);
 		}
-		if ($offset >= count($this->records)) {
+		$index = (int) $offset;
+		if ($index >= count($this->records)) {
 			throw new NoRemainingException(
 				'The offset specified, %1$s, is beyond the last record in the set',
 				$offset
 			);
 		}
-		return $this->records[$offset];
+		return $this->records[$index];
 	}
 
 
@@ -1537,44 +1674,53 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
-		$db     = ORMDatabase::retrieve($this->class, 'read');
-		$schema = ORMSchema::retrieve($this->class);
+		$db     = ORMDatabase::retrieve($this->getSingleClass(), 'read');
+		$schema = ORMSchema::retrieve($this->getSingleClass());
 
 		$related_table = ORM::tablize($related_class);
-		$table         = ORM::tablize($this->class);
+		$table         = ORM::tablize($this->getSingleClass());
 
 		$route        = ORMSchema::getRouteName($schema, $table, $related_table, $route, '*-to-many');
 		$relationship = ORMSchema::getRoute($schema, $table, $related_table, $route, '*-to-many');
 
+		$relationship_column         = is_string($relationship['column'] ?? NULL) ? $relationship['column'] : '';
+		$relationship_related_column = is_string($relationship['related_column'] ?? NULL) ? $relationship['related_column'] : '';
+		$has_join_table              = isset($relationship['join_table']);
+
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
 
 		// Build the query out
-		$params = array($db->escape('SELECT %r.*', $related_table));
+		$select = $db->escape('SELECT %r.*', $related_table);
+		$params = array(is_string($select) ? $select : '');
 
 		// If we are going through a join table we need the related primary key for matching
-		if (isset($relationship['join_table'])) {
+		if ($has_join_table) {
 			// We explicitly alias the column because of SQLite issues
-			$params[0] .= $db->escape(", %r AS %r", $table_with_route . '.' . $relationship['column'], $relationship['column']);
+			$aliased = $db->escape(", %r AS %r", $table_with_route . '.' . $relationship_column, $relationship_column);
+			$params[0] .= is_string($aliased) ? $aliased : '';
 		}
 
 		$params[0] .= ' FROM :from_clause WHERE ';
 		$params     = $this->addWhereParams($db, $schema, $params, $route);
-		$params[0] .= ' :group_by_clause ORDER BY ';
+		$params[0] = (is_string($params[0]) ? $params[0] : '') . ' :group_by_clause ORDER BY ';
 		$params     = $this->addOrderByParams($db, $schema, $params, $related_class, $route);
+		$params[0] = is_string($params[0]) ? $params[0] : '';
 
 		$params = ORMDatabase::injectFromAndGroupByClauses($db, $schema, $params, $related_table);
+		$params[0] = is_string($params[0]) ? $params[0] : '';
 
 		// Add the joining column to the group by
 		if (strpos($params[0], 'GROUP BY') !== FALSE) {
+			$escaped_order = $db->escape(', %r ORDER BY', $table . '.' . $relationship_column);
 			$params[0] = str_replace(
 				' ORDER BY',
-				$db->escape(', %r ORDER BY', $table . '.' . $relationship['column']),
+				is_string($escaped_order) ? $escaped_order : '',
 				$params[0]
 			);
 		}
 
 		// Run the query and inject the results into the records
-		$result = call_user_func_array($db->translatedQuery, $params);
+		$result = self::runQuery($db, $params);
 
 		$total_records = sizeof($this->records);
 		for ($i=0; $i < $total_records; $i++) {
@@ -1586,16 +1732,18 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 
 			// If we are going through a join table, keep track of the record by the value in the join table
-			if (isset($relationship['join_table'])) {
+			if ($has_join_table) {
 				try {
 					$current_row = $result->current();
-					$keys[$relationship['column']] = $current_row[$relationship['column']];
+					if (is_array($current_row)) {
+						$keys[$relationship_column] = $current_row[$relationship_column] ?? NULL;
+					}
 				} catch (ExpectedException $e) { }
 
 			// If it is a straight join, keep track of the value by the related column value
 			} else {
-				$method = 'get' . Grammar::camelize($relationship['column'], TRUE);
-				$keys[$relationship['related_column']] = $record->$method();
+				$method = 'get' . Grammar::camelize($relationship_column, TRUE);
+				$keys[$relationship_related_column] = $record->$method();
 			}
 
 
@@ -1603,15 +1751,18 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$rows = array();
 
 			try {
-				while (!array_diff_assoc($keys, $result->current())) {
+				$current = $result->current();
+				while (is_array($current) && !array_diff_assoc(self::stringifyValues($keys), self::stringifyValues($current))) {
 					$row = $result->fetchRow();
 
 					// If we are going through a join table we need to remove the related primary key that was used for matching
-					if (isset($relationship['join_table'])) {
-						unset($row[$relationship['column']]);
+					if ($has_join_table && is_array($row)) {
+						unset($row[$relationship_column]);
 					}
 
 					$rows[] = $row;
+
+					$current = $result->current();
 				}
 			} catch (ExpectedException $e) { }
 
@@ -1651,25 +1802,27 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
-		$db     = ORMDatabase::retrieve($this->class, 'read');
-		$schema = ORMSchema::retrieve($this->class);
+		$db     = ORMDatabase::retrieve($this->getSingleClass(), 'read');
+		$schema = ORMSchema::retrieve($this->getSingleClass());
 
 		$related_table = ORM::tablize($related_class);
-		$table         = ORM::tablize($this->class);
+		$table         = ORM::tablize($this->getSingleClass());
 
 		$route        = ORMSchema::getRouteName($schema, $table, $related_table, $route, '*-to-many');
 		$relationship = ORMSchema::getRoute($schema, $table, $related_table, $route, '*-to-many');
 
+		$relationship_column = is_string($relationship['column'] ?? NULL) ? $relationship['column'] : '';
+
 		// Build the query out
-		$table_and_column = $table . '.' . $relationship['column'];
+		$table_and_column = $table . '.' . $relationship_column;
 
 		if (isset($relationship['join_table'])) {
-			$table_to_join  = $relationship['join_table'];
-			$column_to_join = $relationship['join_column'];
+			$table_to_join  = is_string($relationship['join_table']) ? $relationship['join_table'] : '';
+			$column_to_join = is_string($relationship['join_column'] ?? NULL) ? $relationship['join_column'] : '';
 
 		} else {
 			$table_to_join  = $related_table;
-			$column_to_join = $relationship['related_column'];
+			$column_to_join = is_string($relationship['related_column'] ?? NULL) ? $relationship['related_column'] : '';
 		}
 
 		$table_to_join_alias = $table_to_join;
@@ -1679,10 +1832,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		// For tables in a specific schema, this prevents the alias from having a . in it
 		if (strpos($table_to_join_alias, '.') !== FALSE) {
-			$table_to_join_alias = preg_replace('#"?."?#', '_', $table_to_join_alias);
+			$alias = preg_replace('#"?."?#', '_', $table_to_join_alias);
+			$table_to_join_alias = is_string($alias) ? $alias : '';
 		}
 
-		$params = array($db->escape(
+		$count_sql = $db->escape(
 			"SELECT count(*) AS flourish__count, %r AS flourish__column FROM %r INNER JOIN %r AS %r ON %r = %r WHERE ",
 			$table_and_column,
 			$table,
@@ -1690,27 +1844,40 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$table_to_join_alias,
 			$table_and_column,
 			$table_to_join_alias . '.' . $column_to_join
-		));
+		);
+		$params = array(is_string($count_sql) ? $count_sql : '');
 		$params = $this->addWhereParams($db, $schema, $params);
-		$params[0] .= $db->escape(' GROUP BY %r', $table_and_column);
+		$params[0] = is_string($params[0]) ? $params[0] : '';
+		$group_by = $db->escape(' GROUP BY %r', $table_and_column);
+		$params[0] .= is_string($group_by) ? $group_by : '';
 
 		// Run the query and inject the results into the records
-		$result = call_user_func_array($db->translatedQuery, $params);
+		$result = self::runQuery($db, $params);
 
 		$counts = array();
 		foreach ($result as $row) {
-			$counts[$row['flourish__column']] = (int) $row['flourish__count'];
+			if (!is_array($row)) {
+				continue;
+			}
+			$count_column = $row['flourish__column'] ?? NULL;
+			if (!is_string($count_column)) {
+				continue;
+			}
+			$count_value = $row['flourish__count'] ?? 0;
+			$counts[$count_column] = is_numeric($count_value) ? (int) $count_value : 0;
 		}
 
 		unset($result);
 
 		$total_records = sizeof($this->records);
-		$get_method   = 'get' . Grammar::camelize($relationship['column'], TRUE);
+		$get_method   = 'get' . Grammar::camelize($relationship_column, TRUE);
 		$tally_method = 'tally' . Grammar::pluralize($related_class);
 
 		for ($i=0; $i < $total_records; $i++) {
 			$record = $this->records[$i];
-			$count  = (isset($counts[$record->$get_method()])) ? $counts[$record->$get_method()] : 0;
+			$value  = $record->$get_method();
+			$key    = is_scalar($value) ? (string) $value : '';
+			$count  = (isset($counts[$key])) ? $counts[$key] : 0;
 			$record->$tally_method($count, $route);
 		}
 
@@ -1742,20 +1909,23 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		ActiveRecord::forceConfigure($related_class);
 
 		$relationship = ORMSchema::getRoute(
-			ORMSchema::retrieve($this->class),
-			ORM::tablize($this->class),
+			ORMSchema::retrieve($this->getSingleClass()),
+			ORM::tablize($this->getSingleClass()),
 			ORM::tablize($related_class),
 			$route,
 			'*-to-one'
 		);
 
-		$values = $this->call('get' . Grammar::camelize($relationship['column'], TRUE));
-		$values = array_unique($values);
+		$relationship_column         = is_string($relationship['column'] ?? NULL) ? $relationship['column'] : '';
+		$relationship_related_column = is_string($relationship['related_column'] ?? NULL) ? $relationship['related_column'] : '';
+
+		$values = $this->call('get' . Grammar::camelize($relationship_column, TRUE));
+		$values = array_unique(self::stringifyValues($values));
 
 		self::build(
 			$related_class,
 			array(
-				$relationship['related_column'] . '=' => $values
+				$relationship_related_column . '=' => $values
 			)
 		);
 
@@ -1797,6 +1967,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
 			$callback = explode('::', $callback);
 		}
+		if (!is_callable($callback)) {
+			throw new ProgrammerException(
+				'The callback specified is not callable'
+			);
+		}
 
 		foreach($this->records as $record) {
 			$result = call_user_func($callback, $result, $record);
@@ -1827,9 +2002,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$limit = NULL;
 		$page  = 1;
 
-		if ($remember_original_count && $length !== NULL && $offset % $length == 0) {
+		if ($remember_original_count && $offset % $length == 0) {
 			$limit = $length;
-			$page  = ($offset / $length) + 1;
+			$page  = (int) (($offset / $length) + 1);
 		}
 
 		return new RecordSet(
@@ -1882,19 +2057,35 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	private function sortCallback(ActiveRecord $a, ActiveRecord $b): int
 	{
 		if ($this->sort_direction == 'asc') {
-			return UTF8::inatcmp($a->{$this->sort_method}(), $b->{$this->sort_method}());
+			return UTF8::inatcmp($this->getSortValue($a), $this->getSortValue($b));
 		}
-		return UTF8::inatcmp($b->{$this->sort_method}(), $a->{$this->sort_method}());
+		return UTF8::inatcmp($this->getSortValue($b), $this->getSortValue($a));
+	}
+
+
+	/**
+	 * Returns the string value of a record method for sorting
+	 *
+	 * @param  ActiveRecord $record  The record to get the value from
+	 * @return string  The string value of the sort method
+	 */
+	private function getSortValue(ActiveRecord $record): string
+	{
+		$value = $record->{$this->sort_method}();
+		if (is_string($value)) {
+			return $value;
+		}
+		return is_scalar($value) ? (string) $value : '';
 	}
 
 
 	/**
 	 * Sorts the set by passing the callback to [http://php.net/usort `usort()`] and rewinds the interator
 	 *
-	 * @param  mixed $callback  The function/method to pass to `usort()`
+	 * @param  callable(ActiveRecord, ActiveRecord): int $callback  The function/method to pass to `usort()`
 	 * @return RecordSet  A new record set object, with the records sorted as requested
 	 */
-	public function sortByCallback(mixed $callback): RecordSet
+	public function sortByCallback(callable $callback): RecordSet
 	{
 		$records = $this->records;
 		usort($records, $callback);
@@ -1916,12 +2107,12 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * except for the last, which will contain between 1 and ceil(…) records.
 	 *
 	 * @param  integer $number  The number of RecordSet objects to create
-	 * @return array  An array of RecordSet objects
+	 * @return array<int, RecordSet>  An array of RecordSet objects
 	 */
 	public function split(int $number): array
 	{
 		$output = array();
-		$records_per_set = ceil($this->count()/$number);
+		$records_per_set = (int) ceil($this->count()/$number);
 		for ($i=0; $i < $number; $i++) {
 			$output[] = new RecordSet($this->class, array_slice($this->records, $i*$records_per_set, $records_per_set));
 		}
@@ -2009,7 +2200,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		throw new ProgrammerException(
 			'The %1$s operation can not be performed on a record set with multiple types (%2$s) of records',
 			$operation,
-			join(', ', $this->class)
+			join(', ', is_array($this->class) ? $this->class : array($this->class))
 		);
 	}
 }
