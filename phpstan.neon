@@ -6,6 +6,11 @@ parameters:
         - vendor/
         - tests/
     bootstrapFiles: []
+
+    # Type model for the Windows-only com_dotnet extension classes (see stubs/com.stub)
+    scanFiles:
+        - stubs/com.stub
+
     checkMissingCallableSignature: true
     checkUninitializedProperties: true
     checkBenevolentUnionTypes: true

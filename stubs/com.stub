@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * Windows-only `com_dotnet` extension: the COM class.
+ *
+ * Only the members used by Flourish are declared, plus the standard
+ * magic-method surface of the extension class.
+ */
+class COM
+{
+	public function __construct(string $module_name, $server_name = null) {}
+
+	public function __get(string $name) {}
+
+	public function __set(string $name, $value): void {}
+
+	public function __call(string $name, array $args) {}
+
+	public function RegRead(string $key): mixed {}
+}
