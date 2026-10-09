@@ -35,7 +35,7 @@ class Number
 	/**
 	 * Converts any positive integer between any two bases ranging from `2` to `16`
 	 *
-	 * @param  Number|string $number     The positive integer to convert
+	 * @param  \Number|string $number     The positive integer to convert
 	 * @param  integer        $from_base  The base to convert from - must be between `2` and `16`
 	 * @param  integer        $to_base    The base to convert to - must be between `2` and `16`
 	 * @return string  The number converted to the new base
@@ -49,6 +49,8 @@ class Number
 			);
 		}
 
+		$number = ($number instanceof Number) ? $number->__toString() : (string) $number;
+
 		if (strlen($number) && $number[0] == '+') {
 			$number = substr($number, 1);
 		}
@@ -60,7 +62,7 @@ class Number
 			);
 		}
 
-		if (!is_numeric($from_base) || $from_base < 2 || $from_base > 16) {
+		if ($from_base < 2 || $from_base > 16) {
 			throw new ProgrammerException(
 				'The from base specified, %1$s, is not valid base between %2$s and %3$s',
 				$from_base,
@@ -69,7 +71,7 @@ class Number
 			);
 		}
 
-		if (!is_numeric($to_base) || $to_base < 2 || $to_base > 16) {
+		if ($to_base < 2 || $to_base > 16) {
 			throw new ProgrammerException('The to base specified, %1$s, is not valid base between %2$s and %3$s',
 				$from_base,
 				'2',
@@ -93,23 +95,22 @@ class Number
 				$value = new Number((isset($base_map[$char])) ? $base_map[$char] : $char);
 				$decimal = $decimal->add($value->mul($base_num->pow($length-($i+1)))->round(0));
 			}
-		} elseif (!$number instanceof Number) {
-			$decimal = new Number($number);
 		} else {
-			$decimal = $number;
+			$decimal = new Number($number);
 		}
 
 		$output = '';
 
 		if ($to_base != 10) {
 			do {
-				$frac   = $decimal->div($to_base, 3)->__toString();
-				$frac   = '0' . substr($frac, strpos($frac, '.'));
-				$x      = (int) ($frac * $to_base + 1.5);
+				$frac   = $decimal->div((string) $to_base, 3)->__toString();
+				$dot    = strpos($frac, '.');
+				$frac   = '0' . (($dot === FALSE) ? $frac : substr($frac, $dot));
+				$x      = (int) (((float) $frac) * $to_base + 1.5);
 
 				$output = $base_string[$x-1] . $output;
 
-				$decimal = $decimal->div($to_base, 0);
+				$decimal = $decimal->div((string) $to_base, 0);
 
 			} while($decimal->gt('0.0'));
 		} else {
@@ -117,6 +118,19 @@ class Number
 		}
 
 		return $output;
+	}
+
+
+	/**
+	 * Confirms a string value is a valid number for the bcmath functions
+	 *
+	 * @phpstan-assert numeric-string $number
+	 */
+	static private function assertNumericString(string $number): void
+	{
+		if (!is_numeric($number)) {
+			throw new ProgrammerException('The number specified, %s, is not numeric.', $number);
+		}
 	}
 
 
@@ -177,10 +191,10 @@ class Number
 	 *
 	 * @throws ValidationException  When `$number1` or `$number2` is not a valid number
 	 *
-	 * @param  Number|string $number1  The first number to normalize
-	 * @param  Number|string $number2  The second number to normalize
+	 * @param  \Number|string $number1  The first number to normalize
+	 * @param  \Number|string $number2  The second number to normalize
 	 * @param  integer        $scale    The number of decimal places to normalize to
-	 * @return array  The two normalized numbers as strings
+	 * @return array{0: string, 1: string}  The two normalized numbers as strings
 	 */
 	static private function normalize(mixed $number1, mixed $number2, ?int $scale=NULL): array
 	{
@@ -233,15 +247,27 @@ class Number
 	 */
 	static private function parse(mixed $number, string $element): mixed
 	{
-		if (is_object($number) && is_callable(array($number, '__toString'))) {
-			$number = $number->__toString();
+		if (is_object($number)) {
+			if (is_callable(array($number, '__toString'))) {
+				$obj = $number;
+				$number = $obj->__toString();
+				if (!is_string($number)) {
+					throw new ValidationException('The number specified, %s, is invalid.', get_class($obj));
+				}
+			} else {
+				throw new ValidationException('The number specified, %s, is invalid.', get_class($number));
+			}
 		} else {
 			$number = (string) $number;
 		}
 		$number = trim($number);
 
 		if (self::$unformat_callback) {
-			$number = call_user_func(self::$unformat_callback, $number);
+			$unformatted = call_user_func(self::$unformat_callback, $number);
+			if (!is_string($unformatted)) {
+				throw new ValidationException('The number specified, %s, is invalid.', $number);
+			}
+			$number = $unformatted;
 		} else {
 			$number = str_replace(',', '', $number);
 		}
@@ -260,7 +286,7 @@ class Number
 
 		$number = self::stripLeadingZeroes($matches[2]);
 
-		$exponent      = (isset($matches[4])) ? $matches[4] : NULL;
+		$exponent      = (isset($matches[4])) ? (int) $matches[4] : NULL;
 		$exponent_sign = (isset($matches[3])) ? $matches[3] : NULL;
 
 		// Adjust the number by the exponent
@@ -274,8 +300,8 @@ class Number
 					$fraction = '';
 					$integer  = $number;
 				} else {
-					$fraction = substr($number, strpos($number, '.')+1);
-					$integer  = substr($number, 0, strpos($number, '.'));
+					$fraction = substr($number, $decimal_pos+1);
+					$integer  = substr($number, 0, $decimal_pos);
 				}
 
 				if (strlen($integer) < $exponent) {
@@ -357,9 +383,9 @@ class Number
 				$output = '.' . $output;
 				continue;
 			}
-			$sum = $number1[$i] + $number2[$i] + $carry;
-			$carry = (strlen($sum) > 1) ? substr($sum, 0, -1) : 0;
-			$output = substr($sum, -1) . $output;
+			$sum = (int) $number1[$i] + (int) $number2[$i] + $carry;
+			$carry = (strlen((string) $sum) > 1) ? 1 : 0;
+			$output = substr((string) $sum, -1) . $output;
 		}
 		if ($carry) {
 			$output = $carry . $output;
@@ -378,11 +404,11 @@ class Number
 	 *
 	 * @param  string  $dividend    The number to be divided
 	 * @param  string  $divisor     The number to divide by
-	 * @param  integer &$remainder  The remainder from the division
+	 * @param  string  &$remainder  The remainder from the division
 	 * @param  integer $scale       The number of digits to return after the decimal
 	 * @return string  The quotient
 	 */
-	static private function performDiv(string $dividend, string $divisor, mixed &$remainder=NULL, ?int $scale=NULL): string
+	static private function performDiv(string $dividend, string $divisor, mixed &$remainder='', ?int $scale=NULL): string
 	{
 		list ($dividend, $divisor) = self::normalize($dividend, $divisor);
 
@@ -438,8 +464,8 @@ class Number
 			$r = 0;
 			$j = 1;
 			while ($j <= $n) {
-				$w[$j] = floor((($r*10)+$u[$j])/$v[1]);
-				$r = (($r*10)+$u[$j]) % $v[1];
+				$w[$j] = (string) (int) floor(((($r*10)+(int) $u[$j]))/((int) $v[1]));
+				$r = ((($r*10)+(int) $u[$j])) % (int) $v[1];
 				$j++;
 			}
 			$quotient  = $w;
@@ -451,7 +477,7 @@ class Number
 			$quotient = '0' . str_pad('', $m, '0');
 
 			// Step D1
-			$d = floor(10/($v[1] + 1));
+			$d = (int) floor(10/((int) $v[1] + 1));
 
 			$u = self::performMul($u, $d);
 			$v = self::performMul($v, $d);
@@ -472,13 +498,13 @@ class Number
 				if ($u[$j] == $v[1]) {
 					$q = 9;
 				} else {
-					$q = floor((($u[$j]*10)+$uj1)/$v[1]);
+					$q = (int) floor((((((int) $u[$j])*10)+(int) $uj1))/((int) $v[1]));
 				}
 
 				$uj2 = (isset($u[$j+2])) ? $u[$j+2] : '0';
-				if ($v[2] * $q > (($u[$j]*10)+$uj1-($q*$v[1]))*10 + $uj2) {
+				if (((int) $v[2]) * $q > ((((((int) $u[$j])*10)+(int) $uj1)-($q*((int) $v[1])))*10) + (int) $uj2) {
 					$q -= 1;
-					if ($v[2] * $q > (($u[$j]*10)+$uj1-($q*$v[1]))*10 + $uj2) {
+					if (((int) $v[2]) * $q > ((((((int) $u[$j])*10)+(int) $uj1)-($q*((int) $v[1])))*10) + (int) $uj2) {
 						$q -= 1;
 					}
 				}
@@ -493,7 +519,7 @@ class Number
 				}
 				$borrow = FALSE;
 				if ($ujn[0] == '-') {
-					$ujn = self::performAdd(self::performPow('10', $n+1), $ujn);
+					$ujn = self::performAdd(self::performPow('10', (string) ($n+1)), $ujn);
 					$borrow = TRUE;
 				}
 				while (strlen($ujn)-1 > $n+1) {
@@ -508,13 +534,13 @@ class Number
 				}
 				$u = substr($u, 0, $j) . substr($ujn, 1) . substr($u, $j+$n+1);
 
-				$quotient[$j] = $q;
+				$quotient[$j] = (string) $q;
 
 				// Step D7
 				$j++;
 			}
 
-			$remainder = self::performDiv(substr($u, 1+$m, $n), $d);
+			$remainder = self::performDiv(substr($u, 1+$m, $n), (string) $d);
 		}
 
 		if (strlen($quotient) < $after_decimal) {
@@ -538,12 +564,12 @@ class Number
 	/**
 	 * Multiplies two numbers
 	 *
-	 * @param  string  $multiplicand  The number to be multiplied
-	 * @param  string  $multiplier    The number of times to multiply the multiplicand
+	 * @param  string|integer $multiplicand  The number to be multiplied
+	 * @param  string|integer $multiplier    The number of times to multiply the multiplicand
 	 * @param  integer $scale         The number of digits after the decimal
 	 * @return string  The product
 	 */
-	static private function performMul(string $multiplicand, string $multiplier, ?int $scale=NULL): string
+	static private function performMul(string|int $multiplicand, string|int $multiplier, ?int $scale=NULL): string
 	{
 		$multiplicand = (string) $multiplicand;
 		$multiplier   = (string) $multiplier;
@@ -585,12 +611,12 @@ class Number
 			$k = 0;
 
 			while ($i > 0) {
-				$t = ($multiplicand[$i] * $multiplier[$j]) + $product[$i+$j] + $k;
-				$product[$i+$j] = $t % 10;
-				$k = (int) $t/10;
+				$t = ((int) $multiplicand[$i] * (int) $multiplier[$j]) + (int) $product[$i+$j] + $k;
+				$product[$i+$j] = (string) ($t % 10);
+				$k = (int) ($t/10);
 				--$i;
 			}
-			$product[$j] = $k;
+			$product[$j] = (string) $k;
 
 			--$j;
 		}
@@ -617,7 +643,7 @@ class Number
 	 * @param  string $power      The power to raise to, must be between `−2,147,483,648` and `2,147,483,647`
 	 * @return string  The product
 	 */
-	static private function performPow(string $number, string $power, mixed $scale=NULL): string
+	static private function performPow(string $number, string $power, ?int $scale=NULL): string
 	{
 		$number = self::fixSign($number);
 		$power  = self::fixSign($power);
@@ -639,10 +665,11 @@ class Number
 
 		$power = '+' . substr($power, 1);
 
-		if ($power%2 == 0) {
-			$product = self::performPow(self::performMul($number, $number), $power/2);
+		$power64 = (int) $power;
+		if ($power64 % 2 == 0) {
+			$product = self::performPow(self::performMul($number, $number), (string) ($power64/2));
 		} else {
-			$product = self::performMul($number, self::performPow(self::performMul($number, $number), floor($power/2)));
+			$product = self::performMul($number, self::performPow(self::performMul($number, $number), (string) floor($power64/2)));
 		}
 
 		if ($negative_power) {
@@ -664,7 +691,7 @@ class Number
 	 * @param  string $subtrahend  The number to subtract
 	 * @return string  The difference
 	 */
-	static private function performSub(string $minuend, string $subtrahend, mixed $scale=NULL): string
+	static private function performSub(string $minuend, string $subtrahend, ?int $scale=NULL): string
 	{
 		list($minuend, $subtrahend) = self::normalize($minuend, $subtrahend);
 
@@ -698,7 +725,7 @@ class Number
 				$output = '.' . $output;
 				continue;
 			}
-			$diff = $minuend[$i] - $subtrahend[$i] - $borrow;
+			$diff = (int) $minuend[$i] - (int) $subtrahend[$i] - $borrow;
 			$borrow = 0;
 			while ($diff < 0) {
 				$borrow += 1;
@@ -717,16 +744,14 @@ class Number
 	 * Returns the value for pi with a scale of up to 500
 	 *
 	 * @param  integer $scale  The number of places after the decimal to return
-	 * @return Number  Pi
+	 * @return \Number  Pi
 	 */
 	static public function pi(int $scale): Number
 	{
+		/** @var string */
 		static $pi_places = '14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881097566593344612847564823378678316527120190914564856692346034861045432664821339360726024914127372458700660631558817488152092096282925409171536436789259036001133053054882046652138414695194151160943305727036575959195309218611738193261179310511854807446237996274956735188575272489122793818301194912';
 
-		if (is_numeric($scale)) {
-			$scale = (int) $scale;
-		}
-		if (!is_numeric($scale) || $scale < 0 || $scale > 500) {
+		if ($scale < 0 || $scale > 500) {
 			throw new ProgrammerException(
 				'The scale specified, %1$s, is outside the valid scale for pi (%2$s to %3$s)',
 				$scale,
@@ -751,13 +776,16 @@ class Number
 	 *
 	 * The callback should return a string, the formatted `$value`.
 	 *
-	 * @param  callable(mixed...):mixed $callback  The callback to pass the Number value to - see method description for parameters
+	 * @param  callable(mixed...):mixed $callback  The callback to pass the \Number value to - see method description for parameters
 	 * @return void
 	 */
 	static public function registerFormatCallback(callable $callback): void
 	{
 		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
 			$callback = explode('::', $callback);
+		}
+		if (!is_callable($callback)) {
+			throw new ProgrammerException('The format callback specified, %s, is not callable.', implode('::', $callback));
 		}
 		self::$format_callback = $callback;
 	}
@@ -773,6 +801,9 @@ class Number
 	{
 		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
 			$callback = explode('::', $callback);
+		}
+		if (!is_callable($callback)) {
+			throw new ProgrammerException('The unformat callback specified, %s, is not callable.', implode('::', $callback));
 		}
 		self::$unformat_callback = $callback;
 	}
@@ -796,10 +827,10 @@ class Number
 	 * Sets the scale for a number
 	 *
 	 * @param  string  $number  The number to set the scale for
-	 * @param  integer $scale   The number of digits to have after the decimal
+	 * @param  integer|null $scale   The number of digits to have after the decimal
 	 * @return string  The scaled number
 	 */
-	static private function setScale(string $number, int $scale): string
+	static private function setScale(string $number, ?int $scale): string
 	{
 		if ($scale === NULL) {
 			return $number;
@@ -868,7 +899,7 @@ class Number
 	 *
 	 * @param  int|float|string  $value  The value for the number - any valid PHP integer or float format including values with `e` exponents
 	 * @param  int|null  $scale  The number of digits after the decimal place, defaults to number of digits in `$value`
-	 * @return Number
+	 * @return \Number
 	 */
 	public function __construct(mixed $value, mixed $scale=NULL)
 	{
@@ -893,7 +924,7 @@ class Number
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: $this, 1: string}  The callback for the method requested
 	 */
 	public function __get(mixed $method)
 	{
@@ -916,7 +947,7 @@ class Number
 	 * Returns the absolute value of this number
 	 *
 	 * @param  integer $scale  The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The absolute number
+	 * @return \Number  The absolute number
 	 */
 	public function abs(?int $scale=NULL): Number
 	{
@@ -930,9 +961,9 @@ class Number
 	 *
 	 * @throws ValidationException  When `$addend` is not a valid number
 	 *
-	 * @param  Number|string $addend  The addend
+	 * @param  \Number|string $addend  The addend
 	 * @param  integer        $scale   The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The sum
+	 * @return \Number  The sum
 	 */
 	public function add(mixed $addend, ?int $scale=NULL): Number
 	{
@@ -940,7 +971,10 @@ class Number
 		$addend = self::parse($addend, 'number');
 
 		if (function_exists('bcadd')) {
-			$sum = bcadd($this->value, $addend, $scale);
+			$value = $this->value;
+			self::assertNumericString($value);
+			self::assertNumericString($addend);
+			$sum = bcadd($value, $addend, $scale);
 		} else {
 			$sum = self::performAdd($this->value, $addend, $scale);
 		}
@@ -952,7 +986,7 @@ class Number
 	/**
 	 * Rounds the number to the next highest integer
 	 *
-	 * @return Number  The next highest integer
+	 * @return \Number  The next highest integer
 	 */
 	public function ceil(): Number
 	{
@@ -978,9 +1012,9 @@ class Number
 	 *
 	 * @throws ValidationException  When `$divisor` is not a valid number
 	 *
-	 * @param  Number|string $divisor  The divisor
+	 * @param  \Number|string $divisor  The divisor
 	 * @param  integer        $scale    The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The quotient
+	 * @return \Number  The quotient
 	 */
 	public function div(mixed $divisor, ?int $scale=NULL): Number
 	{
@@ -995,7 +1029,10 @@ class Number
 		}
 
 		if (function_exists('bcdiv')) {
-			$value = bcdiv($this->value, $divisor, $scale);
+			$num = $this->value;
+			self::assertNumericString($num);
+			self::assertNumericString($divisor);
+			$value = bcdiv($num, $divisor, $scale);
 		} else {
 			$value = self::performDiv($this->value, $divisor, $remainder, $scale);
 		}
@@ -1009,7 +1046,7 @@ class Number
 	 *
 	 * @throws ValidationException  When `$number` is not a valid number
 	 *
-	 * @param  Number|string $number  The number to compare to
+	 * @param  \Number|string $number  The number to compare to
 	 * @param  integer        $scale   The number of decimal places to compare - will use all available if not specified
 	 * @return boolean  If this number is equal to the one passed
 	 */
@@ -1030,10 +1067,10 @@ class Number
 	/**
 	 * Makes sure the scale is an int greater than `-1` - will return the current scale if the one passed is `NULL`
 	 *
-	 * @param  integer $scale  The scale to check
+	 * @param  integer|null $scale  The scale to check
 	 * @return integer  The number of digits after the decimal place
 	 */
-	private function fixScale(int $scale): int
+	private function fixScale(?int $scale): int
 	{
 		$scale = ($scale !== NULL) ? (int) $scale : (int) $this->scale;
 		if ($scale < 0) {
@@ -1046,7 +1083,7 @@ class Number
 	/**
 	 * Rounds the number to the next lowest integer
 	 *
-	 * @return Number  The next lowest integer
+	 * @return \Number  The next lowest integer
 	 */
 	public function floor(): Number
 	{
@@ -1072,13 +1109,14 @@ class Number
 	 *
 	 * @throws ValidationException  When `$divisor` is not a valid number
 	 *
-	 * @param  Number|string $divisor  The divisor
+	 * @param  \Number|string $divisor  The divisor
 	 * @param  integer        $scale    The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The remainder
+	 * @return \Number  The remainder
 	 */
 	public function fmod(mixed $divisor, ?int $scale=NULL): Number
 	{
 		$scale = $this->fixScale($scale);
+		$divisor = self::parse($divisor, 'number');
 
 		$div_frac = self::parse($divisor, 'fraction');
 		$val_frac = self::parse($this->value, 'fraction');
@@ -1114,7 +1152,11 @@ class Number
 	public function format(bool $remove_zero_fraction=FALSE): string
 	{
 		if (self::$format_callback !== NULL) {
-			return call_user_func(self::$format_callback, $this->value, $remove_zero_fraction);
+			$formatted = call_user_func(self::$format_callback, $this->value, $remove_zero_fraction);
+			if (!is_string($formatted)) {
+				throw new ProgrammerException('The format callback specified did not return a string.');
+			}
+			return $formatted;
 		}
 
 		// We can't use number_format() since it takes a float and we have a
@@ -1160,7 +1202,7 @@ class Number
 	 *
 	 * @throws ValidationException  When `$number` is not a valid number
 	 *
-	 * @param  Number|string $number  The number to compare to
+	 * @param  \Number|string $number  The number to compare to
 	 * @param  integer        $scale   The number of decimal places to compare - will use all available if not specified
 	 * @return boolean  If this number is less than the one passed
 	 */
@@ -1183,7 +1225,7 @@ class Number
 	 *
 	 * @throws ValidationException  When `$number` is not a valid number
 	 *
-	 * @param  Number|string $number  The number to compare to
+	 * @param  \Number|string $number  The number to compare to
 	 * @param  integer        $scale   The number of decimal places to compare - will use all available if not specified
 	 * @return boolean  If this number is greater than or equal to the one passed
 	 */
@@ -1206,7 +1248,7 @@ class Number
 	 *
 	 * @throws ValidationException  When `$number` is not a valid number
 	 *
-	 * @param  Number|string $number  The number to compare to
+	 * @param  \Number|string $number  The number to compare to
 	 * @param  integer        $scale   The number of decimal places to compare - will use all available if not specified
 	 * @return boolean  If this number is less than the one passed
 	 */
@@ -1229,7 +1271,7 @@ class Number
 	 *
 	 * @throws ValidationException  When `$number` is not a valid number
 	 *
-	 * @param  Number|string $number  The number to compare to
+	 * @param  \Number|string $number  The number to compare to
 	 * @param  integer        $scale   The number of decimal places to compare - will use all available if not specified
 	 * @return boolean  If this number is less than or equal to the one passed
 	 */
@@ -1252,8 +1294,8 @@ class Number
 	 *
 	 * @throws ValidationException  When `$divisor` is not a valid number
 	 *
-	 * @param  Number|string $divisor  The divisor - will be converted to an integer if it is a float
-	 * @return Number  The remainder
+	 * @param  \Number|string $divisor  The divisor - will be converted to an integer if it is a float
+	 * @return \Number  The remainder
 	 */
 	public function mod(mixed $divisor): Number
 	{
@@ -1262,6 +1304,8 @@ class Number
 		$number  = self::parse($this->value, 'integer');
 
 		if (function_exists('bcmod')) {
+			self::assertNumericString($number);
+			self::assertNumericString($divisor);
 			$remainder = bcmod($number, $divisor);
 		} else {
 			self::performDiv($number, $divisor, $remainder);
@@ -1277,9 +1321,9 @@ class Number
 	 *
 	 * @throws ValidationException  When `$multiplier` is not a valid number
 	 *
-	 * @param  Number|string $multiplier  The multiplier
+	 * @param  \Number|string $multiplier  The multiplier
 	 * @param  integer        $scale       The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The product
+	 * @return \Number  The product
 	 */
 	public function mul(mixed $multiplier, ?int $scale=NULL): Number
 	{
@@ -1287,7 +1331,10 @@ class Number
 		$multiplier = self::parse($multiplier, 'number');
 
 		if (function_exists('bcmul')) {
-			$value = bcmul($this->value, $multiplier, $scale);
+			$value = $this->value;
+			self::assertNumericString($value);
+			self::assertNumericString($multiplier);
+			$product = bcmul($value, $multiplier, $scale);
 		} else {
 			$value = self::performMul($this->value, $multiplier, $scale);
 		}
@@ -1300,7 +1347,7 @@ class Number
 	 * Negates this number
 	 *
 	 * @param  integer $scale  The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The negated number
+	 * @return \Number  The negated number
 	 */
 	public function neg(?int $scale=NULL): Number
 	{
@@ -1318,16 +1365,18 @@ class Number
 	 *
 	 * @param  integer $exponent  The power to raise to - all non integer values will be truncated to integers
 	 * @param  integer $scale     The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The product
+	 * @return \Number  The product
 	 */
 	public function pow(int $exponent, ?int $scale=NULL): Number
 	{
 		$scale = $this->fixScale($scale);
 
 		if (function_exists('bcpow')) {
-			$value = bcpow($this->value, (int) $exponent, $scale);
+			$num = $this->value;
+			self::assertNumericString($num);
+			$value = bcpow($num, (string) $exponent, $scale);
 		} else {
-			$value = self::performPow($this->value, (int) $exponent, $scale);
+			$value = self::performPow($this->value, (string) $exponent, $scale);
 		}
 
 		return new Number($value, $scale);
@@ -1342,9 +1391,9 @@ class Number
 	 *
 	 * @throws ValidationException  When `$exponent` or `$modulus` is not a valid number
 	 *
-	 * @param  Number|string $exponent  The power to raise to - all non integer values will be truncated to integers
-	 * @param  Number|string $modulus   The value to divide by - all non integer values will be truncated to integers
-	 * @return Number  The remainder
+	 * @param  \Number|string $exponent  The power to raise to - all non integer values will be truncated to integers
+	 * @param  \Number|string $modulus   The value to divide by - all non integer values will be truncated to integers
+	 * @return \Number  The remainder
 	 */
 	public function powmod(mixed $exponent, mixed $modulus): Number
 	{
@@ -1379,6 +1428,9 @@ class Number
 		$value    = substr($this->value, 0, $len);
 
 		if (function_exists('bcpowmod')) {
+			self::assertNumericString($value);
+			self::assertNumericString($exponent);
+			self::assertNumericString($modulus);
 			$result = bcpowmod($value, $exponent, $modulus, 0);
 
 		} else {
@@ -1402,7 +1454,7 @@ class Number
 	 * Rounds this number to the specified number of digits after the decimal - negative scales round the number by places to the left of the decimal
 	 *
 	 * @param  integer $scale  The number of places after (or before if negative) the decimal to round to
-	 * @return Number  The rounded result
+	 * @return \Number  The rounded result
 	 */
 	public function round(int $scale): Number
 	{
@@ -1413,24 +1465,25 @@ class Number
 		$add    = FALSE;
 
 		if ($scale == 0) {
-			if ($number[$length-1] >= 5) {
+			if ((int) $number[$length-1] >= 5) {
 				$add = '1';
 			}
 			$number = substr($number, 0, -2);
 
 		} elseif ($scale > 0) {
-			if ($number[$length-1] >= 5) {
+			if ((int) $number[$length-1] >= 5) {
 				$add = '0.' . str_pad('', $scale-1, '0') . '1';
 			}
 			$number = substr($number, 0, -1);
 
 		} else {
-			$number = substr($number, 0, strpos($number, '.'));
+			$dot = strpos($number, '.');
+			$number = substr($number, 0, ($dot === FALSE) ? 0 : $dot);
 
 			if (abs($scale) >= strlen($number)) {
 				$number = '0';
 			} else {
-				if ($number[strlen($number)-abs($scale)] >= 5) {
+				if ((int) $number[strlen($number)-abs($scale)] >= 5) {
 					$add = '1' . str_pad('', abs($scale), '0');
 				}
 				$number = substr($number, 0, $scale);
@@ -1464,7 +1517,7 @@ class Number
 	 * Returns the square root of this number
 	 *
 	 * @param  integer $scale  The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The square root
+	 * @return \Number  The square root
 	 */
 	public function sqrt(?int $scale=NULL): Number
 	{
@@ -1478,8 +1531,10 @@ class Number
 		}
 
 		if (function_exists('bcsqrt')) {
-			$value = bcsqrt($this->value, $scale);
-			return new Number($value, $scale);
+			$value = $this->value;
+			self::assertNumericString($value);
+			$root = bcsqrt($value, $scale);
+			return new Number($root, $scale);
 		}
 
 		// Pure PHP implementation
@@ -1496,7 +1551,7 @@ class Number
 			$fraction .= '0';
 		}
 
-		$after_decimal = strlen($fraction)/2;
+		$after_decimal = intdiv(strlen($fraction), 2);
 
 		$number    = $integer . $fraction;
 		$i         = 0;
@@ -1528,7 +1583,7 @@ class Number
 
 			$x--;
 			$y = self::performMul($p2 . $x, $x);
-			$p = ($p) ? $p . $x : $x;
+			$p = ($p) ? $p . $x : (string) $x;
 
 			$remainder = self::performSub($c, $y);
 
@@ -1557,9 +1612,9 @@ class Number
 	 *
 	 * @throws ValidationException  When `$subtrahend` is not a valid number
 	 *
-	 * @param  Number|string $subtrahend  The subtrahend
+	 * @param  \Number|string $subtrahend  The subtrahend
 	 * @param  integer        $scale       The number of places after the decimal - overrides the scale for this number
-	 * @return Number  The difference
+	 * @return \Number  The difference
 	 */
 	public function sub(mixed $subtrahend, ?int $scale=NULL): Number
 	{
@@ -1567,7 +1622,10 @@ class Number
 		$subtrahend = self::parse($subtrahend, 'number');
 
 		if (function_exists('bcadd')) {
-			$diff = bcsub($this->value, $subtrahend, $scale);
+			$num = $this->value;
+			self::assertNumericString($num);
+			self::assertNumericString($subtrahend);
+			$diff = bcsub($num, $subtrahend, $scale);
 		} else {
 			$diff = self::performSub($this->value, $subtrahend, $scale);
 		}
@@ -1580,7 +1638,7 @@ class Number
 	 * Scales (truncates or expands) the number to the specified number of digits after the decimal - negative scales round the number by places to the left of the decimal
 	 *
 	 * @param  integer $scale  The number of places after (or before if negative) the decimal
-	 * @return Number  The square root
+	 * @return \Number  The square root
 	 */
 	public function trunc(int $scale): Number
 	{
@@ -1588,7 +1646,8 @@ class Number
 		$number = $this->value;
 
 		if ($scale < 0) {
-			$number = substr($number, 0, strpos($number, '.'));
+			$dot = strpos($number, '.');
+			$number = substr($number, 0, ($dot === FALSE) ? 0 : $dot);
 
 			if (abs($scale) >= strlen($number)) {
 				$number = '0';

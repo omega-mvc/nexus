@@ -193,6 +193,17 @@
 - **Commit**: `7c2a981` (RecordSet), `2b5a2d8` (ActiveRecord).
 - **Commit**: `79cea2291` (Image), `18f0376` (Mailbox).
 
+### [2026-10-09 01:15] - Fase PHPStan: Number a 0 errori (13 file a zero)
+
+- **File**: `Number.php`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: `Number` (214 → 0), classe big-number bcmath. Scoperta chiave: **PHPStan 2.2.17 risolve il nome di classe `Number` nei docblock `@param/@return/@var` al pseudo-tipo builtin `number` (`float|int`)**, ombreggiando la classe → fix globale `\Number` con prefisso backslash nei docblock. `@phpstan-assert numeric-string` su `$this->value` (proprietà) viene **invalidato dalle chiamate successive** → pattern "due locali": copia in variabile locale + assert prima di ogni `bcadd/bcmul/bcdiv/bcsub/bcmod/bcpow/bcsqrt`; helper `assertNumericString()`. `normalize()` → `@return array{0: string, 1: string}`; `performDiv` con `&$remainder=''` (default `''` non `null`: `parameterByRef.unusedType`); `performMul(string|int, string|int)`; `(int)` su char digit in tutte le perform*; `setScale(?int)`/`fixScale(?int)`/`performPow(?int)`/`performSub(?int)`; callbacks format/unformat con guardia `is_callable` + `get_class` catturato; `parse/unformat` con `($decimal_pos)` precalcolato; `round/trunc/sqrt` con `intdiv`, `(int) $number[$length-1] >= 5`, `$p = ($p) ? $p . $x : (string) $x`.
+- **Motivazione**: blast 1987 → ~1773; file a zero passano da 12 a 13.
+- **Impatto**: nessuno (comportamento preservato; guardie `is_numeric` su parametri `int` morte rimosse; default `$remainder=''` neutro perché il by-ref è solo scritto mai letto).
+- **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
+- **Commit**: `b0f6554`.
+- **Prossimo**: coda hotspot Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+
 ### [2026-10-09 00:30] - Fase PHPStan: Image e Mailbox a 0 errori (12 file a zero)
 
 - **File**: `Image.php`, `Mailbox.php`
