@@ -193,6 +193,17 @@
 - **Commit**: `7c2a981` (RecordSet), `2b5a2d8` (ActiveRecord).
 - **Commit**: `79cea2291` (Image), `18f0376` (Mailbox).
 
+### [2026-10-09 12:49] - Fase PHPStan: Email a 0 errori (14 file a zero)
+
+- **File**: `Email.php` (+ `stubs/com.stub`, `phpstan.neon`)
+- **Tipo**: `tipizzazione` + `refactor` + `config`
+- **Descrizione**: `Email` (170 → 0) in tre round. Proprietà email tipizzate (`to_emails`/`cc_emails`/`bcc_emails` → `array<int, string>` puri, `from_email`/`reply_to_email`/`sender_email`/`bounce_to_email` → `?string`), guardie `is_array` morte rimosse; `extrapolateFileInfo` riscritto **dai by-ref al return** `array{0: string, 1: string, 2: string|null}` (fix `parameterByRef.unusedType`), `addAttachment`/`addRelatedFile` da `mixed $contents` a `string|File`; `buildMultiAddressHeader` accetta `array<int,string>|string`; setters ritornano `Email|null` con `$name ?? ''`; `validate()` con loop `$email = $this->$field`; S/MIME con guardie `tempnam`/`file_get_contents` + `ProgrammerException`/`EnvironmentException` e flags `openssl_pkcs7_encrypt` `0` al posto di `NULL`; send() Windows con `$from`/`$parameters`/`$matches[0]`/`ini_set(sendmail_from)` ristrutturati; nuovo `com.stub` per la classe `COM` (Windows-only `com_dotnet`) via `scanFiles` in phpstan.neon; `$fqdn` → `static private ?string $fqdn`; `$message_id` → `private string` inizializzata nel costruttore; `sanitizeComposeArgs` per `vsprintf` con valori non-scalari.
+- **Motivazione**: blast ~1773 → ~1603; file a zero passano da 13 a 14. Nessuna regola di silenziamento.
+- **Impatto**: nessuno (comportamento preservato; code-path `addCustomHeader($array)` morto rimosso; `getFQDN` usa variabile locale).
+- **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
+- **Commit**: `be79609`.
+- **Prossimo**: coda hotspot SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+
 ### [2026-10-09 01:15] - Fase PHPStan: Number a 0 errori (13 file a zero)
 
 - **File**: `Number.php`
