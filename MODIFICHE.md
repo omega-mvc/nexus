@@ -201,7 +201,7 @@
 - **Motivazione**: blast 1987 → ~1773; file a zero passano da 12 a 13.
 - **Impatto**: nessuno (comportamento preservato; guardie `is_numeric` su parametri `int` morte rimosse; default `$remainder=''` neutro perché il by-ref è solo scritto mai letto).
 - **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
-- **Commit**: `b0f6554`.
+- **Commit**: `5ffb36a`.
 - **Prossimo**: coda hotspot Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
 
 ### [2026-10-09 00:30] - Fase PHPStan: Image e Mailbox a 0 errori (12 file a zero)
