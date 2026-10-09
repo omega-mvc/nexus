@@ -202,7 +202,18 @@
 - **Impatto**: nessuno (comportamento preservato; code-path `addCustomHeader($array)` morto rimosso; `getFQDN` usa variabile locale).
 - **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
 - **Commit**: `be79609`.
-- **Prossimo**: coda hotspot SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+- **Prossimo**: coda hotspot Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+
+### [2026-10-09 21:01] - Fase PHPStan: SQLSchemaTranslation a 0 errori (15 file a zero)
+
+- **File**: `SQLSchemaTranslation.php`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: `SQLSchemaTranslation` (169 → 0), il più grande file tradotto (~5500 righe). Normalizzazione delle righe query via `fetchRowArray`/`fetchAllRowArrays`/`stringValue` nei rami DB2/MSSQL/Oracle/PostgreSQL/SQLite (iterazione `Result` → `array|stdClass` risolta); `cast.string` su `$row[...]` mixed eliminati (→ `stringValue`); offset opzionali `$data['column_name']` con `?? ''` nei rami `add_primary_key`/`drop_column`/`drop_foreign_key`; variabili Oracle `$constraint_name`/`$not_null`/`$not_null_result` inizializzate a monte con guardie `countReturnedRows()`; `string|null` da `preg_replace`/`preg_split` risolti con `?? fallback`/`?: array()`; by-ref `&$extra_statements` (`array<int, string>`) sistemati convertendo ogni `array_merge` in `foreach` append, filtro `BEGIN`/`COMMIT` via `array_filter` e ritorni `array_shift(...) ?? ''` nei metodi SQLite.
+- **Motivazione**: blast ~1603 → 1427; file a zero passano da 14 a 15. Nessuna regola di silenziamento.
+- **Impatto**: nessuno (comportamento preservato; solo tipizzazione; fix dialetto rimandati come da roadmap).
+- **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
+- **Commit**: `8ae19a5`.
+- **Prossimo**: coda hotspot Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
 
 ### [2026-10-09 01:15] - Fase PHPStan: Number a 0 errori (13 file a zero)
 
