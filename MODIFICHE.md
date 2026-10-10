@@ -453,3 +453,28 @@
 - **Verifica**: `php -l Pagination.php` e `php -l URL.php` puliti; `vendor/bin/phpstan analyse Pagination.php URL.php --no-progress --error-format=raw` → 0 errori su `Pagination.php` (nessun nuovo errore su `URL.php`, che resta a 25); `vendor/bin/phpstan analyse` → 560 errori totali (da 627, −67); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota; `URL.php` resta a 25 errori (verrà chiuso nel proprio file).
 - **Prossimo**: coda hotspot Upload 65, Request 63, Money 55, SMTP 44, XML 42, File 37, ORMDate 36.
+
+### [2026-10-10 19:04] - Fase PHPStan: Upload.php a 0 errori (26 file a zero)
+
+- **File**: `Upload.php`
+- **Intervallo righe**: `1-694`
+- **Tipo**: `tipizzazione` + `refactor` + `fix`
+- **Descrizione**: `Upload` (65 → 0), hotspot successivo a `Pagination`.
+  - Introdotti i tipi `@phpstan-type UploadFileEntry array{name: string, type: string, tmp_name: string, error: int, size: int}`, `UploadImageDimensions array{min_width: int, min_height: int, max_width: int, max_height: int}` e `UploadImageRatio array{width: float, height: float, allow_excess_dimension: string}`.
+  - Ripristinate le costanti di classe `check`, `count` e `filter` (presenti nell'originale `fUpload`, usate come callback) dichiarate `const string ... = 'Upload::...'` per rispettare la type coverage 100% (in linea con `Email.php`).
+  - `$_FILES` è tipizzato da PHPStan come `array<mixed>`: ogni accesso passa ora per un narrowing locale (`is_array` + `ProgrammerException` sui casi impossibili) prima di leggere le colonne `name`/`type`/`tmp_name`/`error`/`size`.
+  - Nuovi helper privati statici: `normalizeString(mixed): string`, `normalizeInt(mixed): int` (convertono gli scalari provenienti da `$_FILES`) e `normalizeFileSize(mixed): int` (`is_numeric` → `(int)`, altrimenti stringa → `Filesystem::convertToBytes`, altrimenti `ProgrammerException`) usato da `setMaxSize()` e `validateField()`, che prima passavano a `convertToBytes` valori `string|false` (da `ini_get`) o `mixed` (da `$_POST['MAX_FILE_SIZE']`).
+  - `check()`: `$_SERVER['CONTENT_TYPE']` letto con `?? NULL` e verificato `is_string` prima dello `stripos`; rimosso `isset($_FILES)` (superglobale sempre definita per PHPStan).
+  - `count()`/`filter()`: narrowing esplicito di `$_FILES[$field]`; `filter()` restituisce `array<int, int|string>|NULL` e aggiorna `$_FILES[$field]` con un `unset` per colonna verificato `isset($file_array[$column]) && is_array(...)`.
+  - `extractFileUploadArray()`: costruisce una `UploadFileEntry` normalizzata (chiavi tipizzate) sia nel ramo a indice singolo sia nel ramo con `$index`; guardie `ValidationException` per campi non-array e indice non `int|string`/inesistente; niente più accesso `'name'` su `mixed`.
+  - `move()`: consuma la entry tipizzata, guardia `ProgrammerException` se `Filesystem::createObject()` restituisce un `Directory` (impossibile dopo `move_uploaded_file`); docblock `@return File|Image|NULL`.
+  - `setImageDimensions()`: rimosse le `is_numeric()` ridondanti (i parametri sono nativi `int`, PHPStan le segnalava `alwaysTrue`); restano i controlli `< 0`.
+  - `setImageRatio()`: docblock `numeric` → `mixed`; i valori sono validati `is_numeric` e memorizzati come `(float)` nella shape `UploadImageRatio`.
+  - `setMaxSize()`: `ini_get()` verificato `=== FALSE` con `ProgrammerException` prima di normalizzare la dimensione.
+  - `validate()`: docblock ripulito dalla coppia di `@param` duplicati/erronei; aggiunto `return NULL` finale.
+  - `validateField()`: tipo di ritorno corretto `string` → `?string` (il metodo restituiva `NULL` nei rami opzionali, con `TypeError` latente a runtime) più `return NULL` finale; `getimagesize()` verificato `=== FALSE` con `ValidationException` prima di `(int) $info[0]`/`(int) $info[1]` (niente più `list()` su `array|false`); `file_get_contents()` con `=== FALSE → NULL`; `$this->mime_type_message` verificato non-`NULL` con `ProgrammerException`.
+- **Motivazione**: chiudere l'hotspot `Upload` (65) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi). Le guardie `ProgrammerException` coprono gli stati impossibili dedotti dal flusso (`check()`/`count()` hanno già validato).
+- **Impatto**: `basso`. Comportamento pubblico invariato per gli input validi; ripristinate le 3 costanti di callback presenti nell'originale; `validateField()` non genera più `TypeError` latente nei rami opzionali; i casi impossibili ora sollevano eccezioni esplicite.
+- **Verifica**: `php -l Upload.php` pulito; `vendor/bin/phpstan analyse Upload.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 495 errori totali (da 560, −65, nessun nuovo errore; caller `ORMFile.php` verificato); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Request 63, Money 55, SMTP 44, XML 42, File 37, ORMDate 36.
