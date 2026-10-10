@@ -16,6 +16,9 @@ declare(strict_types=1);
  * @changes    1.0.0b3  Added ::removeFieldNames() [wb, 2010-05-26]
  * @changes    1.0.0b2  Added a custom ::__construct() to handle arrays of messages [wb, 2009-09-17]
  * @changes    1.0.0b   The initial implementation [wb, 2007-06-14]
+ *
+ * @phpstan-type MessageText string|array{name: string, errors: array<array-key, string>}
+ * @phpstan-type Messages    array<array-key, MessageText>
  */
 class ValidationException extends ExpectedException
 {
@@ -40,27 +43,44 @@ class ValidationException extends ExpectedException
 
 
 	/**
-	 * Removes the field names from normal validation messages, leaving just the message part
+	 * Removes the field name from the front of a single validation message
 	 *
-	 * @param array $messages  The messages to remove the field names from
-	 * @return array  The messages without field names
+	 * @param  string $message  The message to remove the field name from
+	 * @return string  The message without the field name
 	 */
-	static public function removeFieldNames(array $messages): array
+	static public function removeFieldName(string $message): string
 	{
 		$token_field   = self::formatField('__TOKEN__');
 		$replace_regex = '#^' . str_replace('__TOKEN__', '(.*?)', preg_quote($token_field, '#')) . '#';
 
-		$output = array();
+		return preg_replace($replace_regex, '', $message) ?? $message;
+	}
+
+
+	/**
+	 * Removes the field names from normal validation messages, leaving just the message part
+	 *
+	 * Each key is preserved untouched: normal string messages get the field
+	 * name prefix stripped, while nested ORM message structures (`name` and
+	 * `errors` keys) have their errors stripped recursively.
+	 *
+	 * @param  Messages $messages  The messages to remove the field names from
+	 * @return Messages  The messages without field names
+	 */
+	static public function removeFieldNames(array $messages): array
+	{
 		foreach ($messages as $column => $message) {
 			if (is_array($message)) {
-				$message['errors'] = self::removeFieldNames($message['errors']);
-				$output[$column] = $message;
+				foreach ($message['errors'] as $error_key => $error) {
+					$message['errors'][$error_key] = self::removeFieldName($error);
+				}
+				$messages[$column] = $message;
 			} else {
-				$output[$column] = preg_replace($replace_regex, '', $message);
+				$messages[$column] = self::removeFieldName($message);
 			}
 		}
 
-		return $output;
+		return $messages;
 	}
 
 
@@ -129,48 +149,46 @@ class ValidationException extends ExpectedException
 	 * @param  string $message       The beginning message for the exception. This will be placed in a `<p>` tag.
 	 * @return FlourishException
 	 */
-	public function __construct(mixed $message='')
+	public function __construct(string $message='', mixed ...$args)
 	{
-		$params = func_get_args();
-
-		if ((count($params) == 2 || count($params) == 3) && is_string($params[0]) && is_array($params[1])) {
-
+		if ((count($args) == 1 || count($args) == 2) && is_array($args[0])) {
 
 			$message = sprintf(
 				"<p>%1\$s</p>\n<ul>\n<li>%2\$s</li>\n</ul>",
-				self::compose($params[0]),
-				join("</li>\n<li>", $this->formatErrorArray($params[1]))
+				self::compose($message),
+				join("</li>\n<li>", $this->formatErrorArray($args[0]))
 			);
 
-			$params = array_merge(
-				// This escapes % signs since FlourishException is going to look for sprintf formatting codes
-				array(str_replace('%', '%%', $message)),
-				// This grabs the exception code if one is defined
-				array_slice($params, 2)
-			);
+			// This escapes % signs since FlourishException is going to look for sprintf formatting codes
+			$message = str_replace('%', '%%', $message);
+
+			// This grabs the exception code if one is defined
+			$args = array_slice($args, 1);
 		}
 
-		parent::__construct(...$params);
+		parent::__construct($message, ...$args);
 	}
 
 
 	/**
 	 * Takes an error array that may or may not be nested and returns a HTML string representation
 	 *
-	 * @param  array $errors  An array of (possibly nested) child record errors
-	 * @return array  An array of string error messages
+	 * @param  array<array-key, mixed> $errors  An array of (possibly nested) child record errors
+	 * @return list<string>  A list of string error messages
 	 */
 	private function formatErrorArray(array $errors): array
 	{
 		$new_errors = array();
 		foreach ($errors as $error) {
-			if (!is_array($error)) {
+			if (is_string($error)) {
 				$new_errors[] = $error;
-			} else {
+			} elseif (is_array($error)) {
+				$name   = (isset($error['name']) && is_string($error['name'])) ? $error['name'] : '';
+				$nested = (isset($error['errors']) && is_array($error['errors'])) ? $error['errors'] : array();
 				$new_errors[] = sprintf(
 					"<span>%1\$s</span>\n<ul>\n<li>%2\$s</li>\n</ul>",
-					$error['name'],
-					join("</li>\n<li>", $this->formatErrorArray($error['errors']))
+					$name,
+					join("</li>\n<li>", $this->formatErrorArray($nested))
 				);
 			}
 		}

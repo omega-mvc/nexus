@@ -37,6 +37,14 @@ class Validation
 	static protected function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
+		$safe_args = array();
+		foreach ($args as $arg) {
+			if (is_scalar($arg) || $arg === NULL) {
+				$safe_args[] = $arg;
+			} else {
+				throw new ProgrammerException('The values passed to compose() must be scalar values');
+			}
+		}
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -44,7 +52,7 @@ class Validation
 				array($message, $args)
 			);
 		} else {
-			return vsprintf($message, $args);
+			return vsprintf($message, $safe_args);
 		}
 	}
 
@@ -99,102 +107,123 @@ class Validation
 	 */
 	static protected function stringlike(mixed $value): bool
 	{
-		if ((!is_array($value) && !is_string($value) && !is_object($value) && !is_numeric($value)) || (!is_array($value) && !strlen(trim($value)))) {
-			return FALSE;
+		if (is_string($value)) {
+			return strlen(trim($value)) > 0;
 		}
 
-		return TRUE;
+		return is_array($value) || is_object($value) || is_numeric($value);
+	}
+
+
+	/**
+	 * Converts a value into a string
+	 *
+	 * @param  mixed  $value  The value to convert
+	 * @return string  The value as a string
+	 */
+	static private function stringValue(mixed $value): string
+	{
+		if (is_string($value)) {
+			return $value;
+		}
+		if (is_scalar($value) || $value === NULL) {
+			return (string) $value;
+		}
+		if ($value instanceof Stringable) {
+			return $value->__toString();
+		}
+		throw new ProgrammerException('The value could not be converted to a string');
 	}
 
 
 	/**
 	 * Rules that run through a callback
 	 *
-	 * @var array
+	 * @var array<string, array<int, array{callback: callable(mixed...):mixed, message: string}>>
 	 */
 	private array $callback_rules = array();
 
 	/**
 	 * Rules for conditionally requiring fields
 	 *
-	 * @var array
+	 * @var array<int, array{main_fields: array<int, string>, conditional_values: array<int, mixed>|null, conditional_fields: array<int, string>}>
 	 */
 	private array $conditional_rules = array();
 
 	/**
 	 * Fields that should be valid dates
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	private array $date_fields = array();
 
 	/**
 	 * An array for custom field names
 	 *
-	 * @var array
+	 * @var array<string, ?string>
 	 */
 	private array $field_names = array();
 
 	/**
 	 * File upload rules
 	 *
-	 * @var array
+	 * @var array<int, array{field: string, index: string|int|null, uploader: Upload}>
 	 */
 	private array $file_upload_rules = array();
 
 	/**
 	 * An array for ordering the fields in the resulting message
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	private array $message_order = array();
 
 	/**
 	 * Rules for at least one field of multiple having a value
 	 *
-	 * @var array
+	 * @var array<int, array<int, string>>
 	 */
 	private array $one_or_more_rules = array();
 
 	/**
 	 * Rules for exactly one field of multiple having a value
 	 *
-	 * @var array
+	 * @var array<int, array<int, string>>
 	 */
 	private array $only_one_rules = array();
 
 	/**
 	 * Regular expression replacements for the validation messages
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	private array $regex_replacements = array();
 
 	/**
 	 * Rules to validate fields via regular expressions
 	 *
-	 * @var array
+	 * @var array<string, array<int, array{regex: string, message: string}>>
 	 */
 	private array $regex_rules = array();
 
 	/**
 	 * The fields to be required
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	private array $required_fields = array();
 
 	/**
 	 * String replacements for the validation messages
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	private array $string_replacements = array();
 
 	/**
 	 * Rules for validating a field against a set of valid values
 	 *
-	 * @var array
+	 * @var array<string, array<int, mixed>>
 	 */
 	private array $valid_values_rules = array();
 
@@ -205,7 +234,7 @@ class Validation
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{Validation, string}  The callback for the method requested
 	 */
 	public function __get(mixed $method)
 	{
@@ -217,16 +246,12 @@ class Validation
 	 * Adds fields to be checked for 1/0, t/f, true/false, yes/no
 	 *
 	 * @param  string $field    A field that should contain a boolean value
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addBooleanFields(string $field): Validation
+	public function addBooleanFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
-		foreach ($args as $arg) {
+		foreach (array_merge(array($field), $fields) as $arg) {
 			$this->addRegexRule($arg, '#^0|1|t|f|true|false|yes|no$#iD', 'Please enter Yes or No');
 		}
 
@@ -259,17 +284,17 @@ class Validation
 	/**
 	 * Adds fields to be conditionally required if another field has any value, or specific values
 	 *
-	 * @param  string|array  $main_fields          The fields(s) to check for a value
-	 * @param  mixed         $conditional_values   If `NULL`, any value in the main field(s) will trigger the conditional field(s), otherwise the value must match this scalar value or be present in the array of values
-	 * @param  string|array  $conditional_fields   The field(s) that are to be required
+	 * @param  string|array<int,string>  $main_fields          The fields(s) to check for a value
+	 * @param  mixed                    $conditional_values   If `NULL`, any value in the main field(s) will trigger the conditional field(s), otherwise the value must match this scalar value or be present in the array of values
+	 * @param  string|array<int,string>  $conditional_fields  The field(s) that are to be required
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addConditionalRule(mixed $main_fields, mixed $conditional_values, mixed $conditional_fields): Validation
+	public function addConditionalRule(string|array $main_fields, mixed $conditional_values, string|array $conditional_fields): Validation
 	{
-		settype($main_fields, 'array');
-		settype($conditional_fields, 'array');
+		$main_fields      = array_values(is_array($main_fields) ? $main_fields : array($main_fields));
+		$conditional_fields = array_values(is_array($conditional_fields) ? $conditional_fields : array($conditional_fields));
 		if ($conditional_values !== NULL) {
-			settype($conditional_values, 'array');
+			$conditional_values = array_values(is_array($conditional_values) ? $conditional_values : array($conditional_values));
 		}
 
 		$this->conditional_rules[] = array(
@@ -288,16 +313,12 @@ class Validation
 	 * Use ::addRequiredFields() disallow blank values.
 	 *
 	 * @param  string $field    A field that should contain a valid date
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addDateFields(string $field): Validation
+	public function addDateFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
-		$this->date_fields = array_merge($this->date_fields, $args);
+		$this->date_fields = array_merge($this->date_fields, array_values(array_merge(array($field), $fields)));
 
 		return $this;
 	}
@@ -309,16 +330,12 @@ class Validation
 	 * Use ::addRequiredFields() disallow blank values.
 	 *
 	 * @param  string $field    A field that should contain a valid email address
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addEmailFields(string $field): Validation
+	public function addEmailFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
-		foreach ($args as $arg) {
+		foreach (array_merge(array($field), $fields) as $arg) {
 			$this->addRegexRule($arg, Email::EMAIL_REGEX, 'Please enter an email address in the form name@example.com');
 		}
 
@@ -333,16 +350,12 @@ class Validation
 	 * method.
 	 *
 	 * @param  string $field    A field to be checked for email injection
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addEmailHeaderFields(string $field): Validation
+	public function addEmailHeaderFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
-		foreach ($args as $arg) {
+		foreach (array_merge(array($field), $fields) as $arg) {
 			$this->addRegexRule($arg, '#^[^\r\n]*$#D', 'Line breaks are not allowed');
 		}
 
@@ -353,18 +366,22 @@ class Validation
 	/**
 	 * Add a file upload field to be validated using an Upload object
 	 *
-	 * @param  string  $field     The field to validate
-	 * @param  mixed   $index     The index for array file upload fields
-	 * @param  Upload $uploader  The uploader to validate the field with
-	 * @param  string   $field
-	 * @param  Upload  $uploader
+	 * @param  string|int|Upload|null  $index    The index for array file upload fields, or the uploader object
+	 * @param  Upload|null           $uploader   The uploader to validate the field with
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addFileUploadRule(string $field, mixed $index, ?Upload $uploader=NULL): Validation
+	public function addFileUploadRule(string $field, string|int|Upload|null $index=NULL, ?Upload $uploader=NULL): Validation
 	{
 		if ($uploader === NULL && $index instanceof Upload) {
 			$uploader = $index;
 			$index    = NULL;
+		}
+		if ($uploader === NULL) {
+			throw new ProgrammerException('No uploader was specified for the file upload rule');
+		}
+
+		if ($index !== NULL && !is_string($index) && !is_int($index)) {
+			throw new ProgrammerException('The file upload index must be a string, integer or null');
 		}
 
 		$this->file_upload_rules[] = array(
@@ -381,16 +398,12 @@ class Validation
 	 * Adds fields to be checked for float values
 	 *
 	 * @param  string $field    A field that should contain a float value
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addFloatFields(string $field): Validation
+	public function addFloatFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
-		foreach ($args as $arg) {
+		foreach (array_merge(array($field), $fields) as $arg) {
 			$this->addRegexRule($arg, '#^([+\-]?)(?:\d*\.\d+|\d+\.?)(?:e([+\-]?)(\d+))?$#iD', 'Please enter a number');
 		}
 
@@ -402,16 +415,12 @@ class Validation
 	 * Adds fields to be checked for integer values
 	 *
 	 * @param  string $field    A field that should contain an integer value
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addIntegerFields(string $field): Validation
+	public function addIntegerFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
-		foreach ($args as $arg) {
+		foreach (array_merge(array($field), $fields) as $arg) {
 			$this->addRegexRule($arg, '#^[+\-]?\d+(?:e[+]?\d+)?$#iD', 'Please enter a whole number');
 		}
 
@@ -424,28 +433,28 @@ class Validation
 	 *
 	 * @param  string $field    One of the fields to check for a value
 	 * @param  string $field_2  Another field to check for a value
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addOneOrMoreRule(string $field, string $field_2): Validation
+	public function addOneOrMoreRule(string $field, string $field_2, string ...$fields): Validation
 	{
-		$fields = func_get_args();
-		$this->one_or_more_rules[] = $fields;
+		$this->one_or_more_rules[] = array_values(array_merge(array($field, $field_2), $fields));
 
 		return $this;
 	}
 
 
 	/**
-	 * Adds a rule to make sure at exactly one field of multiple has a value
+	 * Adds a rule to make sure exactly one field of multiple has a value
 	 *
 	 * @param  string $field    One of the fields to check for a value
 	 * @param  string $field_2  Another field to check for a value
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addOnlyOneRule(string $field, string $field_2): Validation
+	public function addOnlyOneRule(string $field, string $field_2, string ...$fields): Validation
 	{
-		$fields = func_get_args();
-		$this->only_one_rules[] = $fields;
+		$this->only_one_rules[] = array_values(array_merge(array($field, $field_2), $fields));
 
 		return $this;
 	}
@@ -465,11 +474,7 @@ class Validation
 	 */
 	public function addRegexReplacement(string $search, ?string $replace=NULL): Validation
 	{
-		if (is_array($search) && $replace === NULL) {
-			$this->regex_replacements = array_merge($this->regex_replacements, $search);
-		} else {
-			$this->regex_replacements[$search] = $replace;
-		}
+		$this->regex_replacements[$search] = $replace ?? '';
 
 		return $this;
 	}
@@ -501,16 +506,12 @@ class Validation
 	 * Adds form fields to be required
 	 *
 	 * @param  string $field    A field to require a value for
+	 * @param  string ...$fields  Additional fields to require a value for
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addRequiredFields(string $field): Validation
+	public function addRequiredFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
-		$this->required_fields = array_merge($this->required_fields, $args);
+		$this->required_fields = array_merge($this->required_fields, array_values(array_merge(array($field), $fields)));
 
 		return $this;
 	}
@@ -530,7 +531,7 @@ class Validation
 	 */
 	public function addStringReplacement(string $search, ?string $replace=NULL): Validation
 	{
-		$this->string_replacements[$search] = $replace;
+		$this->string_replacements[$search] = $replace ?? '';
 
 		return $this;
 	}
@@ -542,21 +543,17 @@ class Validation
 	 * Use ::addRequiredFields() disallow blank values.
 	 *
 	 * @param  string $field    A field that should contain a valid URL
+	 * @param  string ...$fields  Additional fields to check
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addURLFields(string $field): Validation
+	public function addURLFields(string $field, string ...$fields): Validation
 	{
-		$args = func_get_args();
-		if (count($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
-		}
-
 		$ip_regex       = '(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])';
 		$hostname_regex = '[a-z]+(?:[a-z0-9\-]*[a-z0-9]\.?|\.)*';
 		$domain_regex   = '([a-z]+([a-z0-9\-]*[a-z0-9])?\.)+[a-z]{2,}';
 		$regex          = '#^(https?://(' . $ip_regex . '|' . $hostname_regex . ')(?=/|$)|' . $domain_regex . '(?=/|$)|/)#i';
 
-		foreach ($args as $arg) {
+		foreach (array_merge(array($field), $fields) as $arg) {
 			$this->addRegexRule($arg, $regex, 'Please enter a URL in the form http://www.example.com/page');
 		}
 
@@ -570,8 +567,8 @@ class Validation
 	 * A strict comparison will be made from the string request value to the
 	 * array of valid values.
 	 *
-	 * @param  string $field         The field to check the value of
-	 * @param  array  $valid_values  The valid values
+	 * @param  string            $field         The field to check the value of
+	 * @param  array<int, mixed>  $valid_values  The valid values
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
 	public function addValidValuesRule(string $field, array $valid_values): Validation
@@ -585,8 +582,8 @@ class Validation
 	/**
 	 * Converts an array of values to string, recursively
 	 *
-	 * @param array $values  An array of values to cast to strings
-	 * @return array  The values, casted to strings, but preserving multi-dimensional arrays
+	 * @param  array<array-key, mixed> $values  An array of values to cast to strings
+	 * @return array<int, mixed>  The values, casted to strings, but preserving multi-dimensional arrays
 	 */
 	private function castToStrings(array $values): array
 	{
@@ -596,14 +593,17 @@ class Validation
 				if (method_exists($value, '__toString')) {
 					$casted_values[] = $value->__toString();
 				} else {
-					$casted_values[] = (string) $value;
+					throw new ProgrammerException('The value could not be converted to a string');
 				}
 
-			} elseif (!is_array($value)) {
-				$casted_values[] = (string) $value;
+			} elseif (is_array($value)) {
+				$casted_values[] = $this->castToStrings($value);
 
 			} else {
-				$casted_values[] = $this->castToStrings($value);
+				if (!is_scalar($value) && $value !== NULL) {
+					throw new ProgrammerException('The value could not be converted to a string');
+				}
+				$casted_values[] = (string) $value;
 			}
 		}
 		return $casted_values;
@@ -613,10 +613,10 @@ class Validation
 	/**
 	 * Runs all callback validation rules
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkCallbackRules(mixed &$messages): void
+	private function checkCallbackRules(array &$messages): void
 	{
 		foreach ($this->callback_rules as $field => $rules) {
 			$value = Request::get($field);
@@ -635,10 +635,10 @@ class Validation
 	/**
 	 * Checks the conditional validation rules
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkConditionalRules(mixed &$messages): void
+	private function checkConditionalRules(array &$messages): void
 	{
 		foreach ($this->conditional_rules as $rule) {
 			$check_for_missing_values = FALSE;
@@ -670,13 +670,14 @@ class Validation
 	/**
 	 * Validates the date fields, requiring that any date fields that have a value that can be interpreted as a date
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkDateFields(mixed &$messages): void
+	private function checkDateFields(array &$messages): void
 	{
 		foreach ($this->date_fields as $date_field) {
-			$value = trim(Request::get($date_field));
+			$request_value = Request::get($date_field);
+			$value = trim(is_string($request_value) ? $request_value : (is_scalar($request_value) ? (string) $request_value : ''));
 			if (self::stringlike($value)) {
 				try {
 					new Timestamp($value);
@@ -694,10 +695,10 @@ class Validation
 	/**
 	 * Checks the file upload validation rules
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkFileUploadRules(mixed &$messages): void
+	private function checkFileUploadRules(array &$messages): void
 	{
 		foreach ($this->file_upload_rules as $rule) {
 			$message = $rule['uploader']->validate($rule['field'], $rule['index'], TRUE);
@@ -715,10 +716,10 @@ class Validation
 	/**
 	 * Ensures all of the one-or-more rules is met
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkOneOrMoreRules(mixed &$messages): void
+	private function checkOneOrMoreRules(array &$messages): void
 	{
 		foreach ($this->one_or_more_rules as $fields) {
 			$found = FALSE;
@@ -731,7 +732,7 @@ class Validation
 			if (!$found) {
 				$messages[join(',', $fields)] = self::compose(
 					'%sPlease enter a value for at least one',
-					ValidationException::formatField(join(', ', array_map($this->makeFieldName, $fields)))
+					ValidationException::formatField(join(', ', array_map(array($this, 'makeFieldName'), $fields)))
 				);
 			}
 		}
@@ -741,10 +742,10 @@ class Validation
 	/**
 	 * Ensures all of the only-one rules is met
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkOnlyOneRules(mixed &$messages): void
+	private function checkOnlyOneRules(array &$messages): void
 	{
 		foreach ($this->only_one_rules as $fields) {
 			$found = FALSE;
@@ -753,7 +754,7 @@ class Validation
 					if ($found) {
 						$messages[join(',', $fields)] = self::compose(
 							'%sPlease enter a value for only one',
-							ValidationException::formatField(join(', ', array_map($this->makeFieldName, $fields)))
+							ValidationException::formatField(join(', ', array_map(array($this, 'makeFieldName'), $fields)))
 						);
 						continue 2;
 					}
@@ -763,7 +764,7 @@ class Validation
 			if (!$found) {
 				$messages[join(',', $fields)] = self::compose(
 					'%sPlease enter a value for one',
-					ValidationException::formatField(join(', ', array_map($this->makeFieldName, $fields)))
+					ValidationException::formatField(join(', ', array_map(array($this, 'makeFieldName'), $fields)))
 				);
 			}
 		}
@@ -773,15 +774,15 @@ class Validation
 	/**
 	 * Runs all regex validation rules
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkRegexRules(mixed &$messages): void
+	private function checkRegexRules(array &$messages): void
 	{
 		foreach ($this->regex_rules as $field => $rules) {
 			$value = Request::get($field);
 			foreach ($rules as $rule) {
-				if (self::stringlike($value) && !preg_match($rule['regex'], $value)) {
+				if (self::stringlike($value) && !preg_match($rule['regex'], self::stringValue($value))) {
 					$messages[$field] = self::compose(
 						'%s' . $rule['message'],
 						ValidationException::formatField($this->makeFieldName($field))
@@ -795,10 +796,10 @@ class Validation
 	/**
 	 * Validates the required fields, adding any missing fields to the messages array
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkRequiredFields(mixed &$messages): void
+	private function checkRequiredFields(array &$messages): void
 	{
 		foreach ($this->required_fields as $required_field) {
 			if (!self::hasValue($required_field)) {
@@ -814,10 +815,10 @@ class Validation
 	/**
 	 * Runs all valid-values rules
 	 *
-	 * @param  array &$messages  The messages to display to the user
+	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
 	 */
-	private function checkValidValuesRules(mixed &$messages): void
+	private function checkValidValuesRules(array &$messages): void
 	{
 		foreach ($this->valid_values_rules as $field => $valid_values) {
 			$value = Request::get($field);
@@ -835,8 +836,7 @@ class Validation
 	/**
 	 * Joins a multi-dimensional array recursively
 	 *
-	 * @param string $glue    The string to join the array elements with
-	 * @param array  $values  The array of values to join together
+	 * @param array<array-key, mixed> $values  The array of values to join together
 	 * @return string  The joined array
 	 */
 	private function joinRecursive(string $glue, array $values): string
@@ -846,7 +846,7 @@ class Validation
 			if (is_array($value)) {
 				$joined[] = '(' . $this->joinRecursive($glue, $value) . ')';
 			} else {
-				$joined[] = $value;
+				$joined[] = self::stringValue($value);
 			}
 		}
 
@@ -890,8 +890,8 @@ class Validation
 	/**
 	 * Reorders an array of messages based on the requested order
 	 *
-	 * @param  array  $messages  An array of the messages
-	 * @return array  The reordered messages
+	 * @param  array<string, string>  $messages  An array of the messages
+	 * @return array<string, string>  The reordered messages
 	 */
 	private function reorderMessages(array $messages): array
 	{
@@ -934,11 +934,7 @@ class Validation
 	 */
 	public function overrideFieldName(string $field, ?string $name=NULL): Validation
 	{
-		if (is_array($field)) {
-			$this->field_names = array_merge($this->field_names, $field);
-		} else {
-			$this->field_names[$field] = $name;
-		}
+		$this->field_names[$field] = $name;
 
 		return $this;
 	}
@@ -950,15 +946,21 @@ class Validation
 	 * All string comparisons during the reordering process are done in a
 	 * case-insensitive manner.
 	 *
-	 * @param  string $match    The string match to order first
-	 * @param  string $match_2  The string match to order second
+	 * @param  string      $match    The string match to order first
+	 * @param  string|null $match_2  The string match to order second
+	 * @param  string|null ...$matches  Additional matches
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function setMessageOrder(string $match, ?string $match_2=NULL): Validation
+	public function setMessageOrder(string $match, ?string $match_2=NULL, ?string ...$matches): Validation
 	{
-		$args = func_get_args();
-		if (sizeof($args) == 1 && is_array($args[0])) {
-			$args = $args[0];
+		$args = array($match);
+		if ($match_2 !== NULL) {
+			$args[] = $match_2;
+		}
+		foreach ($matches as $m) {
+			if ($m !== NULL) {
+				$args[] = $m;
+			}
 		}
 
 		uasort($args, array(self::class, 'sortMessageMatches'));
@@ -975,7 +977,7 @@ class Validation
 	 *
 	 * @param  boolean $return_messages     If an array of validation messages should be returned instead of an exception being thrown
 	 * @param  boolean $remove_field_names  If field names should be removed from the returned messages, leaving just the message itself
-	 * @return ?array  NULL when validation passes, otherwise an array of validation messages when $return_messages is TRUE
+	 * @return ?array<string, string>  NULL when validation passes, otherwise an array of validation messages when $return_messages is TRUE
 	 */
 	public function validate(bool $return_messages=FALSE, bool $remove_field_names=FALSE): ?array
 	{
@@ -1006,25 +1008,27 @@ class Validation
 		$this->checkCallbackRules($messages);
 
 		if ($this->regex_replacements) {
-			$messages = preg_replace(
-				array_keys($this->regex_replacements),
-				array_values($this->regex_replacements),
-				$messages
-			);
+			$regex_search  = array_keys($this->regex_replacements);
+			$regex_replace = array_values($this->regex_replacements);
+			foreach ($messages as $key => $message) {
+				$messages[$key] = preg_replace($regex_search, $regex_replace, $message) ?? $message;
+			}
 		}
 		if ($this->string_replacements) {
-			$messages = str_replace(
-				array_keys($this->string_replacements),
-				array_values($this->string_replacements),
-				$messages
-			);
+			$string_search  = array_keys($this->string_replacements);
+			$string_replace = array_values($this->string_replacements);
+			foreach ($messages as $key => $message) {
+				$messages[$key] = str_replace($string_search, $string_replace, $message);
+			}
 		}
 
 		$messages = $this->reorderMessages($messages);
 
 		if ($return_messages) {
 			if ($remove_field_names) {
-				$messages = ValidationException::removeFieldNames($messages);
+				foreach ($messages as $key => $message) {
+					$messages[$key] = ValidationException::removeFieldName($message);
+				}
 			}
 			return $messages;
 		}
