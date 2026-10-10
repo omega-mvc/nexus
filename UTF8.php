@@ -48,7 +48,7 @@ class UTF8
 	/**
 	 * All lowercase UTF-8 characters mapped to uppercase characters
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $lower_to_upper = array(
 		'a' => 'A', 'b' => 'B', 'c' => 'C', 'd' => 'D', 'e' => 'E', 'f' => 'F',
@@ -76,8 +76,8 @@ class UTF8
 		'ɨ' => 'Ɨ', 'ƙ' => 'Ƙ', 'ɯ' => 'Ɯ', 'ɲ' => 'Ɲ', 'ɵ' => 'Ɵ', 'ơ' => 'Ơ',
 		'ƣ' => 'Ƣ', 'ƥ' => 'Ƥ', 'ƨ' => 'Ƨ', 'ʃ' => 'Ʃ', 'ƭ' => 'Ƭ', 'ʈ' => 'Ʈ',
 		'ư' => 'Ư', 'ʊ' => 'Ʊ', 'ʋ' => 'Ʋ', 'ƴ' => 'Ƴ', 'ƶ' => 'Ƶ', 'ʒ' => 'Ʒ',
-		'ƹ' => 'Ƹ', 'ƽ' => 'Ƽ', 'ǆ' => 'Ǆ', 'ǆ' => 'ǅ', 'ǉ' => 'Ǉ', 'ǉ' => 'ǈ',
-		'ǌ' => 'Ǌ', 'ǌ' => 'ǋ', 'ǎ' => 'Ǎ', 'ǐ' => 'Ǐ', 'ǒ' => 'Ǒ', 'ǔ' => 'Ǔ',
+		'ƹ' => 'Ƹ', 'ƽ' => 'Ƽ', 'ǆ' => 'ǅ', 'ǉ' => 'ǈ',
+		'ǌ' => 'ǋ', 'ǎ' => 'Ǎ', 'ǐ' => 'Ǐ', 'ǒ' => 'Ǒ', 'ǔ' => 'Ǔ',
 		'ǖ' => 'Ǖ', 'ǘ' => 'Ǘ', 'ǚ' => 'Ǚ', 'ǜ' => 'Ǜ', 'ǟ' => 'Ǟ', 'ǡ' => 'Ǡ',
 		'ǣ' => 'Ǣ', 'ǥ' => 'Ǥ', 'ǧ' => 'Ǧ', 'ǩ' => 'Ǩ', 'ǫ' => 'Ǫ', 'ǭ' => 'Ǭ',
 		'ǯ' => 'Ǯ', 'ǳ' => 'Ǳ', 'ǵ' => 'Ǵ', 'ǻ' => 'Ǻ', 'ǽ' => 'Ǽ', 'ǿ' => 'Ǿ',
@@ -168,7 +168,7 @@ class UTF8
 	/**
 	 * All lowercase UTF-8 characters not properly handled by [http://php.net/mb_strtoupper mb_strtoupper()] mapped to uppercase characters
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $mb_lower_to_upper_fix = array(
 		'ɘ' => 'Ǝ', 'ǲ' => 'Ǳ', 'ა' => 'Ⴀ', 'ბ' => 'Ⴁ', 'გ' => 'Ⴂ', 'დ' => 'Ⴃ',
@@ -187,7 +187,7 @@ class UTF8
 	/**
 	 * All uppercase UTF-8 characters not properly handled by [http://php.net/mb_strtolower mb_strtolower()] mapped to lowercase characters
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $mb_upper_to_lower_fix = array(
 		'ǝ' => 'ɘ', 'ǅ' => 'ǆ', 'ǈ' => 'ǉ', 'ǋ' => 'ǌ', 'Ⴀ' => 'ა', 'Ⴁ' => 'ბ',
@@ -211,7 +211,7 @@ class UTF8
 	/**
 	 * All uppercase UTF-8 characters mapped to lowercase characters
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $upper_to_lower = array(
 		'A' => 'a', 'B' => 'b', 'C' => 'c', 'D' => 'd', 'E' => 'e', 'F' => 'f',
@@ -342,7 +342,7 @@ class UTF8
 	 *  - Letterlike symbols
 	 *  - Number Forms
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $utf8_to_ascii = array(
 		// Latin-1 Supplement
@@ -519,6 +519,17 @@ class UTF8
 	 */
 	static private ?bool $mbstring_available = NULL;
 
+	/**
+	 * Maps the ::pad() type names to the corresponding PHP padding constants
+	 *
+	 * @var array<string, int>
+	 */
+	static private array $pad_types = array(
+		'left'  => STR_PAD_LEFT,
+		'right' => STR_PAD_RIGHT,
+		'both'  => STR_PAD_BOTH
+	);
+
 
 	/**
 	 * Maps UTF-8 ASCII-based latin characters, puntuation, symbols and number forms to ASCII
@@ -551,7 +562,7 @@ class UTF8
 		}
 
 		$string = strtr($string, self::$utf8_to_ascii);
-		return preg_replace('#[^\x00-\x7F]#', '', $string);
+		return preg_replace('#[^\x00-\x7F]#', '', $string) ?? $string;
 	}
 
 
@@ -579,6 +590,16 @@ class UTF8
 			$unicode_code_point = hexdec($unicode_code_point);
 		}
 
+		if (!is_int($unicode_code_point)) {
+			if (!is_numeric($unicode_code_point)) {
+				throw new ProgrammerException(
+					'The code point specified, %s, is invalid.',
+					$unicode_code_point
+				);
+			}
+			$unicode_code_point = (int) $unicode_code_point;
+		}
+
 		$bin = decbin($unicode_code_point);
 		$digits = strlen($bin);
 
@@ -586,28 +607,28 @@ class UTF8
 
 		// One byte characters
 		if ($digits <= 7) {
-			$first = chr(bindec($bin));
+			$first = pack('C', bindec($bin));
 
 		// Two byte characters
 		} elseif ($digits <= 11) {
-			$first  = chr(bindec('110' . str_pad(substr($bin, 0, -6), 5, '0', STR_PAD_LEFT)));
-			$second = chr(bindec('10' . substr($bin, -6)));
+			$first  = pack('C', bindec('110' . str_pad(substr($bin, 0, -6), 5, '0', STR_PAD_LEFT)));
+			$second = pack('C', bindec('10' . substr($bin, -6)));
 
 		// Three byte characters
 		} elseif ($digits <= 16) {
-			$first  = chr(bindec('1110' . str_pad(substr($bin, 0, -12), 4, '0', STR_PAD_LEFT)));
-			$second = chr(bindec('10' . substr($bin, -12, -6)));
-			$third  = chr(bindec('10' . substr($bin, -6)));
+			$first  = pack('C', bindec('1110' . str_pad(substr($bin, 0, -12), 4, '0', STR_PAD_LEFT)));
+			$second = pack('C', bindec('10' . substr($bin, -12, -6)));
+			$third  = pack('C', bindec('10' . substr($bin, -6)));
 
 		// Four byte characters
 		} elseif ($digits <= 21) {
-			$first  = chr(bindec('11110' . str_pad(substr($bin, 0, -18), 3, '0', STR_PAD_LEFT)));
-			$second = chr(bindec('10' . substr($bin, -18, -12)));
-			$third  = chr(bindec('10' . substr($bin, -12, -6)));
-			$fourth = chr(bindec('10' . substr($bin, -6)));
+			$first  = pack('C', bindec('11110' . str_pad(substr($bin, 0, -18), 3, '0', STR_PAD_LEFT)));
+			$second = pack('C', bindec('10' . substr($bin, -18, -12)));
+			$third  = pack('C', bindec('10' . substr($bin, -12, -6)));
+			$fourth = pack('C', bindec('10' . substr($bin, -6)));
 		}
 
-		$ord = ord($first);
+		$ord = ord($first ?? '');
 		if ($digits > 21 || $ord == 0xC0 || $ord == 0xC1 || $ord > 0xF4) {
 			throw new ProgrammerException(
 				'The code point specified, %s, is invalid.',
@@ -615,19 +636,23 @@ class UTF8
 			);
 		}
 
-		return $first . $second . $third . $fourth;
+		return $first . ($second ?? '') . ($third ?? '') . ($fourth ?? '');
 	}
 
 
 	/**
 	 * Removes any invalid UTF-8 characters from a string or array of strings
 	 *
-	 * @param  array|string $value  The string or array of strings to clean
-	 * @return string  The cleaned string
+	 * @param  mixed $value  The string or array of strings to clean
+	 * @return ($value is array ? array<array-key, mixed> : string)  The cleaned string
 	 */
-	static public function clean(mixed $value): string
+	static public function clean(mixed $value): array|string
 	{
 		if (!is_array($value)) {
+			if (!is_scalar($value) && $value !== NULL) {
+				throw new ProgrammerException('The value to clean must be a string or an array of strings');
+			}
+			$value = (string) $value;
 			self::checkMbString();
 			if (self::$mbstring_available) {
 				$old_sub = ini_get('mbstring.substitute_character');
@@ -641,7 +666,7 @@ class UTF8
 				self::$can_ignore_invalid = !in_array(strtolower(ICONV_IMPL), array('unknown', 'ibm iconv'));
 			}
 			Core::startErrorCapture(E_NOTICE);
-			$value = self::iconv('UTF-8', 'UTF-8' . (self::$can_ignore_invalid ? '//IGNORE' : ''), (string) $value);
+			$value = self::iconv('UTF-8', 'UTF-8' . (self::$can_ignore_invalid ? '//IGNORE' : ''), $value);
 			Core::stopErrorCapture();
 			return $value;
 		}
@@ -751,12 +776,12 @@ class UTF8
 	 *
 	 * @param  string  $string     The string to explode
 	 * @param  string  $delimiter  The string to explode on. If `NULL` or `''` this method will return one character per array index.
-	 * @return array  The exploded string
+	 * @return array<int, string>  The exploded string
 	 */
 	static public function explode(string $string, ?string $delimiter=NULL): array
 	{
 		// If a delimiter was passed, we just do an explode
-		if ($delimiter || (!$delimiter && is_numeric($delimiter))) {
+		if ($delimiter !== NULL && $delimiter !== '') {
 			return explode($delimiter, $string);
 		}
 
@@ -778,7 +803,17 @@ class UTF8
 	 */
 	static private function iconv(string $in_charset, string $out_charset, string $string): string
 	{
-		return iconv($in_charset, $out_charset, $string);
+		$result = iconv($in_charset, $out_charset, $string);
+
+		if ($result === FALSE) {
+			throw new ProgrammerException(
+				'The string could not be converted from %s to %s',
+				$in_charset,
+				$out_charset
+			);
+		}
+
+		return $result;
 	}
 
 
@@ -869,18 +904,31 @@ class UTF8
 	 */
 	static public function ireplace(string $string, mixed $search, mixed $replace): string
 	{
+		$search = self::toStringOrStrings($search);
+
 		if (is_array($search)) {
-			foreach ($search as &$needle) {
-				$needle = '#' . preg_quote($needle, '#') . '#ui';
+			$patterns = array();
+			foreach ($search as $needle) {
+				$patterns[] = '#' . preg_quote($needle, '#') . '#ui';
 			}
+			$search = $patterns;
 		} else {
 			$search = '#' . preg_quote($search, '#') . '#ui';
 		}
-		return preg_replace(
-			$search,
-			strtr($replace, array('\\' => '\\\\', '$' => '\\$')),
-			$string
-		);
+
+		$replace = self::toStringOrStrings($replace);
+
+		if (is_array($replace)) {
+			$replacements = array();
+			foreach ($replace as $replacement) {
+				$replacements[] = strtr($replacement, array('\\' => '\\\\', '$' => '\\$'));
+			}
+			$replace = $replacements;
+		} else {
+			$replace = strtr($replace, array('\\' => '\\\\', '$' => '\\$'));
+		}
+
+		return preg_replace($search, $replace, $string) ?? $string;
 	}
 
 
@@ -945,6 +993,10 @@ class UTF8
 
 		$pos = strpos($lower_haystack, $lower_needle);
 
+		if ($pos === FALSE) {
+			$pos = 0;
+		}
+
 		if ($before_needle) {
 			return substr($haystack, 0, $pos);
 		}
@@ -970,7 +1022,8 @@ class UTF8
 		}
 
 		if (function_exists('iconv_strlen')) {
-			return iconv_strlen($string, 'UTF-8');
+			$length = iconv_strlen($string, 'UTF-8');
+			return $length === FALSE ? 0 : $length;
 		}
 
 		if (function_exists('utf8_decode')) {
@@ -978,7 +1031,8 @@ class UTF8
 		}
 
 		// Last-resort fallback for environments without mbstring, iconv or utf8_decode
-		return preg_match_all('#[\x00-\x7F]|[\xC0-\xFF][\x80-\xBF]+#', $string);
+		$length = preg_match_all('#[\x00-\x7F]|[\xC0-\xFF][\x80-\xBF]+#', $string);
+		return $length === FALSE ? 0 : $length;
 	}
 
 
@@ -1018,14 +1072,14 @@ class UTF8
 	 */
 	static public function ltrim(string $string, ?string $charlist=NULL): string
 	{
-		if (strlen($charlist) === 0) {
+		if ($charlist === NULL || $charlist === '') {
 			return ltrim($string);
 		}
 
 		$search = preg_quote($charlist, '#');
 		$search = str_replace('-', '\-', $search);
 		$search = str_replace('\.\.', '-', $search);
-		return preg_replace('#^[' . $search . ']+#Du', '', $string);
+		return preg_replace('#^[' . $search . ']+#Du', '', $string) ?? $string;
 	}
 
 
@@ -1067,6 +1121,7 @@ class UTF8
 	{
 		$b       = array_map('ord', str_split($character));
 		$invalid = FALSE;
+		$bin     = '';
 
 		switch (strlen($character)) {
 			case 1:
@@ -1124,7 +1179,7 @@ class UTF8
 			);
 		}
 
-		$hex = strtoupper(dechex(bindec($bin)));
+		$hex = strtoupper(dechex((int) bindec($bin)));
 		return 'U+' . str_pad($hex, 4, '0', STR_PAD_LEFT);
 	}
 
@@ -1151,12 +1206,7 @@ class UTF8
 
 		// We get better performance falling back for ASCII strings
 		if (!self::detect($string) && !self::detect($pad_string)) {
-			static $type_map = array(
-				'left'  => STR_PAD_LEFT,
-				'right' => STR_PAD_RIGHT,
-				'both'  => STR_PAD_BOTH
-			);
-			return str_pad($string, $pad_length, $pad_string, $type_map[$pad_type]);
+			return str_pad($string, $pad_length, $pad_string, self::$pad_types[$pad_type]);
 		}
 
 
@@ -1178,7 +1228,10 @@ class UTF8
 
 			// For pad strings over 1 characters long, they may be too long to fit
 			if ($pad_to_length - $padded < $pad_string_length) {
-				$pad_string = self::sub($pad_string, 0, $pad_to_length - $padded);
+				$trimmed = self::sub($pad_string, 0, $pad_to_length - $padded);
+				if (is_string($trimmed)) {
+					$pad_string = $trimmed;
+				}
 			}
 
 			switch (($pad_type != 'both') ? $pad_type : $next_side) {
@@ -1231,6 +1284,34 @@ class UTF8
 
 
 	/**
+	 * Converts a search or replace value to a string or an array of strings
+	 *
+	 * @param  mixed  $value  The value to convert
+	 * @return string|array<int, string>  The string or array of strings
+	 */
+	static private function toStringOrStrings(mixed $value): string|array
+	{
+		if (is_string($value)) {
+			return $value;
+		}
+
+		if (!is_array($value)) {
+			throw new ProgrammerException('The values to search for or replace with must be strings or arrays of strings');
+		}
+
+		$strings = array();
+		foreach ($value as $element) {
+			if (!is_scalar($element)) {
+				throw new ProgrammerException('The values to search for or replace with must be strings or arrays of strings');
+			}
+			$strings[] = (string) $element;
+		}
+
+		return $strings;
+	}
+
+
+	/**
 	 * Replaces matching parts of the string
 	 *
 	 * If `$search` and `$replace` are both arrays and `$replace` is shorter,
@@ -1245,7 +1326,11 @@ class UTF8
 	 */
 	static public function replace(string $string, mixed $search, mixed $replace): string
 	{
-		return str_replace($search, $replace, $string);
+		return str_replace(
+			self::toStringOrStrings($search),
+			self::toStringOrStrings($replace),
+			$string
+		);
 	}
 
 
@@ -1348,14 +1433,14 @@ class UTF8
 	 */
 	static public function rtrim(string $string, ?string $charlist=NULL): string
 	{
-		if (strlen($charlist) === 0) {
+		if ($charlist === NULL || $charlist === '') {
 			return rtrim($string);
 		}
 
 		$search = preg_quote($charlist, '#');
 		$search = str_replace('-', '\-', $search);
 		$search = str_replace('\.\.', '-', $search);
-		return preg_replace('#[' . $search . ']+$#Du', '', $string);
+		return preg_replace('#[' . $search . ']+$#Du', '', $string) ?? $string;
 	}
 
 
@@ -1470,14 +1555,14 @@ class UTF8
 	 */
 	static public function trim(string $string, ?string $charlist=NULL): string
 	{
-		if (strlen($charlist) === 0) {
+		if ($charlist === NULL || $charlist === '') {
 			return trim($string);
 		}
 
 		$search = preg_quote($charlist, '#');
 		$search = str_replace('-', '\-', $search);
 		$search = str_replace('\.\.', '-', $search);
-		return preg_replace('#^[' . $search . ']+|[' . $search . ']+$#Du', '', $string);
+		return preg_replace('#^[' . $search . ']+|[' . $search . ']+$#Du', '', $string) ?? $string;
 	}
 
 
@@ -1489,7 +1574,10 @@ class UTF8
 	 */
 	static public function ucfirst(string $string): string
 	{
-		return self::upper(self::sub($string, 0, 1)) . self::sub($string, 1);
+		$first = self::sub($string, 0, 1);
+		$rest  = self::sub($string, 1);
+
+		return self::upper(is_string($first) ? $first : '') . (is_string($rest) ? $rest : '');
 	}
 
 
@@ -1508,14 +1596,14 @@ class UTF8
 			'#(?<=^|\s|[\x{2000}-\x{200A}]|/|-|\(|\[|\{|\||"|^\'|\s\'|‘|“)(.)#u',
 			array(self::class, 'ucwordsCallback'),
 			$string
-		);
+		) ?? $string;
 	}
 
 
 	/**
 	 * Handles converting a character to uppercase for ::ucwords()
 	 *
-	 * @param array $match  The regex match from ::ucwords()
+	 * @param array<int, string> $match  The regex match from ::ucwords()
 	 * @return string  The uppercase character
 	 */
 	static private function ucwordsCallback(array $match): string
@@ -1567,7 +1655,11 @@ class UTF8
 			return wordwrap($string, $width, $break, $cut);
 		}
 
-		$words = preg_split('#(?<=\s|[\x{2000}-\x{200A}])#ue', $string);
+		$words = preg_split('#(?<=\s|[\x{2000}-\x{200A}])#u', $string);
+
+		if ($words === FALSE) {
+			return $string;
+		}
 
 		$output = '';
 
@@ -1578,9 +1670,11 @@ class UTF8
 			// Shorten up words that are too long
 			while ($cut && $word_len > $width) {
 				$output  .= $break;
-				$output  .= self::sub($word, 0, $width);
+				$segment  = self::sub($word, 0, $width);
+				$output  .= is_string($segment) ? $segment : '';
 				$line_len = $width;
-				$word	  = self::sub($word, $width);
+				$remainder = self::sub($word, $width);
+				$word	  = is_string($remainder) ? $remainder : '';
 				$word_len = self::len($word);
 			}
 
