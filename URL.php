@@ -249,7 +249,7 @@ class URL
 	 * contain any parameters that are from rewrites.
 	 *
 	 * @param  string|array  $parameter  The query string parameter
-	 * @param  string|array  $value      The value to set the parameter to
+	 * @param  string|int|float|array  $value      The value to set the parameter to
 	 * @return string  The full query string with the parameter replaced, first char is `?`
 	 */
 	static public function replaceInQueryString(mixed $parameter, mixed $value): string
