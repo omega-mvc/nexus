@@ -14,13 +14,15 @@ declare(strict_types=1);
  * @changes    1.0.0b3  Added the `$remove_zero_fraction` parameter to ::format() [wb, 2010-06-09]
  * @changes    1.0.0b2  Fixed a bug with calling ::format() when a format callback is set, fixed `NULL` `$element` handling in ::getCurrencyInfo() [wb, 2009-03-24]
  * @changes    1.0.0b   The initial implementation [wb, 2008-08-10]
+ *
+ * @phpstan-type MoneyCurrency array<string, int|string>
  */
 class Money
 {
 	/**
-	 * The number of decimal places to use for values
+	 * The information for each defined currency
 	 *
-	 * @var integer
+	 * @var array<string, MoneyCurrency>
 	 */
 	static private array $currencies = array(
 		'USD' => array(
@@ -77,7 +79,7 @@ class Money
 	/**
 	 * Lists all of the defined currencies
 	 *
-	 * @return array  The 3 letter ISO codes for all of the defined currencies
+	 * @return array<int, string>  The 3 letter ISO codes for all of the defined currencies
 	 */
 	static public function getCurrencies(): array
 	{
@@ -90,7 +92,7 @@ class Money
 	 *
 	 * @param string  $iso_code  The ISO code (three letters, e.g. `'USD'`) for the currency
 	 * @param string  $element   The element to retrieve: `'name'`, `'symbol'`, `'precision'`, `'value'`
-	 * @return mixed  An associative array of the currency info, or the element specified
+	 * @return ($element is null ? MoneyCurrency : ($element is 'precision' ? int : string))  An associative array of the currency info, or the element specified
 	 */
 	static public function getCurrencyInfo(string $iso_code, ?string $element=NULL): mixed
 	{
@@ -106,24 +108,32 @@ class Money
 			return self::$currencies[$iso_code];
 		}
 
-		if (!isset(self::$currencies[$iso_code][$element])) {
+		$currency_info = self::$currencies[$iso_code];
+
+		if (!isset($currency_info[$element])) {
 			throw new ProgrammerException(
 				'The element specified, %1$s, is not valid. Must be one of: %2$s.',
 				$element,
-				join(', ', array_keys(self::$currencies[$iso_code]))
+				join(', ', array_keys($currency_info))
 			);
 		}
 
-		return self::$currencies[$iso_code][$element];
+		$value = $currency_info[$element];
+
+		if ($element === 'precision') {
+			return (int) $value;
+		}
+
+		return (string) $value;
 	}
 
 
 	/**
 	 * Gets the default currency
 	 *
-	 * @return string  The ISO code of the default currency
+	 * @return string|null  The ISO code of the default currency
 	 */
-	static public function getDefaultCurrency(): string
+	static public function getDefaultCurrency(): ?string
 	{
 		return self::$default_currency;
 	}
@@ -138,7 +148,7 @@ class Money
 	static public function registerFormatCallback(callable $callback): void
 	{
 		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
-			$callback = explode('::', $callback);
+			$callback = Closure::fromCallable($callback);
 		}
 		self::$format_callback = $callback;
 	}
@@ -153,7 +163,7 @@ class Money
 	static public function registerUnformatCallback(callable $callback): void
 	{
 		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
-			$callback = explode('::', $callback);
+			$callback = Closure::fromCallable($callback);
 		}
 		self::$unformat_callback = $callback;
 	}
@@ -205,7 +215,7 @@ class Money
 	/**
 	 * The raw monetary value
 	 *
-	 * @var Number
+	 * @var \Number
 	 */
 	private Number $amount;
 
@@ -222,8 +232,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$amount` is not a valid number/monetary value
 	 *
-	 * @param  Number|string $amount    The monetary value to represent, should never be a float since those are imprecise
-	 * @param  string         $currency  The currency ISO code (three letters, e.g. `'USD'`) for this value
+	 * @param  \Number|string $amount    The monetary value to represent, should never be a float since those are imprecise
+	 * @param  string|null    $currency  The currency ISO code (three letters, e.g. `'USD'`) for this value
 	 * @return Money
 	 */
 	public function __construct(mixed $amount, mixed $currency=NULL)
@@ -260,6 +270,13 @@ class Money
 			);
 		}
 
+		if (!is_int($amount) && !is_float($amount) && !is_string($amount)) {
+			throw new ProgrammerException(
+				'The amount specified, %s, is not a valid number',
+				get_debug_type($amount)
+			);
+		}
+
 		$this->amount = new Number($amount, $precision);
 	}
 
@@ -270,7 +287,7 @@ class Money
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: $this, 1: string}  The callback for the method requested
 	 */
 	public function __get(mixed $method)
 	{
@@ -315,13 +332,16 @@ class Money
 	 *
 	 * @throws ValidationException  When one of the ratios is not a number
 	 *
-	 * @param  Number|string $ratio1  The ratio of the first amount to this amount
-	 * @param  Number|string $ratio2  The ratio of the second amount to this amount
-	 * @return array  Money objects each with the appropriate ratio of the current amount
+	 * @param  \Number|string $ratio1  The ratio of the first amount to this amount
+	 * @param  \Number|string $ratio2  The ratio of the second amount to this amount
+	 * @return array<int, Money>  Money objects each with the appropriate ratio of the current amount
 	 */
 	public function allocate(mixed $ratio1, mixed $ratio2): array
 	{
-		$ratios = func_get_args();
+		$ratios = array_map(
+			static fn(mixed $ratio): \Number|string => self::normalizeNumberInput($ratio),
+			func_get_args()
+		);
 
 		$total = new Number('0', 10);
 		foreach ($ratios as $ratio) {
@@ -426,7 +446,7 @@ class Money
 	public function format(bool $remove_zero_fraction=FALSE): string
 	{
 		if (self::$format_callback !== NULL) {
-			return call_user_func(self::$format_callback, $this->amount, $this->currency, $remove_zero_fraction);
+			return self::stringify(call_user_func(self::$format_callback, $this->amount, $this->currency, $remove_zero_fraction));
 		}
 
 		// We can't use number_format() since it takes a float and we have a
@@ -464,7 +484,7 @@ class Money
 	/**
 	 * Returns the Number object representing the amount
 	 *
-	 * @return Number  The amount of this monetary value
+	 * @return \Number  The amount of this monetary value
 	 */
 	public function getAmount(): Number
 	{
@@ -548,7 +568,7 @@ class Money
 	 *
 	 * @throws ValidationException  When `$money` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $money  The value to convert to an Money object
+	 * @param  mixed $money  The value to convert to an Money object
 	 * @return Money  The converted value
 	 */
 	private function makeMoney(mixed $money): Money
@@ -557,16 +577,22 @@ class Money
 			return $money;
 		}
 
-		if (is_object($money) && is_callable(array($money, '__toString'))) {
+		if (is_object($money)) {
+			if (!is_callable(array($money, '__toString'))) {
+				throw new ProgrammerException(
+					'The money value specified, %s, is not an Money object, integer or string and is thus is invalid for this operation',
+					get_debug_type($money)
+				);
+			}
 			$money = $money->__toString();
-		} elseif (is_numeric($money) || is_object($money)) {
+		} elseif (is_numeric($money)) {
 			$money = (string) $money;
 		}
 
 		if (!is_string($money)) {
 			throw new ProgrammerException(
 				'The money value specified, %s, is not an Money object, integer or string and is thus is invalid for this operation',
-				$money
+				get_debug_type($money)
 			);
 		}
 
@@ -585,13 +611,13 @@ class Money
 	 *
 	 * @throws ValidationException  When `$multiplicand` is not a valid number
 	 *
-	 * @param  Number|string|integer $multiplicand  The number of times to multiply this ammount - don't use a float since they are imprecise
+	 * @param  \Number|string|integer $multiplicand  The number of times to multiply this ammount - don't use a float since they are imprecise
 	 * @return Money  The product of the monetary value and the multiplicand passed
 	 */
 	public function mul(mixed $multiplicand): Money
 	{
 		$precision  = self::getCurrencyInfo($this->currency, 'precision');
-		$new_amount = $this->amount->mul($multiplicand, $precision+1)->round($precision);
+		$new_amount = $this->amount->mul(self::normalizeNumberInput($multiplicand), $precision+1)->round($precision);
 		return new Money($new_amount, $this->currency);
 	}
 
@@ -611,6 +637,52 @@ class Money
 		$precision            = self::getCurrencyInfo($this->currency, 'precision');
 		$new_amount           = $this->amount->sub($converted_subtrahend, $precision+1)->round($precision);
 		return new Money($new_amount, $this->currency);
+	}
+
+
+	/**
+	 * Normalizes a value to a \Number object or a numeric string
+	 *
+	 * @param mixed $value  The value to normalize
+	 * @return \Number|string  The normalized number value
+	 */
+	static private function normalizeNumberInput(mixed $value): \Number|string
+	{
+		if ($value instanceof Number || is_string($value)) {
+			return $value;
+		}
+
+		if (is_int($value) || is_float($value)) {
+			return (string) $value;
+		}
+
+		throw new ProgrammerException(
+			'The value specified, %s, is not a valid number',
+			get_debug_type($value)
+		);
+	}
+
+
+	/**
+	 * Converts a value to a string
+	 *
+	 * @param mixed $value  The value to convert
+	 * @return string  The string version of the value
+	 */
+	static private function stringify(mixed $value): string
+	{
+		if (is_string($value)) {
+			return $value;
+		}
+
+		if ($value instanceof Stringable || is_scalar($value) || $value === NULL) {
+			return (string) $value;
+		}
+
+		throw new ProgrammerException(
+			'The value specified, %s, can not be converted to a string',
+			get_debug_type($value)
+		);
 	}
 }
 
