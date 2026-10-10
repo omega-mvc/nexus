@@ -27,16 +27,18 @@ declare(strict_types=1);
 class ORMMoney
 {
 	/**
-	 * Columns that store currency information for a money column
+	 * Columns that store currency information for a money column, keyed by class then currency column
 	 *
-	 * @var array
+	 * @var array<string, array<string, string>>
 	 */
 	static private array $currency_columns = array();
 
 	/**
-	 * Columns that should be formatted as money
+	 * Columns that should be formatted as money, keyed by class then money column
 	 *
-	 * @var array
+	 * The value is the currency column name, or `FALSE` if there is no currency column
+	 *
+	 * @var array<string, array<string, string|false>>
 	 */
 	static private array $money_columns = array();
 
@@ -50,6 +52,17 @@ class ORMMoney
 	static private function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
+
+		$args = array_map(
+			static function (mixed $arg): bool|float|int|string|null {
+				if ($arg === NULL || is_scalar($arg)) {
+					return $arg;
+				}
+
+				return get_debug_type($arg);
+			},
+			$args
+		);
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -168,13 +181,13 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
-	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  ActiveRecord          $object            The ActiveRecord instance
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
+	 * @param  string                $method_name       The method that was called
+	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return string  The encoded monetary value
 	 */
 	static public function encodeMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
@@ -188,6 +201,16 @@ class ORMMoney
 			$value = $value->__toString();
 		}
 
+		if (!is_string($value)) {
+			if (!is_scalar($value)) {
+				throw new ProgrammerException(
+					'The value of the %s column can not be encoded since it is not a scalar value',
+					$column
+				);
+			}
+			$value = (string) $value;
+		}
+
 		return HTML::prepare($value);
 	}
 
@@ -197,9 +220,9 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  string $class      The class being inspected
-	 * @param  string $column     The column being inspected
-	 * @param  array  &$metadata  The array of metadata about a column
+	 * @param  string                $class      The class being inspected
+	 * @param  string                $column     The column being inspected
+	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
 	static public function inspect(string $class, string $column, mixed &$metadata): void
@@ -214,11 +237,11 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  ActiveRecord          $object            The ActiveRecord instance
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function makeMoneyObjects(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -247,12 +270,23 @@ class ORMMoney
 	 */
 	static public function objectifyMoney(string $class, string $column, mixed $value): mixed
 	{
-		if ((!is_string($value) && !is_numeric($value) && !is_object($value)) || !strlen(trim($value))) {
+		if (is_object($value)) {
+			if (!$value instanceof Money && !$value instanceof Stringable) {
+				return $value;
+			}
+			$string_value = (string) $value;
+		} elseif (is_string($value) || is_numeric($value)) {
+			$string_value = (string) $value;
+		} else {
+			return $value;
+		}
+
+		if (!strlen(trim($string_value))) {
 			return $value;
 		}
 
 		try {
-			return new Money($value);
+			return new Money($string_value);
 
 		// If there was some error creating the money object, just return the raw value
 		} catch (ExpectedException $e) {
@@ -266,30 +300,40 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  array  &$values          The current values
-	 * @param  array  &$old_values      The old values
-	 * @param  string $value_column     The column holding the value
-	 * @param  string $currency_column  The column holding the currency code
+	 * @param  array<array-key, mixed>  &$values          The current values
+	 * @param  array<array-key, mixed>  &$old_values      The old values
+	 * @param  string                $value_column     The column holding the value
+	 * @param  string                $currency_column  The column holding the currency code
 	 * @return void
 	 */
 	static public function objectifyMoneyWithCurrency(mixed &$values, mixed &$old_values, string $value_column, string $currency_column): void
 	{
-		if ((!is_string($values[$value_column]) && !is_numeric($values[$value_column]) && !is_object($values[$value_column])) || !strlen(trim($values[$value_column]))) {
+		$raw_value = $values[$value_column];
+
+		if (is_object($raw_value)) {
+			if (!$raw_value instanceof Money && !$raw_value instanceof Stringable) {
+				return;
+			}
+			$string_value = (string) $raw_value;
+		} elseif (is_string($raw_value) || is_numeric($raw_value)) {
+			$string_value = (string) $raw_value;
+		} else {
+			return;
+		}
+
+		if (!strlen(trim($string_value))) {
 			return;
 		}
 
 		try {
-			$value = $values[$value_column];
-			if ($value instanceof Money) {
-				$value = $value->__toString();
-			}
-
 			$currency = $values[$currency_column];
 			if (!$currency && $currency !== '0' && $currency !== 0) {
 				$currency = NULL;
+			} elseif (!is_string($currency)) {
+				$currency = is_scalar($currency) ? (string) $currency : NULL;
 			}
 
-			$value = new Money($value, $currency);
+			$value = new Money($string_value, $currency);
 
 			if (ActiveRecord::hasOld($old_values, $currency_column) && !ActiveRecord::hasOld($old_values, $value_column)) {
 				ActiveRecord::assign($values, $old_values, $value_column, $value);
@@ -311,13 +355,13 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
-	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  ActiveRecord          $object            The ActiveRecord instance
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
+	 * @param  string                $method_name       The method that was called
+	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return string  The formatted monetary value
 	 */
 	static public function prepareMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
@@ -326,17 +370,29 @@ class ORMMoney
 
 		$column = Grammar::underscorize($subject);
 		if (empty($values[$column])) {
-			return $values[$column];
+			$empty_value = $values[$column];
+
+			return is_scalar($empty_value) ? (string) $empty_value : '';
 		}
 		$value = $values[$column];
 
 		$remove_zero_fraction = FALSE;
 		if (count($parameters)) {
-			$remove_zero_fraction = $parameters[0];
+			$remove_zero_fraction = (bool) $parameters[0];
 		}
 
 		if ($value instanceof Money) {
 			$value = $value->format($remove_zero_fraction);
+		}
+
+		if (!is_string($value)) {
+			if (!is_scalar($value)) {
+				throw new ProgrammerException(
+					'The value of the %s column can not be prepared since it is not a scalar value',
+					$column
+				);
+			}
+			$value = (string) $value;
 		}
 
 		return HTML::prepare($value);
@@ -348,9 +404,9 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  string  $class                 The class to reflect
-	 * @param  array   &$signatures           The associative array of `{method name} => {signature}`
-	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
+	 * @param  string                 $class                 The class to reflect
+	 * @param  array<array-key, mixed>  &$signatures           The associative array of `{method name} => {signature}`
+	 * @param  boolean                $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
 	static public function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
@@ -446,13 +502,13 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
-	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  ActiveRecord          $object            The ActiveRecord instance
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
+	 * @param  string                $method_name       The method that was called
+	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
 	static public function setCurrencyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
@@ -488,13 +544,13 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
-	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  ActiveRecord          $object            The ActiveRecord instance
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
+	 * @param  string                $method_name       The method that was called
+	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
 	static public function setMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
@@ -515,7 +571,14 @@ class ORMMoney
 
 		ActiveRecord::assign($values, $old_values, $column, $value);
 
-		$currency_column = self::$money_columns[$class][$column];
+		$currency_column = self::$money_columns[$class][$column] ?? FALSE;
+
+		if (!is_string($currency_column)) {
+			throw new ProgrammerException(
+				'The %s column is not configured with a currency column',
+				$column
+			);
+		}
 
 		// See if we can make an Money object out of the values
 		self::objectifyMoneyWithCurrency($values, $old_values, $column, $currency_column);
@@ -535,12 +598,12 @@ class ORMMoney
 	 *
 	 * @internal
 	 *
-	 * @param  ActiveRecord $object                The ActiveRecord instance
-	 * @param  array         &$values               The current values
-	 * @param  array         &$old_values           The old values
-	 * @param  array         &$related_records      Any records related to this record
-	 * @param  array         &$cache                The cache array for the record
-	 * @param  array         &$validation_messages  An array of ordered validation messages
+	 * @param  ActiveRecord          $object                The ActiveRecord instance
+	 * @param  array<array-key, mixed>  &$values               The current values
+	 * @param  array<array-key, mixed>  &$old_values           The old values
+	 * @param  array<array-key, mixed>  &$related_records      Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache                The cache array for the record
+	 * @param  array<array-key, mixed>  &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
 	static public function validateMoneyColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
