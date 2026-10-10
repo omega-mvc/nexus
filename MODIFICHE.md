@@ -619,3 +619,21 @@
 - **Verifica**: `php -l ORMDate.php` pulito; `vendor/bin/phpstan analyse ORMDate.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 218 errori totali (da 254, −36, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot Cryptography 30, Timestamp 27, URL 25, Time 25, Date 25, Authorization 24.
+### [2026-10-10 22:03] - Fase PHPStan: Cryptography.php a 0 errori (33 file a zero)
+
+- **File**: `Cryptography.php`
+- **Intervallo righe**: `1-678`
+- **Tipo**: `tipizzazione` + `fix BC`
+- **Descrizione**:
+  - `createPrivateKeyResource()` / `createPublicKeyResource()`: tipo di ritorno cambiato da `mixed`/`resource` a `OpenSSLAsymmetricKey` (PHP 8 restituisce oggetti, non resource) e guardia su `file_get_contents()` `FALSE` → `ProgrammerException` prima di `openssl_pkey_get_private()`/`openssl_pkey_get_public()`.
+  - `publicKeyDecrypt()`: rimossi gli `isset($elements[0])` ridondanti (da `explode()` PHPStan restringe a `non-empty-list<string>`); guardia `is_string($plaintext)` dopo `openssl_open()` (by-ref misto).
+  - `publicKeyEncrypt()`: dopo `openssl_seal()` guardie su `is_array($encrypted_keys)` e `is_string($encrypted_keys[0] ?? NULL)`, `is_string($iv)`, `is_string($ciphertext)` → `EnvironmentException` (iberna i by-ref misti).
+  - `publicKeySign()` / `publicKeyVerify()`: rimosso il blocco morto `is_resource()` + `openssl_free_key()` (su PHP 8 le chiavi sono oggetti `OpenSSLAsymmetricKey` e il guard non eseguiva mai; `base64_encode($signature)` con guardia `is_string()` dopo `openssl_sign()`).
+  - `random()`: `mt_rand()` con normalizzazione `$min ?? 0` e `$max ?? mt_getrandmax()` (evita TypeError con `null`).
+  - `seedRandom()`: rimosso il ramo COM/CAPICOM (API dismessa da Microsoft, incapace di funzionare su PHP 8.4) lasciando un commento esplicativo; guardia su `stat(__FILE__)` `FALSE`; cast `(int)` spostato su `base_convert()` prima della sottrazione per rendere l'operazione intera.
+  - `symmetricKeyDecrypt()`: rimossi gli `isset($elements[0])` ridondanti.
+- **Motivazione**: chiudere l'hotspot `Cryptography` (30) senza tecniche di silenziamento; i tipi OpenSSL di PHP 8 (oggetti, by-ref misti, ritorni `string|false`) richiedono guardie esplicite.
+- **Impatto**: `basso`. Comportamento invariato su PHP 8.4; il ramo COM era già non funzionante; rimossi frame `openssl_free_key()` mai eseguiti.
+- **Verifica**: `php -l Cryptography.php` pulito; `vendor/bin/phpstan analyse Cryptography.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 188 errori totali (da 218, −30, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Timestamp 27, URL 25, Time 25, Date 25, Authorization 24, Directory 17.
