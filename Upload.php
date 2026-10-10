@@ -10,6 +10,9 @@ declare(strict_types=1);
  *
  * @package    Flourish
  * @link       http://flourishlib.com/Upload
+ * @phpstan-type UploadFileEntry array{name: string, type: string, tmp_name: string, error: int, size: int}
+ * @phpstan-type UploadImageDimensions array{min_width: int, min_height: int, max_width: int, max_height: int}
+ * @phpstan-type UploadImageRatio array{width: float, height: float, allow_excess_dimension: string}
  *
  * @version    1.0.0b15
  * @changes    1.0.0b15  Fixed an undefined variable error in ::setMaxSize() [wb, 2012-09-16]
@@ -30,6 +33,12 @@ declare(strict_types=1);
  */
 class Upload
 {
+	// The following constants allow for nice looking callbacks to static methods
+	const string check  = 'Upload::check';
+	const string count  = 'Upload::count';
+	const string filter = 'Upload::filter';
+
+
 	/**
 	 * Checks to see if the field specified is a valid file upload field
 	 *
@@ -50,16 +59,19 @@ class Upload
 			return FALSE;
 		}
 
-		if (isset($_POST[$field]) && (!isset($_SERVER['CONTENT_TYPE']) || stripos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') === FALSE)) {
-			if ($throw_exception) {
-				throw new ValidationException(
-					'Missing enctype="multipart/form-data" attribute in form tag'
-				);
+		if (isset($_POST[$field])) {
+			$content_type = $_SERVER['CONTENT_TYPE'] ?? NULL;
+			if (!is_string($content_type) || stripos($content_type, 'multipart/form-data') === FALSE) {
+				if ($throw_exception) {
+					throw new ValidationException(
+						'Missing enctype="multipart/form-data" attribute in form tag'
+					);
+				}
+				return FALSE;
 			}
-			return FALSE;
 		}
 
-		return isset($_FILES) && isset($_FILES[$field]) && is_array($_FILES[$field]);
+		return isset($_FILES[$field]) && is_array($_FILES[$field]);
 	}
 
 
@@ -80,14 +92,22 @@ class Upload
 			);
 		}
 
-		if (!is_array($_FILES[$field]['name'])) {
+		$file_array = $_FILES[$field];
+		if (!is_array($file_array)) {
+			throw new ProgrammerException(
+				'The field specified, %s, does not appear to be a file upload field',
+				$field
+			);
+		}
+
+		if (!is_array($file_array['name'])) {
 			throw new ValidationException(
 				'The field specified, %s, does not appear to be an array file upload field',
 				$field
 			);
 		}
 
-		return sizeof($_FILES[$field]['name']);
+		return sizeof($file_array['name']);
 	}
 
 
@@ -100,6 +120,10 @@ class Upload
 	static protected function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
+		$args = array_map(
+			static fn(mixed $arg): bool|float|int|string|null => ($arg === NULL || is_scalar($arg)) ? $arg : get_debug_type($arg),
+			$args
+		);
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -118,7 +142,7 @@ class Upload
 	 * @throws ValidationException  If the form is not properly configured for file uploads
 	 *
 	 * @param  string  $field  The field to filter
-	 * @return array  The indexes of the files that were uploaded
+	 * @return array<int, int|string>|NULL  The indexes of the files that were uploaded, or `NULL` if no file was uploaded
 	 */
 	static public function filter(string $field): mixed
 	{
@@ -126,20 +150,92 @@ class Upload
 		$columns = array('name', 'type', 'tmp_name', 'error', 'size');
 
 		if (!self::count($field)) {
-			return null;
+			return NULL;
 		}
 
-		foreach (array_keys($_FILES[$field]['name']) as $index) {
-			if ($_FILES[$field]['error'][$index] == UPLOAD_ERR_NO_FILE) {
+		$file_array = $_FILES[$field];
+		if (!is_array($file_array)) {
+			throw new ProgrammerException(
+				'The field specified, %s, does not appear to be a file upload field',
+				$field
+			);
+		}
+
+		$name_column  = $file_array['name'];
+		$error_column = $file_array['error'];
+		if (!is_array($name_column) || !is_array($error_column)) {
+			throw new ProgrammerException(
+				'The field specified, %s, does not appear to be an array file upload field',
+				$field
+			);
+		}
+
+		foreach (array_keys($name_column) as $index) {
+			if (($error_column[$index] ?? 0) == UPLOAD_ERR_NO_FILE) {
 				foreach ($columns as $column) {
-					unset($_FILES[$field][$column][$index]);
+					if (isset($file_array[$column]) && is_array($file_array[$column])) {
+						unset($file_array[$column][$index]);
+					}
 				}
 			} else {
 				$indexes[] = $index;
 			}
 		}
 
+		$_FILES[$field] = $file_array;
+
 		return $indexes;
+	}
+
+
+	/**
+	 * Normalizes an arbitrary `$_FILES` value to a string
+	 *
+	 * @internal
+	 *
+	 * @param  mixed $value  The value to normalize
+	 * @return string  The normalized value
+	 */
+	static private function normalizeString(mixed $value): string
+	{
+		return is_scalar($value) ? (string) $value : '';
+	}
+
+
+	/**
+	 * Normalizes an arbitrary `$_FILES` value to an integer
+	 *
+	 * @internal
+	 *
+	 * @param  mixed $value  The value to normalize
+	 * @return int  The normalized value
+	 */
+	static private function normalizeInt(mixed $value): int
+	{
+		return is_scalar($value) ? (int) $value : 0;
+	}
+
+
+	/**
+	 * Converts an arbitrary file size value to a number of bytes
+	 *
+	 * @internal
+	 *
+	 * @param  mixed $value  The size to convert
+	 * @return int  The number of bytes represented by the size
+	 */
+	static private function normalizeFileSize(mixed $value): int
+	{
+		if (is_numeric($value)) {
+			return (int) $value;
+		}
+		if (is_string($value)) {
+			return Filesystem::convertToBytes($value);
+		}
+		throw new ProgrammerException(
+			'The size specified, %s, is not a valid size',
+			get_debug_type($value)
+		);
 	}
 
 
@@ -160,14 +256,14 @@ class Upload
 	/**
 	 * The dimension restrictions for uploaded images
 	 *
-	 * @var array
+	 * @var UploadImageDimensions|array{}
 	 */
 	private array $image_dimensions = array();
 
 	/**
 	 * The dimension ratio restriction for uploaded images
 	 *
-	 * @var array
+	 * @var UploadImageRatio|array{}
 	 */
 	private array $image_ratio = array();
 
@@ -195,7 +291,7 @@ class Upload
 	/**
 	 * The mime types of files accepted
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	private array $mime_types = array();
 
@@ -213,9 +309,9 @@ class Upload
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: self, 1: string}  The callback for the method requested
 	 */
-	public function __get(mixed $method)
+	public function __get(string $method)
 	{
 		return array($this, $method);
 	}
@@ -262,37 +358,61 @@ class Upload
 	 *
 	 * @param  string $field  The field to get the file array for
 	 * @param  mixed  $index  If the field is an array file upload field, use this to specify which array index to return
-	 * @return array  The file info array from `$_FILES`
+	 * @return UploadFileEntry  The file info array from `$_FILES`
 	 */
 	private function extractFileUploadArray(string $field, mixed $index=NULL): array
 	{
+		$file_data = $_FILES[$field];
+		if (!is_array($file_data)) {
+			throw new ValidationException(
+				'The field specified, %s, does not appear to be a file upload field',
+				$field
+			);
+		}
+
 		if ($index === NULL) {
-			return $_FILES[$field];
-		}
+			$entry = $file_data;
+		} else {
+			$name_column = $file_data['name'];
+			if (!is_array($name_column)) {
+				throw new ValidationException(
+					'The field specified, %s, does not appear to be an array file upload field',
+					$field
+				);
+			}
 
-		if (!is_array($_FILES[$field]['name'])) {
-			throw new ValidationException(
-				'The field specified, %s, does not appear to be an array file upload field',
-				$field
+			if (!is_int($index) && !is_string($index)) {
+				throw new ValidationException(
+					'The index specified, %1$s, is invalid for the field %2$s',
+					$index,
+					$field
+				);
+			}
+
+			if (!isset($name_column[$index])) {
+				throw new ValidationException(
+					'The index specified, %1$s, is invalid for the field %2$s',
+					$index,
+					$field
+				);
+			}
+
+			$entry = array(
+				'name'     => $name_column[$index] ?? '',
+				'type'     => (!is_array($file_data['type'])) ? '' : ($file_data['type'][$index] ?? ''),
+				'tmp_name' => (!is_array($file_data['tmp_name'])) ? '' : ($file_data['tmp_name'][$index] ?? ''),
+				'error'    => (!is_array($file_data['error'])) ? 0 : ($file_data['error'][$index] ?? 0),
+				'size'     => (!is_array($file_data['size'])) ? 0 : ($file_data['size'][$index] ?? 0)
 			);
 		}
 
-		if (!isset($_FILES[$field]['name'][$index])) {
-			throw new ValidationException(
-				'The index specified, %1$s, is invalid for the field %2$s',
-				$index,
-				$field
-			);
-		}
-
-		$file_array = array();
-		$file_array['name']     = $_FILES[$field]['name'][$index];
-		$file_array['type']     = $_FILES[$field]['type'][$index];
-		$file_array['tmp_name'] = $_FILES[$field]['tmp_name'][$index];
-		$file_array['error']    = $_FILES[$field]['error'][$index];
-		$file_array['size']     = $_FILES[$field]['size'][$index];
-
-		return $file_array;
+		return array(
+			'name'     => self::normalizeString($entry['name'] ?? ''),
+			'type'     => self::normalizeString($entry['type'] ?? ''),
+			'tmp_name' => self::normalizeString($entry['tmp_name'] ?? ''),
+			'error'    => self::normalizeInt($entry['error'] ?? 0),
+			'size'     => self::normalizeInt($entry['size'] ?? 0)
+		);
 	}
 
 
@@ -304,7 +424,7 @@ class Upload
 	 * @param  string|Directory $directory  The directory to upload the file to
 	 * @param  string            $field      The file upload field to get the file from
 	 * @param  mixed             $index      If the field was an array file upload field, upload the file corresponding to this index
-	 * @return File|NULL  An File (or Image) object, or `NULL` if no file was uploaded
+	 * @return File|Image|NULL  A File (or Image) object, or `NULL` if no file was uploaded
 	 */
 	public function move(mixed $directory, string $field, mixed $index=NULL): mixed
 	{
@@ -352,7 +472,12 @@ class Upload
 			throw new EnvironmentException('Unable to change permissions on the uploaded file');
 		}
 
-		return Filesystem::createObject($file_name);
+		$object = Filesystem::createObject($file_name);
+		if ($object instanceof Directory) {
+			throw new ProgrammerException('The uploaded file was moved to a directory');
+		}
+
+		return $object;
 	}
 
 
@@ -367,25 +492,25 @@ class Upload
 	 */
 	public function setImageDimensions(int $min_width, int $min_height, int $max_width=0, int $max_height=0): void
 	{
-		if (!is_numeric($min_width) || $min_width < 0) {
+		if ($min_width < 0) {
 			throw new ProgrammerException(
 				'The minimum width specified, %s, is not an integer, or is less than 0',
 				$min_width
 			);
 		}
-		if (!is_numeric($min_height) || $min_height < 0) {
+		if ($min_height < 0) {
 			throw new ProgrammerException(
 				'The minimum height specified, %s, is not an integer, or is less than 0',
 				$min_height
 			);
 		}
-		if (!is_numeric($max_width) || $max_width < 0) {
+		if ($max_width < 0) {
 			throw new ProgrammerException(
 				'The maximum width specified, %s, is not an integer, or is less than 0',
 				$max_width
 			);
 		}
-		if (!is_numeric($max_height) || $max_height < 0) {
+		if ($max_height < 0) {
 			throw new ProgrammerException(
 				'The maximum height specified, %s, is not an integer, or is less than 0',
 				$max_height
@@ -415,20 +540,20 @@ class Upload
 	/**
 	 * Sets the allowable dimensions for an uploaded image
 	 *
-	 * @param  numeric $width                   The minimum ratio width
-	 * @param  numeric $height                  The minimum ratio height
+	 * @param  mixed  $width                   The minimum ratio width
+	 * @param  mixed  $height                  The minimum ratio height
 	 * @param  string  $allow_excess_dimension  The dimension that should allow for excess pixels
 	 * @return void
 	 */
 	public function setImageRatio(mixed $width, mixed $height, string $allow_excess_dimension): void
 	{
-		if (!is_numeric($width) || $width <= 0) {
+		if (!is_numeric($width) || (float) $width <= 0) {
 			throw new ProgrammerException(
 				'The width specified, %s, is not a number, or is less than or equal to 0',
 				$width
 			);
 		}
-		if (!is_numeric($height) || $height <= 0) {
+		if (!is_numeric($height) || (float) $height <= 0) {
 			throw new ProgrammerException(
 				'The height specified, %s, is not a number, or is less than or equal to 0',
 				$height
@@ -445,8 +570,8 @@ class Upload
 		}
 
 		$this->image_ratio = array(
-			'width'                  => $width,
-			'height'                 => $height,
+			'width'                  => (float) $width,
+			'height'                 => (float) $height,
 			'allow_excess_dimension' => $allow_excess_dimension
 		);
 	}
@@ -475,7 +600,13 @@ class Upload
 	public function setMaxSize(string $size): void
 	{
 		$ini_max_size = ini_get('upload_max_filesize');
-		$ini_max_size = (!is_numeric($ini_max_size)) ? Filesystem::convertToBytes($ini_max_size) : $ini_max_size;
+		if ($ini_max_size === FALSE) {
+			throw new ProgrammerException(
+				'The %s ini setting could not be found',
+				'upload_max_filesize'
+			);
+		}
+		$ini_max_size = self::normalizeFileSize($ini_max_size);
 
 		$size = Filesystem::convertToBytes($size);
 
@@ -495,8 +626,8 @@ class Upload
 	/**
 	 * Sets the file mime types accepted
 	 *
-	 * @param  array  $mime_types  The mime types to accept
-	 * @param  string $message     The message to display if the uploaded file is not one of the mime type specified
+	 * @param  array<int, string>  $mime_types  The mime types to accept
+	 * @param  string             $message     The message to display if the uploaded file is not one of the mime type specified
 	 * @return void
 	 */
 	public function setMIMETypes(array $mime_types, string $message): void
@@ -525,8 +656,6 @@ class Upload
 	 * @param  string  $field           The field the file was uploaded through
 	 * @param  mixed   $index           If the field was an array of file uploads, this specifies which one to validate
 	 * @param  boolean $return_message  If any validation error should be returned as a string instead of being thrown as an ValidationException
-	 * @param  string   $field
-	 * @param  boolean  $return_message
 	 * @return NULL|string  If `$return_message` is not `TRUE` or if no error occurs, `NULL`, otherwise a string error message
 	 */
 	public function validate(string $field, mixed $index=NULL, ?bool $return_message=NULL): mixed
@@ -551,16 +680,18 @@ class Upload
 			}
 			throw new ValidationException($error);
 		}
+
+		return NULL;
 	}
 
 
 	/**
 	 * Validates a $_FILES array against the upload configuration
 	 *
-	 * @param array $file_array  The $_FILES array for a single file
-	 * @return string  The validation error message
+	 * @param UploadFileEntry $file_array  The `$_FILES` array for a single file
+	 * @return NULL|string  The validation error message, or `NULL` if there is no error
 	 */
-	private function validateField(array $file_array): string
+	private function validateField(array $file_array): ?string
 	{
 		if (empty($file_array['name'])) {
 			if ($this->required) {
@@ -571,7 +702,7 @@ class Upload
 
 		if ($file_array['error'] == UPLOAD_ERR_FORM_SIZE || $file_array['error'] == UPLOAD_ERR_INI_SIZE) {
 			$max_size = (!empty($_POST['MAX_FILE_SIZE'])) ? $_POST['MAX_FILE_SIZE'] : ini_get('upload_max_filesize');
-			$max_size = (!is_numeric($max_size)) ? Filesystem::convertToBytes($max_size) : $max_size;
+			$max_size = self::normalizeFileSize($max_size);
 			return self::compose(
 				'The file uploaded is over the limit of %s',
 				Filesystem::formatFilesize($max_size)
@@ -593,7 +724,13 @@ class Upload
 
 		if (!empty($this->mime_types) && file_exists($file_array['tmp_name'])) {
 			$contents = file_get_contents($file_array['tmp_name'], FALSE, NULL, 0, 4096);
+			if ($contents === FALSE) {
+				$contents = NULL;
+			}
 			if (!in_array(File::determineMimeType($file_array['name'], $contents), $this->mime_types)) {
+				if ($this->mime_type_message === NULL) {
+					throw new ProgrammerException('No mime type message was specified for the uploaded file');
+				}
 				return self::compose($this->mime_type_message);
 			}
 		}
@@ -613,7 +750,12 @@ class Upload
 
 		if ($this->image_dimensions && file_exists($file_array['tmp_name'])) {
 			if (Image::isImageCompatible($file_array['tmp_name'])) {
-				list($width, $height, $other) = getimagesize($file_array['tmp_name']);
+				$image_info = getimagesize($file_array['tmp_name']);
+				if ($image_info === FALSE) {
+					throw new ValidationException('Unable to determine the dimensions of the uploaded image');
+				}
+				$width  = (int) $image_info[0];
+				$height = (int) $image_info[1];
 
 				if ($this->image_dimensions['min_width'] && $width < $this->image_dimensions['min_width']) {
 					return self::compose(
@@ -647,7 +789,12 @@ class Upload
 
 		if ($this->image_ratio && file_exists($file_array['tmp_name'])) {
 			if (Image::isImageCompatible($file_array['tmp_name'])) {
-				list($width, $height, $other) = getimagesize($file_array['tmp_name']);
+				$image_info = getimagesize($file_array['tmp_name']);
+				if ($image_info === FALSE) {
+					throw new ValidationException('Unable to determine the dimensions of the uploaded image');
+				}
+				$width  = (int) $image_info[0];
+				$height = (int) $image_info[1];
 
 				if ($this->image_ratio['allow_excess_dimension'] == 'width' && $width/$height < $this->image_ratio['width']/$this->image_ratio['height']) {
 					return self::compose(
@@ -666,6 +813,8 @@ class Upload
 				}
 			}
 		}
+
+		return NULL;
 	}
 }
 
