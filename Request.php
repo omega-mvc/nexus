@@ -84,6 +84,30 @@ class Request
 
 
 	/**
+	 * Ensures a value is a string, or throws an exception if it can not be converted
+	 *
+	 * @param mixed $value  The value to coerce
+	 * @return string  The string version of `$value`
+	 */
+	static private function coerceToString(mixed $value): string
+	{
+		if (is_string($value)) {
+			return $value;
+		}
+		if ($value === NULL || is_scalar($value)) {
+			return (string) $value;
+		}
+		if ($value instanceof Stringable) {
+			return (string) $value;
+		}
+		throw new ProgrammerException(
+			'The value of type %s can not be converted to a string',
+			get_debug_type($value)
+		);
+	}
+
+
+	/**
 	 * Recursively handles casting values
 	 *
 	 * @param mixed        $value    The value to be casted
@@ -113,7 +137,7 @@ class Request
 		}
 
 		// Iterate through array values and cast them individually
-		if (is_array($value) && ($cast_to == 'array' || $cast_to === null || ($strict_array && $level == 1))) {
+		if (is_array($value) && ($cast_to == 'array' || ($strict_array && $level == 1))) {
 			if ($value === array()) {
 				return $value;
 			}
@@ -133,13 +157,13 @@ class Request
 
 		if (!is_array($value) && !is_scalar($value) && $value !== null) {
 			if (is_object($value)) {
-				if (method_exists($value, '__toString')) {
-					$value = (string)$value;
-				} else {
-					$value = (string)$value;
+				if (!($value instanceof Stringable)) {
+					throw new ProgrammerException(
+						'The value of type %s can not be converted to a string',
+						get_debug_type($value)
+					);
 				}
-			} else {
-				$value = $value;
+				$value = (string)$value;
 			}
 		}
 
@@ -148,6 +172,13 @@ class Request
 			$value = NULL;
 
 		} elseif ($cast_to == 'date') {
+			if (!is_int($value) && !is_string($value) && $value !== NULL) {
+				throw new ProgrammerException(
+					'The value of type %s can not be cast to the %s data type',
+					get_debug_type($value),
+					'date'
+				);
+			}
 			try {
 				$value = new Date($value);
 			} catch (ValidationException $e) {
@@ -155,6 +186,13 @@ class Request
 			}
 
 		} elseif ($cast_to == 'time') {
+			if (!is_int($value) && !is_string($value) && $value !== NULL) {
+				throw new ProgrammerException(
+					'The value of type %s can not be cast to the %s data type',
+					get_debug_type($value),
+					'time'
+				);
+			}
 			try {
 				$value = new Time($value);
 			} catch (ValidationException $e) {
@@ -162,6 +200,13 @@ class Request
 			}
 
 		} elseif ($cast_to == 'timestamp') {
+			if (!is_int($value) && !is_string($value) && $value !== NULL) {
+				throw new ProgrammerException(
+					'The value of type %s can not be cast to the %s data type',
+					get_debug_type($value),
+					'timestamp'
+				);
+			}
 			try {
 				$value = new Timestamp($value);
 			} catch (ValidationException $e) {
@@ -213,8 +258,8 @@ class Request
 		self::initPutDelete();
 
 		$array_dereference = NULL;
-		if (strpos($key, '[')) {
-			$bracket_pos       = strpos($key, '[');
+		$bracket_pos       = strpos($key, '[');
+		if ($bracket_pos) {
 			$array_dereference = substr($key, $bracket_pos);
 			$key               = substr($key, 0, $bracket_pos);
 		}
@@ -255,7 +300,8 @@ class Request
 	 */
 	static public function encode(string $key, ?string $cast_to = null, mixed $default_value = null): string
 	{
-		return HTML::encode(self::get($key, $cast_to, $default_value));
+		$value = self::coerceToString(self::get($key, $cast_to, $default_value));
+		return HTML::encode($value);
 	}
 
 
@@ -278,16 +324,21 @@ class Request
 		self::$backup_files[] = $_FILES;
 
 		$_FILES = array();
-		foreach (self::$backup_files[$current_backup] as $field => $value) {
-			$matches_prefix = !$prefix || ($prefix && strpos($field, $prefix) === 0);
-			if ($matches_prefix && is_array($value) && isset($value['name'][$key])) {
-				$new_field = preg_replace($regex, '', $field);
+		$files_backup = self::$backup_files[$current_backup];
+		if (!is_array($files_backup)) {
+			throw new ProgrammerException('The backup copy of the %s superglobal can not be found', '$_FILES');
+		}
+		foreach ($files_backup as $field => $value) {
+			$field_string   = (string) $field;
+			$prefix_matches = ($prefix === '' || strpos($field_string, $prefix) === 0);
+			if ($prefix_matches && is_array($value) && is_array($value['name'] ?? NULL) && (is_int($key) || is_string($key)) && isset($value['name'][$key])) {
+				$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
 				$_FILES[$new_field]             = array();
 				$_FILES[$new_field]['name']     = $value['name'][$key];
-				$_FILES[$new_field]['type']     = $value['type'][$key];
-				$_FILES[$new_field]['tmp_name'] = $value['tmp_name'][$key];
-				$_FILES[$new_field]['error']    = $value['error'][$key];
-				$_FILES[$new_field]['size']     = $value['size'][$key];
+				$_FILES[$new_field]['type']     = is_array($value['type'] ?? NULL) ? ($value['type'][$key] ?? NULL) : NULL;
+				$_FILES[$new_field]['tmp_name'] = is_array($value['tmp_name'] ?? NULL) ? ($value['tmp_name'][$key] ?? NULL) : NULL;
+				$_FILES[$new_field]['error']    = is_array($value['error'] ?? NULL) ? ($value['error'][$key] ?? NULL) : NULL;
+				$_FILES[$new_field]['size']     = is_array($value['size'] ?? NULL) ? ($value['size'][$key] ?? NULL) : NULL;
 			}
 		}
 
@@ -301,14 +352,18 @@ class Request
 			$current_backup   = sizeof($refs['backup']);
 			$refs['backup'][] = $refs['array'];
 			$refs['array']    = array();
-			foreach ($refs['backup'][$current_backup] as $field => $value) {
-				$matches_prefix = !$prefix || ($prefix && strpos($field, $prefix) === 0);
-				if ($matches_prefix && is_array($value) && !is_null($key) && isset($value[$key])) {
-					$new_field = preg_replace($regex, '', $field);
-					$refs['array'][$new_field] = $value[$key];
-				} elseif ($matches_prefix && is_null($key)) {
-					$new_field = preg_replace($regex, '', $field);
-					$refs['array'][$new_field] = $value;
+			$backup_array     = $refs['backup'][$current_backup];
+			if (is_array($backup_array)) {
+				foreach ($backup_array as $field => $value) {
+					$field_string   = (string) $field;
+					$prefix_matches = ($prefix === '' || strpos($field_string, $prefix) === 0);
+					if ($prefix_matches && (is_int($key) || is_string($key)) && is_array($value) && isset($value[$key])) {
+						$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
+						$refs['array'][$new_field] = $value[$key];
+					} elseif ($prefix_matches && $key === NULL) {
+						$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
+						$refs['array'][$new_field] = $value;
+					}
 				}
 			}
 		}
@@ -403,8 +458,8 @@ class Request
 		$value = $default_value;
 
 		$array_dereference = NULL;
-		if (strpos($key, '[')) {
-			$bracket_pos       = strpos($key, '[');
+		$bracket_pos       = strpos($key, '[');
+		if ($bracket_pos) {
 			$array_dereference = substr($key, $bracket_pos);
 			$key               = substr($key, 0, $bracket_pos);
 		}
@@ -448,7 +503,7 @@ class Request
 	/**
 	 * Returns the HTTP `Accept-Language`s sorted by their `q` values (from high to low)
 	 *
-	 * @return array  An associative array of `{language} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
+	 * @return array<string, float>  An associative array of `{language} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
 	 */
 	static public function getAcceptLanguages(): array
 	{
@@ -459,7 +514,7 @@ class Request
 	/**
 	 * Returns the HTTP `Accept` types sorted by their `q` values (from high to low)
 	 *
-	 * @return array  An associative array of `{type} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
+	 * @return array<string, float>  An associative array of `{type} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
 	 */
 	static public function getAcceptTypes(): array
 	{
@@ -477,15 +532,14 @@ class Request
 	 *  - If `$filter` contains one or more values, but the client does not send the `Accept-Language` header, the first entry from `$filter` will be returned
 	 *  - If `$filter` contains two or more values, and two of the values have the same `q` value, the one listed first in `$filter` will be returned
 	 *
-	 * @param  array  $filter     An array of languages that are valid to return - these should be in the form `{language}-{territory}`, e.g. `en-us`
 	 * @return string|NULL|FALSE  The best language listed in the `Accept-Language` header - see method description for edge cases
 	 */
-	static public function getBestAcceptLanguage(array $filter=array()): mixed
+	static public function getBestAcceptLanguage(mixed $filter=array()): mixed
 	{
 		if (!is_array($filter)) {
 			$filter = func_get_args();
 		}
-		return self::pickBestAcceptItem('HTTP_ACCEPT_LANGUAGE', $filter);
+		return self::pickBestAcceptItem('HTTP_ACCEPT_LANGUAGE', array_values($filter));
 	}
 
 
@@ -499,15 +553,14 @@ class Request
 	 *  - If `$filter` contains one or more values, but the client does not send the `Accept` header, the first entry from `$filter` will be returned
 	 *  - If `$filter` contains two or more values, and two of the values have the same `q` value, the one listed first in `$filter` will be returned
 	 *
-	 * @param  array  $filter  An array of types that are valid to return
 	 * @return string|NULL|FALSE  The best type listed in the `Accept` header - see method description for edge cases
 	 */
-	static public function getBestAcceptType(array $filter=array()): mixed
+	static public function getBestAcceptType(mixed $filter=array()): mixed
 	{
 		if (!is_array($filter)) {
 			$filter = func_get_args();
 		}
-		return self::pickBestAcceptItem('HTTP_ACCEPT', $filter);
+		return self::pickBestAcceptItem('HTTP_ACCEPT', array_values($filter));
 	}
 
 
@@ -515,13 +568,13 @@ class Request
 	 * Gets a value from the `DELETE`/`PUT` post data, `$_POST` or `$_GET` superglobals (in that order), restricting to a specific set of values
 	 *
 	 * @param  string $key           The key to get the value of - array elements can be accessed via `[sub-key]` syntax
-	 * @param  array  $valid_values  The array of values that are permissible, if one is not selected, picks first
+	 * @param  array<int|string, mixed>  $valid_values  The array of values that are permissible, if one is not selected, picks first
 	 * @return mixed  The value
 	 */
 	static public function getValid(string $key, array $valid_values): mixed
 	{
 		settype($valid_values, 'array');
-		$valid_values = array_merge(array_unique($valid_values));
+		$valid_values = array_merge(array_unique($valid_values, SORT_REGULAR));
 		$value = self::get($key);
 		if (!in_array($value, $valid_values)) {
 			return $valid_values[0];
@@ -542,7 +595,12 @@ class Request
 		}
 
 		if (self::isPut() || self::isDelete()) {
-			parse_str(file_get_contents('php://input'), self::$put_delete);
+			$input = file_get_contents('php://input');
+			if ($input === FALSE) {
+				$input = '';
+			}
+			self::$put_delete = array();
+			parse_str($input, self::$put_delete);
 		} else {
 			self::$put_delete = array();
 		}
@@ -556,7 +614,8 @@ class Request
 	 */
 	static public function isAjax(): bool
 	{
-		return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+		$requested_with = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? NULL;
+		return is_string($requested_with) && strtolower($requested_with) == 'xmlhttprequest';
 	}
 
 
@@ -567,7 +626,8 @@ class Request
 	 */
 	static public function isDelete(): bool
 	{
-		return strtolower((string) ($_SERVER['REQUEST_METHOD'] ?? '')) == 'delete';
+		$method = $_SERVER['REQUEST_METHOD'] ?? '';
+		return is_string($method) && strtolower($method) == 'delete';
 	}
 
 
@@ -578,7 +638,8 @@ class Request
 	 */
 	static public function isGet(): bool
 	{
-		return strtolower((string) ($_SERVER['REQUEST_METHOD'] ?? '')) == 'get';
+		$method = $_SERVER['REQUEST_METHOD'] ?? '';
+		return is_string($method) && strtolower($method) == 'get';
 	}
 
 
@@ -589,7 +650,8 @@ class Request
 	 */
 	static public function isHead(): bool
 	{
-		return strtolower((string) ($_SERVER['REQUEST_METHOD'] ?? '')) == 'head';
+		$method = $_SERVER['REQUEST_METHOD'] ?? '';
+		return is_string($method) && strtolower($method) == 'head';
 	}
 
 
@@ -600,7 +662,8 @@ class Request
 	 */
 	static public function isPost(): bool
 	{
-		return strtolower((string) ($_SERVER['REQUEST_METHOD'] ?? '')) == 'post';
+		$method = $_SERVER['REQUEST_METHOD'] ?? '';
+		return is_string($method) && strtolower($method) == 'post';
 	}
 
 
@@ -611,7 +674,8 @@ class Request
 	 */
 	static public function isPut(): bool
 	{
-		return strtolower((string) ($_SERVER['REQUEST_METHOD'] ?? '')) == 'put';
+		$method = $_SERVER['REQUEST_METHOD'] ?? '';
+		return is_string($method) && strtolower($method) == 'put';
 	}
 
 
@@ -633,16 +697,19 @@ class Request
 		$globals = array(&$_GET, &$_POST, &self::$put_delete);
 
 		foreach ($globals as &$global) {
-			foreach ($global as $key => $value) {
-				if (substr($key, 0, 8) == 'action::') {
-					$found = (bool) $global['action'] = substr($key, 8);
-					unset($global[$key]);
+			if (is_array($global)) {
+				foreach ($global as $key => $value) {
+					$key_string = (string) $key;
+					if (substr($key_string, 0, 8) == 'action::') {
+						$found = (bool) $global['action'] = substr($key_string, 8);
+						unset($global[$key]);
+					}
 				}
 			}
 		}
 
 		if ($redirect && $found) {
-			URL::redirect(str_replace('%action%', $found, $redirect));
+			URL::redirect(str_replace('%action%', (string) $found, $redirect));
 		}
 	}
 
@@ -651,7 +718,7 @@ class Request
 	 * Returns the best HTTP `Accept-*` header item match (based on `q` value), optionally filtered by an array of options
 	 *
 	 * @param  string $header_name  The key in `$_SERVER` that contains the `Accept-*` header to pick the best item from
-	 * @param  array  $options      A list of supported options to pick the best from
+	 * @param  array<int, mixed> $options      A list of supported options to pick the best from
 	 * @return string|null  The best accept item, `FALSE` if an options array is specified and none are valid, `NULL` if anything is accepted
 	 */
 	static private function pickBestAcceptItem(string $header_name, array $options): ?string
@@ -669,26 +736,29 @@ class Request
 
 		if (!$options) {
 			$result = key($items);
-			if ($result === false) {
+			if ($result === NULL) {
 				return null;
 			}
 			if ($result == '*/*' || $result == '*') {
 				$result = null;
 			}
-			return is_string($result) ? $result : null;
+			return $result;
 		}
 
 		$top_q    = 0;
 		$top_item = FALSE;
 
 		foreach ($options as $option) {
-			$optionStr = is_string($option) || is_int($option) ? (string)$option : (string)$option;
+			if (!is_string($option) && !is_int($option) && !is_float($option) && !is_bool($option) && $option !== NULL) {
+				continue;
+			}
+			$optionStr = (string) $option;
 			foreach ($items as $item => $q) {
 				if ($q < $top_q) {
 					continue;
 				}
 
-				$itemStr = is_string($item) || is_int($item) ? (string)$item : (string)$item;
+				$itemStr = $item;
 
 				// Type matches have /s
 				if (strpos($itemStr, '/') !== false) {
@@ -714,7 +784,7 @@ class Request
 		if ($top_item === false) {
 			return null;
 		}
-		return is_string($top_item) ? $top_item : null;
+		return $top_item;
 	}
 
 
@@ -728,7 +798,8 @@ class Request
 	 */
 	static public function prepare(string $key, ?string $cast_to=NULL, mixed $default_value=NULL): string
 	{
-		return HTML::prepare(self::get($key, $cast_to, $default_value));
+		$value = self::coerceToString(self::get($key, $cast_to, $default_value));
+		return HTML::prepare($value);
 	}
 
 
@@ -736,7 +807,7 @@ class Request
 	 * Returns an array of values from one of the HTTP `Accept-*` headers
 	 *
 	 * @param  string $header_name  The key in `$_SERVER` to get the header value from
-	 * @return array<mixed>  An associative array of `{value} => {quality}` sorted (in a stable-fashion) from highest to lowest `q` - an empty array is returned if the header is empty
+	 * @return array<string, float>  An associative array of `{value} => {quality}` sorted (in a stable-fashion) from highest to lowest `q` - an empty array is returned if the header is empty
 	 */
 	static private function processAcceptHeader(string $header_name): array
 	{
@@ -898,13 +969,23 @@ class Request
 		$key    = __CLASS__ . '::' . $url . '::csrf_tokens';
 		$tokens = Session::get($key, array());
 
-		if (!in_array($token, $tokens)) {
+		if (!is_array($tokens)) {
+			$tokens = array();
+		}
+		$string_tokens = array();
+		foreach ($tokens as $valid_token) {
+			if (is_scalar($valid_token)) {
+				$string_tokens[] = (string) $valid_token;
+			}
+		}
+
+		if (!in_array($token, $string_tokens)) {
 			throw new ValidationException(
 				'The form submitted could not be validated as authentic, please try submitting it again'
 			);
 		}
 
-		$tokens = array_diff($tokens, array($token));;
+		$tokens = array_diff($string_tokens, array($token));
 		Session::set($key, $tokens);
 	}
 
