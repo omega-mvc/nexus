@@ -637,3 +637,15 @@
 - **Verifica**: `php -l Cryptography.php` pulito; `vendor/bin/phpstan analyse Cryptography.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 188 errori totali (da 218, −30, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot Timestamp 27, URL 25, Time 25, Date 25, Authorization 24, Directory 17.
+
+### [2026-10-11 00:18] - Fase PHPStan: Timestamp.php a 0 errori (34 file a zero)
+
+- **File**: `Timestamp.php`
+- **Intervallo righe**: `1-1074`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: tipizzate proprietà e callback; spostata la mappa delle ~450 timezone da `static` locale di `isValidTimezone()` a proprietà `static private array $valid_timezones` con docblock `array<string, bool>` (`isValidTimezone()` ora fa `isset(self::$valid_timezones[$timezone])`); docblock di `$formats` → `array<string, string>` e di `$unformat_callback` → `callable(mixed ...): mixed|null`; `callFormatCallback()`/`callUnformatCallback()` ora assegnano il risultato di `call_user_func()` e lanciano `ProgrammerException` se non è stringa; `compose()` normalizza gli args per `vsprintf`; `registerFormatCallback()`/`registerUnformatCallback()` usano `Closure::fromCallable()`; `__get(string)` con `@return array{0: $this, 1: string}`; `getFuzzyDifference()` pre-inizializza `$unit_diff`/`$units`; costruttore raffinato nel ramo stringhe/oggetti (guardia finale `is_string` → `ProgrammerException`, niente cast su `mixed`).
+- **Motivazione**: chiudere l'hotspot `Timestamp` (27) senza tecniche di silenziamento; il ritorno dinamico di `strtotime()` (l'estensione PHPStan restringe a `int` solo per stringhe relative letterali con base `int`, ma non per stringhe concatenate) richiede una guardia esplicita su `int|false`.
+- **Impatto**: `basso`. Comportamento invariato su PHP 8.4; la guardia falsificabile su `strtotime()` concatenato in `fixISOWeek()` rende esplicita una condizione che prima falliva silenziosamente (`date()` riceveva `false`).
+- **Verifica**: `php -l Timestamp.php` pulito; `vendor/bin/phpstan analyse Timestamp.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 161 errori totali (da 188, −27, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot URL 25, Time 25, Date 25, Authorization 24, Directory 17.
