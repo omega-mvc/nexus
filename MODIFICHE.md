@@ -384,3 +384,23 @@
 - **Verifica**: `php -l Grammar.php` pulito; `vendor/bin/phpstan analyse Grammar.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 769 errori totali, nessun nuovo errore introdotto nei caller `Image.php` e `ORMValidation.php`; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot ORMMoney 74, UTF8 67, Pagination 67, Upload 65, Request 64.
+
+### [2026-10-10 17:42] - Fase PHPStan: ORMMoney.php a 0 errori (23 file a zero)
+
+- **File**: `ORMMoney.php`
+- **Intervallo righe**: `1-608`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: `ORMMoney` (74 → 0), hotspot successivo a `Grammar`.
+  - Proprietà statiche tipizzate: `$currency_columns` (`array<string, array<string, string>>`, class → currency column → value column) e `$money_columns` (`array<string, array<string, string|false>>`, class → money column → currency column oppure `FALSE`).
+  - Docblock dei parametri per riferimento (`&$values`, `&$old_values`, `&$related_records`, `&$cache`, `&$parameters`, `&$metadata`, `&$signatures`, `&$validation_messages`) portati a `array<array-key, mixed>`, la stessa convenzione già usata nei file chiusi (`ORMColumn`, `ORMJSON`). Il by-ref `mixed` delle funzioni `ActiveRecord::assign()`/`ActiveRecord::hasOld()` richiede `array<array-key, mixed>` e non `array<string, mixed>`, altrimenti PHPStan perde il tipo delle chiavi e segnala `parameterByRef.type`.
+  - `compose()`: argomenti normalizzati con `array_map` a `bool|float|int|string|null` (i non-scalari diventano `get_debug_type(...)`), stesso pattern di `Database.php`/`Grammar.php`, così `vsprintf` riceve un array valido.
+  - `encodeMoneyColumn()`: valore non-`Money` normalizzato a stringa (scalari) con `ProgrammerException` per i non-scalari, prima di `HTML::prepare()`.
+  - `prepareMoneyColumn()`: ramo "empty" che restituisce `(string)` per scalari o `''` (preserva il caso `'0'`, che resta `'0'`); `$remove_zero_fraction = (bool) $parameters[0]`; valore non-`Money` normalizzato a stringa con `ProgrammerException` per i non-scalari.
+  - `objectifyMoney()` e `objectifyMoneyWithCurrency()`: la guardia composta `!is_string(...) && !is_numeric(...) && !is_object(...)` è stata ristrutturata in una normalizzazione esplicita (oggetti `Money`/`Stringable` → stringa, altri scalari numerici → stringa, il resto esce invariato) che permette di chiamare `trim()` e il costruttore `Money` con un `string`; la valuta è normalizzata a `string|null` preservando la semantica legacy (`!$currency && $currency !== '0' && $currency !== 0 → NULL`).
+  - `setMoneyColumn()`: `$currency_column` letto con `?? FALSE` e guardia `ProgrammerException` se non stringa (il metodo è registrato solo quando la currency column esiste).
+  - `reflect()`: `$signatures` tipizzato `array<array-key, mixed>`, quindi `$column` (chiave di `$money_columns`) è `string` e non `mixed` nelle concatenazioni.
+- **Motivazione**: chiudere l'hotspot `ORMMoney` (74) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi).
+- **Impatto**: `basso`. Comportamento pubblico invariato; per valori non-scalari/non-`Stringable` in una colonna money ora viene sollevata `ProgrammerException` (prima l'operazione andava in `TypeError`), coerente con lo stile di guardia adottato negli altri file.
+- **Verifica**: `php -l ORMMoney.php` pulito; `vendor/bin/phpstan analyse ORMMoney.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 695 errori totali (da 769, −74, nessun nuovo errore introdotto altrove); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot UTF8 67, Pagination 67, Upload 65, Request 64, Money 55.
