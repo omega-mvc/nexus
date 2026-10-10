@@ -368,7 +368,7 @@ class ORMOrdering
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 		$class  = get_class($object);
 		$table  = ORM::tablize($class);
 

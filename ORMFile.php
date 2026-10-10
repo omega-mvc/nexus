@@ -526,7 +526,7 @@ class ORMFile
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column   = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column   = Grammar::underscorize($subject);
 		$filename = ($values[$column] instanceof File) ? $values[$column]->getName() : '';
 		if ($filename && strpos($values[$column]->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename) !== FALSE) {
 			$filename = self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename;
@@ -669,7 +669,7 @@ class ORMFile
 	static public function prepare(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 
 		if (sizeof($parameters) > 1) {
 			throw new ProgrammerException(
@@ -735,7 +735,7 @@ class ORMFile
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 		$class  = get_class($object);
 
 		if ($values[$column] instanceof File) {
@@ -1012,7 +1012,7 @@ class ORMFile
 
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column   = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column   = Grammar::underscorize($subject);
 		$doc_root = realpath(isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '');
 
 		if (!array_key_exists(0, $parameters)) {
@@ -1151,7 +1151,7 @@ class ORMFile
 		$class = get_class($object);
 
 		list ($action, $subject) = ORM::parseMethod($method_name);
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 
 		$existing_temp_file = FALSE;
 

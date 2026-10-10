@@ -374,7 +374,7 @@ class ORMColumn
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column      = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column      = Grammar::underscorize($subject);
 		$class       = get_class($object);
 		$schema      = ORMSchema::retrieve($class);
 		$table       = ORM::tablize($class);
@@ -420,7 +420,7 @@ class ORMColumn
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 		$class  = get_class($object);
 		$table  = ORM::tablize($class);
 
@@ -542,7 +542,7 @@ class ORMColumn
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 		$value  = $values[$column];
 		$value  = is_string($value) ? $value : (is_scalar($value) ? (string) $value : '');
 
@@ -579,7 +579,7 @@ class ORMColumn
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column      = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column      = Grammar::underscorize($subject);
 		$class       = get_class($object);
 		$table       = ORM::tablize($class);
 		$schema      = ORMSchema::retrieve($class);
@@ -842,7 +842,7 @@ class ORMColumn
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 		$class  = get_class($object);
 
 		if (count($parameters) < 1) {
@@ -1053,7 +1053,7 @@ class ORMColumn
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
-		$column = Grammar::underscorize(is_string($subject) ? $subject : '');
+		$column = Grammar::underscorize($subject);
 		$value  = $values[$column];
 
 		if (

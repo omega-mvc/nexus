@@ -114,7 +114,7 @@ abstract class ActiveRecord
 	/**
 	 * Caches callbacks for methods
 	 *
-	 * @var array<string, array<string, string|false>>
+	 * @var array<string, array<string, callable(mixed ...): mixed|string|false>>
 	 */
 	static protected array $callback_cache = array();
 
@@ -161,7 +161,7 @@ abstract class ActiveRecord
 	/**
 	 * Caches callbacks for static methods
 	 *
-	 * @var array<string, array<string, string|false>>
+	 * @var array<string, array<string, callable(mixed ...): mixed|string|false>>
 	 **/
 	static protected array $static_callback_cache = array();
 
@@ -1199,12 +1199,6 @@ abstract class ActiveRecord
 
 		if (!isset(self::$method_name_cache[$method_name])) {
 			list ($action, $subject) = ORM::parseMethod($method_name);
-			if (!is_string($action) || !is_string($subject)) {
-				throw new ProgrammerException(
-					'Invalid method, %s(), called',
-					$method_name
-				);
-			}
 			if (in_array($action, array('get', 'encode', 'prepare', 'inspect', 'set'))) {
 				$subject = Grammar::underscorize($subject);
 			} else {
@@ -2850,9 +2844,7 @@ abstract class ActiveRecord
 
 		$signature_map = array();
 		foreach ($signatures as $method_name => $signature) {
-			if (is_string($method_name)) {
-				$signature_map[$method_name] = is_string($signature) ? $signature : '';
-			}
+			$signature_map[$method_name] = $signature;
 		}
 
 		return $signature_map;
