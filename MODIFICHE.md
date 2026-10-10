@@ -358,3 +358,29 @@
 - **Verifica**: `php -l Cache.php` pulito; `vendor/bin/phpstan analyse Cache.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot Grammar 79, ORMMoney 74, UTF8 67, Pagination 67, Upload 65.
+
+### [2026-10-10 17:29] - Fase PHPStan: Grammar.php a 0 errori (22 file a zero)
+
+- **File**: `Grammar.php`
+- **Intervallo righe**: `1-858`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: `Grammar` (79 → 0), hotspot successivo a `Cache`.
+  - Proprietà `$cache` tipizzata con la forma precisa `array{camelize: array{0: array<string, string>, 1: array<string, string>}, humanize: array<string, string>, pluralize: array<string, string|false>, singularize: array<string, string|false>, underscorize: array<string, string>}`.
+  - Regole tipizzate `array<string, string>`: `$camelize_rules`, `$humanize_rules`, `$plural_to_singular_rules`, `$singular_to_plural_rules`, `$underscorize_rules`.
+  - Nuova proprietà privata `$quantity_words` (`array<int, string>|null`) che sostituisce la `static $replacements` locale (le static locali restano `mixed` per PHPStan).
+  - `camelize()`: l'hack `$upper = (int)(bool) $upper` è sostituito da `$cache_key = $upper ? 1 : 0` (chiave tipizzata `0|1` per l'indice shape della cache); `preg_replace(...) ?? $string` e `preg_replace_callback(...) ?? $string`.
+  - `camelizeCallback()`: `@param array<int, string> $match`.
+  - `compose()`: gli argomenti sono normalizzati con un `array_map` che restituisce `bool|float|int|string|null` (i non-scalari diventano `get_debug_type(...)`), stesso pattern già usato in `Database.php`, così `vsprintf` riceve un `array<bool|float|int|string|null>`.
+  - `humanize()`: soggetto estratto in `$subject` e `preg_replace_callback(...) ?? $subject`.
+  - `inflectOnQuantity()`: se `$plural_form === NULL` si valida il risultato di `pluralize()` (guardia `=== FALSE` con `ProgrammerException`); dopo il `sizeof` su array, la quantità è validata con `is_numeric()` + cast `(int)` (cast legittimo su valore numerico) con `ProgrammerException` per valori non numerici; le forme in parole usano la nuova proprietà `$quantity_words`; `str_replace('%d', (string) $quantity, $output)`.
+  - `joinArray()`: `@param array<int, string> $strings`; il risultato del callback utente è validato (`is_string` → `ProgrammerException`); rimossi i `break;` irraggiungibili dopo i `return`; rimosso il `settype()` ridondante (il parametro è già `array`); `array_pop` ora tipizzato `string` nel ramo `default`.
+  - `registerJoinArrayCallback()`: il callback è memorizzato con `Closure::fromCallable($callback)`, che accetta sia le stringhe `'Classe::metodo'` sia gli array, rendendo superfluo il vecchio `explode('::', ...)` e compatibile con il tipo `callable(mixed ...): mixed`.
+  - `pluralize()`/`singularize()`: concatenazione con `preg_replace(...) ?? $singular_noun`/`?? $plural_noun`.
+  - `splitLastWord()`: `@return array{0: string, 1: string}`.
+  - `stem()`: la cascata `string|null` era causata dalla sola `preg_replace` di Step 1a, ora `?? $word`.
+  - `underscorize()`: `preg_replace(...) ?? $string` nel ramo human-friendly e nel loop di conversione camelCase.
+- **Motivazione**: chiudere l'hotspot `Grammar` (79) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi). I `?? $...` servono solo dove `preg_replace`/`preg_replace_callback` possono restituire `null`; il cast `(int)` è su un valore già validato `is_numeric`.
+- **Impatto**: `basso`. Comportamento pubblico invariato; `inflectOnQuantity()` ora solleva `ProgrammerException` per quantità non numeriche (prima comportamento indefinito), coerentemente con il contratto documentato (`int` o `array`). Il formato interno di `$join_array_callback` diventa un `Closure` (proprietà privata), nessun cambiamento osservabile.
+- **Verifica**: `php -l Grammar.php` pulito; `vendor/bin/phpstan analyse Grammar.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 769 errori totali, nessun nuovo errore introdotto nei caller `Image.php` e `ORMValidation.php`; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot ORMMoney 74, UTF8 67, Pagination 67, Upload 65, Request 64.
