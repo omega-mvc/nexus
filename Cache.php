@@ -18,6 +18,9 @@ declare(strict_types=1);
  * @changes    1.0.0b2  Fixed API calls to the memcache extension to pass the TTL as the correct parameter [wb, 2011-02-01]
  * @changes    1.0.0b   The initial implementation [wb, 2009-04-28]
  */
+/**
+ * @phpstan-type FileCacheStore array<string, array{value: string, expire: int}>
+ */
 class Cache
 {
 	/**
@@ -48,7 +51,7 @@ class Cache
 	 * )
 	 * }}}
 	 *
-	 * @var array
+	 * @var array<string, mixed>
 	 */
 	protected array $config;
 
@@ -63,7 +66,7 @@ class Cache
 	 *
 	 * Not used for apc, directory or xcache
 	 *
-	 * @var mixed
+	 * @var FileCacheStore|Database|Memcache|Memcached|Redis|null
 	 */
 	protected mixed $data_store = null;
 
@@ -124,7 +127,7 @@ class Cache
 	 *
 	 * @param  string $type        The type of caching to use: `'apc'`, `'database'`, `'directory'`, `'file'`, `'memcache'`, `'redis'`, `'xcache'`
 	 * @param  mixed  $data_store  The path for a `file` or `directory` cache, an `Memcache` or `Memcached` object for a `memcache` cache, an Database object for a `database` cache or a `Redis` object for a `redis` cache - not used for `apc` or `xcache`
-	 * @param  array  $config      Configuration options - see method description for details
+	 * @param  array<string, mixed>  $config      Configuration options - see method description for details
 	 * @return Cache
 	 */
 	public function __construct(mixed $type, mixed $data_store=NULL, mixed $config=array())
@@ -153,6 +156,11 @@ class Cache
 				break;
 
 			case 'directory':
+				if (!is_string($data_store)) {
+					throw new ProgrammerException(
+						'The path for a directory cache must be a string'
+					);
+				}
 				$exists = file_exists($data_store);
 				if (!$exists) {
 					throw new EnvironmentException(
@@ -172,10 +180,22 @@ class Cache
 						$data_store
 					);
 				}
-				$this->config['path'] = realpath($data_store) . DIRECTORY_SEPARATOR;
+				$real_path = realpath($data_store);
+				if ($real_path === FALSE) {
+					throw new EnvironmentException(
+						'The directory specified, %s, does not exist',
+						$data_store
+					);
+				}
+				$this->config['path'] = $real_path . DIRECTORY_SEPARATOR;
 				break;
 
 			case 'file':
+				if (!is_string($data_store)) {
+					throw new ProgrammerException(
+						'The path for a file cache must be a string'
+					);
+				}
 				$exists = file_exists($data_store);
 				if (!$exists && !is_writable(dirname($data_store))) {
 					throw new EnvironmentException(
@@ -191,7 +211,36 @@ class Cache
 				}
 				$this->config['path'] = $data_store;
 				if ($exists) {
-					$this->data_store = unserialize(file_get_contents($data_store));
+					$contents = file_get_contents($data_store);
+					if ($contents === FALSE) {
+						throw new EnvironmentException(
+							'The file specified, %s, could not be read',
+							$data_store
+						);
+					}
+					$data = unserialize($contents);
+					if (!is_array($data)) {
+						throw new ProgrammerException(
+							'The file cache %s did not contain a valid cache array',
+							$data_store
+						);
+					}
+					$store = array();
+					foreach ($data as $cache_key => $entry) {
+						if (!is_string($cache_key) || !is_array($entry)) {
+							continue;
+						}
+						$entry_value  = $entry['value'] ?? NULL;
+						$entry_expire = $entry['expire'] ?? NULL;
+						if (!is_string($entry_value) || !is_int($entry_expire)) {
+							continue;
+						}
+						$store[$cache_key] = array(
+							'value'  => $entry_value,
+							'expire' => $entry_expire
+						);
+					}
+					$this->data_store = $store;
 				} else {
 					$this->data_store = array();
 				}
@@ -279,18 +328,20 @@ class Cache
 				return apc_add($key, $value, $ttl);
 
 			case 'file':
-				if (isset($this->data_store[$key]) && (($this->data_store[$key]['expire'] && $this->data_store[$key]['expire'] >= time()) || !$this->data_store[$key]['expire'])) {
+				$store = $this->getFileStore();
+				if (isset($store[$key]) && (($store[$key]['expire'] && $store[$key]['expire'] >= time()) || !$store[$key]['expire'])) {
 					return FALSE;
 				}
-				$this->data_store[$key] = array(
+				$store[$key] = array(
 					'value'  => $value,
 					'expire' => (!$ttl) ? 0 : time() + $ttl
 				);
+				$this->data_store = $store;
 				$this->config['state'] = 'dirty';
 				return TRUE;
 
 			case 'database':
-				$res = $this->data_store->query(
+				$res = $this->queryDatabase(
 					"SELECT %r FROM %r WHERE %r = %s",
 					$this->config['key_column'],
 					$this->config['table'],
@@ -302,7 +353,7 @@ class Cache
 				}
 				try {
 					$value_placeholder = $this->config['value_data_type'] == 'blob' ? '%l' : '%s';
-					$this->data_store->query(
+					$this->queryDatabase(
 						"INSERT INTO %r (%r, %r, %r) VALUES (%s, " . $value_placeholder . ", %i)",
 						$this->config['table'],
 						$this->config['key_column'],
@@ -318,33 +369,36 @@ class Cache
 				}
 
 			case 'directory':
-				if (file_exists($this->config['path'] . $key)) {
+				$path = $this->getPath();
+				if (file_exists($path . $key)) {
 					return FALSE;
 				}
 				$expiration_date = (!$ttl) ? 0 : time() + $ttl;
 				file_put_contents(
-					$this->config['path'] . $key,
+					$path . $key,
 					$expiration_date . "\n" . $value
 				);
 				return TRUE;
 
 			case 'memcache':
+				$memcache = $this->getMemcache();
 				if ($ttl > 2592000) {
 					$ttl = time() + 2592000;
 				}
-				if ($this->data_store instanceof Memcache) {
-					return $this->data_store->add($key, $value, 0, $ttl);
+				if ($memcache instanceof Memcache) {
+					return $memcache->add($key, $value, 0, $ttl);
 				}
-				return $this->data_store->add($key, $value, $ttl);
+				return $memcache->add($key, $value, $ttl);
 
 			case 'redis':
+				$redis = $this->getRedis();
 				if (!$ttl) {
-					return $this->data_store->setnx($key, $value);
+					return (bool) $redis->setnx($key, $value);
 				}
-				if ($this->data_store->exists($key)) {
+				if ($redis->exists($key)) {
 					return FALSE;
 				}
-				$this->data_store->setex($key, $ttl, $value);
+				$redis->setex($key, $ttl, $value);
 				return TRUE;
 
 			case 'xcache':
@@ -354,6 +408,11 @@ class Cache
 				xcache_set($key, $value, $ttl);
 				return TRUE;
 		}
+
+		throw new ProgrammerException(
+			'The cache type specified, %s, is not valid',
+			$this->type
+		);
 	}
 
 
@@ -366,7 +425,7 @@ class Cache
 	{
 		switch ($this->type) {
 			case 'database':
-				$this->data_store->query(
+				$this->queryDatabase(
 					"DELETE FROM %r WHERE %r != 0 AND %r < %i",
 					$this->config['table'],
 					$this->config['ttl_column'],
@@ -376,29 +435,45 @@ class Cache
 				break;
 
 			case 'directory':
+				$path = $this->getPath();
 				$clear_before = time();
-				$files = array_diff(scandir($this->config['path']), array('.', '..'));
+				$files = scandir($path);
+				if ($files === FALSE) {
+					throw new EnvironmentException(
+						'The directory specified, %s, could not be scanned',
+						$path
+					);
+				}
+				$files = array_diff($files, array('.', '..'));
 				foreach ($files as $file) {
-					if (!file_exists($this->config['path'] . $file)) {
+					if (!file_exists($path . $file)) {
 						continue;
 					}
-					$handle = fopen($this->config['path'] . $file, 'r');
-					$expiration_date = trim(fgets($handle));
+					$handle = fopen($path . $file, 'r');
+					if ($handle === FALSE) {
+						continue;
+					}
+					$expiration_date = fgets($handle);
 					fclose($handle);
-					if ($expiration_date && $expiration_date < $clear_before) {
-						unlink($this->config['path'] . $file);
+					if ($expiration_date === FALSE) {
+						continue;
+					}
+					if (trim($expiration_date) && (int) trim($expiration_date) < $clear_before) {
+						unlink($path . $file);
 					}
 				}
 				break;
 
 			case 'file':
+				$store = $this->getFileStore();
 				$clear_before = time();
-				foreach ($this->data_store as $key => $value) {
+				foreach ($store as $key => $value) {
 					if ($value['expire'] && $value['expire'] < $clear_before) {
-						unset($this->data_store[$key]);
+						unset($store[$key]);
 						$this->config['state'] = 'dirty';
 					}
 				}
+				$this->data_store = $store;
 				break;
 		}
 	}
@@ -418,17 +493,25 @@ class Cache
 				return apc_clear_cache('user');
 
 			case 'database':
-				$this->data_store->query(
+				$this->queryDatabase(
 					"DELETE FROM %r",
 					$this->config['table']
 				);
 				return TRUE;
 
 			case 'directory':
-				$files = array_diff(scandir($this->config['path']), array('.', '..'));
+				$path = $this->getPath();
+				$files = scandir($path);
+				if ($files === FALSE) {
+					throw new EnvironmentException(
+						'The directory specified, %s, could not be scanned',
+						$path
+					);
+				}
+				$files = array_diff($files, array('.', '..'));
 				$success = TRUE;
 				foreach ($files as $file) {
-					$success = unlink($this->config['path'] . $file) && $success;
+					$success = unlink($path . $file) && $success;
 				}
 				return $success;
 
@@ -438,16 +521,28 @@ class Cache
 				return TRUE;
 
 			case 'memcache':
-				return $this->data_store->flush();
+				return $this->getMemcache()->flush();
 
 			case 'redis':
-				return $this->data_store->flushDB();
+				return (bool) $this->getRedis()->flushDB();
 
 			case 'xcache':
-				Core::startErrorCapture();
-				xcache_clear_cache(XC_TYPE_VAR, 0);
-				return (bool) Core::stopErrorCapture();
+				if (defined('XC_TYPE_VAR')) {
+					$xc_type = constant('XC_TYPE_VAR');
+					if (!is_int($xc_type)) {
+						return FALSE;
+					}
+					Core::startErrorCapture();
+					xcache_clear_cache($xc_type, 0);
+					return (bool) Core::stopErrorCapture();
+				}
+				return FALSE;
 		}
+
+		throw new ProgrammerException(
+			'The cache type specified, %s, is not valid',
+			$this->type
+		);
 	}
 
 
@@ -464,7 +559,7 @@ class Cache
 				return apc_delete($key);
 
 			case 'database':
-				return $this->data_store->query(
+				return (bool) $this->queryDatabase(
 					"DELETE FROM %r WHERE %r = %s",
 					$this->config['table'],
 					$this->config['key_column'],
@@ -472,24 +567,31 @@ class Cache
 				)->countAffectedRows();
 
 			case 'directory':
-				return unlink($this->config['path'] . $key);
+				return unlink($this->getPath() . $key);
 
 			case 'file':
-				if (isset($this->data_store[$key])) {
-					unset($this->data_store[$key]);
+				$store = $this->getFileStore();
+				if (isset($store[$key])) {
+					unset($store[$key]);
+					$this->data_store = $store;
 					$this->config['state'] = 'dirty';
 				}
 				return TRUE;
 
 			case 'memcache':
-				return $this->data_store->delete($key, 0);
+				return $this->getMemcache()->delete($key, 0);
 
 			case 'redis':
-				return (bool) $this->data_store->delete($key);
+				return (bool) $this->getRedis()->delete($key);
 
 			case 'xcache':
 				return xcache_unset($key);
 		}
+
+		throw new ProgrammerException(
+			'The cache type specified, %s, is not valid',
+			$this->type
+		);
 	}
 
 
@@ -510,7 +612,7 @@ class Cache
 				break;
 
 			case 'database':
-				$res = $this->data_store->query(
+				$res = $this->queryDatabase(
 					"SELECT %r FROM %r WHERE %r = %s AND (%r = 0 OR %r >= %i)",
 					$this->config['value_column'],
 					$this->config['table'],
@@ -525,28 +627,43 @@ class Cache
 				break;
 
 			case 'directory':
-				if (!file_exists($this->config['path'] . $key)) {
+				$path = $this->getPath() . $key;
+				if (!file_exists($path)) {
 					return $default;
 				}
-				$handle = fopen($this->config['path'] . $key, 'r');
+				$handle = fopen($path, 'r');
+				if ($handle === FALSE) {
+					return $default;
+				}
 				$expiration_date = fgets($handle);
+				if ($expiration_date === FALSE) {
+					fclose($handle);
+					return $default;
+				}
 				if ($expiration_date != 0 && $expiration_date < time()) {
+					fclose($handle);
 					return $default;
 				}
 				$value = '';
 				while (!feof($handle)) {
-					$value .= fread($handle, 524288);
+					$chunk = fread($handle, 524288);
+					if ($chunk === FALSE) {
+						break;
+					}
+					$value .= $chunk;
 				}
 				fclose($handle);
 				break;
 
 			case 'file':
-				if (isset($this->data_store[$key])) {
-					$expire = $this->data_store[$key]['expire'];
+				$store = $this->getFileStore();
+				if (isset($store[$key])) {
+					$expire = $store[$key]['expire'];
 					if (!$expire || $expire >= time()) {
-						$value = $this->data_store[$key]['value'];
+						$value = $store[$key]['value'];
 					} elseif ($expire) {
-						unset($this->data_store[$key]);
+						unset($store[$key]);
+						$this->data_store = $store;
 						$this->config['state'] = 'dirty';
 					}
 				}
@@ -556,18 +673,23 @@ class Cache
 				break;
 
 			case 'memcache':
-				$value = $this->data_store->get($key);
+				$value = $this->getMemcache()->get($key);
 				if ($value === FALSE) { return $default; }
 				break;
 
 			case 'redis':
-				$value = $this->data_store->get($key);
+				$value = $this->getRedis()->get($key);
 				if ($value === FALSE) { return $default; }
 				break;
 
 			case 'xcache':
 				$value = xcache_get($key);
 				if ($value === FALSE) { return $default; }
+				break;
+		}
+
+		if (!isset($value) || !is_string($value)) {
+			return $default;
 		}
 
 		return $this->unserialize($value);
@@ -585,7 +707,8 @@ class Cache
 			return;
 		}
 
-		file_put_contents($this->config['path'], serialize($this->data_store));
+		$path = $this->getPath();
+		file_put_contents($path, serialize($this->data_store));
 		$this->config['state'] = 'clean';
 	}
 
@@ -599,13 +722,30 @@ class Cache
 	protected function serialize(mixed $value): string
 	{
 		if ($this->config['serializer'] == 'string') {
-			if (is_object($value) && method_exists($value, '__toString')) {
-				return $value->__toString();
+			if (is_scalar($value) || $value === NULL) {
+				return (string) $value;
 			}
-			return (string) $value;
+			if (is_object($value) && method_exists($value, '__toString')) {
+				return (string) $value;
+			}
+			throw new ProgrammerException(
+				'The value for the cache could not be converted to a string'
+			);
 		}
 
-		return call_user_func($this->config['serializer'], $value);
+		$serializer = $this->config['serializer'] ?? NULL;
+		if (!is_callable($serializer)) {
+			throw new ProgrammerException(
+				'The serializer for the cache is not callable'
+			);
+		}
+		$result = call_user_func($serializer, $value);
+		if (!is_string($result)) {
+			throw new ProgrammerException(
+				'The serializer for the cache did not return a string'
+			);
+		}
+		return $result;
 	}
 
 
@@ -626,7 +766,7 @@ class Cache
 				return apc_store($key, $value, $ttl);
 
 			case 'database':
-				$res = $this->data_store->query(
+				$res = $this->queryDatabase(
 					"SELECT %r FROM %r WHERE %r = %s",
 					$this->config['key_column'],
 					$this->config['table'],
@@ -639,7 +779,7 @@ class Cache
 				try {
 					$value_placeholder = $this->config['value_data_type'] == 'blob' ? '%l' : '%s';
 					if (!$res->countReturnedRows()) {
-						$this->data_store->query(
+						$this->queryDatabase(
 							"INSERT INTO %r (%r, %r, %r) VALUES (%s, " . $value_placeholder . ", %i)",
 							$this->config['table'],
 							$this->config['key_column'],
@@ -650,7 +790,7 @@ class Cache
 							$expiration_date
 						);
 					} else {
-						$this->data_store->query(
+						$this->queryDatabase(
 							"UPDATE %r SET %r = " . $value_placeholder . ", %r = %s WHERE %r = %s",
 							$this->config['table'],
 							$this->config['value_column'],
@@ -667,42 +807,52 @@ class Cache
 				return TRUE;
 
 			case 'directory':
+				$path = $this->getPath();
 				$expiration_date = (!$ttl) ? 0 : time() + $ttl;
 				return (bool) file_put_contents(
-					$this->config['path'] . $key,
+					$path . $key,
 					$expiration_date . "\n" . $value
 				);
 
 			case 'file':
-				$this->data_store[$key] = array(
+				$store = $this->getFileStore();
+				$store[$key] = array(
 					'value'  => $value,
 					'expire' => (!$ttl) ? 0 : time() + $ttl
 				);
+				$this->data_store = $store;
 				$this->config['state'] = 'dirty';
 				return TRUE;
 
 			case 'memcache':
+				$memcache = $this->getMemcache();
 				if ($ttl > 2592000) {
 					$ttl = time() + 2592000;
 				}
-				if ($this->data_store instanceof Memcache) {
-					$result = $this->data_store->replace($key, $value, 0, $ttl);
+				if ($memcache instanceof Memcache) {
+					$result = $memcache->replace($key, $value, 0, $ttl);
 					if (!$result) {
-						return $this->data_store->set($key, $value, 0, $ttl);
+						return $memcache->set($key, $value, 0, $ttl);
 					}
 					return $result;
 				}
-				return $this->data_store->set($key, $value, $ttl);
+				return $memcache->set($key, $value, $ttl);
 
 			case 'redis':
+				$redis = $this->getRedis();
 				if ($ttl) {
-					return $this->data_store->setex($key, $value, $ttl);
+					return (bool) $redis->setex($key, $ttl, $value);
 				}
-				return $this->data_store->set($key, $value);
+				return (bool) $redis->set($key, $value);
 
 			case 'xcache':
 				return xcache_set($key, $value, $ttl);
 		}
+
+		throw new ProgrammerException(
+			'The cache type specified, %s, is not valid',
+			$this->type
+		);
 	}
 
 
@@ -718,7 +868,114 @@ class Cache
 			return $value;
 		}
 
-		return call_user_func($this->config['unserializer'], $value);
+		$unserializer = $this->config['unserializer'] ?? NULL;
+		if (!is_callable($unserializer)) {
+			throw new ProgrammerException(
+				'The unserializer for the cache is not callable'
+			);
+		}
+		return call_user_func($unserializer, $value);
+	}
+
+
+	/**
+	 * Returns the database data store, verifying it is a Database object
+	 *
+	 * @return Database  The database data store
+	 */
+	private function getDatabase(): Database
+	{
+		if (!$this->data_store instanceof Database) {
+			throw new ProgrammerException(
+				'The data store for the database cache is not a Database object'
+			);
+		}
+		return $this->data_store;
+	}
+
+
+	/**
+	 * Returns the memcache data store, verifying it is a Memcache or Memcached object
+	 *
+	 * @return Memcache|Memcached  The memcache data store
+	 */
+	private function getMemcache(): Memcache|Memcached
+	{
+		if ($this->data_store instanceof Memcache || $this->data_store instanceof Memcached) {
+			return $this->data_store;
+		}
+		throw new ProgrammerException(
+			'The data store for the memcache cache is not a Memcache or Memcached object'
+		);
+	}
+
+
+	/**
+	 * Returns the redis data store, verifying it is a Redis object
+	 *
+	 * @return Redis  The redis data store
+	 */
+	private function getRedis(): Redis
+	{
+		if (!$this->data_store instanceof Redis) {
+			throw new ProgrammerException(
+				'The data store for the redis cache is not a Redis object'
+			);
+		}
+		return $this->data_store;
+	}
+
+
+	/**
+	 * Returns the file cache data store, verifying it is a valid cache array
+	 *
+	 * @return FileCacheStore  The file cache data store
+	 */
+	private function getFileStore(): array
+	{
+		if (!is_array($this->data_store)) {
+			throw new ProgrammerException(
+				'The data store for the file cache is not an array'
+			);
+		}
+		return $this->data_store;
+	}
+
+
+	/**
+	 * Returns the path configuration value for directory and file caches
+	 *
+	 * @return string  The configured path
+	 */
+	private function getPath(): string
+	{
+		$path = $this->config['path'] ?? NULL;
+		if (!is_string($path)) {
+			throw new ProgrammerException(
+				'The path for the %s cache is not configured',
+				$this->type
+			);
+		}
+		return $path;
+	}
+
+
+	/**
+	 * Runs a query against the database data store, verifying the result
+	 *
+	 * @param  Statement|string $statement  The SQL statement
+	 * @param  mixed ...$params  The parameters for the statement
+	 * @return Result  The result of the query
+	 */
+	private function queryDatabase(Statement|string $statement, mixed ...$params): Result
+	{
+		$result = $this->getDatabase()->query($statement, ...$params);
+		if (!$result instanceof Result) {
+			throw new ProgrammerException(
+				'The database cache query did not return a single Result object'
+			);
+		}
+		return $result;
 	}
 }
 
