@@ -27,13 +27,6 @@ declare(strict_types=1);
 class SMTP
 {
 	/**
-	 * The authorization methods that are valid for this server
-	 *
-	 * @var array
-	 */
-	private ?array $auth_methods = null;
-
-	/**
 	 * The socket connection to the SMTP server
 	 *
 	 * @var resource|null
@@ -45,7 +38,7 @@ class SMTP
 	 *
 	 * @var boolean
 	 */
-	private ?bool $debug = null;
+	private bool $debug = FALSE;
 
 	/**
 	 * The hostname or IP of the SMTP server
@@ -57,7 +50,7 @@ class SMTP
 	/**
 	 * The line ending to use
 	 *
-	 * @var integer
+	 * @var string
 	 */
 	private string $line_ending = "\r\n";
 
@@ -167,7 +160,7 @@ class SMTP
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: $this, 1: string}  The callback for the method requested
 	 */
 	public function __get(mixed $method)
 	{
@@ -228,18 +221,19 @@ class SMTP
 
 		Core::startErrorCapture(E_WARNING);
 
-		$host = ($this->secure) ? 'tls://' . $this->host : $this->host;
-		$this->connection = fsockopen($host, $this->port, $error_int, $error_string, $this->timeout);
+		$host       = ($this->secure) ? 'tls://' . $this->host : $this->host;
+		$connection = fsockopen($host, $this->port, $error_int, $error_string, (float) $this->timeout);
 
 		foreach (Core::stopErrorCapture('#ssl#i') as $error) {
 			throw new ConnectivityException('There was an error connecting to the server. A secure connection was requested, but was not available. Try a non-secure connection instead.');
 		}
 
-		if (!$this->connection) {
+		if ($connection === FALSE) {
 			throw new ConnectivityException('There was an error connecting to the server');
 		}
+		$this->connection = $connection;
 
-		stream_set_timeout($this->connection, $this->timeout);
+		stream_set_timeout($this->connection, (int) $this->timeout);
 		$response = $this->read('#^220 #');
 		if (!$this->find($response, '#^220[ -]#')) {
 			throw new ConnectivityException(
@@ -263,7 +257,7 @@ class SMTP
 			if ($affirmative) {
 				do {
 					if (isset($res)) {
-						sleep(0.1);
+						usleep(100000);
 					}
 					$res = stream_socket_enable_crypto($this->connection, TRUE, STREAM_CRYPTO_METHOD_TLS_CLIENT);
 				} while ($res === 0);
@@ -276,7 +270,7 @@ class SMTP
 
 		$this->max_size = 0;
 		if ($match = $this->find($response, '#^250[ -]SIZE\s+(\d+)$#')) {
-			$this->max_size = $match[0][1];
+			$this->max_size = (int) $match[0][1];
 		}
 
 		$this->pipelining = (bool) $this->find($response, '#^250[ -]PIPELINING$#');
@@ -288,6 +282,10 @@ class SMTP
 
 		if (!$auth_methods || !$this->username) {
 			return;
+		}
+
+		if ($this->password === NULL) {
+			throw new ProgrammerException('An SMTP password must be set in order to authenticate');
 		}
 
 		if (in_array('DIGEST-MD5', $auth_methods)) {
@@ -319,7 +317,7 @@ class SMTP
 			// Algorithm from http://www.ietf.org/rfc/rfc2831.txt
 			$realm      = $request_params['realm'];
 			$nonce      = $request_params['nonce'];
-			$cnonce     = Cryptography::randomString('32', 'hexadecimal');
+			$cnonce     = Cryptography::randomString(32, 'hexadecimal');
 			$nc         = '00000001';
 			$digest_uri = 'smtp/' . $this->host;
 
@@ -384,9 +382,9 @@ class SMTP
 	/**
 	 * Searches the response array for the the regex and returns any matches
 	 *
-	 * @param array  $response  The lines of data to search through
+	 * @param array<int, string> $response  The lines of data to search through
 	 * @param string $regex     The regex to search with
-	 * @return array  The regex matches
+	 * @return array<int, array<int|string, string>>  The regex matches
 	 */
 	private function find(array $response, string $regex): array
 	{
@@ -415,7 +413,7 @@ class SMTP
 	/**
 	 * Searches the response array for SMTP error codes
 	 *
-	 * @param array $response  The response array to search through
+	 * @param array<int, string> $response  The response array to search through
 	 * @return void
 	 */
 	private function handleErrors(array $response): void
@@ -445,22 +443,23 @@ class SMTP
 	/**
 	 * Reads lines from the SMTP server
 	 *
-	 * @param  integer|string $expect  The expected number of lines of response or a regex of the last line
-	 * @return array  The lines of response from the server
+	 * @param  integer|string|null $expect  The expected number of lines of response or a regex of the last line
+	 * @return array<int, string>  The lines of response from the server
 	 */
 	private function read(mixed $expect): array
 	{
-		$response = array();
-		if ($result = $this->select($this->timeout, 0)) {
-			while (!feof($this->connection)) {
-				$line = fgets($this->connection);
+		$response   = array();
+		$connection = $this->connection;
+		if (!is_resource($connection)) {
+			throw new ProgrammerException('The connection to the SMTP server has already been closed');
+		}
+		if ($result = $this->select((int) $this->timeout, 0)) {
+			while (!feof($connection)) {
+				$line = fgets($connection);
 				if ($line === FALSE) {
 					break;
 				}
-				$line = substr($line, 0, -2);
-				if (is_string($result)) {
-					$line = $result . $line;
-				}
+				$line       = substr($line, 0, -2);
 				$response[] = $line;
 				if ($expect !== NULL) {
 					$result = NULL;
@@ -487,11 +486,15 @@ class SMTP
 	 *
 	 * @param integer $timeout   The number of seconds in the timeout
 	 * @param integer $utimeout  The number of microseconds in the timeout
-	 * @return boolean|string  TRUE (or a character) is the connection is ready to be read from, FALSE if not
+	 * @return int|false  The number of streams ready to be read from, or FALSE on error
 	 */
-	private function select(int $timeout, int $utimeout): mixed
+	private function select(int $timeout, int $utimeout): int|false
 	{
-		$read     = array($this->connection);
+		$connection = $this->connection;
+		if (!is_resource($connection)) {
+			throw new ProgrammerException('The connection to the SMTP server has already been closed');
+		}
+		$read     = array($connection);
 		$write    = NULL;
 		$except   = NULL;
 
@@ -514,7 +517,7 @@ class SMTP
 	 * @throws ValidationException  When the message is too large for the server
 	 *
 	 * @param string $from     The email address being sent from - this will be used as the `Return-Path` header
-	 * @param array  $to       All of the To, Cc and Bcc email addresses to send the message to - this does not affect the message headers in any way
+	 * @param array<int, string> $to       All of the To, Cc and Bcc email addresses to send the message to - this does not affect the message headers in any way
 	 * @param string $headers  The message headers - the Bcc header will be removed if present
 	 * @param string $body     The mail body
 	 * @return void
@@ -578,7 +581,7 @@ class SMTP
 	 *
 	 * @param  string         $data    The data or commands to send
 	 * @param  integer|string $expect  The expected number of lines of response or a regex of the last line
-	 * @return array  The response from the server
+	 * @return array<int, string>  The response from the server
 	 */
 	private function write(string $data, mixed $expect): array
 	{
