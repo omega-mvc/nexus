@@ -308,3 +308,29 @@
 - **Verifica**: `php -l Templating.php` pulito; `vendor/bin/phpstan analyse Templating.php --no-progress` → 0 errori; nessun riferimento esterno a `Templating` nel codice della libreria (grep case-insensitive); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: `verifyValue()` è riorganizzato a `if` annidati unicamente per il narrowing di PHPStan su `mixed` (nessun cambiamento semantico). Nessuna regressione nota.
 - **Prossimo**: coda hotspot SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (da portare: `ORMDate` 38 e `ORMMoney` inclusi).
+
+### [2026-10-10 16:08] - Fase PHPStan: SQLTranslation.php a 0 errori (20 file a zero)
+
+- **File**: `SQLTranslation.php`
+- **Intervallo righe**: `1-983`
+- **Tipo**: `tipizzazione` + `refactor` + `fix BC`
+- **Descrizione**: `SQLTranslation` (106 → 0), hotspot successivo a `Templating`.
+  - Proprietà `$schema_info` tipizzata con la forma precisa `array{national_columns?: array<string, list<string>>, national_types?: array<string, array<string, string>>}` (elimina la propagazione di `mixed` in `fixMSSQLNationalColumns`).
+  - `__construct(Database $database)`: assegnazione diretta `$this->database = $database;` seguita da `inject($this)`; costruzione dei tipi per SQLite.
+  - `compose()`: sostituzioni validate; `parseTableAliases(string $sql): array` con `@return array<string, string>` e guardia su `preg_match(...) === FALSE`.
+  - `__get(string $method): array{0: self, 1: string}`; `enableCaching` con guardia `is_scalar` su `$key_token`; `createSQLiteFunctions` con `$functions` inizializzata e narrowing `PDO`.
+  - Callback SQLite con parametri `int|float` e docblock (`abs`, `mod`, `round`, ecc.).
+  - `fixMSSQLNationalColumns()`: la ricostruzione della cache scatta se manca **almeno una** delle due chiavi (`!isset(national_columns) || !isset(national_types)`); il `foreach` sul risultato query ora guarda `is_array($row)` (→ `ProgrammerException`), legge `$row['table'|'schema'|'column'|'type'] ?? NULL` e valida con `is_string` prima di costruire le mappe.
+  - Branch regex di `fixMSSQLNationalColumns`: `($match[1] ?? '')`/`($match[2] ?? '')`; `$table_aliases[$table] ?? NULL` + `continue` se sconosciuto; variabile dedicata `$column_value` (non più riassegnazione di `$column`, che corrompeva la forma dell'array); accumulo `$to_fix[$table][] = $column_value`.
+  - Tail: `array_unique($columns, SORT_REGULAR)`; `$reverse_table_aliases[$table] ?? NULL` + `continue`; `$column_name` locale; `$national_types[$table][$column_name]`.
+  - `$from_clause = preg_replace(...) ?? $from_clause` (loop sub-select) e `$sql = preg_replace(...) ?? $sql`.
+  - `fixOracleEmptyStrings()`: `?? $sql` su tutte le riassegnazioni `preg_replace`.
+  - `translate()`: `Core::debug(..., $this->debug ?? FALSE)`.
+  - `translateBasicSyntax()`: `$regex = array();` inizializzata; `version_compare(..., '3', '>=')`; `return preg_replace(...) ?? $sql;`.
+  - `translateCastClauses()`: `$regex = array();` inizializzata nel loop; `preg_replace(...) ?? $match[2]`.
+  - `translateLimitOffsetToRowNumber()`: cast espliciti `$limit = (int) $match[7]; $offset = (int) ($match[8] ?? 0);` usati al posto delle stringhe numeriche nelle somme/concatenazioni; ramo finale `else { $replacement = $match[0]; }` per garantire l'inizializzazione.
+- **Motivazione**: chiudere l'hotspot `SQLTranslation` (106) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()`, cast o widening puramente soppressivi). I `?? $...` sono usati solo dove `preg_replace` può realmente restituire `null`; i `(int)` sono cast legittimi su stringhe numeriche per aritmetica.
+- **Impatto**: `minimo`. Comportamento pubblico invariato. Le condizioni impossibili (riga query non-array, info colonna non-stringa, alias tabella sconosciuto) ora sollevano/ignorano in modo esplicito invece di generare warning o `TypeError`. `translateLimitOffsetToRowNumber()` è invocato solo per `mssql`/`oracle`/`db2`; il nuovo `else` è difensivo.
+- **Verifica**: `php -l SQLTranslation.php` pulito; `vendor/bin/phpstan analyse SQLTranslation.php --no-progress --error-format=raw` → 0 errori; caller `Database.php` verificati (`new SQLTranslation($this)` a riga 1795, `inject(mixed)` a riga 2396 con docblock `@param SQLTranslation`); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota; `Database.php` risulta già a 0 errori.
+- **Prossimo**: coda hotspot Cache 91, Grammar 79, ORMMoney 74, UTF8 67, Pagination 67 (da portare: `ORMDate` 36 e `ORMMoney` inclusi).
