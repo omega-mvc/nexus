@@ -43,7 +43,7 @@ class Templating
 	/**
 	 * Named Templating instances
 	 *
-	 * @var array
+	 * @var array<string, Templating>
 	 */
 	static public array $instances = array();
 
@@ -100,9 +100,16 @@ class Templating
 	private int|null $buffered_id;
 
 	/**
+	 * The sequence number used to generate unique ids for buffered instances
+	 *
+	 * @var int
+	 */
+	static private int $buffered_id_sequence = 1;
+
+	/**
 	 * A data store for templating
 	 *
-	 * @var array
+	 * @var array<string, mixed>
 	 */
 	private array $elements;
 
@@ -116,9 +123,9 @@ class Templating
 	/**
 	 * The path prefix to prepend to CSS and JS paths to find them on the filesystem
 	 *
-	 * @var string
+	 * @var string|null
 	 */
-	private mixed $minification_prefix = null;
+	private ?string $minification_prefix = null;
 
 	/**
 	 * The minification mode: development or production
@@ -156,10 +163,11 @@ class Templating
 	 * @param  string $main_element  The value for the `__main__` element - this is used when calling ::place() without an element, or when placing Templating objects as children
 	 * @return Templating
 	 */
-	public function __construct(mixed $root=NULL, mixed $main_element=NULL)
+	public function __construct(?string $root=NULL, mixed $main_element=NULL)
 	{
 		if ($root === NULL) {
-			$root = $_SERVER['DOCUMENT_ROOT'];
+			$document_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
+			$root = is_string($document_root) ? $document_root : '';
 		}
 
 		if (!file_exists($root)) {
@@ -214,7 +222,7 @@ class Templating
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{Templating, string}  The callback for the method requested
 	 */
 	public function __get(mixed $method)
 	{
@@ -293,8 +301,6 @@ class Templating
 	 */
 	public function buffer(): void
 	{
-		static $id_sequence = 1;
-
 		if ($this->buffered_id) {
 			throw new ProgrammerException('Buffering has already been started');
 		}
@@ -303,35 +309,37 @@ class Templating
 			Buffer::start();
 		}
 
-		$this->buffered_id = $id_sequence;
+		$this->buffered_id = self::$buffered_id_sequence;
 
-		$id_sequence++;
+		self::$buffered_id_sequence++;
 	}
 
 
 	/**
 	 * Deletes an element from the template
 	 *
-	 * @param  string $element        The element to delete - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string|list<string>|array<string, mixed> $element  The element to delete - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
 	 * @param  mixed  $default_value  The value to return if the `$element` is not set
 	 * @return mixed  The value of the `$element` that was deleted - an associative array of deleted elements will be returned if an array of `$elements` was specified
 	 */
-	public function delete(string $element, mixed $default_value=NULL): mixed
+	public function delete(string|array $element, mixed $default_value=NULL): mixed
 	{
 		if (is_array($element)) {
-			$elements = $element;
-
-			if (is_numeric(key($elements))) {
-				$new_elements = array();
-				foreach ($elements as $element) {
-					$new_elements[$element] = NULL;
+			$elements = array();
+			foreach ($element as $key => $value) {
+				if (is_int($key)) {
+					if (!is_string($value)) {
+						throw new ProgrammerException('The elements to delete must be a list of strings or an array of string keys');
+					}
+					$elements[$value] = NULL;
+				} else {
+					$elements[$key] = $value;
 				}
-				$elements = $new_elements;
 			}
 
 			$output = array();
-			foreach ($elements as $key => $default_value) {
-				$output[$key] = $this->delete($key, $default_value);
+			foreach ($elements as $element_name => $default_value) {
+				$output[$element_name] = $this->delete($element_name, $default_value);
 			}
 			return $output;
 		}
@@ -414,7 +422,7 @@ class Templating
 	 * @param  Directory|string  $path_prefix      The directory to prepend to all CSS and JS paths to load the files from the filesystem - this defaults to `$_SERVER['DOCUMENT_ROOT']`
 	 * @return void
 	 */
-	public function enableMinification(string $mode, mixed $cache_directory, mixed $path_prefix=NULL): void
+	public function enableMinification(string $mode, Directory|string $cache_directory, Directory|string|null $path_prefix=NULL): void
 	{
 		$valid_modes = array('development', 'production');
 		if (!in_array($mode, $valid_modes)) {
@@ -426,7 +434,7 @@ class Templating
 		}
 
 		$cache_directory = $cache_directory instanceof Directory ? $cache_directory->getPath() : realpath($cache_directory);
-		if (!is_writable($cache_directory)) {
+		if ($cache_directory === FALSE || !is_writable($cache_directory)) {
 			throw new EnvironmentException(
 				'The cache directory specified, %s, is not writable',
 				$cache_directory
@@ -435,7 +443,8 @@ class Templating
 
 		$path_prefix = $path_prefix instanceof Directory ? $path_prefix->getPath() : $path_prefix;
 		if ($path_prefix === NULL) {
-			$path_prefix = $_SERVER['DOCUMENT_ROOT'];
+			$document_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
+			$path_prefix   = is_string($document_root) ? $document_root : '';
 		}
 
 		$this->minification_mode      = $mode;
@@ -459,7 +468,7 @@ class Templating
 	 * @param  Directory|string  $cache_directory  The directory to cache the compiled files into - this directory should not be accessible from the web
 	 * @return void
 	 */
-	public function enablePHPShortTags(string $mode, mixed $cache_directory): void
+	public function enablePHPShortTags(string $mode, Directory|string $cache_directory): void
 	{
 		// This does not need to be enabled if short tags are on
 		if (ini_get('short_open_tag') && strtolower(ini_get('short_open_tag')) != 'off') {
@@ -497,7 +506,11 @@ class Templating
 	 */
 	public function encode(string $element, mixed $default_value=NULL): mixed
 	{
-		return HTML::encode($this->get($element, $default_value));
+		$value = $this->get($element, $default_value);
+		if (!is_array($value) && !is_string($value)) {
+			throw new ProgrammerException('The value for the element, %s, is not a string or array', $element);
+		}
+		return HTML::encode($value);
 	}
 
 
@@ -538,7 +551,10 @@ class Templating
 
 		if (!isset($tip[$element])) {
 			return $this;
-		} elseif (!is_array($tip[$element])) {
+		}
+
+		$element_values = $tip[$element];
+		if (!is_array($element_values)) {
 			throw new ProgrammerException(
 				'%1$s was called for an element, %2$s, which is not an array',
 				'filter()',
@@ -546,12 +562,12 @@ class Templating
 			);
 		}
 
-		$keys = array_keys($tip[$element], $value);
+		$keys = array_keys($element_values, $value);
 		if ($keys) {
 			foreach ($keys as $key) {
-				unset($tip[$element][$key]);
+				unset($element_values[$key]);
 			}
-			$tip[$element] = array_values($tip[$element]);
+			$tip[$element] = array_values($element_values);
 		}
 
 		return $this;
@@ -561,19 +577,25 @@ class Templating
 	/**
 	 * Takes an array of PHP files and caches a version with all short tags converted to regular tags
 	 *
-	 * @param array $values  The file paths to the PHP files
-	 * @return array  An array of file paths to the corresponding converted PHP files
+	 * @param array<int, mixed> $values  The file paths to the PHP files
+	 * @return array<int, string>  An array of file paths to the corresponding converted PHP files
 	 */
 	private function fixShortTags(array $values): array
 	{
 		$fixed_paths = array();
 		foreach ($values as $value) {
+			if (!is_string($value)) {
+				throw new ProgrammerException('The PHP file path for short tag fixing must be a string');
+			}
 			// Check to see if the element is a path relative to the template root
 			if (!preg_match('#^(/|\\\\|[a-z]:(\\\\|/)|\\\\|//|\./|\.\\\\)#i', $value)) {
 				$value = $this->root . $value;
 			}
 
 			$real_value = realpath($value);
+			if ($real_value === FALSE) {
+				throw new ProgrammerException('The file, %s, could not be found', $value);
+			}
 			$cache_path = $this->short_tag_directory . sha1($real_value) . '.php';
 
 			$fixed_paths[] = $cache_path;
@@ -582,10 +604,14 @@ class Templating
 			}
 
 			$code = file_get_contents($real_value);
+			if ($code === FALSE) {
+				throw new ProgrammerException('The file, %s, could not be read', $real_value);
+			}
 			$output = '';
 
 			$in_php = FALSE;
 
+			$token_regex = '';
 			do {
 				if (!$in_php) {
 					$token_regex = '<\?';
@@ -630,18 +656,17 @@ class Templating
 				}
 
 				$part = str_replace('<?=', '<?php echo', $part);
-				$part = preg_replace('#<\?(?!php)#i', '<?php', $part);
+				$part = preg_replace('#<\?(?!php)#i', '<?php', $part) ?? $part;
 
 				// This makes sure that __FILE__ and __DIR__ stay as the
 				// original value since the cached file will be in a different
 				// place with a different filename
-				$part = preg_replace('#(?<=[^a-zA-Z0-9]|^)__FILE__(?=[^a-zA-Z0-9]|$)#iD', "'" . $real_value . "'", $part);
-				$part = preg_replace('#(?<=[^a-zA-Z0-9]|^)__DIR__(?=[^a-zA-Z0-9]|$)#iD', "'" . dirname($real_value) . "'", $part);
+				$part = preg_replace('#(?<=[^a-zA-Z0-9]|^)__FILE__(?=[^a-zA-Z0-9]|$)#iD', "'" . $real_value . "'", $part) ?? $part;
+				$part = preg_replace('#(?<=[^a-zA-Z0-9]|^)__DIR__(?=[^a-zA-Z0-9]|$)#iD', "'" . dirname($real_value) . "'", $part) ?? $part;
 
 				$output .= $part;
 
-				if ($regex) {
-					preg_match($regex, $code, $match);
+				if ($regex && preg_match($regex, $code, $match)) {
 					$output .= $match[0];
 					$code = substr($code, strlen($match[0]));
 				}
@@ -658,23 +683,28 @@ class Templating
 	/**
 	 * Gets the value of an element
 	 *
-	 * @param  string $element        The element to get - array elements can be accessed via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string|list<string>|array<string, mixed> $element  The element to get - array elements can be accessed via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
 	 * @param  mixed  $default_value  The value to return if the element has not been set
 	 * @return mixed  The value of the element(s) specified, or the default value(s) if it has not been set
 	 */
-	public function get(string $element, mixed $default_value=NULL): mixed
+	public function get(string|array $element, mixed $default_value=NULL): mixed
 	{
 		if (is_array($element)) {
-			$elements = $element;
-
-			// Turn an array of elements into an array of elements with NULL default values
-			if (array_values($elements) === $elements) {
-				$elements = array_combine($elements, array_fill(0, count($elements), NULL));
+			$elements = array();
+			foreach ($element as $key => $value) {
+				if (is_int($key)) {
+					if (!is_string($value)) {
+						throw new ProgrammerException('The elements to get must be a list of strings or an array of string keys');
+					}
+					$elements[$value] = NULL;
+				} else {
+					$elements[$key] = $value;
+				}
 			}
 
 			$output = array();
-			foreach ($elements as $element => $default_value) {
-				$output[$element] = $this->get($element, $default_value);
+			foreach ($elements as $element_name => $default_value) {
+				$output[$element_name] = $this->get($element_name, $default_value);
 			}
 			return $output;
 		}
@@ -722,7 +752,7 @@ class Templating
 	 *
 	 * @param string $type     The type of compilation, 'css' or 'js'
 	 * @param string $element  The element name
-	 * @param array  $values   An array of file paths
+	 * @param array<int, mixed>  $values   An array of file paths
 	 * @return void
 	 */
 	protected function handleMinified(string $type, string $element, array $values): void
@@ -731,11 +761,17 @@ class Templating
 		$media = NULL;
 		foreach ($values as $value) {
 			if (is_array($value)) {
+				if (!isset($value['path']) || !is_string($value['path'])) {
+					throw new ProgrammerException('The path for a minified file must be a string');
+				}
 				$paths[] = $this->minification_prefix . $value['path'];
 				if ($type == 'css') {
 					$media = !empty($value['media']) ? $value['media'] : NULL;
 				}
 			} else {
+				if (!is_string($value)) {
+					throw new ProgrammerException('The path for a minified file must be a string');
+				}
 				$paths[] = $this->minification_prefix . $value;
 			}
 		}
@@ -755,7 +791,7 @@ class Templating
 				if (!file_exists($path)) {
 					throw new EnvironmentException(
 						'The file specified, %s, does not exist under the $path_prefix specified',
-						preg_replace('#^' . preg_quote($this->minification_prefix, '#') . '#', '', $path)
+						preg_replace('#^' . preg_quote($this->minification_prefix ?? '', '#') . '#', '', $path) ?? $path
 					);
 				}
 				if (filemtime($path) > $cache_mtime) {
@@ -775,15 +811,22 @@ class Templating
 				if ($checked_paths && !file_exists($path)) {
 					throw new EnvironmentException(
 						'The file specified, %s, does not exist under the $path_prefix specified',
-						preg_replace('#^' . preg_quote($this->minification_prefix, '#') . '#', '', $path)
+						preg_replace('#^' . preg_quote($this->minification_prefix ?? '', '#') . '#', '', $path) ?? $path
 					);
 				}
 
 				// Checks if this path has been cached
 				if (file_exists($path_cache_file) && filemtime($path_cache_file) >= filemtime($path)) {
 					$minified_path = file_get_contents($path_cache_file);
+					if ($minified_path === FALSE) {
+						throw new ProgrammerException('The cached file, %s, could not be read', $path_cache_file);
+					}
 				} else {
-					$minified_path = trim($this->minify(file_get_contents($path), $type));
+					$contents = file_get_contents($path);
+					if ($contents === FALSE) {
+						throw new ProgrammerException('The file, %s, could not be read', $path);
+					}
+					$minified_path = trim($this->minify($contents, $type));
 					file_put_contents($path_cache_file, $minified_path);
 				}
 
@@ -793,7 +836,10 @@ class Templating
 			file_put_contents($cache_file, substr($minified, 1));
 		}
 
-		$version        = filemtime($cache_file);
+		$version = filemtime($cache_file);
+		if ($version === FALSE) {
+			throw new ProgrammerException('The cached file, %s, could not be read', $cache_file);
+		}
 		$compiled_value = Filesystem::translateToWebPath($cache_file) . '?v=' . $version;
 		if ($type == 'css' && $media) {
 			$compiled_value = array(
@@ -898,8 +944,7 @@ class Templating
 			$output .= $buffer;
 			$buffer  = $part;
 
-			if ($regex) {
-				preg_match($regex, $code, $match);
+			if ($regex && preg_match($regex, $code, $match)) {
 				$code = substr($code, strlen($match[0]));
 				$this->minifyLiteral($match[0], $buffer, $type);
 				$output .= $buffer;
@@ -919,11 +964,11 @@ class Templating
 	 *
 	 * @param string &$part    The part of code to minify
 	 * @param string &$buffer  A buffer containing the last code or literal encountered
-	 * @param array  $stack    A stack used to keep track of the nesting level of CSS
-	 * @param mixed  $type     The type of code, `'css'` or `'js'`
+	 * @param array<int, string> &$stack  A stack used to keep track of the nesting level of CSS
+	 * @param string $type     The type of code, `'css'` or `'js'`
 	 * @return void
 	 */
-	protected function minifyCode(mixed &$part, mixed &$buffer, array &$stack, mixed $type='js'): void
+	protected function minifyCode(string &$part, string &$buffer, array &$stack, string $type='js'): void
 	{
 		// This pulls in the end of the last match for useful context
 		$end_buffer = substr($buffer, -1);
@@ -934,28 +979,22 @@ class Templating
 		if ($type == 'js') {
 
 			// All whitespace and control characters are collapsed
-			$part = preg_replace('#[\x00-\x09\x0B\x0C\x0E-\x20]+#', ' ', $part);
-			$part = preg_replace('#[\n\r]+#', "\n", $part);
-
+			$part = preg_replace('#[\x00-\x09\x0B\x0C\x0E-\x20]+#', ' ', $part) ?? $part;
+			$part = preg_replace('#[\n\r]+#', "\n", $part) ?? $part;
 			// Whitespace is removed where not needed
-			$part = preg_replace('#(?<![a-z0-9\x80-\xFF\\\\$_+\-])[ ]+#i', '', $part);
-			$part = preg_replace('#[ ]+(?![a-z0-9\x80-\xFF\\\\$_+\-])#i', '', $part);
-
-			$part = preg_replace('#(?<![a-z0-9\x80-\xFF\\\\$_}\\])"\'+-])\n+#i', '', $part);
-			$part = preg_replace('#\n+(?![a-z0-9\x80-\xFF\\\\$_{[(+-])#i', '', $part);
-
+			$part = preg_replace('#(?<![a-z0-9\x80-\xFF\\\\$_+\-])[ ]+#i', '', $part) ?? $part;
+			$part = preg_replace('#[ ]+(?![a-z0-9\x80-\xFF\\\\$_+\-])#i', '', $part) ?? $part;
+			$part = preg_replace('#(?<![a-z0-9\x80-\xFF\\\\$_}\\])"\'+-])\n+#i', '', $part) ?? $part;
+			$part = preg_replace('#\n+(?![a-z0-9\x80-\xFF\\\\$_{[(+-])#i', '', $part) ?? $part;
 			// Remove spaces around + and - unless they are followed by a plus or minus
-			$part = preg_replace('#(?<=[+-])[ ]+(?![+\-])#i', '', $part);
-			$part = preg_replace('#(?<![+-])[ ]+(?=[+\-])#i', '', $part);
-
+			$part = preg_replace('#(?<=[+-])[ ]+(?![+\-])#i', '', $part) ?? $part;
+			$part = preg_replace('#(?<![+-])[ ]+(?=[+\-])#i', '', $part) ?? $part;
 		} elseif ($type == 'css') {
 
 			// All whitespace is collapsed
-			$part = preg_replace('#\s+#', ' ', $part);
-
+			$part = preg_replace('#\s+#', ' ', $part) ?? $part;
 			// Whitespace is removed where not needed
-			$part = preg_replace('#\s*([;{},>+])\s*#', '\1', $part);
-
+			$part = preg_replace('#\s*([;{},>+])\s*#', '\1', $part) ?? $part;
 			// This keeps track of the current scope since some minification
 			// rules are different if inside or outside of a rule block
 			$new_part = '';
@@ -977,34 +1016,27 @@ class Templating
 				if (end($stack) == 'rule_block') {
 
 					// Colons don't need space inside of a block
-					$chunk = preg_replace('#\s*:\s*#', ':', $chunk);
-
+					$chunk = preg_replace('#\s*:\s*#', ':', $chunk) ?? $chunk;
 					// Useless semi-colons are removed
 					$chunk = str_replace(';}', '}', $chunk);
 
 					// All zero units are reduces to just 0
-					$chunk = preg_replace('#((?<!\d|\.|\#|\w)0+(\.0+)?|(?<!\d)\.0+)(?=\D|$)((%|in|cm|mm|em|ex|pt|pc|px)(\b|$))?#iD', '0', $chunk);
-
+					$chunk = preg_replace('#((?<!\d|\.|\#|\w)0+(\.0+)?|(?<!\d)\.0+)(?=\D|$)((%|in|cm|mm|em|ex|pt|pc|px)(\b|$))?#iD', '0', $chunk) ?? $chunk;
 					// All .0 decimals are removed
-					$chunk = preg_replace('#(\d+)\.0+(?=\D)#iD', '\1', $chunk);
-
+					$chunk = preg_replace('#(\d+)\.0+(?=\D)#iD', '\1', $chunk) ?? $chunk;
 					// All leading zeros are removed
-					$chunk = preg_replace('#(?<!\d)0+(\.\d+)(?=\D)#iD', '\1', $chunk);
-
+					$chunk = preg_replace('#(?<!\d)0+(\.\d+)(?=\D)#iD', '\1', $chunk) ?? $chunk;
 					// All measurements that contain the same value 4 times are reduced to a single
-					$chunk = preg_replace('#(?<!\d|\.)([\d\.]+(?:%|in|cm|mm|em|ex|pt|pc|px))(\s*\1){3}#i', '\1', $chunk);
-
+					$chunk = preg_replace('#(?<!\d|\.)([\d\.]+(?:%|in|cm|mm|em|ex|pt|pc|px))(\s*\1){3}#i', '\1', $chunk) ?? $chunk;
 					// Hex color codes are reduced if possible
-					$chunk = preg_replace('@#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3(?!\d)@iD', '#\1\2\3', $chunk);
-
+					$chunk = preg_replace('@#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3(?!\d)@iD', '#\1\2\3', $chunk) ?? $chunk;
 					$chunk = str_ireplace('! important', '!important', $chunk);
 
 
 				} else {
 
 					// This handles an IE6 edge-case
-					$chunk = preg_replace('#(:first-l(etter|ine))\{#', '\1 {', $chunk);
-
+					$chunk = preg_replace('#(:first-l(etter|ine))\{#', '\1 {', $chunk) ?? $chunk;
 				}
 
 				$new_part .= $chunk;
@@ -1029,12 +1061,12 @@ class Templating
 	/**
 	 * Takes a literal and either discards or keeps it
 	 *
-	 * @param mixed  &$part    The literal to process
-	 * @param mixed  &$buffer  The last literal or code processed
+	 * @param string &$part    The literal to process
+	 * @param string &$buffer  The last literal or code processed
 	 * @param string $type     The language the literal is in, `'css'` or `'js'`
 	 * @return void
 	 */
-	protected function minifyLiteral(mixed &$part, mixed &$buffer, string $type): void
+	protected function minifyLiteral(string &$part, string &$buffer, string $type): void
 	{
 		// Comments are skipped unless they are special
 		if (substr($part, 0, 2) == '/*' && substr($part, 0, 3) != '/*!') {
@@ -1111,18 +1143,27 @@ class Templating
 			$info['media'] = 'all';
 		}
 
-		echo '<link rel="stylesheet" type="text/css" href="' . $info['path'] . '" media="' . $info['media'] . '" />' . "\n";
+		$path  = $info['path'] ?? NULL;
+		$media = $info['media'];
+		if (!is_string($path)) {
+			throw new ProgrammerException('The path for the CSS file must be a string');
+		}
+		if (!is_string($media)) {
+			throw new ProgrammerException('The media for the CSS file must be a string');
+		}
+
+		echo '<link rel="stylesheet" type="text/css" href="' . $path . '" media="' . $media . '" />' . "\n";
 	}
 
 
 	/**
 	 * Performs the action of actually placing an element
 	 *
-	 * @param  string $element    The element that is being placed
-	 * @param  string $file_type  The file type to treat all values as
+	 * @param  string $element         The element that is being placed
+	 * @param  string|null $file_type  The file type to treat all values as
 	 * @return void
 	 */
-	protected function placeElement(string $element, string $file_type): void
+	protected function placeElement(string $element, ?string $file_type=NULL): void
 	{
 		$values = $this->elements[$element];
 		if (!is_object($values)) {
@@ -1132,50 +1173,69 @@ class Templating
 		}
 		$values = array_values($values);
 
+		/** @var list<array{type: string, location: string, values: list<mixed>}> $value_groups */
 		$value_groups = array();
+
+		$current_group = NULL;
 
 		$last_type     = NULL;
 		$last_location = NULL;
 		$last_media    = NULL;
-		foreach ($values as $i => $value) {
+		foreach ($values as $value) {
 			$type = $this->verifyValue($element, $value, $file_type);
 
 			$media    = is_array($value) && isset($value['media']) ? $value['media'] : NULL;
 			$path     = is_array($value) ? $value['path'] : $value;
 			$location = is_string($path) && preg_match('#^https?://#', $path) ? 'http' : 'local';
 
-			if ($type != $last_type || $location != $last_location || $media != $last_media) {
-				$value_groups[] = array(
+			if ($current_group === NULL || $type != $last_type || $location != $last_location || $media != $last_media) {
+				if ($current_group !== NULL) {
+					$value_groups[] = $current_group;
+				}
+				$current_group = array(
 					'type'     => $type,
 					'location' => $location,
 					'values'   => array()
 				);
 			}
-			$value_groups[count($value_groups)-1]['values'][] = $value;
+			$current_group['values'][] = $value;
 
 			$last_type     = $type;
 			$last_location = $location;
 			$last_media    = $media;
 		}
+		if ($current_group !== NULL) {
+			$value_groups[] = $current_group;
+		}
 
 		foreach ($value_groups as $value_group) {
-			if ($value_group['location'] == 'local') {
-				if ($this->minification_directory && in_array($value_group['type'], array('js', 'css'))) {
-					$this->handleMinified($value_group['type'], $element, $value_group['values']);
+			$group_type     = $value_group['type'];
+			$group_location = $value_group['location'];
+			$group_values   = $value_group['values'];
+
+			if ($group_location == 'local') {
+				if ($this->minification_directory && in_array($group_type, array('js', 'css'))) {
+					$this->handleMinified($group_type, $element, $group_values);
 					continue;
 				}
-				if ($this->short_tag_directory && $value_group['type'] == 'php') {
-					$value_group['values'] = $this->fixShortTags($value_group['values']);
+				if ($this->short_tag_directory && $group_type == 'php') {
+					$group_values = $this->fixShortTags($group_values);
 				}
 			}
 
-			foreach ($value_group['values'] as $value) {
-				switch ($value_group['type']) {
+			foreach ($group_values as $value) {
+				switch ($group_type) {
 					case 'css':
 						$this->placeCSS($value);
 						break;
 
 					case 'Templating':
+						if (!($value instanceof self)) {
+							throw new ProgrammerException(
+								'The element specified, %s, is not a Templating object',
+								$element
+							);
+						}
 						// This causes children to inherit settings if they aren't already set
 						if ($value->minification_directory === NULL) {
 							$value->minification_directory = $this->minification_directory;
@@ -1194,6 +1254,9 @@ class Templating
 						break;
 
 					case 'php':
+						if (!is_string($value)) {
+							throw new ProgrammerException('The path for the PHP file must be a string');
+						}
 						$this->placePHP($element, $value);
 						break;
 
@@ -1204,7 +1267,7 @@ class Templating
 					default:
 						throw new ProgrammerException(
 							'The file type specified, %1$s, is invalid. Must be one of: %2$s.',
-							$type,
+							$group_type,
 							'css, js, php, rss'
 						);
 				}
@@ -1225,7 +1288,12 @@ class Templating
 			$info = array('path'  => $info);
 		}
 
-		echo '<script type="text/javascript" src="' . $info['path'] . '"></script>' . "\n";
+		$path = $info['path'] ?? NULL;
+		if (!is_string($path)) {
+			throw new ProgrammerException('The path for the javascript file must be a string');
+		}
+
+		echo '<script type="text/javascript" src="' . $path . '"></script>' . "\n";
 	}
 
 
@@ -1272,10 +1340,13 @@ class Templating
 	protected function placeRSS(mixed $info): void
 	{
 		if (!is_array($info)) {
+			if (!is_string($info)) {
+				throw new ProgrammerException('The path for the RSS file must be a string');
+			}
 			$info = array(
 				'path'  => $info,
 				'title' => Grammar::humanize(
-					preg_replace('#.*?([^/]+).(rss|xml)$#iD', '\1', $info)
+					preg_replace('#.*?([^/]+).(rss|xml)$#iD', '\1', $info) ?? $info
 				)
 			);
 		}
@@ -1287,7 +1358,16 @@ class Templating
 			);
 		}
 
-		echo '<link rel="alternate" type="application/rss+xml" href="' . $info['path'] . '" title="' . $info['title'] . '" />' . "\n";
+		$path  = $info['path'] ?? NULL;
+		$title = $info['title'];
+		if (!is_string($path)) {
+			throw new ProgrammerException('The path for the RSS file must be a string');
+		}
+		if (!is_string($title)) {
+			throw new ProgrammerException('The title for the RSS file must be a string');
+		}
+
+		echo '<link rel="alternate" type="application/rss+xml" href="' . $path . '" title="' . $title . '" />' . "\n";
 	}
 
 
@@ -1318,7 +1398,7 @@ class Templating
 	/**
 	 * Performs a captured place of an element to use with buffer placing
 	 *
-	 * @param array $match  A regex match from ::placeBuffered()
+	 * @param array<int, string> $match  A regex match from ::placeBuffered()
 	 * @return string  The output of placing the element
 	 */
 	private function placeBufferedCallback(array $match): string
@@ -1338,7 +1418,11 @@ class Templating
 	 */
 	public function prepare(string $element, mixed $default_value=NULL): mixed
 	{
-		return HTML::prepare($this->get($element, $default_value));
+		$value = $this->get($element, $default_value);
+		if (!is_array($value) && !is_string($value)) {
+			throw new ProgrammerException('The value for the element, %s, is not a string or array', $element);
+		}
+		return HTML::prepare($value);
 	}
 
 
@@ -1399,13 +1483,16 @@ class Templating
 	/**
 	 * Sets the value for an element
 	 *
-	 * @param  string $element    The element to set - the magic element `__main__` is used for placing the current Templating object as a child of another Templating object - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string|array<string, mixed> $element    The element to set - the magic element `__main__` is used for placing the current Templating object as a child of another Templating object - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
 	 * @param  mixed  $value      The value for the element
 	 * @return Templating  The template object, to allow for method chaining
 	 */
-	public function set(string $element, mixed $value=NULL): Templating
+	public function set(string|array $element, mixed $value=NULL): Templating
 	{
-		if ($value === NULL && is_array($element)) {
+		if (is_array($element)) {
+			if ($value !== NULL) {
+				throw new ProgrammerException('The value must be NULL when setting an array of elements');
+			}
 			foreach ($element as $key => $value) {
 				$this->set($key, $value);
 			}
@@ -1454,12 +1541,16 @@ class Templating
 			);
 		}
 
-		if (is_array($value) && !isset($value['path'])) {
-			throw new ProgrammerException(
-				'The element specified, %1$s, has a value, %2$s, that is missing the path key',
-				$element,
-				$value
-			);
+		$path = $value;
+		if (is_array($value)) {
+			if (!isset($value['path'])) {
+				throw new ProgrammerException(
+					'The element specified, %1$s, has a value, %2$s, that is missing the path key',
+					$element,
+					$value
+				);
+			}
+			$path = $value['path'];
 		}
 
 		if ($file_type) {
@@ -1470,8 +1561,13 @@ class Templating
 			return 'Templating';
 		}
 
-		$path = (is_array($value)) ? $value['path'] : $value;
-		$path = preg_replace('#\?.*$#D', '', $path);
+		if (!is_string($path)) {
+			throw new ProgrammerException(
+				'The element specified, %s, has a value that is not a string or a path array',
+				$element
+			);
+		}
+		$path = preg_replace('#\?.*$#D', '', $path) ?? $path;
 		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
 		// Allow some common variations on file extensions
