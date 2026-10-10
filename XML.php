@@ -70,6 +70,35 @@ class XML implements ArrayAccess
 
 
 	/**
+	 * Returns the DOM node for this object, throwing an exception if it is not set
+	 *
+	 * @return DOMAttr|DOMElement  The DOM node for this object
+	 */
+	private function dom(): DOMAttr|DOMElement
+	{
+		if ($this->__dom === NULL) {
+			throw new ProgrammerException('The %s object does not have an associated XML element', __CLASS__);
+		}
+		return $this->__dom;
+	}
+
+
+	/**
+	 * Converts an array offset to a string, throwing an exception for invalid values
+	 *
+	 * @param  mixed $offset  The offset to convert
+	 * @return string  The offset as a string
+	 */
+	static private function offsetToString(mixed $offset): string
+	{
+		if (!is_scalar($offset) && $offset !== NULL && !$offset instanceof Stringable) {
+			throw new ProgrammerException('The offset must be a string, %s given', get_debug_type($offset));
+		}
+		return (string) $offset;
+	}
+
+
+	/**
 	 * Custom prefix => namespace URI mappings
 	 *
 	 * @var array<string, string>
@@ -97,6 +126,31 @@ class XML implements ArrayAccess
 	 */
 	protected mixed $__xml = null;
 
+	/**
+	 * The methods that can be called using the callback syntax
+	 *
+	 * @var array<string, bool>
+	 */
+	static private array $methods = array(
+		'__construct'     => true,
+		'__get'           => true,
+		'__isset'         => true,
+		'__sleep'         => true,
+		'__toString'      => true,
+		'__wakeup'        => true,
+		'addCustomPrefix' => true,
+		'getName'         => true,
+		'getNamespace'    => true,
+		'getPrefix'       => true,
+		'getText'         => true,
+		'offsetExists'    => true,
+		'offsetGet'       => true,
+		'offsetSet'       => true,
+		'offsetUnset'     => true,
+		'toXML'           => true,
+		'xpath'           => true
+	);
+
 
 	/**
 	 * Create the XML object from a string, File or URL
@@ -107,11 +161,9 @@ class XML implements ArrayAccess
 	 *
 	 * @throws ValidationException    When the source XML is invalid or does not exist
 	 *
-	 * @param  File|string  $source                 The source of the XML, either an File object, a string of XML, a file path or a URL
-	 * @param  numeric       $http_timeout           The timeout to use in seconds when requesting an XML file from a URL
-	 * @param  boolean       $fix_entities_encoding  This will fix two common XML authoring errors and should only be used when experiencing decoding issues - HTML entities that haven't been encoded as XML, and XML content published in ISO-8859-1 or Windows-1252 encoding without an explicit encoding attribute
-	 * @param  File|string   $source
-	 * @param  boolean        $fix_entities_encoding
+	 * @param  File|string|DOMElement  $source                 The source of the XML, either an File object, a string of XML, a file path or a URL
+	 * @param  numeric|boolean         $http_timeout           The timeout to use in seconds when requesting an XML file from a URL, or a boolean `$fix_entities_encoding` value
+	 * @param  boolean                 $fix_entities_encoding  This will fix two common XML authoring errors and should only be used when experiencing decoding issues - HTML entities that haven't been encoded as XML, and XML content published in ISO-8859-1 or Windows-1252 encoding without an explicit encoding attribute
 	 * @return XML
 	 */
 	public function __construct(mixed $source, mixed $http_timeout=NULL, mixed $fix_entities_encoding=NULL)
@@ -124,7 +176,7 @@ class XML implements ArrayAccess
 		// Prevent spitting out errors to we can throw exceptions
 		$old_setting = libxml_use_internal_errors(TRUE);
 
-		$exception_message = NULL;
+		$exception_message = '';
 		try {
 			if ($source instanceof File && $fix_entities_encoding) {
 				$source = $source->read();
@@ -151,7 +203,7 @@ class XML implements ArrayAccess
 
 				// If the URL is not loaded in time, this supresses the file_get_contents() warning
 				Core::startErrorCapture(E_WARNING);
-				$xml = file_get_contents($source, 0, $context);
+				$xml = file_get_contents($source, FALSE, $context);
 				Core::stopErrorCapture();
 
 				if (!$xml) {
@@ -169,7 +221,11 @@ class XML implements ArrayAccess
 
 				if ($fix_entities_encoding) {
 					if ($is_path) {
-						$source = file_get_contents($source);
+						$path   = $source;
+						$source = file_get_contents($path);
+						if ($source === FALSE) {
+							throw new ExpectedException('The file specified, %s, could not be loaded', $path);
+						}
 						$is_path = FALSE;
 					}
 					$source = $this->fixEntitiesEncoding($source);
@@ -201,6 +257,9 @@ class XML implements ArrayAccess
 		}
 
 		if (!$this->__dom) {
+			if (!$xml instanceof SimpleXMLElement) {
+				throw new ProgrammerException('The %s object could not be created from the source', __CLASS__);
+			}
 			$this->__dom = dom_import_simplexml($xml);
 		}
 
@@ -223,34 +282,14 @@ class XML implements ArrayAccess
 	 * @param  string $name  The child element to retrieve
 	 * @return XML|string|array<int, mixed>|null  The child element requested or callback array
 	 */
-	public function __get(mixed $name)
+	public function __get(string $name)
 	{
 		// Handle nice callback syntax
-		static $methods = array(
-			'__construct'     => true,
-			'__get'           => true,
-			'__isset'         => true,
-			'__sleep'         => true,
-			'__toString'      => true,
-			'__wakeup'        => true,
-			'addCustomPrefix' => true,
-			'getName'         => true,
-			'getNamespace'    => true,
-			'getPrefix'       => true,
-			'getText'         => true,
-			'offsetExists'    => true,
-			'offsetGet'       => true,
-			'offsetSet'       => true,
-			'offsetUnset'     => true,
-			'toXML'           => true,
-			'xpath'           => true
-		);
-
-		if (isset($methods[$name])) {
+		if (isset(self::$methods[$name])) {
 			return array($this, $name);
 		}
 
-		if ($this->__dom->namespaceURI && $this->__dom->prefix == '' && strpos($name, ':') === FALSE) {
+		if ($this->dom()->namespaceURI && $this->dom()->prefix == '' && strpos($name, ':') === FALSE) {
 			$name = '__:' . $name;
 		}
 		$first_child = $this->query($name . '[1]');
@@ -276,9 +315,9 @@ class XML implements ArrayAccess
 	 * @param  string $name  The child element to check - see method description for details about namespaces
 	 * @return boolean  If the child element is set
 	 */
-	public function __isset(mixed $name)
+	public function __isset(string $name)
 	{
-		if ($this->__dom->namespaceURI && $this->__dom->prefix == '' && strpos($name, ':') === FALSE) {
+		if ($this->dom()->namespaceURI && $this->dom()->prefix == '' && strpos($name, ':') === FALSE) {
 			$name = '__:' . $name;
 		}
 		return (bool) $this->query($name . '[1]')->length;
@@ -294,7 +333,7 @@ class XML implements ArrayAccess
 	 * @param  mixed  $value  The value to set
 	 * @return void
 	 */
-	public function __set(mixed $name, mixed $value)
+	public function __set(string $name, mixed $value)
 	{
 		throw new ProgrammerException('The %s class does not support modifying XML', __CLASS__);
 	}
@@ -321,7 +360,7 @@ class XML implements ArrayAccess
 	 */
 	public function __toString()
 	{
-		return (string) $this->__dom->textContent;
+		return (string) $this->dom()->textContent;
 	}
 
 
@@ -333,7 +372,7 @@ class XML implements ArrayAccess
 	 * @param  string $name  The element to unset
 	 * @return void
 	 */
-	public function __unset(mixed $name)
+	public function __unset(string $name)
 	{
 		throw new ProgrammerException('The %s class does not support modifying XML', __CLASS__);
 	}
@@ -348,6 +387,9 @@ class XML implements ArrayAccess
 	 */
 	public function __wakeup()
 	{
+		if ($this->__xml === NULL) {
+			throw new ProgrammerException('The %s object does not have any XML to unserialize', __CLASS__);
+		}
 		$this->__dom = dom_import_simplexml(new SimpleXMLElement($this->__xml));
 		$this->__xml = NULL;
 	}
@@ -405,7 +447,7 @@ class XML implements ArrayAccess
 		// Windows-1252 into an XML file without an encoding or UTF-8 encoding
 		if (preg_replace('#[^a-z0-9]#', '', strtolower($encoding)) == 'utf8') {
 			// Remove the UTF-8 BOM if present
-			$xml = preg_replace("#^\xEF\xBB\xBF#", '', $xml);
+			$xml = preg_replace("#^\xEF\xBB\xBF#", '', $xml) ?? $xml;
 			Core::startErrorCapture(E_NOTICE);
 			$cleaned = self::iconv('UTF-8', 'UTF-8', $xml);
 			if ($cleaned != $xml) {
@@ -420,7 +462,7 @@ class XML implements ArrayAccess
 			// don't have characters for all HTML entities
 			if (substr(strtolower($encoding), 0, 3) != 'utf') {
 				$xml = self::iconv($encoding, 'UTF-8', $xml);
-				$xml = preg_replace('#^(<\?xml.*?) encoding="[^"]+"(.*?\?>)#', '\1 encoding="UTF-8"\2', $xml);
+				$xml = preg_replace('#^(<\?xml.*?) encoding="[^"]+"(.*?\?>)#', '\1 encoding="UTF-8"\2', $xml) ?? $xml;
 				$encoding = 'UTF-8';
 			}
 
@@ -442,7 +484,7 @@ class XML implements ArrayAccess
 	 */
 	public function getName(): string
 	{
-		return $this->__dom->localName;
+		return $this->dom()->localName ?? '';
 	}
 
 
@@ -453,7 +495,7 @@ class XML implements ArrayAccess
 	 */
 	public function getNamespace(): string
 	{
-		return $this->__dom->namespaceURI;
+		return $this->dom()->namespaceURI ?? '';
 	}
 
 
@@ -464,7 +506,7 @@ class XML implements ArrayAccess
 	 */
 	public function getPrefix(): string
 	{
-		return $this->__dom->prefix;
+		return $this->dom()->prefix;
 	}
 
 
@@ -475,7 +517,7 @@ class XML implements ArrayAccess
 	 */
 	public function getText(): string
 	{
-		return (string) $this->__dom->textContent;
+		return (string) $this->dom()->textContent;
 	}
 
 
@@ -494,7 +536,7 @@ class XML implements ArrayAccess
 	 */
 	public function offsetExists(mixed $offset): bool
 	{
-		return (bool) $this->query('@' . (string) $offset . '[1]')->length;
+		return (bool) $this->query('@' . self::offsetToString($offset) . '[1]')->length;
 	}
 
 
@@ -515,7 +557,10 @@ class XML implements ArrayAccess
 	{
 		$attribute = $this->query('@' . $offset . '[1]');
 		if ($attribute->length) {
-			return $attribute->item(0)->nodeValue;
+			$item = $attribute->item(0);
+			if ($item !== NULL) {
+				return $item->nodeValue;
+			}
 		}
 		return NULL;
 	}
@@ -553,12 +598,16 @@ class XML implements ArrayAccess
 	 * Performs an XPath query on the current element, returning the raw results
 	 *
 	 * @param  string $path  The XPath path to query
-	 * @return DOMNodeList  The raw list of matching nodes
+	 * @return DOMNodeList<DOMNameSpaceNode|DOMNode>  The raw list of matching nodes
 	 */
 	protected function query(string $path): DOMNodeList
 	{
 		if (!$this->__xpath) {
-			$this->__xpath = new DOMXPath($this->__dom->ownerDocument);
+			$owner_document = $this->dom()->ownerDocument;
+			if ($owner_document === NULL) {
+				throw new ProgrammerException('The %s object does not have an owner document', __CLASS__);
+			}
+			$this->__xpath = new DOMXPath($owner_document);
 			if ($this->__custom_prefixes) {
 				foreach ($this->__custom_prefixes as $prefix => $namespace) {
 					$this->__xpath->registerNamespace($prefix, $namespace);
@@ -603,7 +652,18 @@ class XML implements ArrayAccess
 	 */
 	public function toXML(): string
 	{
-		return $this->__dom->ownerDocument->saveXML($this->__dom->parentNode === $this->__dom->ownerDocument ? $this->__dom->parentNode : $this->__dom);
+		$dom            = $this->dom();
+		$owner_document = $dom->ownerDocument;
+		if ($owner_document === NULL) {
+			throw new ProgrammerException('The %s object does not have an owner document', __CLASS__);
+		}
+		$parent_node = $dom->parentNode;
+		$node        = ($parent_node !== NULL && $parent_node === $owner_document) ? $parent_node : $dom;
+		$xml         = $owner_document->saveXML($node);
+		if ($xml === FALSE) {
+			throw new ProgrammerException('The %s object could not be converted to XML', __CLASS__);
+		}
+		return $xml;
 	}
 
 
@@ -612,7 +672,7 @@ class XML implements ArrayAccess
 	 *
 	 * @param  string  $path        The XPath path to query
 	 * @param  boolean $first_only  If only the first match should be returned
-	 * @return array|string|XML  An array of matching elements, or a string or XML object if `$first_only` is `TRUE`
+	 * @return array<int|string, mixed>|string|XML|null  An array of matching elements, or a string or XML object if `$first_only` is `TRUE`
 	 */
 	public function xpath(string $path, bool $first_only=FALSE): mixed
 	{
@@ -634,8 +694,8 @@ class XML implements ArrayAccess
 			if ($element instanceof DOMElement) {
 				$child = new XML($element);
 				$child->__custom_prefixes = $this->__custom_prefixes;
-				if ($child->__dom->namespaceURI && $child->__dom->prefix == '') {
-					$child->addCustomPrefix('__', $child->__dom->namespaceURI);
+				if ($child->dom()->namespaceURI && $child->dom()->prefix == '') {
+					$child->addCustomPrefix('__', $child->dom()->namespaceURI);
 				}
 				$output[] = $child;
 
@@ -680,7 +740,8 @@ class XML implements ArrayAccess
 		}
 
 		if ($first_only) {
-			return current($output);
+			$first = current($output);
+			return $first === FALSE ? NULL : $first;
 		}
 
 		return $output;
