@@ -478,3 +478,27 @@
 - **Verifica**: `php -l Upload.php` pulito; `vendor/bin/phpstan analyse Upload.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 495 errori totali (da 560, −65, nessun nuovo errore; caller `ORMFile.php` verificato); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot Request 63, Money 55, SMTP 44, XML 42, File 37, ORMDate 36.
+
+### [2026-10-10 19:40] - Fase PHPStan: Request.php a 0 errori (27 file a zero)
+
+- **File**: `Request.php`
+- **Intervallo righe**: `1-1023`
+- **Tipo**: tipizzazione PHPStan level 10
+- **Descrizione**:
+  - Nuovo helper privato `coerceToString(mixed): string` (stringhe invariate; scalari/`NULL` con `(string)`; oggetti `Stringable` con `(string)`; altrimenti `ProgrammerException`) usato da `encode()` e `prepare()`: prima `HTML::encode()`/`HTML::prepare()` ricevevano `mixed` e potevano restituire un array da un metodo dichiarato `string`.
+  - `cast()`: rimossa la condizione morta `$cast_to === null` (già intercettata dal `return` iniziale), semplificato il ramo oggetti (senza `__toString`/`Stringable` ora `ProgrammerException` invece di un cast che va in errore), aggiunte guardie `ProgrammerException` per `int|string|NULL` prima di `new Date()`, `new Time()`, `new Timestamp()` (i costruttori portati accettano `int|object|string|null`).
+  - `check()`/`get()`: il `strpos($key, '[')` è ora catturato in `$bracket_pos` e testato direttamente, così `substr()` riceve un `int` invece di `int<0,max>|false`.
+  - `filter()`: narrowing di `self::$backup_files` e dei backup dei superglobali con `is_array` prima del `foreach`; chiavi `(string)` per `strpos`/`preg_replace`; `$key` verificato `is_int|is_string` prima di indicizzare `$_FILES`; lettura delle colonne `type`/`tmp_name`/`error`/`size` con `is_array(...) ? (... ?? NULL) : NULL`.
+  - `isAjax()` e `isGet()/isPost()/isPut()/isHead()/isDelete()`: lettura di `$_SERVER` con `?? NULL`/`?? ''` più guardia `is_string` prima di `strtolower`.
+  - `initPutDelete()`: `file_get_contents('php://input')` verificato `=== FALSE` e `self::$put_delete` inizializzato ad array prima di `parse_str`.
+  - `getAcceptLanguages()`/`getAcceptTypes()`/`processAcceptHeader()`: docblock `@return array<string, float>` (mappa `{valore} => {q}`).
+  - `getBestAcceptLanguage()`/`getBestAcceptType()`: parametro nativo riportato a `mixed $filter=array()` (come l'originale) per mantenere vivo il fallback `func_get_args()`; l'array passa a `pickBestAcceptItem()` via `array_values()`.
+  - `getValid()`: docblock `@param array<int|string, mixed>` (compatibile con i chiamanti che passano `array<mixed>`) e `array_unique(..., SORT_REGULAR)`.
+  - `overrideAction()`: guardia `is_array($global)`; chiavi `(string)`; `str_replace('%action%', (string) $found, ...)`.
+  - `pickBestAcceptItem()`: docblock `@param array<int, mixed>`; `key()` confrontato con `NULL` (non `false`, valore che `key()` non restituisce mai); opzioni non scalari saltate e `(string)`; `$item` già `string`; ritorno finale diretto.
+  - `validateCSRFToken()`: `Session::get()` verificato `is_array`; i token normalizzati in una lista di stringhe prima di `in_array`/`array_diff`.
+- **Motivazione**: chiudere l'hotspot `Request` (63) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi). Le guardie `ProgrammerException` coprono gli stati impossibili dedotti dal flusso.
+- **Impatto**: `basso`. Comportamento pubblico invariato per gli input validi; `encode()`/`prepare()` ora garantiscono realmente un `string`; i valori non convertibili sollevano eccezioni esplicite invece di `Error`/`TypeError`.
+- **Verifica**: `php -l Request.php` pulito; `vendor/bin/phpstan analyse Request.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 432 errori totali (da 495, −63, nessun nuovo errore; caller `CRUD.php` verificato e rimasto a 14); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Money 55, SMTP 44, XML 42, File 37, ORMDate 36.
