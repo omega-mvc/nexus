@@ -334,3 +334,27 @@
 - **Verifica**: `php -l SQLTranslation.php` pulito; `vendor/bin/phpstan analyse SQLTranslation.php --no-progress --error-format=raw` → 0 errori; caller `Database.php` verificati (`new SQLTranslation($this)` a riga 1795, `inject(mixed)` a riga 2396 con docblock `@param SQLTranslation`); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota; `Database.php` risulta già a 0 errori.
 - **Prossimo**: coda hotspot Cache 91, Grammar 79, ORMMoney 74, UTF8 67, Pagination 67 (da portare: `ORMDate` 36 e `ORMMoney` inclusi).
+
+### [2026-10-10 16:56] - Fase PHPStan: Cache.php a 0 errori (21 file a zero)
+
+- **File**: `Cache.php`
+- **Intervallo righe**: `1-1004`
+- **Tipo**: `tipizzazione` + `refactor` + `fix comportamento` (bug ordine argomenti Redis `setex`)
+- **Descrizione**: `Cache` (91 → 0), hotspot successivo a `SQLTranslation`.
+  - Introdotto il tipo `@phpstan-type FileCacheStore array<string, array{value: string, expire: int}>` per la cache su file.
+  - Proprietà `$config` tipizzata `array<string, mixed>`; `$data_store` tipizzato `FileCacheStore|Database|Memcache|Memcached|Redis|null`.
+  - `__construct()`: guardie `is_string` sul path per i tipi `directory` e `file`; per `file` la cache letta da disco viene validata e ricostruita nel tipo `FileCacheStore` (le voci non conformi vengono scartate), con `ProgrammerException` se il contenuto non è un array.
+  - Introdotta una **layer di helper privati** che restringe `$data_store`/`$config` ai tipi attesi invece di propagare `mixed` in tutto il file: `getDatabase(): Database`, `getMemcache(): Memcache|Memcached`, `getRedis(): Redis`, `getFileStore(): array`, `getPath(): string`, `queryDatabase(Statement|string $statement, mixed ...$params): Result`. Ogni helper solleva `ProgrammerException` se il tipo non è quello previsto.
+  - Tutti i `switch ($this->type)` (`add`, `clear`, `delete`, `get`, `set`) sono chiusi da un ramo finale con `ProgrammerException` (tipo cache non valido), garantendo che ogni percorso restituisca un valore.
+  - Percorsi I/O resi sicuri: `scandir(...) === FALSE`, `fopen(...) === FALSE`, `fgets(...) === FALSE`, `fread(...) === FALSE` gestiti esplicitamente (skip/early-return), con `EnvironmentException` dove il fallimento è fatale (`scandir`, apertura file cache); `(int)` legittimo su `trim($expiration_date)` per il confronto temporale in `deleteExpired()`.
+  - `serialize()`: ramo `string` con cast `(string)` solo su scalar/null e `ProgrammerException` per oggetti non convertibili; ramo callable con guardia `is_callable` e `is_string` sul risultato.
+  - `unserialize()`: guardia `is_callable` con `ProgrammerException`.
+  - `get()`: dopo lo `switch`, `$value` è considerata valorizzata solo se `isset($value) && is_string($value)`, altrimenti ritorna il default.
+  - Valori di ritorno `mixed` normalizzati con cast `(bool)` dove l'estensione restituisce booleani (`setnx`, `set`, `setex`, `get` Redis; `add`).
+  - `save()` e i metodi `file`/`directory` usano `getPath()` per accedere al path configurato in modo type-safe.
+- **Fix comportamento**: corretto l'ordine degli argomenti di `Redis::setex()` in `set()`: era `setex($key, $value, $ttl)`, ora `setex($key, $ttl, $value)` (firma corretta `setex(string $key, int $seconds, string $value)`). Nella versione precedente il valore della cache veniva passato come TTL e la scadenza come payload.
+- **Motivazione**: chiudere l'hotspot `Cache` (91) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi). I cast/guardie sono giustificati dal tipo reale delle API delle estensioni e dai percorsi I/O.
+- **Impatto**: `basso`. Comportamento pubblico invariato a meno del bug fix Redis. Le condizioni impossibili (data store di tipo errato, serializer non callable, contenuto file non valido) ora sollevano `ProgrammerException` in modo esplicito invece di generare `TypeError`/warning.
+- **Verifica**: `php -l Cache.php` pulito; `vendor/bin/phpstan analyse Cache.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Grammar 79, ORMMoney 74, UTF8 67, Pagination 67, Upload 65.
