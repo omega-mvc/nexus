@@ -573,3 +573,31 @@
 - **Verifica**: `php -l XML.php` pulito; `vendor/bin/phpstan analyse XML.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 291 errori totali (da 333, −42, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota. Il tipo `@param File|string|DOMElement` documenta l'uso interno reale; `boolean` sul secondo argomento documenta l'overload storico.
 - **Prossimo**: coda hotspot File 37, ORMDate 36, Cryptography 30, Timestamp 27, URL/Time/Date 25.
+
+
+### [2026-10-10 21:24] - Fase PHPStan: File.php a 0 errori (31 file a zero)
+
+- **File**: `File.php` (+ tipi `TraceEntry` condivisi in `Filesystem.php`)
+- **Intervallo righe**: `File.php` 1-1425; `Filesystem.php` docblock di classe, `$deleted_map`, `hookDeletedMap()`, `updateDeletedMap()`
+- **Tipo**: tipizzazione + refactor + bugfix
+- **Descrizione**:
+  - Aggiunto `@phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?: list<mixed>}` e `@implements Iterator<int, string|false>` sull'intestazione della classe.
+  - Proprietà: `$current_line` → `@var false|string` (inizializzata `FALSE`, non più `NULL`); `$deleted` → `@var list<TraceEntry>|null`; `$file_handle` → `@var resource|null` (rimosso il `false` impossibile, il `NULL` iniziale torna valido).
+  - Nuovi helper privati: `copyPermissions()` (guarda il `fileperms()` `false` con `ProgrammerException`, usato da `__clone()` e `duplicate()`) e `stringify()` (scalare/`Stringable`/`null` → stringa, altrimenti `ProgrammerException`, usato da `append()`).
+  - `determineMimeType()`: guardie su `fopen()`/`fread()`.
+  - Corretto l'uso della variabile non definita `$_4_4` in `determineMimeTypeByContents()` (aggiunta `$_4_4 = substr($content, 4, 4);`), che rendeva irraggiungibile il riconoscimento dei QuickTime `moov`/`mdat`.
+  - Costruttore: `realpath()` catturato e verificato (`ProgrammerException` se `FALSE`) prima di `hookFilenameMap()`/`hookDeletedMap()`.
+  - `__get()`: parametro `string $method` e ritorno `array{0: $this, 1: string}`.
+  - `count()` e `next()`: guardie su `fopen()`/`fread()`.
+  - `current()`: tipo di ritorno corretto da `array` a `string|false` (il valore reale è la riga corrente).
+  - `delete()`: ritorno nativo `void` (era `mixed` con docblock `@return void`), rimossi i `return` con valore.
+  - `getMTime()`: `filemtime()` verificato; `getSize()`: `Filesystem::formatFilesize((int) $size, ...)`.
+  - `output()`: `$filename` normalizzato a stringa (scalare) con `ProgrammerException` per tipi non validi prima dell'header.
+  - `read()`: `file_get_contents()` verificato; `rename()`: `realpath($info['dirname'])` verificato prima di `Directory::makeCanonical()`.
+  - `rewind()`: guardia `is_resource()`.
+  - `Filesystem.php`: `$deleted_map` tipizzato `array<string, list<TraceEntry>|null>`, `hookDeletedMap()` ritorna `list<TraceEntry>|null`, `updateDeletedMap()` accetta `list<TraceEntry>|null` (condivisione precisa del tipo di backtrace con `Core::backtrace()`).
+- **Motivazione**: chiudere l'hotspot `File` (37) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi). Le guardie esplicitano i reali ritorni `false`/`null` delle funzioni PHP; `ProgrammerException` copre gli stati impossibili.
+- **Impatto**: `basso`. Comportamento pubblico invariato per gli input validi. `File::delete()` ora è `void` (come da docblock, già ritornava `null`/niente); `File::current()` ritorna la riga (stringa) invece del tipo `array` dichiarato per errore; il riconoscimento dei file QuickTime `moov`/`mdat` ora funziona.
+- **Verifica**: `php -l File.php` e `php -l Filesystem.php` puliti; `vendor/bin/phpstan analyse File.php Filesystem.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 254 errori totali (da 291, −37, nessun nuovo errore, `Filesystem.php` resta a zero); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota. `File::delete()` con tipo `void` è coerente con l'uso interno (nessun chiamante usa il valore di ritorno).
+- **Prossimo**: coda hotspot ORMDate 36, Cryptography 30, Timestamp 27, Time/Date 26, URL/Authorization 25.
