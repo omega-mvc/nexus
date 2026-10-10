@@ -601,3 +601,21 @@
 - **Verifica**: `php -l File.php` e `php -l Filesystem.php` puliti; `vendor/bin/phpstan analyse File.php Filesystem.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 254 errori totali (da 291, −37, nessun nuovo errore, `Filesystem.php` resta a zero); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota. `File::delete()` con tipo `void` è coerente con l'uso interno (nessun chiamante usa il valore di ritorno).
 - **Prossimo**: coda hotspot ORMDate 36, Cryptography 30, Timestamp 27, Time/Date 26, URL/Authorization 25.
+
+### [2026-10-10 21:37] - Fase PHPStan: ORMDate.php a 0 errori (32 file a zero)
+
+- **File**: `ORMDate.php`
+- **Intervallo righe**: `1-590`
+- **Tipo**: tipizzazione + refactor + bugfix
+- **Descrizione**:
+  - `compose()`: normalizzati gli argomenti variadici con `array_map` (non-scalari → `get_debug_type()`) prima di `vsprintf()`, come già fatto in `Database.php`/`Grammar.php`.
+  - `configureTimezoneColumn()`: corretto il bug della variabile non definita `$data_type` → `$timestamp_data_type` nel messaggio di eccezione.
+  - `inspect()`: docblock `@param array<array-key, mixed> &$metadata` (convenzione condivisa con `ORMColumn`/`ORMMoney`/`ORMValidation`).
+  - Tutti i parametri by-ref dei callback ORM (`&$values`, `&$old_values`, `&$related_records`, `&$cache`, `&$validation_messages`) e `$parameters` tipizzati come `array<array-key, mixed>` (richiesto per il passaggio a `ActiveRecord::assign()`/`hasOld()`).
+  - `objectifyTimestampWithTimezone()`: riscritto il guard di ingresso con narrowing esplicito (oggetto non-`Stringable` → return; float → stringa; non string/int → return) e normalizzazione del fuso orario a `string|null` prima di `new Timestamp()`; rimosso il ramo `instanceof Timestamp` diventato ridondante (già coperto da `Stringable`).
+  - `validateTimezoneColumns()`: il valore del fuso orario è normalizzato/verificato con `is_string()` prima di `Timestamp::isValidTimezone()`.
+- **Motivazione**: chiudere l'hotspot `ORMDate` (36) senza tecniche di silenziamento; le guardie esplicitano i ritorni reali delle funzioni e gli stati impossibili con return anticipato.
+- **Impatto**: `basso`. Comportamento pubblico invariato per input validi; corretto il messaggio di eccezione (variabile non definita) e resa robusta la conversione timestamp/fuso orario.
+- **Verifica**: `php -l ORMDate.php` pulito; `vendor/bin/phpstan analyse ORMDate.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 218 errori totali (da 254, −36, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Cryptography 30, Timestamp 27, URL 25, Time 25, Date 25, Authorization 24.
