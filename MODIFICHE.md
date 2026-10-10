@@ -282,3 +282,29 @@
 - **Verifica**: `php -l` pulito su tutti i file toccati; `vendor/bin/phpstan analyse ORM.php --no-progress` → 0 errori; analisi dei caller (`ActiveRecord`, `ORMColumn`, `ORMDate`, `ORMFile`, `ORMMoney`, `ORMOrdering`, `ORMRelated`, `ORMValidation`, `ORMDatabase`) → 113 errori, **tutti già presenti nel baseline** (119) e nessuno nuovo (6 risolti); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: `ORMColumn.php`/`ORMFile.php`/`ActiveRecord.php`/`ORMOrdering.php` sono tornati al loro baseline a 0 (nessuna regressione); `ORMDate` (38) e `ORMMoney` (78) restano non portati come da coda (`ORMMoney` è tra gli hotspot).
 - **Prossimo**: coda hotspot Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (da portare: `ORMDate` e `ORMMoney` inclusi).
+
+### [2026-10-10 13:03] - Fase PHPStan: Templating.php a 0 errori (19 file a zero)
+
+- **File**: `Templating.php`
+- **Intervallo righe**: `1-1621`
+- **Tipo**: `tipizzazione` + `refactor` + `fix BC`
+- **Descrizione**: `Templating` (107 → 0), hotspot successivo dopo `ORM`.
+  - Proprietà tipizzate: `$instances` → `array<string, Templating>`, `$elements` → `array<string, mixed>`, `$minification_prefix` → `?string`; `$buffered_id_sequence` da variabile statica locale (tipata `mixed` da PHPStan) a proprietà `static private int`.
+  - Costruttore con `?string $root` e guardia su `$_SERVER['DOCUMENT_ROOT']`; `__get()` con `@return array{Templating, string}`.
+  - `enableMinification(string $mode, Directory|string $cache_directory, Directory|string|null $path_prefix=NULL)`: guardia `realpath() === FALSE`/`is_writable()` → `EnvironmentException`, `$path_prefix` derivato da `$_SERVER['DOCUMENT_ROOT'] ?? ''` con guardia `is_string`; `enablePHPShortTags(string $mode, Directory|string $cache_directory)`.
+  - `encode()`/`prepare()`: guardia `!is_array($value) && !is_string($value)` → `ProgrammerException` prima di `HTML::encode()`/`HTML::prepare()`.
+  - `get()`/`delete()`: normalizzazione onesta degli argomenti array (chiave `int` → il valore è il nome elemento; chiave `string` mantenuta come chiave) con `ProgrammerException` sui valori non stringa; il nome elemento nella ricorsione è `string`.
+  - `filter()`: riscrittura in read-modify-write su variabile locale (`$element_values`) per evitare accesso a offset su `mixed`.
+  - `fixShortTags()`: guardie `realpath()`/`file_get_contents()` → `ProgrammerException`; `$token_regex` inizializzata; `preg_match()` spostato nella condizione; `@param array<int, mixed>` con guardia `is_string` per-ciascun-valore.
+  - `handleMinified()`: guardie `is_string` su path/valori; `preg_quote($this->minification_prefix ?? '', '#')`; guardie su `file_get_contents()`/`filemtime()`.
+  - `minify()`/`minifyCode()`/`minifyLiteral()`: firme by-ref `string &$part`, `string &$buffer`, `array &$stack`, `string $type`; ogni `preg_replace(...)` riassegnato a `$part`/`$chunk` ora `?? $part`/`?? $chunk` (il ritorno è `?string`).
+  - `placeElement()`: `?string $file_type=NULL` (prima obbligatorio); costruzione dei gruppi tramite variabile `$current_group` e `/** @var list<array{type: string, location: string, values: list<mixed>}> $value_groups */`; guardia `instanceof self` nel ramo `'Templating'`; guardia `is_string` nel ramo `'php'`; `$group_type` locale nel `default` (prima `$type` poteva non esistere).
+  - `placeCSS()`/`placeJS()`/`placeRSS()`: path/media/title estratti in variabili locali con guardie `is_string` → `ProgrammerException` prima dell'`echo` (nessun cast).
+  - `placeBufferedCallback()`: `@param array<int, string> $match`.
+  - `set()`: firma `string|array $element`; ramo array con `ProgrammerException` se `$value !== NULL`.
+  - `verifyValue()`: ramo array riscritto con `if` annidati (`is_array($v) && !isset($v['path'])` su `mixed` induceva PHPStan a un falso "is_array sempre falso"); `$path = preg_replace(...) ?? $path`; guardia `is_string` prima di `pathinfo()`.
+- **Motivazione**: chiudere l'hotspot `Templating` (107) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()`, cast o widening puramente soppressivi). Il `?? $part` è usato solo dove `preg_replace` può davvero restituire `null` in caso di errore runtime.
+- **Impatto**: `minimo`. API pubblica invariata (solo allargamenti: `set()` accetta array come già indicato dal docblock, `placeElement()` ha `$file_type` opzionale). Gli input impossibili ora sollevano `ProgrammerException` esplicite invece di errori fatali/`TypeError`.
+- **Verifica**: `php -l Templating.php` pulito; `vendor/bin/phpstan analyse Templating.php --no-progress` → 0 errori; nessun riferimento esterno a `Templating` nel codice della libreria (grep case-insensitive); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: `verifyValue()` è riorganizzato a `if` annidati unicamente per il narrowing di PHPStan su `mixed` (nessun cambiamento semantico). Nessuna regressione nota.
+- **Prossimo**: coda hotspot SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (da portare: `ORMDate` 38 e `ORMMoney` inclusi).
