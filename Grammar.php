@@ -32,7 +32,13 @@ class Grammar
 	/**
 	 * Cache for plural <-> singular and underscore <-> camelcase
 	 *
-	 * @var array
+	 * @var array{
+	 *     camelize: array{0: array<string, string>, 1: array<string, string>},
+	 *     humanize: array<string, string>,
+	 *     pluralize: array<string, string|false>,
+	 *     singularize: array<string, string|false>,
+	 *     underscorize: array<string, string>
+	 * }
 	 */
 	static private array $cache = array(
 		'camelize'     => array(0 => array(), 1 => array()),
@@ -45,14 +51,14 @@ class Grammar
 	/**
 	 * Custom rules for camelizing a string
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $camelize_rules = array();
 
 	/**
 	 * Custom rules for humanizing a string
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $humanize_rules = array();
 
@@ -64,9 +70,16 @@ class Grammar
 	static private mixed $join_array_callback = NULL;
 
 	/**
+	 * Cached word forms for the numbers 0 to 9 for ::inflectOnQuantity()
+	 *
+	 * @var array<int, string>|null
+	 */
+	static private ?array $quantity_words = NULL;
+
+	/**
 	 * Rules for plural to singular inflection of nouns
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $plural_to_singular_rules = array(
 		'([ml])ice$'                   => '\1ouse',
@@ -92,7 +105,7 @@ class Grammar
 	/**
 	 * Rules for singular to plural inflection of nouns
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $singular_to_plural_rules = array(
 		'([ml])ouse$'                  => '\1ice',
@@ -119,7 +132,7 @@ class Grammar
 	/**
 	 * Custom rules for underscorizing a string
 	 *
-	 * @var array
+	 * @var array<string, string>
 	 */
 	static private array $underscorize_rules = array();
 
@@ -202,9 +215,9 @@ class Grammar
 			);
 		}
 
-		$upper = (int)(bool) $upper;
-		if (isset(self::$cache['camelize'][$upper][$string])) {
-			return self::$cache['camelize'][$upper][$string];
+		$cache_key = $upper ? 1 : 0;
+		if (isset(self::$cache['camelize'][$cache_key][$string])) {
+			return self::$cache['camelize'][$cache_key][$string];
 		}
 
 		$original = $string;
@@ -219,7 +232,7 @@ class Grammar
 		} else {
 			// Make a humanized string like underscore notation
 			if (strpos($string, ' ') !== FALSE) {
-				$string = strtolower(preg_replace('#\s+#', '_', $string));
+				$string = strtolower(preg_replace('#\s+#', '_', $string) ?? $string);
 			}
 
 			// Check to make sure this is not already camel case
@@ -234,11 +247,11 @@ class Grammar
 				if ($upper) {
 					$string = ucfirst($string);
 				}
-				$string = preg_replace_callback('#_([a-z0-9])#i', array(self::class, 'camelizeCallback'), $string);
+				$string = preg_replace_callback('#_([a-z0-9])#i', array(self::class, 'camelizeCallback'), $string) ?? $string;
 			}
 		}
 
-		self::$cache['camelize'][$upper][$original] = $string;
+		self::$cache['camelize'][$cache_key][$original] = $string;
 		return $string;
 	}
 
@@ -246,7 +259,7 @@ class Grammar
 	/**
 	 * A callback used by ::camelize() to handle converting underscore to camelCase
 	 *
-	 * @param array $match  The regular expression match
+	 * @param array<int, string> $match  The regular expression match
 	 * @return string  The value to replace the string with
 	 */
 	static private function camelizeCallback(array $match): string
@@ -264,6 +277,17 @@ class Grammar
 	static protected function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
+
+		$args = array_map(
+			static function (mixed $arg): bool|float|int|string|null {
+				if ($arg === NULL || is_scalar($arg)) {
+					return $arg;
+				}
+
+				return get_debug_type($arg);
+			},
+			$args
+		);
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -308,11 +332,12 @@ class Grammar
 				$string = self::underscorize($string);
 			}
 
-			$string = preg_replace_callback(
+			$subject = str_replace('_', ' ', $string);
+			$string  = preg_replace_callback(
 				'/(\b(api|css|gif|html|id|jpg|js|mp3|pdf|php|png|sql|swf|url|xhtml|xml)\b|\b\w)/',
 				array(self::class, 'camelizeCallback'),
-				str_replace('_', ' ', $string)
-			);
+				$subject
+			) ?? $subject;
 		}
 
 		self::$cache['humanize'][$original] = $string;
@@ -334,11 +359,25 @@ class Grammar
 	{
 		if ($plural_form === NULL) {
 			$plural_form = self::pluralize($singular_form);
+			if ($plural_form === FALSE) {
+				throw new ProgrammerException(
+					'The noun specified, %s, could not be pluralized',
+					$singular_form
+				);
+			}
 		}
 
 		if (is_array($quantity)) {
 			$quantity = sizeof($quantity);
 		}
+
+		if (!is_numeric($quantity)) {
+			throw new ProgrammerException(
+				'The quantity specified, %s, is not numeric',
+				get_debug_type($quantity)
+			);
+		}
+		$quantity = (int) $quantity;
 
 		if ($quantity == 1) {
 			return $singular_form;
@@ -350,9 +389,8 @@ class Grammar
 			if (strpos($output, '%d') !== FALSE) {
 
 				if ($use_words_for_single_digits && $quantity < 10) {
-					static $replacements = array();
-					if (!$replacements) {
-						$replacements = array(
+					if (self::$quantity_words === NULL) {
+						self::$quantity_words = array(
 							0 => self::compose('zero'),
 							1 => self::compose('one'),
 							2 => self::compose('two'),
@@ -365,10 +403,10 @@ class Grammar
 							9 => self::compose('nine')
 						);
 					}
-					$quantity = $replacements[$quantity];
+					$quantity = self::$quantity_words[$quantity];
 				}
 
-				$output = str_replace('%d', $quantity, $output);
+				$output = str_replace('%d', (string) $quantity, $output);
 			}
 
 			return $output;
@@ -379,7 +417,7 @@ class Grammar
 	/**
 	 * Returns the passed terms joined together using rule 2 from Strunk & White's 'The Elements of Style'
 	 *
-	 * @param  array  $strings  An array of strings to be joined together
+	 * @param  array<int, string>  $strings  An array of strings to be joined together
 	 * @param  string $type     The type of join to perform, `'and'` or `'or'`
 	 * @return string  The terms joined together
 	 */
@@ -395,29 +433,31 @@ class Grammar
 		}
 
 		if (self::$join_array_callback) {
-			return call_user_func(self::$join_array_callback, $strings, $type);
+			$result = call_user_func(self::$join_array_callback, $strings, $type);
+			if (!is_string($result)) {
+				throw new ProgrammerException(
+					'The callback for %s did not return a string',
+					__CLASS__ . '::joinArray()'
+				);
+			}
+			return $result;
 		}
 
-		settype($strings, 'array');
 		$strings = array_values($strings);
 
 		switch (sizeof($strings)) {
 			case 0:
 				return '';
-				break;
 
 			case 1:
 				return $strings[0];
-				break;
 
 			case 2:
 				return $strings[0] . ' ' . $type . ' ' . $strings[1];
-				break;
 
 			default:
 				$last_string = array_pop($strings);
 				return join(', ', $strings) . ' ' . $type . ' ' . $last_string;
-				break;
 		}
 	}
 
@@ -448,7 +488,7 @@ class Grammar
 		list ($beginning, $singular_noun) = self::splitLastWord($singular_noun);
 		foreach (self::$singular_to_plural_rules as $from => $to) {
 			if (preg_match('#' . $from . '#iD', $singular_noun)) {
-				$plural_noun = $beginning . preg_replace('#' . $from . '#iD', $to, $singular_noun);
+				$plural_noun = $beginning . (preg_replace('#' . $from . '#iD', $to, $singular_noun) ?? $singular_noun);
 				break;
 			}
 		}
@@ -478,10 +518,7 @@ class Grammar
 	 */
 	static public function registerJoinArrayCallback(callable $callback): void
 	{
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
-			$callback = explode('::', $callback);
-		}
-		self::$join_array_callback = $callback;
+		self::$join_array_callback = Closure::fromCallable($callback);
 	}
 
 
@@ -574,7 +611,7 @@ class Grammar
 		list ($beginning, $plural_noun) = self::splitLastWord($plural_noun);
 		foreach (self::$plural_to_singular_rules as $from => $to) {
 			if (preg_match('#' . $from . '#iD', $plural_noun)) {
-				$singular_noun = $beginning . preg_replace('#' . $from . '#iD', $to, $plural_noun);
+				$singular_noun = $beginning . (preg_replace('#' . $from . '#iD', $to, $plural_noun) ?? $plural_noun);
 				break;
 			}
 		}
@@ -597,7 +634,7 @@ class Grammar
 	 * Splits the last word off of a `camelCase` or `underscore_notation` string
 	 *
 	 * @param  string $string  The string to split the word from
-	 * @return array  The first element is the beginning part of the string, the second element is the last word
+	 * @return array{0: string, 1: string}  The first element is the beginning part of the string, the second element is the last word
 	 */
 	static private function splitLastWord(string $string): array
 	{
@@ -652,7 +689,7 @@ class Grammar
 		}
 
 		// Step 1a
-		$word = preg_replace('#^(.+?)(?:(ss|i)es|([^s])s)$#', '\1\2\3', $word);
+		$word = preg_replace('#^(.+?)(?:(ss|i)es|([^s])s)$#', '\1\2\3', $word) ?? $word;
 
 		// Step 1b
 		if (preg_match('#^(.+?)eed$#', $word, $match)) {
@@ -770,13 +807,13 @@ class Grammar
 
 		// Allow humanized string to be passed in
 		} elseif (strpos($string, ' ') !== FALSE) {
-			$string = strtolower(preg_replace('#\s+#', '_', $string));
+			$string = strtolower(preg_replace('#\s+#', '_', $string) ?? $string);
 
 		} else {
 			do {
 				$old_string = $string;
-				$string = preg_replace('/([a-zA-Z])([0-9])/', '\1_\2', $string);
-				$string = preg_replace('/([a-z0-9A-Z])([A-Z])/', '\1_\2', $string);
+				$string = preg_replace('/([a-zA-Z])([0-9])/', '\1_\2', $string) ?? $string;
+				$string = preg_replace('/([a-z0-9A-Z])([A-Z])/', '\1_\2', $string) ?? $string;
 			} while ($old_string != $string);
 
 			$string = strtolower($string);
