@@ -404,3 +404,30 @@
 - **Verifica**: `php -l ORMMoney.php` pulito; `vendor/bin/phpstan analyse ORMMoney.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 695 errori totali (da 769, −74, nessun nuovo errore introdotto altrove); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot UTF8 67, Pagination 67, Upload 65, Request 64, Money 55.
+
+### [2026-10-10 18:18] - Fase PHPStan: UTF8.php a 0 errori (24 file a zero)
+
+- **File**: `UTF8.php`
+- **Intervallo righe**: `1-1629`
+- **Tipo**: `tipizzazione` + `refactor` + `bugfix`
+- **Descrizione**: `UTF8` (67 → 0), hotspot successivo a `ORMMoney`.
+  - Proprietà statiche `$lower_to_upper`, `$mb_lower_to_upper_fix`, `$mb_upper_to_lower_fix`, `$upper_to_lower`, `$utf8_to_ascii` tipizzate `array<string, string>`.
+  - **Bugfix chiavi duplicate**: in `$lower_to_upper` le chiavi `'ǆ'`, `'ǉ'`, `'ǌ'` erano definite due volte; rimosso il primo valore duplicato, mantenendo l'ultimo (semantica PHP), eliminando l'errore PHPStan e il valore morto.
+  - `chr()`: normalizzazione esplicita del code point (`is_int`/`is_numeric` + `(int)`, con `ProgrammerException` per valori non numerici) e sostituzione di `chr(bindec(...))` con `pack('C', bindec(...))`: PHPStan richiede `int<0,255>` per `chr()` e nessun cast lo soddisfa, mentre `pack('C')` produce lo stesso byte. `ord($first ?? '')` e concatenazione difensiva `$first . ($second ?? '') ...`.
+  - `clean()`: firma `mixed $value` con docblock condizionale `@return ($value is array ? array<array-key, mixed> : string)`; nel ramo non-array guardia `ProgrammerException` per non-scalari e cast a stringa. Preserva il percorso array e i chiamanti (`Cookie`, `Request`).
+  - `explode()`: `@return array<int, string>`; condizione resa `$delimiter !== NULL && $delimiter !== ''` (equivalente alla precedente, che PHPStan segnalava come `alwaysTrue`).
+  - `iconv()`: il risultato `string|false` è verificato e in caso di fallimento solleva `ProgrammerException`.
+  - `ireplace()`/`replace()`: nuovo helper privato `toStringOrStrings(mixed): string|array<int, string>` che valida e normalizza input stringa/array; `ireplace` costruisce i pattern con `preg_quote` e ritorna `preg_replace(...) ?? $string`.
+  - `istr()`: `$pos` da `strpos` è riportato a `0` quando `FALSE`, preservando la coercizione storica di `substr`.
+  - `len()`: i ritorni `int|false` di `iconv_strlen` e `preg_match_all` sono convertiti con `=== FALSE ? 0 : $x`.
+  - `ltrim()`/`rtrim()`/`trim()`: guardia `$charlist === NULL || $charlist === ''` (preserva il caso `'0'`) e `preg_replace(...) ?? $string`.
+  - `ord()`: inizializzato `$bin = ''` prima dello `switch` e `dechex((int) bindec($bin))`.
+  - `pad()`: la mappa dei tipi di padding spostata in una proprietà statica tipizzata `array<string, int> $pad_types` (un `static` locale resta `mixed`); il risultato di `self::sub()` è assegnato solo se stringa.
+  - `ucfirst()`: i risultati di `self::sub()` sono racchiusi con `is_string(...) ? ... : ''`.
+  - `ucwords()`: `preg_replace_callback(...) ?? $string`; `ucwordsCallback()` con `@param array<int, string> $match`.
+  - **Bugfix `wordwrap()`**: rimosso il modificatore `e` dal pattern di `preg_split` (non valido da PHP 7, faceva fallire `preg_split` per stringhe non-ASCII); il ritorno `array|false` è gestito con early-return e i risultati di `self::sub()` sono normalizzati a stringa.
+- **Motivazione**: chiudere l'hotspot `UTF8` (67) senza tecniche di silenziamento, correggendo nel contempo due difetti reali (chiavi duplicate e modificatore `e` di `wordwrap`).
+- **Impatto**: `basso/medio`. Comportamento pubblico invariato per gli input validi; per valori non scalari passati a `clean()`/`replace()`/`ireplace()`/`chr()` ora viene sollevata `ProgrammerException` invece di un `TypeError`/warning. `chr()` con code point numerici e `wordwrap()` per stringhe non-ASCII ora funzionano correttamente.
+- **Verifica**: `php -l UTF8.php` pulito; `vendor/bin/phpstan analyse UTF8.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 627 errori totali (da 695, −68, nessun nuovo errore; `Request.php` scende da 64 a 63); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Pagination 67, Upload 65, Request 63, Money 55.
