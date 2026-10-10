@@ -431,3 +431,25 @@
 - **Verifica**: `php -l UTF8.php` pulito; `vendor/bin/phpstan analyse UTF8.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 627 errori totali (da 695, −68, nessun nuovo errore; `Request.php` scende da 64 a 63); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot Pagination 67, Upload 65, Request 63, Money 55.
+
+### [2026-10-10 18:32] - Fase PHPStan: Pagination.php a 0 errori (25 file a zero)
+
+- **File**: `Pagination.php` (+ docblock in `URL.php`)
+- **Intervallo righe**: `1-713`
+- **Tipo**: `tipizzazione` + `refactor` + `fix`
+- **Descrizione**: `Pagination` (67 → 0), hotspot successivo a `UTF8`.
+  - Proprietà statiche tipizzate: `$filters` → `array<int, string>`; `$templates` → `array<string, array{type: string, size: int, pieces: array<string, string>}>` (elimina la propagazione di `mixed` in `showTemplatedLinks`); proprietà d'istanza `$data` → `array<array-key, mixed>`.
+  - `defineTemplate(string $name, string $type, int $size, array $pieces)`: `$pieces` docblock `array<string, string>`; la validazione `preg_match('#^\d+$#D', $size)` (impossibile/ridondante su un `int`) è sostituita da `if ($size < 0)`.
+  - `extendRecordSetInfo()`: `$data` `array<array-key, mixed>`, `$class` `string|array<int, string>`; `array_map(array('ORM','getRecordName'), $class)` sostituito da una closure tipizzata `static fn(string $record_class): string => ORM::getRecordName($record_class)`.
+  - `printRecordSetInfo()`/`showRecordSetLinks()`: `$parameters` `array<array-key, mixed>`; estrazione di template e data delegata al nuovo helper `extractTemplateAndData(array $parameters): array{0: string, 1: array<array-key, mixed>}`; `$per_page = $object->getLimit()` (nullable) verificato con guardia → `ProgrammerException` se il `RecordSet` non ha un limite.
+  - `showTemplatedLinks()`: docblock `@return void` corretto in `@return boolean` e tipo nativo `: bool` (prima il metodo dichiarava `mixed` ma il docblock `void`, causando errori a cascata nei chiamanti); inizializzate `$start_separator`/`$end_separator` a `FALSE` prima del ramo `if`; `$data` `array<array-key, mixed>`.
+  - `printPiece()`: `$name` ora `string`; `$data` `array<array-key, mixed>`; normalizzazione difensiva di `$value` (valore della variabile di template) prima dei filtri (`is_scalar` + `strlen((string) $value)`) e prima di `HTML::encode((string) $value)`; `$piece = preg_replace(...) ?? $piece`.
+  - Costruttore `__construct(mixed $records, mixed $per_page=NULL, mixed $page=NULL)`: rimosso il duplicato/errato `@param RecordSet $records` nel docblock (che rendeva `$records instanceof RecordSet` sempre vero); nuovo helper `normalizeInteger(mixed $value, string $name): int` per normalizzare `$records`/`$per_page` con `ProgrammerException` su valori non interi; la validazione della pagina conserva `ValidationException` e accetta `int`, `float` interi e stringhe di cifre (come il `preg_match` originale).
+  - `printInfo()`/`showLinks()`: nuovo helper `getDefaultTemplate(array $data): string` con guardia `is_string` sul valore `__template__`.
+  - `set(string|array $key, mixed $value=NULL)`: il parametro `$key` torna ad accettare un array (comportamento originale), risolvendo il ramo `is_array($key)` divenuto "sempre falso".
+  - `URL.php`: `@param string|array $value` di `replaceInQueryString()` allargato a `string|int|float|array` (la firma nativa è `mixed` e il metodo fa `settype($value, 'array')`, quindi accetta scalari); i chiamanti in `Pagination` passano numeri di pagina.
+- **Motivazione**: chiudere l'hotspot `Pagination` (67) senza tecniche di silenziamento. I `?? $...` sono usati solo dove `preg_replace` può realmente restituire `null`; `(string)`/`(int)` sono normalizzazioni legittime su scalari.
+- **Impatto**: `basso`. Comportamento pubblico invariato per gli input validi. I casi impossibili (`RecordSet` senza limite, template non-stringa, data non-array, pagina non intera) ora sollevano `ProgrammerException`/`ValidationException` esplicite invece di warning o `TypeError`.
+- **Verifica**: `php -l Pagination.php` e `php -l URL.php` puliti; `vendor/bin/phpstan analyse Pagination.php URL.php --no-progress --error-format=raw` → 0 errori su `Pagination.php` (nessun nuovo errore su `URL.php`, che resta a 25); `vendor/bin/phpstan analyse` → 560 errori totali (da 627, −67); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota; `URL.php` resta a 25 errori (verrà chiuso nel proprio file).
+- **Prossimo**: coda hotspot Upload 65, Request 63, Money 55, SMTP 44, XML 42, File 37, ORMDate 36.
