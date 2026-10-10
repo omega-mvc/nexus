@@ -548,3 +548,28 @@
 - **Verifica**: `php -l SMTP.php` pulito; `vendor/bin/phpstan analyse SMTP.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 333 errori totali (da 377, −44, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota. `usleep(100000)` introduce l'attesa di 100 ms che il codice intendeva già effettuare (prima era un no-op di fatto).
 - **Prossimo**: coda hotspot XML 42, File 37, ORMDate 36, Cryptography 30, Timestamp 27.
+
+### [2026-10-10 20:48] - Fase PHPStan: XML.php a 0 errori (30 file a zero)
+
+- **File**: `XML.php`
+- **Intervallo righe**: `1-773`
+- **Tipo**: `tipizzazione` + `refactor`
+- **Descrizione**: `XML` (42 → 0), hotspot successivo a `SMTP`.
+  - Docblock del costruttore: `@param File|string|DOMElement $source` e `@param numeric|boolean $http_timeout`; rimossi i due `@param` duplicati. L'aggiunta di `DOMElement` e `boolean` risolve sia il falso `instanceof DOMElement` sempre falso (il tipo è usato internamente da `xpath()` con `new XML($element)`) sia il falso `is_bool($http_timeout)` sempre falso (il secondo argomento può essere il booleano `$fix_entities_encoding`).
+  - `file_get_contents($source, FALSE, $context)`: il secondo parametro `$use_include_path` è `bool` (era `0`); nel ramo file la lettura è verificata con `if ($source === FALSE) { throw new ExpectedException(...); }` (il percorso originale è conservato in `$path`).
+  - `$exception_message` inizializzata a `''` (era `NULL`, poi passata a `str_replace()`).
+  - Nuovo helper privato `dom(): DOMAttr|DOMElement` (solleva `ProgrammerException` se `$this->__dom` è `NULL`), usato al posto degli accessi diretti a `$this->__dom` in `__get()`, `__isset()`, `__toString()`, `getName()`, `getNamespace()`, `getPrefix()`, `getText()`, `query()`, `toXML()` e nel ramo `$child` di `xpath()`; elimina tutti gli errori `property.nonObject` sul tipo `DOMAttr|DOMElement|null`.
+  - Nuovo helper statico `offsetToString(mixed): string` (guardia su scalari/`Stringable`, altrimenti `ProgrammerException`) usato in `offsetExists()`.
+  - La mappa dei metodi callable è passata da `static` locale (tipata `mixed`) a proprietà statica tipizzata `array<string, bool>` `$methods`; i metodi magici `__get()`, `__isset()`, `__set()`, `__unset()` ora dichiarano il parametro `string $name`.
+  - `getName()` e `getNamespace()` usano `?? ''` (le proprietà `DOMNode::$localName` e `$namespaceURI` sono `?string`).
+  - Il ramo `DOMElement` del costruttore assegna `$xml = TRUE`; prima di `dom_import_simplexml()` è aggiunta la guardia `!$xml instanceof SimpleXMLElement` → `ProgrammerException` (stato impossibile, perché in quel caso `$this->__dom` è già valorizzato).
+  - `fixEntitiesEncoding()`: `preg_replace(...) ?? $xml` sulla rimozione del BOM e sulla riscrittura della dichiarazione di encoding.
+  - `query()`: docblock `@return DOMNodeList<DOMNameSpaceNode|DOMNode>` (è il tipo reale del ritorno di `DOMXPath::query`); `ownerDocument` verificato prima di `new DOMXPath()`.
+  - `toXML()`: riscritto con guardie esplicite su `ownerDocument` (`ProgrammerException` se nullo) e su `saveXML()` (se `FALSE` → `ProgrammerException`), con il `parentNode` normalizzato in una variabile.
+  - `offsetGet()`: il nodo restituito da `item(0)` è verificato non nullo prima di leggere `nodeValue`.
+  - `xpath()`: docblock `@return array<int|string, mixed>|string|XML|null`; il ramo `$first_only` gestisce `current($output)` con `=== FALSE ? NULL : $first`.
+- **Motivazione**: chiudere l'hotspot `XML` (42) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi). Le guardie `dom()`/`offsetToString()` e i `ProgrammerException` esplicitano condizioni altrimenti impossibili; i `?? $...` coprono i reali ritorni `null` di `preg_replace`.
+- **Impatto**: `basso`. Comportamento pubblico invariato per gli input validi. `__get/__isset/__set/__unset` ora richiedono un nome `string` (come da firma canonica dei metodi magici PHP); `getNamespace()`/`getName()` ritornano `''` invece di `null` dove prima il tipo dichiarato `string` avrebbe prodotto un `TypeError`; `toXML()` solleva `ProgrammerException` in caso di serializzazione fallita invece di restituire `false`.
+- **Verifica**: `php -l XML.php` pulito; `vendor/bin/phpstan analyse XML.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 291 errori totali (da 333, −42, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota. Il tipo `@param File|string|DOMElement` documenta l'uso interno reale; `boolean` sul secondo argomento documenta l'overload storico.
+- **Prossimo**: coda hotspot File 37, ORMDate 36, Cryptography 30, Timestamp 27, URL/Time/Date 25.
