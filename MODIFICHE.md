@@ -186,7 +186,7 @@
 
 - **File**: `RecordSet.php`, `ActiveRecord.php`
 - **Tipo**: `tipizzazione` + `refactor`
-- **Descrizione**: `RecordSet` (181 → 0): generici via `@implements IteratorAggregate<int, ActiveRecord>` / `ArrayAccess<int|string, mixed>` (i generici nativi in `implements` sono sintassi invalida), helper `runQuery()` e `getSingleClass()`, accumulatori query normalizzati, `getOrderBys()` con route non-nullable, `slice/count/getPages` con `(int)`. `ActiveRecord` (141 → 0): helper `relationshipString()` per gli array relationship, widening del docblock di `hash()` all'effettivo dominio, narrowing `__call` ecc., reshape onesto dei messaggi di validazione prima di `ORMValidation::replaceMessages()` (forma `string|array{name, errors}`), fix di bug legacy reali (es. `__construct` restituiva il risultato di `__call`, docblock `@return void` su `fetchResultFromUniqueKey` che ritorna `Result`). `ORM.php` lasciato intatto come da vincolo.
+- **Descrizione**: `RecordSet` (181 → 0): generici via `@implements IteratorAggregate<int, ActiveRecord>` / `ArrayAccess<int|string, mixed>` (i generici nativi in `implements` sono sintassi invalida), helper `runQuery()` e `getSingleClass()`, accumulatori query normalizzati, `getOrderBys()` con route non-nullable, `slice/count/getPages` con `(int)`. `ActiveRecord` (141 → 0): helper `relationshipString()` per gli array relationship, widening del docblock di `hash()` all'effettivo dominio, narrowing `__call` ecc., reshape onesto dei messaggi di validazione prima di `ORMValidation::replaceMessages()` (forma `string|array{name, errors}`), fix di bug legacy reali (es. `__construct` restituiva il risultato di `__call`, docblock `@return void` su `fetchResultFromUniqueKey` che ritorna `Result`). `ORM.php` rimandato (nessun vincolo esiste: vedi la voce di chiarimento del 2026-10-10).
 - **Motivazione**: blast 2598 → 2458; file a zero errori passano da 8 a 10.
 - **Impatto**: nessuno (comportamento preservato; guardie rimosse solo dove provate morte da PHPStan e dal flusso reale).
 - **Verifica**: `php -l`; per-file 0; blast 2458 senza nuove hotspot; phpunit 42/65; commit con rimozione del symlink `vendor` accidentalmente in staging.
@@ -202,7 +202,7 @@
 - **Impatto**: nessuno (comportamento preservato; code-path `addCustomHeader($array)` morto rimosso; `getFQDN` usa variabile locale).
 - **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
 - **Commit**: `be79609`.
-- **Prossimo**: coda hotspot Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+- **Prossimo**: coda hotspot Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 incluso in coda).
 
 ### [2026-10-09 21:01] - Fase PHPStan: SQLSchemaTranslation a 0 errori (15 file a zero)
 
@@ -213,7 +213,7 @@
 - **Impatto**: nessuno (comportamento preservato; solo tipizzazione; fix dialetto rimandati come da roadmap).
 - **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
 - **Commit**: `8ae19a5`.
-- **Prossimo**: coda hotspot Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+- **Prossimo**: coda hotspot Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 incluso in coda).
 
 ### [2026-10-09 01:15] - Fase PHPStan: Number a 0 errori (13 file a zero)
 
@@ -224,7 +224,7 @@
 - **Impatto**: nessuno (comportamento preservato; guardie `is_numeric` su parametri `int` morte rimosse; default `$remainder=''` neutro perché il by-ref è solo scritto mai letto).
 - **Verifica**: `php -l`; per-file 0; blast decrescente; phpunit 42/65 green.
 - **Commit**: `5ffb36a`.
-- **Prossimo**: coda hotspot Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+- **Prossimo**: coda hotspot Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 incluso in coda).
 
 ### [2026-10-09 00:30] - Fase PHPStan: Image e Mailbox a 0 errori (12 file a zero)
 
@@ -235,7 +235,7 @@
 - **Impatto**: nessuno (comportamento preservato; malformed-response paths ora throw `ProgrammerException` espliciti invece di warning silenziosi).
 - **Verifica**: `php -l`; per-file 0; blast 1987 (`tail`: Number 214, Email 170, SQLSchemaTranslation 169, ORM 135, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67); phpunit 42/65 green.
 - **Commit**: `79cea2291` (Image), `18f0376` (Mailbox); verifica `vendor` non in stage pre-commit.
-- **Prossimo**: coda hotspot Number 214, Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79… (ORM 135 resta intoccabile come da vincolo).
+- **Prossimo**: coda hotspot Number 214, Email 170, SQLSchemaTranslation 169, Validation 125, Templating 107, SQLTranslation 106, Cache 91, Grammar 79… (ORM 135 incluso in coda).
 
 ### [2026-10-10 03:06] - Fase PHPStan: Validation e ValidationException a 0 errori (17 file a zero)
 
@@ -254,4 +254,14 @@
 - **Impatto**: `minimo`. Comportamento pubblico preservato; `addOnlyOneRule`/`addOneOrMoreRule` tornano alla semantica attesa; `addFileUploadRule` accetta indici numerici; `formatErrorArray` ignora i valori non-stringa/non-array (contratto documentato: messaggi stringa); `removeFieldNames` preserva le chiavi e appiattisce il solo annidamento `name`/`errors`.
 - **Verifica**: `php -l` pulito; `vendor/bin/phpstan analyse Validation.php ValidationException.php --no-progress` → 0 errori; `vendor/bin/phpstan analyse ActiveRecord.php --no-progress` → 0 errori (caller di `removeFieldNames`); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: in `removeFieldNames` l'annidamento è a un solo livello (coerente con lo shape dichiarato `errors: array<array-key, string>`); le 2 segnalazioni residue di `ORMValidation.php` riga 512 (`Number::gt/lt`) sono preesistenti e non legate a questa modifica.
-- **Prossimo**: coda hotspot Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 resta intoccabile).
+- **Prossimo**: coda hotspot Templating 107, SQLTranslation 106, Cache 91, Grammar 79, ORMMoney 78, UTF8 67, Pagination 67 (ORM 135 incluso in coda).
+
+### [2026-10-10 03:16] - Chiarimento: nessun vincolo su `ORM.php`
+
+- **File**: `MODIFICHE.md`
+- **Tipo**: `documentazione`
+- **Descrizione**: Rimossa l'affermazione scorretta secondo cui `ORM.php` sarebbe "intoccabile / lasciato intatto come da vincolo", presente dalla voce `[2026-10-08 22:00]` (commit `fd480ea`) e ripetuta in tutte le voci "Prossimo" successive. Verifica effettuata: **non esiste alcun ordine** (né dell'utente, né in `SCALETTA.md`, né in `phpstan.neon`/`composer.json`/`.gitignore`) che escluda `ORM.php`. L'unico riferimento reale in `SCALETTA.md` (riga 204) chiede di **non rimuovere l'`eval()`** di generazione dinamica classi (`ORM.php:390`) senza alternativa robusta e di verificarlo con PHPStan/test — è una cautela, non un divieto. `ORM.php` è quindi riammesso nella coda degli hotspot (135 errori, attualmente il più grande rimasto).
+- **Motivazione**: evitare che un'assunzione priva di fonte continui a propagarsi e a rimandare il file più critico.
+- **Impatto**: nessuno sul codice; cambia solo il perimetro di lavorazione (ORM incluso).
+- **Verifica**: `grep` su `SCALETTA.md`/`MODIFICHE.md`/config; `git log -S` per l'origine (prima comparsa in `fd480ea`).
+- **Issue/Rischio**: resta la cautela nota sull'`eval()` di `ORM.php:390` (da verificare con PHPStan e coprire con test, non da rimuovere a cuor leggero).
