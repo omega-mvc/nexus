@@ -67,9 +67,9 @@ class Cryptography
 	 *
 	 * @param  string $private_key_file  The path to a PEM-encoded private key
 	 * @param  string $password          The password for the private key
-	 * @return resource  The private key resource
+	 * @return OpenSSLAsymmetricKey  The private key resource
 	 */
-	static private function createPrivateKeyResource(string $private_key_file, string $password): mixed
+	static private function createPrivateKeyResource(string $private_key_file, string $password): OpenSSLAsymmetricKey
 	{
 		if (!file_exists($private_key_file)) {
 			throw new ProgrammerException(
@@ -85,6 +85,12 @@ class Cryptography
 		}
 
 		$private_key          = file_get_contents($private_key_file);
+		if ($private_key === FALSE) {
+			throw new ProgrammerException(
+				'The PEM-encoded private key specified, %s, could not be read',
+				$private_key_file
+			);
+		}
 		$private_key_resource = openssl_pkey_get_private($private_key, $password);
 
 		if ($private_key_resource === FALSE) {
@@ -102,9 +108,9 @@ class Cryptography
 	 * Create a public key resource based on a filename
 	 *
 	 * @param  string $public_key_file  The path to an X.509 public key certificate
-	 * @return resource  The public key resource
+	 * @return OpenSSLAsymmetricKey  The public key resource
 	 */
-	static private function createPublicKeyResource(string $public_key_file): mixed
+	static private function createPublicKeyResource(string $public_key_file): OpenSSLAsymmetricKey
 	{
 		if (!file_exists($public_key_file)) {
 			throw new ProgrammerException(
@@ -120,6 +126,12 @@ class Cryptography
 		}
 
 		$public_key = file_get_contents($public_key_file);
+		if ($public_key === FALSE) {
+			throw new ProgrammerException(
+				'The X.509 certificate specified, %s, could not be read',
+				$public_key_file
+			);
+		}
 		$public_key_resource = openssl_pkey_get_public($public_key);
 
 		if ($public_key_resource === FALSE) {
@@ -233,12 +245,12 @@ class Cryptography
 		$elements = explode('#', $ciphertext);
 
 		// Ciphertexts produced before the class was renamed carry the old f-prefixed marker
-		if (isset($elements[0]) && str_starts_with($elements[0], 'fCryptography::')) {
+		if (str_starts_with($elements[0], 'fCryptography::')) {
 			$elements[0] = substr($elements[0], 1);
 		}
 
 		// We need to make sure this ciphertext came from here, otherwise we are gonna have issues decrypting it
-		if (!isset($elements[0]) || $elements[0] != 'Cryptography::public' || (count($elements) != 4 && count($elements) != 5)) {
+		if ($elements[0] != 'Cryptography::public' || (count($elements) != 4 && count($elements) != 5)) {
 			throw new ProgrammerException(
 				'The ciphertext provided does not appear to have been encrypted using %s',
 				__CLASS__ . '::publicKeyEncrypt()'
@@ -275,6 +287,12 @@ class Cryptography
 		$result = openssl_open($ciphertext, $plaintext, $encrypted_key, $private_key_resource, $cipher, $iv);
 
 		if ($result === FALSE) {
+			throw new EnvironmentException(
+				'There was an unknown error decrypting the ciphertext provided'
+			);
+		}
+
+		if (!is_string($plaintext)) {
 			throw new EnvironmentException(
 				'There was an unknown error decrypting the ciphertext provided'
 			);
@@ -320,9 +338,22 @@ class Cryptography
 			);
 		}
 
-		$hmac = self::hashHMAC('sha1', $encrypted_keys[0] . $iv . $ciphertext, $plaintext);
+		if (!is_array($encrypted_keys)) {
+			throw new EnvironmentException(
+				'There was an unknown error encrypting the plaintext provided'
+			);
+		}
 
-		return 'Cryptography::public#' . base64_encode($encrypted_keys[0]) . '#' . base64_encode($iv) . '#' . base64_encode($ciphertext) . '#' . $hmac;
+		$encrypted_key = $encrypted_keys[0] ?? NULL;
+		if (!is_string($encrypted_key) || !is_string($iv) || !is_string($ciphertext)) {
+			throw new EnvironmentException(
+				'There was an unknown error encrypting the plaintext provided'
+			);
+		}
+
+		$hmac = self::hashHMAC('sha1', $encrypted_key . $iv . $ciphertext, $plaintext);
+
+		return 'Cryptography::public#' . base64_encode($encrypted_key) . '#' . base64_encode($iv) . '#' . base64_encode($ciphertext) . '#' . $hmac;
 	}
 
 
@@ -346,11 +377,14 @@ class Cryptography
 		$private_key_resource = self::createPrivateKeyResource($private_key_file, $password);
 
 		$result = openssl_sign($plaintext, $signature, $private_key_resource);
-		if (is_resource($private_key_resource)) {
-			openssl_free_key($private_key_resource);
-		}
 
 		if (!$result) {
+			throw new EnvironmentException(
+				'There was an unknown error signing the plaintext'
+			);
+		}
+
+		if (!is_string($signature)) {
 			throw new EnvironmentException(
 				'There was an unknown error signing the plaintext'
 			);
@@ -378,9 +412,6 @@ class Cryptography
 		$public_key_resource = self::createPublicKeyResource($public_key_file);
 
 		$result = openssl_verify($plaintext, base64_decode($signature), $public_key_resource);
-		if (is_resource($public_key_resource)) {
-			openssl_free_key($public_key_resource);
-		}
 
 		if ($result === -1) {
 			throw new EnvironmentException(
@@ -403,7 +434,7 @@ class Cryptography
 	{
 		self::seedRandom();
 		if ($min !== NULL || $max !== NULL) {
-			return mt_rand($min, $max);
+			return mt_rand($min ?? 0, $max ?? mt_getrandmax());
 		}
 		return mt_rand();
 	}
@@ -492,25 +523,25 @@ class Cryptography
 			$bytes = fread($handle, 4);
 			fclose($handle);
 
-		// On windows we should be able to use the Cryptographic Application Programming Interface COM object
-		} elseif (Core::checkOS('windows') && class_exists('COM', FALSE)) {
-			try {
-				// This COM object no longer seems to work on PHP 5.2.9+, no response on the bug report yet
-				$capi  = new COM('CAPICOM.Utilities.1');
-				$bytes = base64_decode($capi->getrandom(4, 0));
-				unset($capi);
-			} catch (Exception $e) { }
+		// On windows the CAPICOM COM object provides a random source, however
+		// it was retired by Microsoft and the API no longer functions
+		} elseif (Core::checkOS('windows')) {
+			$bytes = NULL;
 		}
 
 		// If we could not use the OS random number generators we get some of the most unique info we can
 		if (!$bytes) {
-			$string = microtime(TRUE) . uniqid('', TRUE) . join('', stat(__FILE__)) . disk_free_space(dirname(__FILE__));
+			$stats  = stat(__FILE__);
+			if ($stats === FALSE) {
+				$stats = array();
+			}
+			$string = microtime(TRUE) . uniqid('', TRUE) . join('', $stats) . disk_free_space(dirname(__FILE__));
 			$bytes  = substr(pack('H*', md5($string)), 0, 4);
 		}
 
 		Core::stopErrorCapture();
 
-		$seed = (int) (base_convert(bin2hex($bytes), 16, 10) - 2147483647);
+		$seed = (int) base_convert(bin2hex($bytes), 16, 10) - 2147483647;
 
 		mt_srand($seed);
 
@@ -537,13 +568,13 @@ class Cryptography
 		$elements = explode('#', $ciphertext);
 
 		// Ciphertexts produced before the class was renamed carry the old f-prefixed marker
-		if (isset($elements[0]) && str_starts_with($elements[0], 'fCryptography::')) {
+		if (str_starts_with($elements[0], 'fCryptography::')) {
 			$elements[0] = substr($elements[0], 1);
 		}
 
 		// Legacy ciphertexts were produced by the mcrypt-based implementation, which
 		// cannot be decrypted on PHP 8.4+ since the mcrypt extension no longer exists
-		if (isset($elements[0]) && $elements[0] === 'Cryptography::symmetric') {
+		if ($elements[0] === 'Cryptography::symmetric') {
 			throw new EnvironmentException(
 				'The ciphertext provided was encrypted using the legacy mcrypt-based %s implementation, which is not supported in PHP 8.4+. Please re-encrypt the data using the current implementation.',
 				'Cryptography::symmetricKeyEncrypt()'
