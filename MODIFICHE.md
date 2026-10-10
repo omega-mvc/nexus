@@ -527,3 +527,24 @@
 - **Verifica**: `php -l Money.php` pulito; `vendor/bin/phpstan analyse Money.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 377 errori totali (da 432, −55, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: `makeMoney()` accetta ancora oggetti con `__toString` a runtime; `@param mixed` documenta l'accettazione reale. Nessuna regressione nota.
 - **Prossimo**: coda hotspot SMTP 44, XML 42, File 37, ORMDate 36, Cryptography 30.
+
+### [2026-10-10 20:22] - Fase PHPStan: SMTP.php a 0 errori (29 file a zero)
+
+- **File**: `SMTP.php`
+- **Intervallo righe**: `1-628`
+- **Tipo**: `tipizzazione` + `refactor` + `fix comportamento` (fix `sleep(0.1)` e rimozione del ramo morto di `select()`)
+- **Descrizione**: `SMTP` (44 → 0), hotspot successivo a `Money`.
+  - Rimossa la proprietà privata `$auth_methods` (mai letta né assegnata: `connect()` usa solo la variabile locale); proprietà `$debug` da `?bool` a `bool` con default `FALSE` (il valore `null` era equivalente a `FALSE` in `Core::getDebug()`/`Core::debug()`, che ora richiedono `bool`); docblock di `$line_ending` corretto da `@var integer` a `@var string`.
+  - `__get()`: docblock `@return array{0: $this, 1: string}` (era `callable(mixed...):mixed`, incompatibile col valore effettivamente ritornato).
+  - `connect()`: la connessione è assegnata solo se `fsockopen()` non restituisce `FALSE` (il tipo `resource|false` non è più assegnato alla proprietà `resource|null`); timeout convertito con `(float)` per `fsockopen()` e `(int)` per `stream_set_timeout()`; `(int) $match[0][1]` per `max_size`; guardia `ProgrammerException` se `$this->password` è `NULL` (dopo il controllo su `$this->username`, così `Cryptography::hashHMAC()` e `base64_encode()` ricevono una stringa); `randomString('32', ...)` corretto in `randomString(32, ...)`.
+  - `find()`: `@param array<int, string> $response` e `@return array<int, array<int|string, string>>` (il tipo del valore di ritorno di `preg_match` non è `array<int, string>` ma `array<int|string, string>`): risolve a cascata tutti gli accessi `$match[0][1]`.
+  - `handleErrors()`: `@param array<int, string> $response` (risolve `preg_match($regex, $line)` e `join("\n", $errors)`).
+  - `read()`: `@param integer|string|null $expect` (il ramo `$expect !== NULL` non è più "sempre vero") e `@return array<int, string>`; la connessione è verificata con `is_resource()` (`ProgrammerException` se chiusa) prima di `feof()`/`fgets()`; rimosso il ramo morto `if (is_string($result))` (dipendeva dal vecchio hack PHP 5.2 già eliminato dal port, quindi `select()` non restituisce più una stringa).
+  - `select()`: `@return int|false` (era `boolean|string`) e tipo nativo `: int|false`; connessione verificata con `is_resource()` per soddisfare `stream_select()`.
+  - `send()`: `@param array<int, string> $to` (risolve le concatenazioni `"RCPT TO:<" . $email`); `write()`: `@return array<int, string>`.
+- **Fix comportamento**: `sleep(0.1)` in `connect()` (attesa tra i tentativi di `stream_socket_enable_crypto()`) sostituito da `usleep(100000)`: `sleep()` accetta solo `int` e con `strict_types=1` la chiamata andava in `TypeError` (in precedenza dormiva 0 s); ora attende realmente 100 ms come da intento originale.
+- **Motivazione**: chiudere l'hotspot `SMTP` (44) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi). I `(int)`/`(float)` sono conversioni legittime del timeout; le guardie `is_resource()`/`ProgrammerException` esplicitano condizioni altrimenti impossibili.
+- **Impatto**: `basso`. Comportamento pubblico invariato per gli input validi. Il parametro `read()` è documentato `int|string|null` come la logica effettivamente gestita. `select()` ora ritorna `int|false` (i chiamanti usavano solo la verità del valore).
+- **Verifica**: `php -l SMTP.php` pulito; `vendor/bin/phpstan analyse SMTP.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 333 errori totali (da 377, −44, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota. `usleep(100000)` introduce l'attesa di 100 ms che il codice intendeva già effettuare (prima era un no-op di fatto).
+- **Prossimo**: coda hotspot XML 42, File 37, ORMDate 36, Cryptography 30, Timestamp 27.
