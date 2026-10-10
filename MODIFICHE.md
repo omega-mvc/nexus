@@ -502,3 +502,28 @@
 - **Verifica**: `php -l Request.php` pulito; `vendor/bin/phpstan analyse Request.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 432 errori totali (da 495, −63, nessun nuovo errore; caller `CRUD.php` verificato e rimasto a 14); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot Money 55, SMTP 44, XML 42, File 37, ORMDate 36.
+
+### [2026-10-10 20:03] - Fase PHPStan: Money.php a 0 errori (28 file a zero)
+
+- **File**: `Money.php`
+- **Intervallo righe**: `1-639`
+- **Tipo**: tipizzazione PHPStan level 10
+- **Descrizione**:
+  - Aggiunto `@phpstan-type MoneyCurrency array<string, int|string>` e tipizzato `self::$currencies` di conseguenza (prima `@var integer`, errato rispetto al tipo nativo `array`).
+  - `getCurrencies()`: docblock `@return array<int, string>`.
+  - `getCurrencyInfo()`: docblock condizionale `@return ($element is null ? MoneyCurrency : ($element is 'precision' ? int : string))`; il corpo legge `$currency_info`, valida la chiave e restituisce `(int)` per `'precision'` e `(string)` per gli altri elementi.
+  - `getDefaultCurrency()`: il tipo nativo passa da `string` a `?string` (l'originale restituiva `NULL` quando nessuna valuta di default era impostata; comportamento preservato).
+  - `registerFormatCallback()`/`registerUnformatCallback()`: la stringa `'Classe::metodo'` è ora convertita con `Closure::fromCallable()` invece di `explode('::', ...)`, che produceva una `list<string>` non assegnabile alla proprietà `callable`.
+  - Docblock: tutte le occorrenze di `Number` nei PHPDoc sono state qualificate come `\Number` (il tipo non qualificato veniva risolto da PHPStan come `float|int`, generando errori e falsi `instanceof`).
+  - `__construct()`: docblock `@param \Number|string $amount`, `@param string|null $currency`; dopo l'unformat/`str_replace` il valore è normalizzato con una guardia `ProgrammerException` prima di `new Number()` (il callback di unformat poteva restituire `mixed`).
+  - `__get()`: docblock `@return array{0: $this, 1: string}` (era `callable(mixed...):mixed`).
+  - `allocate()`: `@return array<int, Money>`; i ratio da `func_get_args()` normalizzati con `array_map` + `normalizeNumberInput()`.
+  - `mul()`: il moltiplicando è normalizzato con `normalizeNumberInput()`; `@param \Number|string|integer`.
+  - `format()`: il risultato del callback è passato a `stringify()`, che garantisce il ritorno `string`.
+  - `makeMoney()`: docblock `@param mixed`; il ramo oggetto ora solleva `ProgrammerException` se l'oggetto non è convertibile (niente più cast invalido), con `get_debug_type()` nei messaggi.
+  - Nuovi helper privati `normalizeNumberInput(mixed): \Number|string` (Number/string invariati, int/float con `(string)`, altrimenti `ProgrammerException`) e `stringify(mixed): string` (stringa invariata; `Stringable`/scalari/`NULL` con `(string)`; altrimenti `ProgrammerException`).
+- **Motivazione**: chiudere l'hotspot `Money` (55) senza tecniche di silenziamento (nessun `@phpstan-ignore`, baseline, `assert()` o cast puramente soppressivi).
+- **Impatto**: `basso`. Comportamento pubblico invariato per gli input validi; `getCurrencyInfo()` ora tipizza precisamente gli elementi; `getDefaultCurrency()` è dichiarato `?string` come il comportamento reale.
+- **Verifica**: `php -l Money.php` pulito; `vendor/bin/phpstan analyse Money.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 377 errori totali (da 432, −55, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: `makeMoney()` accetta ancora oggetti con `__toString` a runtime; `@param mixed` documenta l'accettazione reale. Nessuna regressione nota.
+- **Prossimo**: coda hotspot SMTP 44, XML 42, File 37, ORMDate 36, Cryptography 30.
