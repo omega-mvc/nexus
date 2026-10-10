@@ -30,6 +30,8 @@ declare(strict_types=1);
  * @changes    1.0.0b3   Removed some unnecessary error suppresion operators [wb, 2008-12-11]
  * @changes    1.0.0b2   Fixed a bug where the filepath and exception maps weren't being updated after a rollback [wb, 2008-12-11]
  * @changes    1.0.0b    The initial implementation [wb, 2008-03-24]
+ *
+ * @phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?: list<mixed>}
  */
 class Filesystem
 {
@@ -43,7 +45,7 @@ class Filesystem
 	/**
 	 * Maps deletion backtraces to all instances of a file or directory, providing consistency
 	 *
-	 * @var array<string, array<mixed>|null>
+	 * @var array<string, list<TraceEntry>|null>
 	 */
 	static private array $deleted_map = array();
 
@@ -283,7 +285,7 @@ class Filesystem
 	 * @internal
 	 *
 	 * @param  string $file  The name of the file or directory
-	 * @return array<mixed>|null  Will return `NULL` if no match, or the backtrace array if a match occurs
+	 * @return list<TraceEntry>|null  Will return `NULL` if no match, or the backtrace array if a match occurs
 	 */
 	static public function &hookDeletedMap(string $file): ?array
 	{
@@ -399,7 +401,7 @@ class Filesystem
 	 * @internal
 	 *
 	 * @param  string          $file       A file or directory name, directories should end in `/` or `\`
-	 * @param  array<mixed>|null  $backtrace  The backtrace for this file/directory, `NULL` when no backtrace should be kept
+	 * @param  list<TraceEntry>|null  $backtrace  The backtrace for this file/directory, `NULL` when no backtrace should be kept
 	 * @return void
 	 */
 	static public function updateDeletedMap(string $file, ?array $backtrace): void

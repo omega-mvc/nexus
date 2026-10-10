@@ -53,6 +53,9 @@ declare(strict_types=1);
  * @changes    1.0.0b3   Fixed mime type detection of Microsoft Office files [wb, 2008-11-23]
  * @changes    1.0.0b2   Made ::rename() and ::write() return the object for method chaining [wb, 2008-11-22]
  * @changes    1.0.0b    The initial implementation [wb, 2007-06-14]
+ *
+ * @phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?: list<mixed>}
+ * @implements Iterator<int, string|false>
  */
 class File implements Iterator, Countable
 {
@@ -127,8 +130,20 @@ class File implements Iterator, Countable
 
 			// The first 4k should be enough for content checking
 			$handle   = fopen($file, 'r');
+			if ($handle === FALSE) {
+				throw new ProgrammerException(
+					'The file specified, %s, could not be opened for reading',
+					$file
+				);
+			}
 			$contents = fread($handle, 4096);
 			fclose($handle);
+			if ($contents === FALSE) {
+				throw new ProgrammerException(
+					'The file specified, %s, could not be read',
+					$file
+				);
+			}
 		}
 
 		$extension = strtolower(Filesystem::getPathInfo($file, 'extension'));
@@ -158,6 +173,7 @@ class File implements Iterator, Countable
 		$_0_4   = substr($content, 0, 4);
 		$_0_3   = substr($content, 0, 3);
 		$_0_2   = substr($content, 0, 2);
+		$_4_4   = substr($content, 4, 4);
 		$_8_4   = substr($content, 8, 4);
 
 		// Images
@@ -446,11 +462,52 @@ class File implements Iterator, Countable
 
 
 	/**
+	 * Copies the permissions from one file to another
+	 *
+	 * @param  string $source       The file to read the permissions from
+	 * @param  string $destination  The file to apply the permissions to
+	 * @return void
+	 */
+	static private function copyPermissions(string $source, string $destination): void
+	{
+		$permissions = fileperms($source);
+		if ($permissions === FALSE) {
+			throw new ProgrammerException(
+				'The permissions of the file specified, %s, could not be determined',
+				$source
+			);
+		}
+		chmod($destination, $permissions);
+	}
+
+
+	/**
+	 * Converts a scalar or stringable value to a string, throwing for other types
+	 *
+	 * @param  mixed $value  The value to convert
+	 * @return string  The string value
+	 */
+	static private function stringify(mixed $value): string
+	{
+		if (is_string($value)) {
+			return $value;
+		}
+		if ($value === NULL || is_scalar($value) || $value instanceof Stringable) {
+			return (string) $value;
+		}
+		throw new ProgrammerException(
+			'The value specified, %s, is not a string',
+			get_debug_type($value)
+		);
+	}
+
+
+	/**
 	 * The current line of the file
 	 *
-	 * @var false|null|string
+	 * @var false|string
 	 */
-	private false|null|string $current_line = NULL;
+	private false|string $current_line = FALSE;
 
 	/**
 	 * The current line number of the file
@@ -462,7 +519,7 @@ class File implements Iterator, Countable
 	/**
 	 * A backtrace from when the file was deleted
 	 *
-	 * @var array|null
+	 * @var list<TraceEntry>|null
 	 */
 	protected mixed $deleted = NULL;
 
@@ -476,7 +533,7 @@ class File implements Iterator, Countable
 	/**
 	 * The file handle for iteration
 	 *
-	 * @var false|resource
+	 * @var resource|null
 	 */
 	private mixed $file_handle = NULL;
 
@@ -504,7 +561,7 @@ class File implements Iterator, Countable
 		$file = Filesystem::makeUniqueName($directory->getPath() . $this->getName());
 
 		copy($this->getPath(), $file);
-		chmod($file, fileperms($this->getPath()));
+		self::copyPermissions($this->getPath(), $file);
 
 		$this->file    =& Filesystem::hookFilenameMap($file);
 		$this->deleted =& Filesystem::hookDeletedMap($file);
@@ -552,7 +609,14 @@ class File implements Iterator, Countable
 		}
 
 		// Store the file as an absolute path
-		$file = realpath($file);
+		$real_file = realpath($file);
+		if ($real_file === FALSE) {
+			throw new ProgrammerException(
+				'The file specified, %s, could not be resolved to an absolute path',
+				$file
+			);
+		}
+		$file = $real_file;
 
 		$this->file    =& Filesystem::hookFilenameMap($file);
 		$this->deleted =& Filesystem::hookDeletedMap($file);
@@ -571,9 +635,9 @@ class File implements Iterator, Countable
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: $this, 1: string}  The callback for the method requested
 	 */
-	public function __get(mixed $method)
+	public function __get(string $method)
 	{
 		return array($this, $method);
 	}
@@ -650,7 +714,7 @@ class File implements Iterator, Countable
 
 		// Allow filesystem transactions
 		if (Filesystem::isInsideTransaction()) {
-			Filesystem::recordAppend($this, $data);
+			Filesystem::recordAppend($this, self::stringify($data));
 		}
 
 		file_put_contents($this->file, $data, FILE_APPEND);
@@ -670,6 +734,12 @@ class File implements Iterator, Countable
 		$this->tossIfDeleted();
 
 		$file_handle = fopen($this->file, 'r');
+		if ($file_handle === FALSE) {
+			throw new ProgrammerException(
+				'The file specified, %s, could not be opened for reading',
+				$this->file
+			);
+		}
 
 		$lines        = 0;
 		$has_contents = FALSE;
@@ -677,6 +747,9 @@ class File implements Iterator, Countable
 		// Read 512KB at a time to make this more efficient without using too much ram
 		while (!feof($file_handle)) {
 			$text   = fread($file_handle, 524288);
+			if ($text === FALSE) {
+				break;
+			}
 			$text   = str_replace("\r\n", "\n", $text);
 			$text   = str_replace("\r", "\n", $text);
 			$lines += substr_count($text, "\n");
@@ -700,9 +773,9 @@ class File implements Iterator, Countable
 	 * @throws NoRemainingException   When there are no remaining lines in the file
 	 * @internal
 	 *
-	 * @return array  The current row
+	 * @return string|false  The current line
 	 */
-	public function current(): array
+	public function current(): string|false
 	{
 		$this->tossIfDeleted();
 
@@ -728,10 +801,10 @@ class File implements Iterator, Countable
 	 *
 	 * @return void
 	 */
-	public function delete(): mixed
+	public function delete(): void
 	{
 		if ($this->deleted) {
-			return null;
+			return;
 		}
 
 		if (!$this->getParent()->isWritable()) {
@@ -743,7 +816,8 @@ class File implements Iterator, Countable
 
 		// Allow filesystem transactions
 		if (Filesystem::isInsideTransaction()) {
-			return Filesystem::recordDelete($this);
+			Filesystem::recordDelete($this);
+			return;
 		}
 
 		unlink($this->file);
@@ -811,7 +885,7 @@ class File implements Iterator, Countable
 		}
 
 		copy($this->getPath(), $new_filename);
-		chmod($new_filename, fileperms($this->getPath()));
+		self::copyPermissions($this->getPath(), $new_filename);
 
 		$class = get_class($this);
 		$file  = new $class($new_filename);
@@ -934,7 +1008,15 @@ class File implements Iterator, Countable
 	{
 		$this->tossIfDeleted();
 
-		return new Timestamp(filemtime($this->file));
+		$mtime = filemtime($this->file);
+		if ($mtime === FALSE) {
+			throw new ProgrammerException(
+				'The modification time of the file specified, %s, could not be determined',
+				$this->file
+			);
+		}
+
+		return new Timestamp($mtime);
 	}
 
 
@@ -1000,7 +1082,7 @@ class File implements Iterator, Countable
 			return $size;
 		}
 
-		return Filesystem::formatFilesize($size, $decimal_places);
+		return Filesystem::formatFilesize((int) $size, $decimal_places);
 	}
 
 
@@ -1082,7 +1164,14 @@ class File implements Iterator, Countable
 		$this->tossIfDeleted();
 
 		if ($this->file_handle === NULL) {
-			$this->file_handle         = fopen($this->file, 'r');
+			$handle = fopen($this->file, 'r');
+			if ($handle === FALSE) {
+				throw new ProgrammerException(
+					'The file specified, %s, could not be opened for reading',
+					$this->file
+				);
+			}
+			$this->file_handle         = $handle;
 			$this->current_line        = '';
 			$this->current_line_number = 0;
 
@@ -1119,6 +1208,15 @@ class File implements Iterator, Countable
 		if ($headers) {
 			if ($filename !== NULL) {
 				if ($filename === TRUE) { $filename = $this->getName();	}
+				if (!is_string($filename)) {
+					if (!is_scalar($filename)) {
+						throw new ProgrammerException(
+							'The filename specified, %s, is not a valid filename',
+							get_debug_type($filename)
+						);
+					}
+					$filename = (string) $filename;
+				}
 				header('Content-Disposition: attachment; filename="' . $filename . '"');
 			}
 			header('Cache-Control: ');
@@ -1149,7 +1247,15 @@ class File implements Iterator, Countable
 	{
 		$this->tossIfDeleted();
 
-		return file_get_contents($this->file);
+		$contents = file_get_contents($this->file);
+		if ($contents === FALSE) {
+			throw new ProgrammerException(
+				'The file specified, %s, could not be read',
+				$this->file
+			);
+		}
+
+		return $contents;
 	}
 
 
@@ -1192,7 +1298,14 @@ class File implements Iterator, Countable
 		}
 
 		// Make the filename absolute
-		$new_filename = Directory::makeCanonical(realpath($info['dirname'])) . $info['basename'];
+		$resolved_dirname = realpath($info['dirname']);
+		if ($resolved_dirname === FALSE) {
+			throw new ProgrammerException(
+				'The directory specified, %s, could not be resolved to an absolute path',
+				$info['dirname']
+			);
+		}
+		$new_filename = Directory::makeCanonical($resolved_dirname) . $info['basename'];
 
 		if ($this->file == $new_filename && $overwrite) {
 			return $this;
@@ -1250,7 +1363,7 @@ class File implements Iterator, Countable
 	{
 		$this->tossIfDeleted();
 
-		if ($this->file_handle !== NULL) {
+		if (is_resource($this->file_handle)) {
 			rewind($this->file_handle);
 		}
 	}
