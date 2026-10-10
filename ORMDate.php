@@ -61,6 +61,7 @@ class ORMDate
 	static private function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
+		$args = array_map(static fn(mixed $arg): bool|float|int|string|null => ($arg === NULL || is_scalar($arg)) ? $arg : get_debug_type($arg), $args);
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -175,7 +176,7 @@ class ORMDate
 			throw new ProgrammerException(
 				'The timestamp column specified, %1$s, is a %2$s column. Must be a %3$s to have a related timezone column.',
 				$timestamp_column,
-				$data_type,
+				$timestamp_data_type,
 				'timestamp'
 			);
 		}
@@ -236,7 +237,7 @@ class ORMDate
 	 *
 	 * @param  string $class      The class being inspected
 	 * @param  string $column     The column being inspected
-	 * @param  array  &$metadata  The array of metadata about a column
+	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
 	static public function inspect(string $class, string $column, mixed &$metadata): void
@@ -261,10 +262,10 @@ class ORMDate
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function makeTimestampObjects(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -286,30 +287,36 @@ class ORMDate
 	 *
 	 * @internal
 	 *
-	 * @param  array  &$values           The current values
-	 * @param  array  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
 	 * @param  string $timestamp_column  The column holding the timestamp
 	 * @param  string $timezone_column   The column holding the timezone
 	 * @return void
 	 */
 	static public function objectifyTimestampWithTimezone(mixed &$values, mixed &$old_values, string $timestamp_column, string $timezone_column): void
 	{
-		if ((!is_string($values[$timestamp_column]) &&
-				!is_object($values[$timestamp_column]) &&
-				!is_numeric($values[$timestamp_column])) ||
-			  !strlen(trim($values[$timestamp_column]))) {
+		$value = $values[$timestamp_column];
+		if (is_object($value)) {
+			if (!$value instanceof Stringable) {
+				return;
+			}
+			$value = (string) $value;
+		} elseif (is_float($value)) {
+			$value = (string) $value;
+		} elseif (!is_string($value) && !is_int($value)) {
+			return;
+		}
+
+		if (!strlen(trim((string) $value))) {
 			return;
 		}
 
 		try {
-			$value = $values[$timestamp_column];
-			if ($value instanceof Timestamp) {
-				$value = $value->__toString();
-			}
-
 			$timezone = $values[$timezone_column];
 			if (!$timezone && $timezone !== '0' && $timezone !== 0) {
 				$timezone = NULL;
+			} elseif (!is_string($timezone)) {
+				$timezone = is_scalar($timezone) ? (string) $timezone : NULL;
 			}
 
 			$value = new Timestamp($value, $timezone);
@@ -351,10 +358,10 @@ class ORMDate
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function setDateCreated(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -391,10 +398,10 @@ class ORMDate
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
 	 */
 	static public function setDateUpdated(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
@@ -427,12 +434,12 @@ class ORMDate
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed>  $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
 	static public function setTimestampColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
@@ -472,12 +479,12 @@ class ORMDate
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object            The ActiveRecord instance
-	 * @param  array         &$values           The current values
-	 * @param  array         &$old_values       The old values
-	 * @param  array         &$related_records  Any records related to this record
-	 * @param  array         &$cache            The cache array for the record
+	 * @param  array<array-key, mixed>  &$values           The current values
+	 * @param  array<array-key, mixed>  &$old_values       The old values
+	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @param  string        $method_name       The method that was called
-	 * @param  array         $parameters        The parameters passed to the method
+	 * @param  array<array-key, mixed>  $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
 	static public function setTimezoneColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
@@ -514,11 +521,11 @@ class ORMDate
 	 * @internal
 	 *
 	 * @param  ActiveRecord $object                The ActiveRecord instance
-	 * @param  array         &$values               The current values
-	 * @param  array         &$old_values           The old values
-	 * @param  array         &$related_records      Any records related to this record
-	 * @param  array         &$cache                The cache array for the record
-	 * @param  array         &$validation_messages  An array of ordered validation messages
+	 * @param  array<array-key, mixed>  &$values               The current values
+	 * @param  array<array-key, mixed>  &$old_values           The old values
+	 * @param  array<array-key, mixed>  &$related_records      Any records related to this record
+	 * @param  array<array-key, mixed>  &$cache                The cache array for the record
+	 * @param  array<array-key, mixed>  &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
 	static public function validateTimezoneColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
@@ -533,7 +540,8 @@ class ORMDate
 			if ($values[$timestamp_column] instanceof Timestamp || $values[$timestamp_column] === NULL) {
 				continue;
 			}
-			if (!Timestamp::isValidTimezone($values[$timezone_column])) {
+			$timezone = $values[$timezone_column];
+			if (!is_string($timezone) || !Timestamp::isValidTimezone($timezone)) {
 				$validation_messages[$timezone_column] = self::compose(
 					'%sThe timezone specified is invalid',
 					ValidationException::formatField(ORM::getColumnName($class, $timezone_column))
