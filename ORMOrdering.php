@@ -125,7 +125,7 @@ class ORMOrdering
 		}
 
 		$min_value = $info['min_value'] ?? NULL;
-		if ($min_value instanceof Number && $min_value->eq(0)) {
+		if ($min_value instanceof Number && $min_value->eq('0')) {
 			throw new ProgrammerException(
 				'The column specified, %1$s, does not allow for negative values. Please adjust the data type to an integer type that allows for negative values.',
 				$column
