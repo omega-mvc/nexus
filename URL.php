@@ -63,15 +63,12 @@ class URL
 			$port = 443;
 		} else {
 			$secure = isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == '1');
-			$port = isset($_SERVER['SERVER_PORT']) ? (int)$_SERVER['SERVER_PORT'] : null;
+			$port = (int) self::stringify($_SERVER['SERVER_PORT'] ?? '');
 			if ($secure && $port == 80 && isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] == 'http') {
 				$port = 443;
 			}
 		}
-		$serverName = $_SERVER['SERVER_NAME'] ?? '';
-		if (!is_string($serverName)) {
-			$serverName = (string)$serverName;
-		}
+		$serverName = self::stringify($_SERVER['SERVER_NAME'] ?? '');
 		if ($secure) {
 			$portPart = '';
 			if ($port && $port != 443) {
@@ -95,10 +92,7 @@ class URL
 	 */
 	static public function getQueryString(): string
 	{
-		$uri = $_SERVER['REQUEST_URI'] ?? '';
-		if (!is_string($uri)) {
-			$uri = (string)$uri;
-		}
+		$uri = self::stringify($_SERVER['REQUEST_URI'] ?? '');
 		$result = preg_replace('#^[^?]*\??#', '', $uri);
 		return is_string($result) ? $result : '';
 	}
@@ -111,8 +105,7 @@ class URL
 	 */
 	static public function getWithQueryString(): string
 	{
-		$uri = $_SERVER['REQUEST_URI'] ?? '';
-		return is_string($uri) ? $uri : (string)$uri;
+		return self::stringify($_SERVER['REQUEST_URI'] ?? '');
 	}
 
 
@@ -128,12 +121,6 @@ class URL
 	 */
 	static public function makeFriendly(string $string, ?int $max_length=NULL, ?string $delimiter=NULL): string
 	{
-		// This allows omitting the max length, but including a delimiter
-		if ($max_length && !is_numeric($max_length)) {
-			$delimiter  = $max_length;
-			$max_length = NULL;
-		}
-
 		$string = HTML::decode(UTF8::ascii($string));
 		$string = strtolower(trim($string));
 		$string = str_replace("'", '', $string);
@@ -145,17 +132,17 @@ class URL
 		$delimiter_replacement = strtr($delimiter, array('\\' => '\\\\', '$' => '\\$'));
 		$delimiter_regex       = preg_quote($delimiter, '#');
 
-		$string = preg_replace('#[^a-z0-9\-_]+#', $delimiter_replacement, $string);
-		$string = preg_replace('#' . $delimiter_regex . '{2,}#', $delimiter_replacement, $string);
-		$string = preg_replace('#_-_#', '-', $string);
-		$string = preg_replace('#(^' . $delimiter_regex . '+|' . $delimiter_regex . '+$)#D', '', $string);
-		if (!is_string($string)) {
-			$string = '';
-		}
+		$string = preg_replace('#[^a-z0-9\-_]+#', $delimiter_replacement, $string) ?? '';
+		$string = preg_replace('#' . $delimiter_regex . '{2,}#', $delimiter_replacement, $string) ?? $string;
+		$string = preg_replace('#_-_#', '-', $string) ?? $string;
+		$string = preg_replace('#(^' . $delimiter_regex . '+|' . $delimiter_regex . '+$)#D', '', $string) ?? $string;
 
 		$length = strlen($string);
 		if ($max_length && $length > $max_length) {
 			$last_pos = strrpos($string, $delimiter, ($length - $max_length - 1) * -1);
+			if ($last_pos === FALSE) {
+				$last_pos = $max_length;
+			}
 			if ($last_pos < ceil($max_length / 2)) {
 				$last_pos = $max_length;
 			}
@@ -179,6 +166,8 @@ class URL
 	 */
 	static public function redirect(?string $url=NULL): void
 	{
+		$url = $url ?? '';
+
 		if (strpos($url, '/') === 0) {
 			$url = self::getDomain() . $url;
 
@@ -190,7 +179,7 @@ class URL
 				// All URLs that have more than the query string need to
 				// be appended to the current directory name
 				if ($url[0] != '?') {
-					$prefix = preg_replace('#(?<=/)[^/]+$#D', '', $prefix);
+					$prefix = preg_replace('#(?<=/)[^/]+$#D', '', $prefix) ?? $prefix;
 				}
 
 				// Clean up ./ relative URLS
@@ -201,7 +190,7 @@ class URL
 				// Resolve ../ relative paths as far as possible
 				while (substr($url, 0, 3) == '../') {
 					if ($prefix == self::getDomain() . '/') { break; }
-					$prefix = preg_replace('#(?<=/)[^/]+/?$#D', '', $prefix);
+					$prefix = preg_replace('#(?<=/)[^/]+/?$#D', '', $prefix) ?? $prefix;
 					$url    = substr($url, 3);
 				}
 			}
@@ -235,7 +224,9 @@ class URL
 		parse_str(self::getQueryString(), $qs_array);
 
 		foreach ($parameters as $parameter) {
-			unset($qs_array[$parameter]);
+			if (is_int($parameter) || is_string($parameter)) {
+				unset($qs_array[$parameter]);
+			}
 		}
 
 		return '?' . http_build_query($qs_array, '', '&');
@@ -248,16 +239,20 @@ class URL
 	 * This method uses the query string from the original URL and will not
 	 * contain any parameters that are from rewrites.
 	 *
-	 * @param  string|array  $parameter  The query string parameter
-	 * @param  string|int|float|array  $value      The value to set the parameter to
+	 * @param  array<int, mixed>|null|string  $parameter  The query string parameter
+	 * @param  array<int, mixed>|bool|float|int|null|string  $value  The value to set the parameter to
 	 * @return string  The full query string with the parameter replaced, first char is `?`
 	 */
 	static public function replaceInQueryString(mixed $parameter, mixed $value): string
 	{
 		parse_str(self::getQueryString(), $qs_array);
 
-		settype($parameter, 'array');
-		settype($value, 'array');
+		if (!is_array($parameter)) {
+			$parameter = ($parameter === NULL) ? array() : array($parameter);
+		}
+		if (!is_array($value)) {
+			$value = ($value === NULL) ? array() : array($value);
+		}
 
 		if (sizeof($parameter) != sizeof($value)) {
 			throw new ProgrammerException(
@@ -268,10 +263,36 @@ class URL
 		}
 
 		for ($i=0; $i<sizeof($parameter); $i++) {
-			$qs_array[$parameter[$i]] = $value[$i];
+			$key_value = $parameter[$i];
+			if (is_bool($key_value) || is_float($key_value)) {
+				$key_value = (int) $key_value;
+			} elseif ($key_value === NULL) {
+				$key_value = '';
+			}
+			if (is_int($key_value) || is_string($key_value)) {
+				$qs_array[$key_value] = $value[$i];
+			}
 		}
 
 		return '?' . http_build_query($qs_array, '', '&');
+	}
+
+
+	/**
+	 * Converts a mixed `$_SERVER` value to a string for use in URL parts
+	 *
+	 * @param  mixed $value  The value to stringify
+	 * @return string  The stringified value, or an empty string when not convertable
+	 */
+	static private function stringify(mixed $value): string
+	{
+		if (is_string($value)) {
+			return $value;
+		}
+		if (is_scalar($value) || $value instanceof Stringable) {
+			return (string) $value;
+		}
+		return '';
 	}
 
 
