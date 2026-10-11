@@ -34,7 +34,11 @@ class Time
 	 */
 	static protected function compose(string $message): string
 	{
-		$args = array_slice(func_get_args(), 1);
+		$args = array_map(
+			static fn(mixed $arg): bool|float|int|string|null =>
+				($arg === NULL || is_scalar($arg)) ? $arg : get_debug_type($arg),
+			array_slice(func_get_args(), 1)
+		);
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -50,9 +54,9 @@ class Time
 	/**
 	 * A timestamp of the time
 	 *
-	 * @var false|int
+	 * @var int
 	 */
-	protected false|int $time;
+	protected int $time;
 
 
 	/**
@@ -67,15 +71,21 @@ class Time
 	{
 		if ($time === NULL) {
 			$timestamp = time();
-		} elseif (is_numeric($time) && preg_match('#^-?\d+$#D', $time)) {
+		} elseif (is_numeric($time) && preg_match('#^-?\d+$#D', (string) $time)) {
 			$timestamp = (int) $time;
 		} elseif (is_string($time) && in_array(strtoupper($time), array('CURRENT_TIMESTAMP', 'CURRENT_TIME'))) {
 			$timestamp = time();
 		} else {
 			if (is_object($time) && is_callable(array($time, '__toString'))) {
 				$time = $time->__toString();
-			} elseif (is_numeric($time) || is_object($time)) {
+			} elseif (is_numeric($time)) {
 				$time = (string) $time;
+			}
+			if (!is_string($time)) {
+				throw new ProgrammerException(
+					'The time specified, %s, can not be converted to a string',
+					get_debug_type($time)
+				);
 			}
 
 			$time = Timestamp::callUnformatCallback($time);
@@ -92,7 +102,15 @@ class Time
 			);
 		}
 
-		$this->time = strtotime(date('1970-01-01 H:i:s', $timestamp));
+		$timestamp = strtotime(date('1970-01-01 H:i:s', $timestamp));
+		if ($timestamp === FALSE) {
+			throw new ProgrammerException(
+				'The time specified, %s, could not be converted back to a timestamp',
+				$time
+			);
+		}
+
+		$this->time = $timestamp;
 	}
 
 
@@ -102,7 +120,7 @@ class Time
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: $this, 1: string}  The callback for the method requested
 	 */
 	public function __get(mixed $method)
 	{
@@ -211,9 +229,8 @@ class Time
 	 *
 	 *  - `'55 minutes'` would be represented as `'1 hour'`, however `'45 minutes'` would not
 	 *
-	 * @param  Time|object|string|integer $other_time  The time to create the difference with, `NULL` is interpreted as now
-	 * @param  boolean                     $simple      When `TRUE`, the returned value will only include the difference in the two times, but not `from now`, `ago`, `after` or `before`
-	 * @param  boolean                      $simple
+	 * @param  boolean|Time|object|string|integer $other_time  The time to create the difference with, `NULL` is interpreted as now, `TRUE` sets `$simple`
+	 * @param  boolean $simple  When `TRUE`, the returned value will only include the difference in the two times, but not `from now`, `ago`, `after` or `before`
 	 * @return string  The fuzzy difference in time between the this time and the one provided
 	 */
 	public function getFuzzyDifference(mixed $other_time=NULL, bool $simple=FALSE): string
@@ -238,6 +255,7 @@ class Time
 			return self::compose('at the same time');
 		}
 
+		/** @var array<int, array{0: int, 1: string, 2: string}> $break_points  Cached unit break points */
 		static $break_points = array();
 		if (!$break_points) {
 			$break_points = array(
@@ -258,6 +276,13 @@ class Time
 			$unit_diff = round(abs($diff)/$unit_info[0]);
 			$units     = Grammar::inflectOnQuantity($unit_diff, $unit_info[1], $unit_info[2]);
 			break;
+		}
+
+		if (!isset($unit_diff) || !isset($units)) {
+			throw new ProgrammerException(
+				'The fuzzy difference can not be calculated for a time difference of %s seconds',
+				$diff
+			);
 		}
 
 		if ($simple) {
