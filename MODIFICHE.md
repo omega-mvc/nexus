@@ -649,3 +649,15 @@
 - **Verifica**: `php -l Timestamp.php` pulito; `vendor/bin/phpstan analyse Timestamp.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 161 errori totali (da 188, −27, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot URL 25, Time 25, Date 25, Authorization 24, Directory 17.
+
+### [2026-10-11 05:45] - Fase PHPStan: URL.php a 0 errori (35 file a zero)
+
+- **File**: `URL.php`
+- **Intervallo righe**: `1-308`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: aggiunto helper `static private stringify(mixed $value): string` (is_string → as-is, `is_scalar()`/`Stringable` → `(string)`, altrimenti `''`) per normalizzare i valori `mixed` di `$_SERVER` senza cast non leciti: `getDomain()` usa `(int) self::stringify($_SERVER['SERVER_PORT'] ?? '')` e `self::stringify($_SERVER['SERVER_NAME'] ?? '')`; `getQueryString()`/`getWithQueryString()` usano `stringify($_SERVER['REQUEST_URI'] ?? '')`. `makeFriendly()`: rimosso il ramo di shift "omitted max_length + delimiter" (morto con la firma native `?int $max_length` → `is_numeric()` sempre vera e `&&` sempre falso), i `preg_replace` concatenati sono salvaguardati con `?? ''`/`?? $string` e rimossa la guardia finale `!is_string` ormai impossibile, gestito `strrpos()` `int|false` con `if ($last_pos === FALSE)`. `redirect(?string $url=NULL)`: normalizzazione `$url = $url ?? ''` che preserva il redirect all'URL corrente e sana `strpos`/`preg_match`/`strlen`/offset su `string|null`; guardie `?? $prefix` sui due `preg_replace` di `$prefix`. `removeFromQueryString()`: chiavi da `func_get_args()` (mixed) ristrette con `is_int() || is_string()` prima di `unset`. `replaceInQueryString()`: docblock ampliati a `array<int, mixed>|null|string` (param) e `array<int, mixed>|bool|float|int|null|string` (value) per riflettere il runtime leniente, `settype()` sostituito da normalizzazione esplicita (`array()`, `array($x)` o invariato) e, per ogni chiave, coercizione fedele a PHP (`bool|float`→`(int)`, `null`→`''`) con assegnazione solo su `int|string`.
+- **Motivazione**: chiudere l'hotspot `URL` (25) senza tecniche di silenziamento; i cast `(int)`/`(string)` su `mixed` (valori `$_SERVER`) non sono leciti a livello 10, e `settype()` non dà restringimento di tipo a PHPStan.
+- **Impatto**: `basso`. Comportamento invariato su PHP 8.4: `makeFriendly('x', '-')` (delimiter come 2° arg) era già rotto dalla firma `?int` tipizzata nel port (TypeError); in `redirect()` il ramo NULL (che su PHP 8 lanciava TypeError in `preg_match`) ora produce il redirect all'URL corrente come da intenzione originale.
+- **Verifica**: `php -l URL.php` pulito; `vendor/bin/phpstan analyse URL.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 136 errori totali (da 161, −25, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Time 25, Date 25, Authorization 24, Directory 17, Session 15.
