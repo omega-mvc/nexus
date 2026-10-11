@@ -3384,7 +3384,7 @@ abstract class ActiveRecord
 
 		// Normalize the messages to the format expected by the message processing methods
 		$validation_messages = array_map(
-			static function ($message) {
+			static function (mixed $message) {
 				if (is_string($message)) {
 					return $message;
 				}
