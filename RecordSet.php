@@ -633,7 +633,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	public function __call(mixed $method_name, mixed $parameters)
 	{
 		$callback = ORM::getRecordSetMethod($method_name);
-		if ($callback && is_callable($callback)) {
+		if ($callback) {
 			return call_user_func_array(
 				$callback,
 				array(
@@ -654,7 +654,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$related_class = '';
 		$related_class_sans_namespace = '';
 		if (in_array($action, array('build', 'prebuild', 'precount', 'precreate'))) {
-			$related_class = Grammar::singularize(is_string($subject) ? $subject : '');
+			$related_class = Grammar::singularize($subject);
 			if ($related_class === FALSE) {
 				$related_class = '';
 			}
