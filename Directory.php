@@ -26,6 +26,7 @@ declare(strict_types=1);
  * @changes    1.0.0b3   Added the $regex_filter parameter to ::scan() and ::scanRecursive(), fixed bug in ::scanRecursive() [wb, 2009-01-05]
  * @changes    1.0.0b2   Removed some unnecessary error suppresion operators [wb, 2008-12-11]
  * @changes    1.0.0b    The initial implementation [wb, 2007-12-21]
+ * @phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?: list<mixed>}
  */
 class Directory
 {
@@ -68,7 +69,7 @@ class Directory
 			);
 		}
 
-		mkdir($directory, $mode);
+		mkdir($directory, (int) $mode);
 
 		$directory = new Directory($directory);
 
@@ -96,7 +97,7 @@ class Directory
 	/**
 	 * A backtrace from when the file was deleted
 	 *
-	 * @var array|null
+	 * @var list<TraceEntry>|null
 	 */
 	protected mixed $deleted = NULL;
 
@@ -142,7 +143,11 @@ class Directory
 			}
 		}
 
-		$directory = self::makeCanonical(realpath($directory));
+		$real_directory = realpath($directory);
+		if ($real_directory === FALSE) {
+			$real_directory = $directory;
+		}
+		$directory = self::makeCanonical($real_directory);
 
 		$this->directory =& Filesystem::hookFilenameMap($directory);
 		$this->deleted   =& Filesystem::hookDeletedMap($directory);
@@ -161,9 +166,9 @@ class Directory
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: $this, 1: string}  The callback for the method requested
 	 */
-	public function __get(mixed $method)
+	public function __get(string $method)
 	{
 		return array($this, $method);
 	}
@@ -207,10 +212,10 @@ class Directory
 	 *
 	 * @return void
 	 */
-	public function delete(): mixed
+	public function delete(): void
 	{
 		if ($this->deleted) {
-			return null;
+			return;
 		}
 
 		if (!$this->getParent()->isWritable()) {
@@ -228,7 +233,8 @@ class Directory
 
 		// Allow filesystem transactions
 		if (Filesystem::isInsideTransaction()) {
-			return Filesystem::recordDelete($this);
+			Filesystem::recordDelete($this);
+			return;
 		}
 
 		rmdir($this->directory);
@@ -304,18 +310,36 @@ class Directory
 	{
 		$this->tossIfDeleted();
 
-		$size = 0;
-
-		$children = $this->scan();
-		foreach ($children as $child) {
-			$size += $child->getSize();
-		}
+		$size = $this->calculateSize();
 
 		if (!$format) {
 			return $size;
 		}
 
 		return Filesystem::formatFilesize($size, $decimal_places);
+	}
+
+
+	/**
+	 * Calculates the unformatted disk usage of the directory and all files
+	 * and folders contained within
+	 *
+	 * @return int  The disk usage in bytes
+	 */
+	private function calculateSize(): int
+	{
+		$size = 0;
+
+		$children = $this->scan();
+		foreach ($children as $child) {
+			if ($child instanceof self) {
+				$size += $child->calculateSize();
+			} else {
+				$size += (int) $child->getSize();
+			}
+		}
+
+		return $size;
 	}
 
 
@@ -361,7 +385,9 @@ class Directory
 			throw new ValidationException('It is not possible to move a directory into one of its sub-directories');
 		}
 
-		return $this->rename($new_parent_directory->getPath() . $this->getName(), $overwrite);
+		$this->rename($new_parent_directory->getPath() . $this->getName(), $overwrite);
+
+		return $this;
 	}
 
 
@@ -425,11 +451,15 @@ class Directory
 		rename($this->directory, $new_dirname);
 
 		// Make the dirname absolute
-		$new_dirname = Directory::makeCanonical(realpath($new_dirname));
+		$real_new_dirname = realpath($new_dirname);
+		if ($real_new_dirname === FALSE) {
+			$real_new_dirname = $new_dirname;
+		}
+		$new_dirname = Directory::makeCanonical($real_new_dirname);
 
 		// Allow filesystem transactions
 		if (Filesystem::isInsideTransaction()) {
-			Filesystem::rename($this->directory, $new_dirname);
+			Filesystem::recordRename($this->directory, $new_dirname);
 		}
 
 		Filesystem::updateFilenameMapForDirectory($this->directory, $new_dirname);
@@ -458,7 +488,11 @@ class Directory
 	{
 		$this->tossIfDeleted();
 
-		$files   = array_diff(scandir($this->directory), array('.', '..'));
+		$raw_files = scandir($this->directory);
+		if ($raw_files === FALSE) {
+			$raw_files = array();
+		}
+		$files = array_diff($raw_files, array('.', '..'));
 		$objects = array();
 
 		if ($filter && !preg_match('#^([^a-zA-Z0-9\\\\\s]).*\1[imsxeADSUXJu]*$#D', $filter)) {
@@ -492,7 +526,7 @@ class Directory
 	 * Performs a **recursive** [http://php.net/scandir scandir()] on a directory, removing the `.` and `..` entries
 	 *
 	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - see ::scan() for details
-	 * @return array  The File (or Image) and Directory objects for the files/directories (listed recursively) in this directory
+	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories (listed recursively) in this directory
 	 */
 	public function scanRecursive(?string $filter=NULL): array
 	{
