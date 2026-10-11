@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides validation routines for standalone forms, such as contact forms
  *
@@ -34,19 +36,19 @@ class Validation
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
 		$safe_args = array();
 		foreach ($args as $arg) {
-			if (is_scalar($arg) || $arg === NULL) {
+			if (is_scalar($arg) || $arg === null) {
 				$safe_args[] = $arg;
 			} else {
 				throw new ProgrammerException('The values passed to compose() must be scalar values');
 			}
 		}
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -63,20 +65,20 @@ class Validation
 	 * @param  string $key  The key to check for a value
 	 * @return boolean  If the key has a value
 	 */
-	static private function hasValue(string $key): bool
+	private static function hasValue(string $key): bool
 	{
 		$value = Request::get($key);
 		if (self::stringlike($value)) {
-			return TRUE;
+			return true;
 		}
 		if (is_array($value)) {
 			foreach ($value as $individual_value) {
 				if (self::stringlike($individual_value)) {
-					return TRUE;
+					return true;
 				}
 			}
 		}
-		return FALSE;
+		return false;
 	}
 
 
@@ -87,7 +89,7 @@ class Validation
 	 * @param  string $b  The second string to compare
 	 * @return integer  `-1` if `$a` is longer than `$b`, `0` if they are equal length, `1` if `$a` is shorter than `$b`
 	 */
-	static private function sortMessageMatches(string $a, string $b): int
+	private static function sortMessageMatches(string $a, string $b): int
 	{
 		if (strlen($a) == strlen($b)) {
 			return 0;
@@ -105,7 +107,7 @@ class Validation
 	 * @param  mixed $value  The value to check
 	 * @return boolean  If the value is string-like
 	 */
-	static protected function stringlike(mixed $value): bool
+	protected static function stringlike(mixed $value): bool
 	{
 		if (is_string($value)) {
 			return strlen(trim($value)) > 0;
@@ -121,12 +123,12 @@ class Validation
 	 * @param  mixed  $value  The value to convert
 	 * @return string  The value as a string
 	 */
-	static private function stringValue(mixed $value): string
+	private static function stringValue(mixed $value): string
 	{
 		if (is_string($value)) {
 			return $value;
 		}
-		if (is_scalar($value) || $value === NULL) {
+		if (is_scalar($value) || $value === null) {
 			return (string) $value;
 		}
 		if ($value instanceof Stringable) {
@@ -293,7 +295,7 @@ class Validation
 	{
 		$main_fields      = array_values(is_array($main_fields) ? $main_fields : array($main_fields));
 		$conditional_fields = array_values(is_array($conditional_fields) ? $conditional_fields : array($conditional_fields));
-		if ($conditional_values !== NULL) {
+		if ($conditional_values !== null) {
 			$conditional_values = array_values(is_array($conditional_values) ? $conditional_values : array($conditional_values));
 		}
 
@@ -370,17 +372,17 @@ class Validation
 	 * @param  Upload|null           $uploader   The uploader to validate the field with
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addFileUploadRule(string $field, string|int|Upload|null $index=NULL, ?Upload $uploader=NULL): Validation
+	public function addFileUploadRule(string $field, string|int|Upload|null $index = null, ?Upload $uploader = null): Validation
 	{
-		if ($uploader === NULL && $index instanceof Upload) {
+		if ($uploader === null && $index instanceof Upload) {
 			$uploader = $index;
-			$index    = NULL;
+			$index    = null;
 		}
-		if ($uploader === NULL) {
+		if ($uploader === null) {
 			throw new ProgrammerException('No uploader was specified for the file upload rule');
 		}
 
-		if ($index !== NULL && !is_string($index) && !is_int($index)) {
+		if ($index !== null && !is_string($index) && !is_int($index)) {
 			throw new ProgrammerException('The file upload index must be a string, integer or null');
 		}
 
@@ -472,7 +474,7 @@ class Validation
 	 * @param  string $replace  The string to replace with - all $ and \ are used in back references and must be escaped with a \ when meant literally
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addRegexReplacement(string $search, ?string $replace=NULL): Validation
+	public function addRegexReplacement(string $search, ?string $replace = null): Validation
 	{
 		$this->regex_replacements[$search] = $replace ?? '';
 
@@ -529,7 +531,7 @@ class Validation
 	 * @param  string $replace  The string to replace with
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addStringReplacement(string $search, ?string $replace=NULL): Validation
+	public function addStringReplacement(string $search, ?string $replace = null): Validation
 	{
 		$this->string_replacements[$search] = $replace ?? '';
 
@@ -595,12 +597,10 @@ class Validation
 				} else {
 					throw new ProgrammerException('The value could not be converted to a string');
 				}
-
 			} elseif (is_array($value)) {
 				$casted_values[] = $this->castToStrings($value);
-
 			} else {
-				if (!is_scalar($value) && $value !== NULL) {
+				if (!is_scalar($value) && $value !== null) {
 					throw new ProgrammerException('The value could not be converted to a string');
 				}
 				$casted_values[] = (string) $value;
@@ -641,13 +641,13 @@ class Validation
 	private function checkConditionalRules(array &$messages): void
 	{
 		foreach ($this->conditional_rules as $rule) {
-			$check_for_missing_values = FALSE;
+			$check_for_missing_values = false;
 
 			foreach ($rule['main_fields'] as $main_field) {
-				$matches_conditional_value = $rule['conditional_values'] !== NULL && in_array(Request::get($main_field), $rule['conditional_values']);
-				$has_some_value            = $rule['conditional_values'] === NULL && self::hasValue($main_field);
+				$matches_conditional_value = $rule['conditional_values'] !== null && in_array(Request::get($main_field), $rule['conditional_values']);
+				$has_some_value            = $rule['conditional_values'] === null && self::hasValue($main_field);
 				if ($matches_conditional_value || $has_some_value) {
-					$check_for_missing_values = TRUE;
+					$check_for_missing_values = true;
 					break;
 				}
 			}
@@ -657,7 +657,9 @@ class Validation
 			}
 
 			foreach ($rule['conditional_fields'] as $conditional_field) {
-				if (self::hasValue($conditional_field)) { continue; }
+				if (self::hasValue($conditional_field)) {
+                    continue;
+                }
 				$messages[$conditional_field] = self::compose(
 					'%sPlease enter a value',
 					ValidationException::formatField($this->makeFieldName($conditional_field))
@@ -701,9 +703,9 @@ class Validation
 	private function checkFileUploadRules(array &$messages): void
 	{
 		foreach ($this->file_upload_rules as $rule) {
-			$message = $rule['uploader']->validate($rule['field'], $rule['index'], TRUE);
+			$message = $rule['uploader']->validate($rule['field'], $rule['index'], true);
 			if ($message) {
-				$field = $rule['index'] === NULL ? $rule['field'] : $rule['field'] . '[' . $rule['index'] . ']';
+				$field = $rule['index'] === null ? $rule['field'] : $rule['field'] . '[' . $rule['index'] . ']';
 				$messages[$field] = self::compose(
 					'%s' . $message,
 					ValidationException::formatField($this->makeFieldName($field))
@@ -722,10 +724,10 @@ class Validation
 	private function checkOneOrMoreRules(array &$messages): void
 	{
 		foreach ($this->one_or_more_rules as $fields) {
-			$found = FALSE;
+			$found = false;
 			foreach ($fields as $field) {
 				if (self::hasValue($field)) {
-					$found = TRUE;
+					$found = true;
 					break;
 				}
 			}
@@ -748,7 +750,7 @@ class Validation
 	private function checkOnlyOneRules(array &$messages): void
 	{
 		foreach ($this->only_one_rules as $fields) {
-			$found = FALSE;
+			$found = false;
 			foreach ($fields as $field) {
 				if (self::hasValue($field)) {
 					if ($found) {
@@ -758,7 +760,7 @@ class Validation
 						);
 						continue 2;
 					}
-					$found = TRUE;
+					$found = true;
 				}
 			}
 			if (!$found) {
@@ -822,7 +824,7 @@ class Validation
 	{
 		foreach ($this->valid_values_rules as $field => $valid_values) {
 			$value = Request::get($field);
-			if (self::stringlike($value) && !in_array($value, $valid_values, TRUE)) {
+			if (self::stringlike($value) && !in_array($value, $valid_values, true)) {
 				$messages[$field] = self::compose(
 					'%1$sPlease choose from one of the following: %2$s',
 					ValidationException::formatField($this->makeFieldName($field)),
@@ -867,7 +869,7 @@ class Validation
 
 		$suffix = '';
 		$bracket_pos = strpos($field, '[');
-		if ($bracket_pos !== FALSE) {
+		if ($bracket_pos !== false) {
 			$array_dereference = substr($field, $bracket_pos);
 			$field             = substr($field, 0, $bracket_pos);
 
@@ -876,7 +878,7 @@ class Validation
 
 			foreach ($array_keys as $array_key) {
 				if (is_numeric($array_key)) {
-					$suffix .= ' #' . ($array_key+1);
+					$suffix .= ' #' . ($array_key + 1);
 				} else {
 					$suffix .= ' ' . Grammar::humanize($array_key);
 				}
@@ -904,7 +906,7 @@ class Validation
 
 		foreach ($messages as $key => $message) {
 			foreach ($this->message_order as $num => $match_string) {
-				if (UTF8::ipos($message, $match_string) !== FALSE) {
+				if (UTF8::ipos($message, $match_string) !== false) {
 					$ordered_items[$num][$key] = $message;
 					continue 2;
 				}
@@ -932,7 +934,7 @@ class Validation
 	 * @param  string $name   The custom name for the field
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function overrideFieldName(string $field, ?string $name=NULL): Validation
+	public function overrideFieldName(string $field, ?string $name = null): Validation
 	{
 		$this->field_names[$field] = $name;
 
@@ -951,14 +953,14 @@ class Validation
 	 * @param  string|null ...$matches  Additional matches
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function setMessageOrder(string $match, ?string $match_2=NULL, ?string ...$matches): Validation
+	public function setMessageOrder(string $match, ?string $match_2 = null, ?string ...$matches): Validation
 	{
 		$args = array($match);
-		if ($match_2 !== NULL) {
+		if ($match_2 !== null) {
 			$args[] = $match_2;
 		}
 		foreach ($matches as $m) {
-			if ($m !== NULL) {
+			if ($m !== null) {
 				$args[] = $m;
 			}
 		}
@@ -979,9 +981,10 @@ class Validation
 	 * @param  boolean $remove_field_names  If field names should be removed from the returned messages, leaving just the message itself
 	 * @return ?array<string, string>  NULL when validation passes, otherwise an array of validation messages when $return_messages is TRUE
 	 */
-	public function validate(bool $return_messages=FALSE, bool $remove_field_names=FALSE): ?array
+	public function validate(bool $return_messages = false, bool $remove_field_names = false): ?array
 	{
-		if (!$this->callback_rules &&
+		if (
+            !$this->callback_rules &&
 			  !$this->conditional_rules &&
 			  !$this->date_fields &&
 			  !$this->file_upload_rules &&
@@ -989,7 +992,8 @@ class Validation
 			  !$this->only_one_rules &&
 			  !$this->regex_rules &&
 			  !$this->required_fields &&
-			  !$this->valid_values_rules) {
+			  !$this->valid_values_rules
+        ) {
 			throw new ProgrammerException(
 				'No fields or rules have been added for validation'
 			);
@@ -1040,7 +1044,7 @@ class Validation
 			);
 		}
 
-		return NULL;
+		return null;
 	}
 }
 

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides money functionality for ActiveRecord classes
  *
@@ -31,7 +33,7 @@ class ORMMoney
 	 *
 	 * @var array<string, array<string, string>>
 	 */
-	static private array $currency_columns = array();
+	private static array $currency_columns = array();
 
 	/**
 	 * Columns that should be formatted as money, keyed by class then money column
@@ -40,7 +42,7 @@ class ORMMoney
 	 *
 	 * @var array<string, array<string, string|false>>
 	 */
-	static private array $money_columns = array();
+	private static array $money_columns = array();
 
 
 	/**
@@ -49,13 +51,13 @@ class ORMMoney
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static private function compose(string $message): string
+	private static function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
 
 		$args = array_map(
 			static function (mixed $arg): bool|float|int|string|null {
-				if ($arg === NULL || is_scalar($arg)) {
+				if ($arg === null || is_scalar($arg)) {
 					return $arg;
 				}
 
@@ -64,7 +66,7 @@ class ORMMoney
 			$args
 		);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -83,7 +85,7 @@ class ORMMoney
 	 * @param  string $currency_column  If specified, this column will store the currency of the Money object
 	 * @return void
 	 */
-	static public function configureMoneyColumn(mixed $class, string $column, ?string $currency_column=NULL): void
+	public static function configureMoneyColumn(mixed $class, string $column, ?string $currency_column = null): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -100,7 +102,7 @@ class ORMMoney
 			);
 		}
 
-		if ($currency_column !== NULL) {
+		if ($currency_column !== null) {
 			$currency_column_data_type = $schema->getColumnInfo($table, $currency_column, 'type');
 			$valid_currency_column_data_types = array('varchar', 'char', 'text');
 			if (!in_array($currency_column_data_type, $valid_currency_column_data_types)) {
@@ -113,7 +115,7 @@ class ORMMoney
 			}
 		}
 
-		$camelized_column = Grammar::camelize($column, TRUE);
+		$camelized_column = Grammar::camelize($column, true);
 
 		ORM::registerActiveRecordMethod(
 			$class,
@@ -134,7 +136,7 @@ class ORMMoney
 		ORM::registerReflectCallback($class, array(self::class, 'reflect'));
 		ORM::registerInspectCallback($class, $column, array(self::class, 'inspect'));
 
-		$value = FALSE;
+		$value = false;
 
 		if ($currency_column) {
 			$value = $currency_column;
@@ -160,10 +162,9 @@ class ORMMoney
 
 			ORM::registerActiveRecordMethod(
 				$class,
-				'set' . Grammar::camelize($currency_column, TRUE),
+				'set' . Grammar::camelize($currency_column, true),
 				array(self::class, 'setCurrencyColumn')
 			);
-
 		} else {
 			ORM::registerObjectifyCallback($class, $column, array(self::class, 'objectifyMoney'));
 		}
@@ -190,7 +191,7 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return string  The encoded monetary value
 	 */
-	static public function encodeMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
+	public static function encodeMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -225,7 +226,7 @@ class ORMMoney
 	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
-	static public function inspect(string $class, string $column, mixed &$metadata): void
+	public static function inspect(string $class, string $column, mixed &$metadata): void
 	{
 		unset($metadata['auto_increment']);
 		$metadata['feature'] = 'money';
@@ -244,7 +245,7 @@ class ORMMoney
 	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function makeMoneyObjects(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function makeMoneyObjects(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		$class = get_class($object);
 
@@ -252,7 +253,7 @@ class ORMMoney
 			return;
 		}
 
-		foreach(self::$currency_columns[$class] as $currency_column => $value_column) {
+		foreach (self::$currency_columns[$class] as $currency_column => $value_column) {
 			self::objectifyMoneyWithCurrency($values, $old_values, $value_column, $currency_column);
 		}
 	}
@@ -268,7 +269,7 @@ class ORMMoney
 	 * @param  mixed  $value   The value
 	 * @return mixed  The Money object or raw value
 	 */
-	static public function objectifyMoney(string $class, string $column, mixed $value): mixed
+	public static function objectifyMoney(string $class, string $column, mixed $value): mixed
 	{
 		if (is_object($value)) {
 			if (!$value instanceof Money && !$value instanceof Stringable) {
@@ -306,7 +307,7 @@ class ORMMoney
 	 * @param  string                $currency_column  The column holding the currency code
 	 * @return void
 	 */
-	static public function objectifyMoneyWithCurrency(mixed &$values, mixed &$old_values, string $value_column, string $currency_column): void
+	public static function objectifyMoneyWithCurrency(mixed &$values, mixed &$old_values, string $value_column, string $currency_column): void
 	{
 		$raw_value = $values[$value_column];
 
@@ -328,9 +329,9 @@ class ORMMoney
 		try {
 			$currency = $values[$currency_column];
 			if (!$currency && $currency !== '0' && $currency !== 0) {
-				$currency = NULL;
+				$currency = null;
 			} elseif (!is_string($currency)) {
-				$currency = is_scalar($currency) ? (string) $currency : NULL;
+				$currency = is_scalar($currency) ? (string) $currency : null;
 			}
 
 			$value = new Money($string_value, $currency);
@@ -341,12 +342,13 @@ class ORMMoney
 				$values[$value_column] = $value;
 			}
 
-			if ($values[$currency_column] === NULL) {
+			if ($values[$currency_column] === null) {
 				ActiveRecord::assign($values, $old_values, $currency_column, $value->getCurrency());
 			}
 
 		// If there was some error creating the money object, we just leave all values alone
-		} catch (ExpectedException $e) { }
+		} catch (ExpectedException $e) {
+        }
 	}
 
 
@@ -364,7 +366,7 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return string  The formatted monetary value
 	 */
-	static public function prepareMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
+	public static function prepareMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -376,7 +378,7 @@ class ORMMoney
 		}
 		$value = $values[$column];
 
-		$remove_zero_fraction = FALSE;
+		$remove_zero_fraction = false;
 		if (count($parameters)) {
 			$remove_zero_fraction = (bool) $parameters[0];
 		}
@@ -409,14 +411,14 @@ class ORMMoney
 	 * @param  boolean                $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
-	static public function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
+	public static function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
 		if (!isset(self::$money_columns[$class])) {
 			return;
 		}
 
-		foreach(self::$money_columns[$class] as $column => $enabled) {
-			$camelized_column = Grammar::camelize($column, TRUE);
+		foreach (self::$money_columns[$class] as $column => $enabled) {
+			$camelized_column = Grammar::camelize($column, true);
 
 			// Get and set methods
 			$signature = '';
@@ -490,7 +492,7 @@ class ORMMoney
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$currency_columns = array();
 		self::$money_columns    = array();
@@ -511,7 +513,7 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	static public function setCurrencyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
+	public static function setCurrencyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -553,7 +555,7 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	static public function setMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
+	public static function setMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -571,7 +573,7 @@ class ORMMoney
 
 		ActiveRecord::assign($values, $old_values, $column, $value);
 
-		$currency_column = self::$money_columns[$class][$column] ?? FALSE;
+		$currency_column = self::$money_columns[$class][$column] ?? false;
 
 		if (!is_string($currency_column)) {
 			throw new ProgrammerException(
@@ -606,7 +608,7 @@ class ORMMoney
 	 * @param  array<array-key, mixed>  &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	static public function validateMoneyColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
+	public static function validateMoneyColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{
 		$class = get_class($object);
 
@@ -615,7 +617,7 @@ class ORMMoney
 		}
 
 		foreach (self::$money_columns[$class] as $column => $currency_column) {
-			if ($values[$column] instanceof Money || $values[$column] === NULL) {
+			if ($values[$column] instanceof Money || $values[$column] === null) {
 				continue;
 			}
 
@@ -627,7 +629,6 @@ class ORMMoney
 					'%sThe currency specified is invalid',
 					ValidationException::formatField(ORM::getColumnName($class, $currency_column))
 				);
-
 			} else {
 				$validation_messages[$column] = self::compose(
 					'%sPlease enter a monetary value',
@@ -643,7 +644,9 @@ class ORMMoney
 	 *
 	 * @return ORMMoney
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

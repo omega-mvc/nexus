@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * An exception that should probably not be handled by the display code, Core::enableExceptionHandler() is recommended
  *

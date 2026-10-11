@@ -10,6 +10,8 @@
         <exclude name="Generic.Functions.OpeningFunctionBraceBsdAllman.BraceOnSameLine"/>
         <exclude name="PSR12.Classes.OpeningBraceSpace.Found"/>
         <exclude name="Generic.WhiteSpace.DisallowTabIndent.NonIndentTabsUsed"/>
+        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+        <exclude name="Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase"/>
     </rule>
     <rule ref="Generic.WhiteSpace.DisallowTabIndent">
         <exclude name="Generic.WhiteSpace.DisallowTabIndent.TabsUsed"/>

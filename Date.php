@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Represents a date and provides useful manipulation methods
  *
@@ -31,15 +33,15 @@ class Date
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_map(
 			static fn(mixed $arg): bool|float|int|string|null =>
-				($arg === NULL || is_scalar($arg)) ? $arg : get_debug_type($arg),
+				($arg === null || is_scalar($arg)) ? $arg : get_debug_type($arg),
 			array_slice(func_get_args(), 1)
 		);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -99,7 +101,7 @@ class Date
 		}
 
 		$normalized_date = strtotime(date('Y-m-d 00:00:00', $timestamp));
-		$this->date = ($normalized_date === FALSE) ? time() : $normalized_date;
+		$this->date = ($normalized_date === false) ? time() : $normalized_date;
 	}
 
 
@@ -140,7 +142,7 @@ class Date
 	{
 		$timestamp = strtotime($adjustment, $this->date);
 
-		if ($timestamp === FALSE || $timestamp === -1) {
+		if ($timestamp === false || $timestamp === -1) {
 			throw new ValidationException(
 				'The adjustment specified, %s, does not appear to be a valid relative date measurement',
 				$adjustment
@@ -157,7 +159,7 @@ class Date
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is equal to the one passed
 	 */
-	public function eq(mixed $other_date=NULL): bool
+	public function eq(mixed $other_date = null): bool
 	{
 		$other_date = new Date($other_date);
 		return $this->date == $other_date->date;
@@ -223,16 +225,16 @@ class Date
 	 * @param  boolean                     $simple      When `TRUE`, the returned value will only include the difference in the two dates, but not `from now`, `ago`, `after` or `before`
 	 * @return string  The fuzzy difference in time between the this date and the one provided
 	 */
-	public function getFuzzyDifference(mixed $other_date=NULL, bool $simple=FALSE): string
+	public function getFuzzyDifference(mixed $other_date = null, bool $simple = false): string
 	{
 		if (is_bool($other_date)) {
 			$simple     = $other_date;
-			$other_date = NULL;
+			$other_date = null;
 		}
 
-		$relative_to_now = FALSE;
-		if ($other_date === NULL) {
-			$relative_to_now = TRUE;
+		$relative_to_now = false;
+		if ($other_date === null) {
+			$relative_to_now = true;
 		}
 		$other_date = new Date($other_date);
 
@@ -261,9 +263,11 @@ class Date
 		}
 
 		foreach ($break_points as $break_point => $unit_info) {
-			if (abs($diff) > $break_point) { continue; }
+			if (abs($diff) > $break_point) {
+                continue;
+            }
 
-			$unit_diff = round(abs($diff)/$unit_info[0]);
+			$unit_diff = round(abs($diff) / $unit_info[0]);
 			$units     = Grammar::inflectOnQuantity($unit_diff, $unit_info[1], $unit_info[2]);
 			break;
 		}
@@ -271,7 +275,7 @@ class Date
 		// The largest break point is 2147483647 seconds (~68 years), so any
 		// difference larger than that gets expressed in years
 		if (!isset($unit_diff) || !isset($units)) {
-			$unit_diff = round(abs($diff)/31536000);
+			$unit_diff = round(abs($diff) / 31536000);
 			$units     = Grammar::inflectOnQuantity($unit_diff, self::compose('year'), self::compose('years'));
 		}
 
@@ -301,7 +305,7 @@ class Date
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is greater than the one passed
 	 */
-	public function gt(mixed $other_date=NULL): bool
+	public function gt(mixed $other_date = null): bool
 	{
 		$other_date = new Date($other_date);
 		return $this->date > $other_date->date;
@@ -314,7 +318,7 @@ class Date
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is greater than or equal to the one passed
 	 */
-	public function gte(mixed $other_date=NULL): bool
+	public function gte(mixed $other_date = null): bool
 	{
 		$other_date = new Date($other_date);
 		return $this->date >= $other_date->date;
@@ -327,7 +331,7 @@ class Date
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is less than the one passed
 	 */
-	public function lt(mixed $other_date=NULL): bool
+	public function lt(mixed $other_date = null): bool
 	{
 		$other_date = new Date($other_date);
 		return $this->date < $other_date->date;
@@ -340,7 +344,7 @@ class Date
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is less than or equal to the one passed
 	 */
-	public function lte(mixed $other_date=NULL): bool
+	public function lte(mixed $other_date = null): bool
 	{
 		$other_date = new Date($other_date);
 		return $this->date <= $other_date->date;
@@ -363,7 +367,7 @@ class Date
 	 */
 	public function modify(string $format): Date
 	{
-	   return new Date($this->format($format));
+        return new Date($this->format($format));
 	}
 }
 

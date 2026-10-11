@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Adds cross-database `CREATE TABLE`, `ALTER TABLE` and `COMMENT ON COLUMN` statements to SQLTranslation
  *
@@ -26,7 +28,7 @@ class SQLSchemaTranslation
 	 * @param  string $identifier  The SQL identifier
 	 * @return string  The unescaped identifier
 	 */
-	static private function unescapeIdentifier(string $identifier): string
+	private static function unescapeIdentifier(string $identifier): string
 	{
 		return str_replace('"', '', strtolower($identifier));
 	}
@@ -39,9 +41,9 @@ class SQLSchemaTranslation
 	 * @param  mixed   ...$args    The arguments to substitute into the message
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message, mixed ...$args): string
+	protected static function compose(string $message, mixed ...$args): string
 	{
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -50,7 +52,7 @@ class SQLSchemaTranslation
 
 		$safe_args = array();
 		foreach ($args as $arg) {
-			if (is_scalar($arg) || $arg === NULL) {
+			if (is_scalar($arg) || $arg === null) {
 				$safe_args[] = $arg;
 			} elseif ($arg instanceof Stringable) {
 				$safe_args[] = (string) $arg;
@@ -86,7 +88,7 @@ class SQLSchemaTranslation
 	 * @param  string $sql  The SQL `CREATE TABLE` statement
 	 * @return array<string, array{definition: string, pieces: array<string, string>}>  An associative array of information for each column - see method description for details
 	 */
-	static private function parseSQLiteColumnDefinitions(string $sql): array
+	private static function parseSQLiteColumnDefinitions(string $sql): array
 	{
 		preg_match_all(
 			'#(?<=,|\(|\*/|\n)(\s*)[`"\'\[]?(\w+)[`"\'\]]?(\s+(?:[a-z]+)(?:\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\))?)(?:(\s+NOT\s+NULL)|(\s+NULL)|(\s+DEFAULT\s+([^, \'\n]*|\'(?:\'\'|[^\']+)*\'))|(\s+UNIQUE)|(\s+PRIMARY\s+KEY(?:\s+AUTOINCREMENT)?)|(\s+CHECK\s*\("?\w+"?\s+IN\s+\(\s*(?:(?:[^, \'\n]+|\'(?:\'\'|[^\']+)*\')\s*,\s*)*\s*(?:[^, \'\n]+|\'(?:\'\'|[^\']+)*\')\)\)))*(\s+REFERENCES\s+[\'"`\[]?\w+[\'"`\]]?\s*\(\s*[\'"`\[]?\w+[\'"`\]]?\s*\)\s*(?:\s+(?:ON\s+DELETE|ON\s+UPDATE)\s+(?:CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))*(\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?)?((?:\s*(?:/\*\s*((?:(?!\*/).)*?)\s*\*/))?\s*(?:,[ \t]*(?:--[ \t]*([^\n]*?)[ \t]*(?=\n)|/\*\s*((?:(?!\*/).)*?)\s*\*/)?|(?:--[ \t]*([^\n]*?)[ \t]*(?=\n))?\s*(?=\))))#msi',
@@ -133,7 +135,7 @@ class SQLSchemaTranslation
 	 * @param  string $search            The string to remove
 	 * @return string  The modified `CREATE TABLE` statement
 	 */
-	static private function removeFromSQLiteCreateTable(string $create_table_sql, string $search): string
+	private static function removeFromSQLiteCreateTable(string $create_table_sql, string $search): string
 	{
 		if (preg_match('#,(\s*--.*)?\s*$#D', $search)) {
 			$regex = '#' . preg_quote($search, '#') . '#';
@@ -461,7 +463,7 @@ class SQLSchemaTranslation
 		);
 
 		if (!$constraint->countReturnedRows()) {
-			return NULL;
+			return null;
 		}
 
 		$row = $this->fetchRowArray($constraint);
@@ -480,7 +482,7 @@ class SQLSchemaTranslation
 	 * @param  string $column  The column to get the foreign keys for and the foreign keys that point to
 	 * @return array<string, array{schema: string, table: string, table_without_schema?: string, constraint_name: string, column: string, foreign_schema: string, foreign_table: string, foreign_column: string, on_delete: string, on_update: string}>  An associative array of the key being the constraint name and the value being an associative array containing the keys: `schema`, `table`, `column`, `foreign_schema`, `foreign_table`, `foreign_column`, `on_delete` and `on_cascade`
 	 */
-	private function getDB2ForeignKeyConstraints(string $schema, string $table, ?string $column=NULL): array
+	private function getDB2ForeignKeyConstraints(string $schema, string $table, ?string $column = null): array
 	{
 		if ($column) {
 			$where_conditions = "((
@@ -687,7 +689,7 @@ class SQLSchemaTranslation
 		);
 
 		if (!$constraint->countReturnedRows()) {
-			return NULL;
+			return null;
 		}
 
 		$row = $this->fetchRowArray($constraint);
@@ -797,7 +799,7 @@ class SQLSchemaTranslation
 		);
 
 		if (!$constraint->countReturnedRows()) {
-			return NULL;
+			return null;
 		}
 
 		$row = $this->fetchRowArray($constraint);
@@ -848,13 +850,13 @@ class SQLSchemaTranslation
 		);
 
 		if (!$column_info->countReturnedRows()) {
-			return NULL;
+			return null;
 		}
 
 		$output = array(
 			'name'          => '',
 			'columns'       => array(),
-			'autoincrement' => FALSE
+			'autoincrement' => false
 		);
 		foreach ($this->fetchAllRowArrays($column_info) as $row) {
 			$output['columns'][]     = $this->stringValue($row['column_name']);
@@ -995,7 +997,7 @@ class SQLSchemaTranslation
 		if (!isset($this->schema_info['version'])) {
 			$version = $this->stringValue($this->query("SELECT version()")->fetchScalar());
 			$position = strpos($version, '.');
-			$this->schema_info['version'] = substr($version, 0, $position === FALSE ? 0 : $position);
+			$this->schema_info['version'] = substr($version, 0, $position === false ? 0 : $position);
 		}
 		if ($this->schema_info['version'] <= 4) {
 			$sql = 'SHOW TABLES';
@@ -1025,7 +1027,7 @@ class SQLSchemaTranslation
 	private function getSQLiteColumns(string $table): array
 	{
 		$create_sql = $this->getSQLiteCreateTable($table);
-		if ($create_sql === NULL) {
+		if ($create_sql === null) {
 			return array();
 		}
 
@@ -1046,7 +1048,7 @@ class SQLSchemaTranslation
 		}
 
 		if (!isset($this->schema_info['sqlite_create_tables'][$table])) {
-			return NULL;
+			return null;
 		}
 
 		return $this->schema_info['sqlite_create_tables'][$table];
@@ -1060,16 +1062,16 @@ class SQLSchemaTranslation
 	 * @param  string  $column  Only foreign keys pointing to this column will be returned
 	 * @return array<int, array{table: string, column: string, foreign_table: string, foreign_column: string, on_delete: string, on_update: string}>  An array of arrays containing they keys: `table`, `column`, `foreign_table`, `foreign_column`, `on_delete` and `on_update`
 	 */
-	private function getSQLiteForeignKeys(string $table, ?string $column=NULL): array
+	private function getSQLiteForeignKeys(string $table, ?string $column = null): array
 	{
 		$output = array();
 		foreach ($this->getSQLiteTables() as $_table) {
 			$create_sql = $this->getSQLiteCreateTable($_table);
-			if ($create_sql === NULL) {
+			if ($create_sql === null) {
 				continue;
 			}
 
-			if (stripos($create_sql, 'references') === FALSE) {
+			if (stripos($create_sql, 'references') === false) {
 				continue;
 			}
 
@@ -1084,7 +1086,7 @@ class SQLSchemaTranslation
 				$on_delete      = empty($match[4]) ? 'RESTRICT' : $match[4];
 				$on_update      = empty($match[5]) ? 'RESTRICT' : $match[5];
 
-				if ($foreign_table != $table || ($column !== NULL && $column != $foreign_column)) {
+				if ($foreign_table != $table || ($column !== null && $column != $foreign_column)) {
 					continue;
 				}
 
@@ -1108,7 +1110,7 @@ class SQLSchemaTranslation
 	 *
 	 * @return array<string, array{table: string, sql: string}>  An associative array with the key being the index name and the value an associative arrays, each containing the keys: `table`, `sql`
 	 */
-	private function getSQLiteIndexes(mixed $table=NULL): array
+	private function getSQLiteIndexes(mixed $table = null): array
 	{
 		if (!isset($this->schema_info['sqlite_indexes'])) {
 			$this->schema_info['sqlite_indexes'] = array();
@@ -1171,7 +1173,7 @@ class SQLSchemaTranslation
 	 *
 	 * @return array<string, array{table: string, sql: string}>  An associative array with the key being the trigger name and the value an associative arrays, each containing the keys: `table`, `sql`
 	 */
-	private function getSQLiteTriggers(mixed $exclude_table=NULL): array
+	private function getSQLiteTriggers(mixed $exclude_table = null): array
 	{
 		if (!isset($this->schema_info['sqlite_triggers'])) {
 			$this->schema_info['sqlite_triggers'] = array();
@@ -1380,7 +1382,7 @@ class SQLSchemaTranslation
 		if (is_string($value)) {
 			return $value;
 		}
-		if (is_scalar($value) || $value === NULL) {
+		if (is_scalar($value) || $value === null) {
 			return (string) $value;
 		}
 		$this->throwException('The value fetched from the database could not be converted to a string', '');
@@ -1413,16 +1415,16 @@ class SQLSchemaTranslation
 	 * @param  array<int, string>|NULL &$rollback_statements  SQL statements to rollback the returned SQL statements if something goes wrong - only applicable for MySQL `ALTER TABLE` statements
 	 * @return array{0: string, 1: array<int, string>}  An array containing the translated `$sql` statement and an array of extra statements
 	 */
-	public function translate(string $sql, mixed &$rollback_statements=NULL): array
+	public function translate(string $sql, mixed &$rollback_statements = null): array
 	{
-		$reset_sqlite_info = FALSE;
+		$reset_sqlite_info = false;
 		if (!isset($this->schema_info['sqlite_schema_info'])) {
-			$this->schema_info['sqlite_schema_info'] = TRUE;
-			$reset_sqlite_info = TRUE;
+			$this->schema_info['sqlite_schema_info'] = true;
+			$reset_sqlite_info = true;
 		}
 
 		$new_sql   = $sql;
-		$exception = NULL;
+		$exception = null;
 
 		try {
 			$extra_statements = array();
@@ -1435,7 +1437,6 @@ class SQLSchemaTranslation
 			if ($this->database->getType() == 'sqlite') {
 				$new_sql = $this->translateSQLiteDropTableStatements($new_sql, $extra_statements);
 			}
-
 		} catch (Exception $e) {
 			$exception = $e;
 		}
@@ -1479,62 +1480,49 @@ class SQLSchemaTranslation
 			$data['type']        = 'column_comment';
 			$data['column_name'] = trim($statement_matches[1], '"');
 			$data['comment']     = $statement_matches[2];
-
 		} elseif (preg_match('#RENAME\s+TO\s+(\w+|"[^"]+")\s*$#isD', $statement, $statement_matches)) {
 			$data['type']           = 'rename_table';
 			$data['new_table_name'] = trim($statement_matches[1], '"');
-
 		} elseif (preg_match('#RENAME\s+COLUMN\s+(\w+|"[^"]+")\s+TO\s+(\w+|"[^"]+")\s*$#isD', $statement, $statement_matches)) {
 			$data['type']            = 'rename_column';
 			$data['column_name']     = trim($statement_matches[1], '"');
 			$data['new_column_name'] = trim($statement_matches[2], '"');
-
 		} elseif (preg_match('#ADD\s+COLUMN\s+("?(\w+)"?.*)$#isD', $statement, $statement_matches)) {
 			$data['type']              = 'add_column';
 			$data['column_definition'] = $statement_matches[1];
 			$data['column_name']       = $statement_matches[2];
-
 		} elseif (preg_match('#DROP\s+COLUMN\s+(\w+|"[^"]+")\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'drop_column';
 			$data['column_name'] = trim($statement_matches[1], '"');
-
 		} elseif (preg_match('#ALTER\s+COLUMN\s+(\w+|"[^"]+")\s+TYPE\s+(.*?)\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'alter_type';
 			$data['column_name'] = trim($statement_matches[1], '"');
 			$data['data_type']   = $statement_matches[2];
-
 		} elseif (preg_match('#ALTER\s+COLUMN\s+(\w+|"[^"]+")\s+DROP\s+DEFAULT\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'drop_default';
 			$data['column_name'] = trim($statement_matches[1], '"');
-
 		} elseif (preg_match('#ALTER\s+COLUMN\s+(\w+|"[^"]+")\s+SET\s+DEFAULT\s+(.*?)\s*$#isD', $statement, $statement_matches)) {
 			$data['type']          = 'set_default';
 			$data['column_name']   = trim($statement_matches[1], '"');
 			$data['default_value'] = trim($statement_matches[2], '"');
-
 		} elseif (preg_match('#ALTER\s+COLUMN\s+(\w+|"[^"]+")\s+DROP\s+NOT\s+NULL\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'drop_not_null';
 			$data['column_name'] = trim($statement_matches[1], '"');
-
 		} elseif (preg_match('#ALTER\s+COLUMN\s+(\w+|"[^"]+")\s+SET\s+NOT\s+NULL(\s+DEFAULT\s+(.*))?\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'set_not_null';
 			$data['column_name'] = trim($statement_matches[1], '"');
 			if (isset($statement_matches[2], $statement_matches[3])) {
 				$data['default'] = $statement_matches[3];
 			}
-
 		} elseif (preg_match('#ALTER\s+COLUMN\s+(\w+|"[^"]+")\s+DROP\s+CHECK\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'drop_check_constraint';
 			$data['column_name'] = trim($statement_matches[1], '"');
-
 		} elseif (preg_match('#ALTER\s+COLUMN\s+(\w+|"[^"]+")\s+SET\s+CHECK\s+IN\s+(\(.*?\))\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'set_check_constraint';
 			$data['column_name'] = trim($statement_matches[1], '"');
 			$data['constraint']  = ' CHECK(' . $statement_matches[1] . ' IN ' . $statement_matches[2] . ')';
-
 		} elseif (preg_match('#DROP\s+PRIMARY\s+KEY\s*$#isD', $statement, $statement_matches)) {
 			$data['type'] = 'drop_primary_key';
-
 		} elseif (preg_match('#ADD\s+PRIMARY\s+KEY\s*\(\s*([^\)]+?)\s*\)(\s+AUTOINCREMENT)?\s*$#isD', $statement, $statement_matches)) {
 			$data['type']         = 'add_primary_key';
 			$data['column_names'] = preg_split(
@@ -1547,18 +1535,15 @@ class SQLSchemaTranslation
 			if (count($data['column_names']) == 1) {
 				$data['column_name'] = implode('', $data['column_names']);
 			}
-
 		} elseif (preg_match('#DROP\s+FOREIGN\s+KEY\s*\(\s*(\w+|"[^"]+")\s*\)\s*$#isD', $statement, $statement_matches)) {
 			$data['type']        = 'drop_foreign_key';
 			$data['column_name'] = trim($statement_matches[1], '"');
-
 		} elseif (preg_match('#ADD\s+FOREIGN\s+KEY\s*\((\w+|"[^"]+")\)\s+REFERENCES\s+("?(\w+)"?\s*\(\s*"?(\w+)"?\s*\)\s*.*)\s*$#isD', $statement, $statement_matches)) {
 			$data['type']           = 'add_foreign_key';
 			$data['column_name']    = trim($statement_matches[1], '"');
 			$data['references']     = $statement_matches[2];
 			$data['foreign_table']  = self::unescapeIdentifier($statement_matches[3]);
 			$data['foreign_column'] = self::unescapeIdentifier($statement_matches[4]);
-
 		} elseif (preg_match('#DROP\s+UNIQUE\s*\(\s*([^\)]+?)\s*\)\s*$#isD', $statement, $statement_matches)) {
 			$data['type']         = 'drop_unique';
 			$data['column_names'] = preg_split(
@@ -1570,7 +1555,6 @@ class SQLSchemaTranslation
 			if (count($data['column_names']) == 1) {
 				$data['column_name'] = implode('', $data['column_names']);
 			}
-
 		} elseif (preg_match('#ADD\s+UNIQUE\s*\(\s*([^\)]+?)\s*\)\s*$#isD', $statement, $statement_matches)) {
 			$data['type']         = 'add_unique';
 			$data['column_names'] = preg_split(
@@ -1582,7 +1566,6 @@ class SQLSchemaTranslation
 			if (count($data['column_names']) == 1) {
 				$data['column_name'] = implode('', $data['column_names']);
 			}
-
 		} else {
 			return $sql;
 		}
@@ -1637,14 +1620,15 @@ class SQLSchemaTranslation
 				$sql = "BEGIN";
 				$extra_statements[] = "COMMIT";
 				$rollback_statements[] = "ROLLBACK";
-
 			} else {
 				$sql = array_shift($extra_statements);
 			}
 		}
 
 		return $sql;
-	}/**
+	}
+
+	/**
 	 * Translates the structure of `CREATE TABLE` statements to the database specific syntax
 	 *
 	 * @param  string $sql                The SQL to translate
@@ -1653,7 +1637,7 @@ class SQLSchemaTranslation
 	 */
 	private function translateCreateTableStatements(string $sql, array &$extra_statements): string
 	{
-		if (!preg_match('#^\s*CREATE\s+TABLE\s+["`\[]?(\w+)["`\]]?#i', $sql, $table_matches) ) {
+		if (!preg_match('#^\s*CREATE\s+TABLE\s+["`\[]?(\w+)["`\]]?#i', $sql, $table_matches)) {
 			return $sql;
 		}
 
@@ -1670,12 +1654,9 @@ class SQLSchemaTranslation
 
 			// DB2 only supports some ON UPDATE clauses
 			$sql = preg_replace('#(\sON\s+UPDATE\s+(CASCADE|SET\s+NULL))#i', '', $sql) ?? $sql;
-
 		} elseif ($this->database->getType() == 'mssql') {
 			$sql = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\b#i', 'INTEGER IDENTITY', $sql) ?? $sql;
-
 		} elseif ($this->database->getType() == 'mysql') {
-
 			$sql = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\b#i', 'INTEGER AUTO_INCREMENT', $sql) ?? $sql;
 
 			// Make sure MySQL uses InnoDB tables, translate check constraints to enums and fix column-level foreign key definitions
@@ -1699,9 +1680,7 @@ class SQLSchemaTranslation
 			}
 
 			$sql = preg_replace('#\)\s*;?\s*$#D', ')ENGINE=InnoDB, CHARACTER SET utf8', $sql) ?? $sql;
-
 		} elseif ($this->database->getType() == 'oracle') {
-
 			// If NOT NULL DEFAULT '' is present, both are removed since Oracle converts '' to NULL
 			$sql = preg_replace('#(\bNOT\s+NULL\s+DEFAULT\s+\'\'|\bDEFAULT\s+\'\'\s+NOT\s+NULL)#', '', $sql) ?? $sql;
 
@@ -1709,17 +1688,17 @@ class SQLSchemaTranslation
 			$sql = preg_replace('#(\sON\s+UPDATE\s+(CASCADE|SET\s+NULL|NO\s+ACTION|RESTRICT))#i', '', $sql) ?? $sql;
 
 			// Create sequences and triggers for Oracle
-			if (stripos($sql, 'autoincrement') !== FALSE && preg_match('#(?<=,|\(|^)\s*("?\w+"?)\s+(?:[a-z]+)(?:\((?:\d+)\))?.*?\bAUTOINCREMENT\b[^,\)]*(?:,|\s*(?=\)))#mi', $sql, $matches)) {
+			if (stripos($sql, 'autoincrement') !== false && preg_match('#(?<=,|\(|^)\s*("?\w+"?)\s+(?:[a-z]+)(?:\((?:\d+)\))?.*?\bAUTOINCREMENT\b[^,\)]*(?:,|\s*(?=\)))#mi', $sql, $matches)) {
 				$column        = $matches[1];
 
-				$table_column  = substr(str_replace('"' , '', $table) . '_' . str_replace('"', '', $column), 0, 26);
+				$table_column  = substr(str_replace('"', '', $table) . '_' . str_replace('"', '', $column), 0, 26);
 
 				$sequence_name = $table_column . '_seq';
 				$trigger_name  = $table_column . '_trg';
 
 				$sequence = 'CREATE SEQUENCE ' . $sequence_name;
 
-				$trigger  = 'CREATE OR REPLACE TRIGGER '. $trigger_name . "\n";
+				$trigger  = 'CREATE OR REPLACE TRIGGER ' . $trigger_name . "\n";
 				$trigger .= "BEFORE INSERT ON " . $table . "\n";
 				$trigger .= "FOR EACH ROW\n";
 				$trigger .= "BEGIN\n";
@@ -1733,12 +1712,9 @@ class SQLSchemaTranslation
 
 				$sql = preg_replace('#\s+autoincrement\b#i', '', $sql) ?? $sql;
 			}
-
 		} elseif ($this->database->getType() == 'postgresql') {
 			$sql = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\b#i', 'SERIAL', $sql) ?? $sql;
-
 		} elseif ($this->database->getType() == 'sqlite') {
-
 			// Data type translation
 			if (version_compare($this->database->getVersion(), '3', '>=')) {
 				$sql = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\s+primary\s+key\b#i', 'INTEGER PRIMARY KEY AUTOINCREMENT', $sql) ?? $sql;
@@ -1749,20 +1725,19 @@ class SQLSchemaTranslation
 			}
 
 			// SQLite 3.6.19 and newer, may or may not have native foreign key support
-			$toggle_foreign_key_support = FALSE;
+			$toggle_foreign_key_support = false;
 			if (!isset($this->schema_info['foreign_keys_enabled'])) {
-				$toggle_foreign_key_support = TRUE;
+				$toggle_foreign_key_support = true;
 				$foreign_keys_res = $this->query('PRAGMA foreign_keys');
 				if ($foreign_keys_res->countReturnedRows() && $foreign_keys_res->fetchScalar()) {
-					$this->schema_info['foreign_keys_enabled'] = TRUE;
+					$this->schema_info['foreign_keys_enabled'] = true;
 				} else {
-					$this->schema_info['foreign_keys_enabled'] = FALSE;
+					$this->schema_info['foreign_keys_enabled'] = false;
 				}
 			}
 
 			// Create foreign key triggers for SQLite
-			if (stripos($sql, 'REFERENCES') !== FALSE && !$this->schema_info['foreign_keys_enabled']) {
-
+			if (stripos($sql, 'REFERENCES') !== false && !$this->schema_info['foreign_keys_enabled']) {
 				preg_match_all('#(?:(?<=,|\(|\*/|\n)\s*(?:`|"|\[)?(\w+)(?:`|"|\])?\s+(?:[a-z]+)(?:\(\s*(?:\d+)(?:\s*,\s*(?:\d+))?\s*\))?(?:(\s+NOT\s+NULL)|(?:\s+NULL)|(?:\s+DEFAULT\s+(?:[^, \']*|\'(?:\'\'|[^\']+)*\'))|(?:\s+UNIQUE)|(?:\s+PRIMARY\s+KEY(?:\s+AUTOINCREMENT)?)|(?:\s+CHECK\s*\(\w+\s+IN\s+\(\s*(?:(?:[^, \']+|\'(?:\'\'|[^\']+)*\')\s*,\s*)*\s*(?:[^, \']+|\'(?:\'\'|[^\']+)*\')\)\)))*(?:\s+REFERENCES\s+["`\[]?(\w+)["`\]]?\s*\(\s*["`\[]?(\w+)["`\]]?\s*\)\s*(?:(?:\s+ON\s+DELETE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))|(?:\s+ON\s+UPDATE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT)))*(?:\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?)?(?:\s*(?:/\*(?:(?!\*/).)*\*/))?\s*(?:,(?:[ \t]*--[^\n]*\n)?|(?:--[^\n]*\n)?\s*(?=\))))|(?:(?<=,|\(|\*/|\n)\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?FOREIGN\s+KEY\s*\(?\s*["`\[]?(\w+)["`\]]?\s*\)?\s+REFERENCES\s+["`\[]?(\w+)["`\]]?\s*\(\s*["`\[]?(\w+)["`\]]?\s*\)\s*(?:(?:\s+ON\s+DELETE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))|(?:\s+ON\s+UPDATE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT)))*(?:\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?\s*(?:,(?:[ \t]*--[^\n]*\n)?|(?:--[^\n]*\n)?\s*(?=\))))#mis', $sql, $matches, PREG_SET_ORDER);
 
 				$not_null_columns = array();
@@ -1781,14 +1756,14 @@ class SQLSchemaTranslation
 						$column         = $match[1];
 						$foreign_table  = $match[3] ?? '';
 						$foreign_column = $match[4] ?? '';
-						$on_delete      = isset($match[5]) ? $match[5] : NULL;
-						$on_update      = isset($match[6]) ? $match[6] : NULL;
+						$on_delete      = isset($match[5]) ? $match[5] : null;
+						$on_update      = isset($match[6]) ? $match[6] : null;
 					} else {
 						$column         = $match[7] ?? '';
 						$foreign_table  = $match[8] ?? '';
 						$foreign_column = $match[9] ?? '';
-						$on_delete      = isset($match[10]) ? $match[10] : NULL;
-						$on_update      = isset($match[11]) ? $match[11] : NULL;
+						$on_delete      = isset($match[10]) ? $match[10] : null;
+						$on_update      = isset($match[11]) ? $match[11] : null;
 					}
 
 					if (!$on_delete) {
@@ -1913,7 +1888,7 @@ class SQLSchemaTranslation
 	{
 		$data['schema']               = strtolower($this->database->getUsername());
 		$data['table_without_schema'] = $data['table'];
-		if (strpos($data['table'], '.') !== FALSE) {
+		if (strpos($data['table'], '.') !== false) {
 			list ($data['schema'], $data['table_without_schema']) = explode('.', $data['table']);
 		}
 
@@ -1962,9 +1937,7 @@ class SQLSchemaTranslation
 
 		if ($data['type'] == 'column_comment') {
 			// DB2 handles the normalized syntax
-
 		} elseif ($data['type'] == 'rename_table') {
-
 			$foreign_key_constraints = $this->getDB2ForeignKeyConstraints(
 				$data['schema'],
 				$data['table_without_schema']
@@ -1995,9 +1968,7 @@ class SQLSchemaTranslation
 					$constraint['foreign_column']
 				);
 			}
-
 		} elseif ($data['type'] == 'rename_column') {
-
 			$data['column_name'] = strtolower($data['column_name']);
 
 			$foreign_key_constraints = $this->getDB2ForeignKeyConstraints(
@@ -2102,9 +2073,7 @@ class SQLSchemaTranslation
 					$constraint['foreign_column']
 				);
 			}
-
 		} elseif ($data['type'] == 'add_column') {
-
 			$sql = $this->translateDataTypes($sql);
 
 			// DB2 only supports some ON UPDATE clauses
@@ -2140,16 +2109,13 @@ class SQLSchemaTranslation
 					$data['column_name']
 				);
 			}
-
 		} elseif ($data['type'] == 'drop_column') {
 			$sql .= ' CASCADE';
 			// Certain operations in DB2 require calling REORG
 			$extra_statements[] = "CALL SYSPROC.ADMIN_CMD('REORG TABLE " . $this->escape('%r', $data['table']) . "')";
 			// REORGE implicitly commits
 			$extra_statements[] = "BEGIN";
-
 		} elseif ($data['type'] == 'alter_type') {
-
 			$data['data_type'] = $this->translateDataTypes($data['data_type']);
 
 			$sql = $this->escape(
@@ -2161,10 +2127,8 @@ class SQLSchemaTranslation
 			$extra_statements[] = "CALL SYSPROC.ADMIN_CMD('REORG TABLE " . $this->escape('%r', $data['table']) . "')";
 			// REORGE implicitly commits
 			$extra_statements[] = "BEGIN";
-
 		} elseif ($data['type'] == 'set_default') {
 			// DB2 handles the normalized syntax
-
 		} elseif ($data['type'] == 'drop_default') {
 			// DB2 complains if you try to drop the default for a column without a default
 			$column_info = $this->query(
@@ -2182,11 +2146,10 @@ class SQLSchemaTranslation
 			);
 			if ($column_info->countReturnedRows()) {
 				$default = $column_info->fetchScalar();
-				if ($default === NULL) {
+				if ($default === null) {
 					$sql = "SELECT 'noop - no constraint to drop' FROM SYSIBM.SYSDUMMY1";
 				}
 			}
-
 		} elseif ($data['type'] == 'set_not_null') {
 			$extra_statements[] = "CALL SYSPROC.ADMIN_CMD('REORG TABLE " . $this->escape('%r', $data['table']) . "')";
 			// REORGE implicitly commits
@@ -2204,14 +2167,12 @@ class SQLSchemaTranslation
 					$data['column_name']
 				) . $data['default'];
 			}
-
 		} elseif ($data['type'] == 'drop_not_null') {
 			// DB2 handles the normalized syntax
 			// Certain operations in DB2 require calling REORG
 			$extra_statements[] = "CALL SYSPROC.ADMIN_CMD('REORG TABLE " . $this->escape('%r', $data['table']) . "')";
 			// REORGE implicitly commits
 			$extra_statements[] = "BEGIN";
-
 		} elseif ($data['type'] == 'drop_check_constraint') {
 			$check_constraint = $this->getDB2CheckConstraint(
 				$data['schema'],
@@ -2233,7 +2194,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$check_constraint['name']
 			);
-
 		} elseif ($data['type'] == 'set_check_constraint') {
 			$check_constraint = $this->getDB2CheckConstraint(
 				$data['schema'],
@@ -2255,7 +2215,6 @@ class SQLSchemaTranslation
 
 			$extra_statements[] = $sql;
 			$sql = array_shift($extra_statements);
-
 		} elseif ($data['type'] == 'drop_primary_key') {
 			// We drop the default value when dropping primary keys to get
 			// rid of autoincrementing functionality
@@ -2286,9 +2245,7 @@ class SQLSchemaTranslation
 					);
 				}
 			}
-
 		} elseif ($data['type'] == 'add_primary_key') {
-
 			if ($data['autoincrement']) {
 				$column_name = $data['column_name'] ?? '';
 				$extra_statements[] = $this->escape(
@@ -2312,7 +2269,6 @@ class SQLSchemaTranslation
 
 				$sql = array_shift($extra_statements);
 			}
-
 		} elseif ($data['type'] == 'drop_foreign_key') {
 			$constraint = $this->query(
 				"SELECT
@@ -2350,12 +2306,9 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint->fetchScalar()
 			);
-
 		} elseif ($data['type'] == 'add_foreign_key') {
-
 			// DB2 only supports some ON UPDATE clauses
 			$sql = preg_replace('#(\sON\s+UPDATE\s+(CASCADE|SET\s+NULL))#i', '', $sql) ?? $sql;
-
 		} elseif ($data['type'] == 'drop_unique') {
 			$constraint_rows = $this->fetchAllRowArrays($this->query(
 				"SELECT
@@ -2386,7 +2339,7 @@ class SQLSchemaTranslation
 				}
 				$constraints[$constraint_name][] = $row['column'];
 			}
-			$constraint_name = NULL;
+			$constraint_name = null;
 			sort($data['column_names']);
 			foreach ($constraints as $name => $columns) {
 				sort($columns);
@@ -2416,7 +2369,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint_name
 			);
-
 		} elseif ($data['type'] == 'add_unique') {
 			// DB2 handles the normalized syntax
 		}
@@ -2438,7 +2390,7 @@ class SQLSchemaTranslation
 	{
 		$data['schema']               = 'dbo';
 		$data['table_without_schema'] = $data['table'];
-		if (strpos($data['table'], '.') !== FALSE) {
+		if (strpos($data['table'], '.') !== false) {
 			list ($data['schema'], $data['table_without_schema']) = explode('.', $data['table']);
 		}
 
@@ -2548,16 +2500,13 @@ class SQLSchemaTranslation
 				$data['table_without_schema'],
 				$data['column_name']
 			);
-
 		} elseif ($data['type'] == 'rename_table') {
 			$sql = $this->escape(
 				"EXECUTE sp_rename %r, %r",
 				$data['table'],
 				$data['new_table_name']
 			);
-
 		} elseif ($data['type'] == 'rename_column') {
-
 			// Find any check constraints and remove them, they will be re-added after the rename
 			$check_constraint = $this->getMSSQLCheckConstraint(
 				$data['schema'],
@@ -2593,7 +2542,6 @@ class SQLSchemaTranslation
 					$this->generateConstraintName($sql, 'ck')
 				) . $check_constraint['definition'];
 			}
-
 		} elseif ($data['type'] == 'add_column') {
 			$sql = $this->escape(
 				'ALTER TABLE %r ADD ',
@@ -2602,9 +2550,7 @@ class SQLSchemaTranslation
 
 			$sql = $this->translateDataTypes($sql);
 			$sql = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\b#i', 'INTEGER IDENTITY', $sql) ?? $sql;
-
 		} elseif ($data['type'] == 'drop_column') {
-
 			// We must find all constraints that reference this column and drop them first
 			$foreign_key_constraints = $this->getMSSQLForeignKeyConstraints(
 				$data['schema'],
@@ -2672,10 +2618,7 @@ class SQLSchemaTranslation
 
 			$extra_statements[] = $sql;
 			$sql = array_shift($extra_statements);
-
-
 		} elseif ($data['type'] == 'alter_type') {
-
 			$default_constraint = $this->getMSSQLDefaultConstraint(
 				$data['schema'],
 				$data['table_without_schema'],
@@ -2719,7 +2662,7 @@ class SQLSchemaTranslation
 				$data['column_name']
 			);
 
-			$not_null = FALSE;
+			$not_null = false;
 			if ($column_info->countReturnedRows()) {
 				$row = $this->fetchRowArray($column_info);
 				$not_null = $row['is_nullable'] == 'NO';
@@ -2764,7 +2707,7 @@ class SQLSchemaTranslation
 			$sql = array_shift($extra_statements);
 
 			if ($default_constraint) {
-				$extra_statements[] =$this->escape("ALTER TABLE %r ADD DEFAULT ", $data['table']) .
+				$extra_statements[] = $this->escape("ALTER TABLE %r ADD DEFAULT ", $data['table']) .
 					$default_constraint['definition'] .
 					$this->escape(" FOR %r", $data['column_name']);
 			}
@@ -2792,7 +2735,6 @@ class SQLSchemaTranslation
 					$primary_key_constraint['columns']
 				);
 			}
-
 		} elseif ($data['type'] == 'set_default') {
 			// SQL Server requires removing any existing default constraint
 			$default_constraint = $this->getMSSQLDefaultConstraint(
@@ -2813,7 +2755,6 @@ class SQLSchemaTranslation
 
 			$extra_statements[] = $sql;
 			$sql = array_shift($extra_statements);
-
 		} elseif ($data['type'] == 'drop_default') {
 			$default_constraint = $this->getMSSQLDefaultConstraint(
 				$data['schema'],
@@ -2829,7 +2770,6 @@ class SQLSchemaTranslation
 					$default_constraint['name']
 				);
 			}
-
 		} elseif ($data['type'] == 'set_not_null') {
 			$sql = $this->escape(
 				"ALTER TABLE %r ALTER COLUMN %r " . $data_type . " NOT NULL",
@@ -2853,14 +2793,12 @@ class SQLSchemaTranslation
 					$data['default'] .
 					$this->escape(" FOR %r", $data['column_name']);
 			}
-
 		} elseif ($data['type'] == 'drop_not_null') {
 			$sql = $this->escape(
 				"ALTER TABLE %r ALTER COLUMN %r " . $data_type . " NULL",
 				$data['table'],
 				$data['column_name']
 			);
-
 		} elseif ($data['type'] == 'drop_check_constraint') {
 			$check_constraint = $this->getMSSQLCheckConstraint(
 				$data['schema'],
@@ -2882,7 +2820,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$check_constraint['name']
 			);
-
 		} elseif ($data['type'] == 'set_check_constraint') {
 			$check_constraint = $this->getMSSQLCheckConstraint(
 				$data['schema'],
@@ -2904,9 +2841,7 @@ class SQLSchemaTranslation
 
 			$extra_statements[] = $sql;
 			$sql = array_shift($extra_statements);
-
 		} elseif ($data['type'] == 'drop_primary_key') {
-
 			$primary_key_constraint = $this->getMSSQLPrimaryKeyConstraint(
 				$data['schema'],
 				$data['table_without_schema']
@@ -2950,7 +2885,6 @@ class SQLSchemaTranslation
 			$sql = array_shift($extra_statements);
 
 			if ($primary_key_constraint['autoincrement']) {
-
 				$primary_key_column = (string) reset($primary_key_constraint['columns']);
 				$unique_constraints = $this->getMSSQLUniqueConstraints(
 					$data['schema'],
@@ -2998,9 +2932,7 @@ class SQLSchemaTranslation
 					);
 				}
 			}
-
 		} elseif ($data['type'] == 'add_primary_key') {
-
 			if ($data['autoincrement']) {
 				$column_name = $data['column_name'] ?? '';
 				$unique_constraints = $this->getMSSQLUniqueConstraints(
@@ -3044,7 +2976,6 @@ class SQLSchemaTranslation
 
 				$sql = array_shift($extra_statements);
 			}
-
 		} elseif ($data['type'] == 'drop_foreign_key') {
 			$constraint = $this->query(
 				"SELECT
@@ -3079,10 +3010,8 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint->fetchScalar()
 			);
-
 		} elseif ($data['type'] == 'add_foreign_key') {
 			// MSSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'drop_unique') {
 			$constraint_rows = $this->fetchAllRowArrays($this->query(
 				"SELECT
@@ -3109,7 +3038,7 @@ class SQLSchemaTranslation
 				}
 				$constraints[$constraint_name][] = $row['column'];
 			}
-			$constraint_name = NULL;
+			$constraint_name = null;
 			sort($data['column_names']);
 			foreach ($constraints as $name => $columns) {
 				sort($columns);
@@ -3139,7 +3068,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint_name
 			);
-
 		} elseif ($data['type'] == 'add_unique') {
 			// MSSQL handles the normalized syntax
 		}
@@ -3234,7 +3162,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$data['column_name']
 			) . $column_def;
-
 		} elseif ($data['type'] == 'rename_column') {
 			$column_def = join('', array_slice($column_match, 1));
 			$sql = $this->escape(
@@ -3243,9 +3170,7 @@ class SQLSchemaTranslation
 				$data['column_name'],
 				$data['new_column_name']
 			) . $column_def;
-
 		} elseif ($data['type'] == 'add_column') {
-
 			$not_null   = preg_match('#\bNOT\s+NULL(\b|$)#iD', $data['column_definition']);
 			$no_default = !preg_match('#\bDEFAULT\s+|\s+AUTOINCREMENT#i', $data['column_definition']);
 			if ($not_null && $no_default && $this->query("SELECT COUNT(*) FROM %r", $data['table'])->fetchScalar()) {
@@ -3287,7 +3212,6 @@ class SQLSchemaTranslation
 					$sql = str_replace($match[7], '', $sql);
 				}
 			}
-
 		} elseif ($data['type'] == 'drop_column') {
 			preg_match_all('/\bUNIQUE\s+KEY\s+"([^"]+)"\s+\("(.*?)"\),?\n/i', $create_sql, $matches, PREG_SET_ORDER);
 			foreach ($matches as $match) {
@@ -3308,9 +3232,7 @@ class SQLSchemaTranslation
 					);
 				}
 			}
-
 		} elseif ($data['type'] == 'alter_type') {
-
 			// We ignore changes from enum to varchar since that will just destroy the check constraint functionality
 			if (!(preg_match('#\s*enum\(#i', $this->stringValue($column_match[1] ?? '')) && preg_match('#\s*varchar(\(\d+\))?\s*$#iD', $data['data_type']))) {
 				$data['data_type'] = $this->translateDataTypes($data['data_type']);
@@ -3323,13 +3245,10 @@ class SQLSchemaTranslation
 				$data['table'],
 				$data['column_name']
 			) . $column_def;
-
 		} elseif ($data['type'] == 'set_default') {
 			// MySQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'drop_default') {
 			// MySQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'set_not_null') {
 			$column_match[2] = '';
 			$column_match[3] = ' NOT NULL';
@@ -3346,7 +3265,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$data['column_name']
 			) . $column_def;
-
 		} elseif ($data['type'] == 'drop_not_null') {
 			$column_match[2] = '';
 			$column_match[3] = '';
@@ -3356,9 +3274,7 @@ class SQLSchemaTranslation
 				$data['table'],
 				$data['column_name']
 			) . $column_def;
-
 		} elseif ($data['type'] == 'set_check_constraint') {
-
 			preg_match("/^\s*CHECK\s*\(\s*\"?\w+\"?\s+IN\s+(\(\s*(?:(?<!')'(?:''|[^']+)*'|%\d+\\\$s)(?:\s*,\s*(?:(?<!')'(?:''|[^']+)*'|%\d+\\\$s))*\s*\))\s*\)\s*$/i", $data['constraint'], $match);
 			$valid_values = $match[1] ?? '';
 
@@ -3370,9 +3286,7 @@ class SQLSchemaTranslation
 				$data['table'],
 				$data['column_name']
 			) . $column_def;
-
 		} elseif ($data['type'] == 'drop_check_constraint') {
-
 			$found = preg_match_all("/(?<!')'((''|[^']+)*)'/", $this->stringValue($column_match[1] ?? ''), $matches, PREG_PATTERN_ORDER);
 			if (!$found) {
 				$this->throwException(
@@ -3397,9 +3311,7 @@ class SQLSchemaTranslation
 				$data['table'],
 				$data['column_name']
 			) . $column_def;
-
 		} elseif ($data['type'] == 'drop_primary_key') {
-
 			// MySQL doesn't allow a column to be auto_increment if it is not a primary key
 			if (count($data['column_names']) == 1) {
 				$column_match[3] = ' NOT NULL';
@@ -3413,9 +3325,7 @@ class SQLSchemaTranslation
 					$data['column_names'][0]
 				) . $column_def;
 			}
-
 		} elseif ($data['type'] == 'add_primary_key') {
-
 			if ($data['autoincrement']) {
 				$sql = preg_replace('#\s+autoincrement#i', '', $sql) ?? $sql;
 
@@ -3427,7 +3337,6 @@ class SQLSchemaTranslation
 					$data['column_name'] ?? ''
 				);
 			}
-
 		} elseif ($data['type'] == 'drop_foreign_key') {
 			$found = preg_match(
 				'#CONSTRAINT\s+"(\w+)"\s+FOREIGN KEY \("' . preg_quote($data['column_name'], '#') . '"\) REFERENCES "([^"]+)" \("([^"]+)"\)(?:\sON\sDELETE\s(SET\sNULL|SET\sDEFAULT|CASCADE|NO\sACTION|RESTRICT))?(?:\sON\sUPDATE\s(SET\sNULL|SET\sDEFAULT|CASCADE|NO\sACTION|RESTRICT))?#',
@@ -3450,7 +3359,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$match[1]
 			);
-
 		} elseif ($data['type'] == 'add_foreign_key') {
 			// MySQL has terrible error messages for non-existent foreign tables and columns
 			try {
@@ -3482,11 +3390,10 @@ class SQLSchemaTranslation
 					$sql
 				);
 			}
-
 		} elseif ($data['type'] == 'drop_unique') {
 			preg_match_all('/\bUNIQUE\s+KEY\s+"([^"]+)"\s+\("(.*?)"\),?\n/i', $create_sql, $matches, PREG_SET_ORDER);
 
-			$matched = FALSE;
+			$matched = false;
 			foreach ($matches as $match) {
 				$columns = explode('","', $match[2]);
 				sort($columns);
@@ -3495,7 +3402,7 @@ class SQLSchemaTranslation
 				if ($columns != $data['column_names']) {
 					continue;
 				}
-				$matched = TRUE;
+				$matched = true;
 
 				$sql = $this->escape(
 					"ALTER TABLE %r DROP INDEX %r",
@@ -3520,14 +3427,13 @@ class SQLSchemaTranslation
 				}
 				$this->throwException($message, $sql);
 			}
-
 		} elseif ($data['type'] == 'add_unique') {
 			// MySQL handles the normalized syntax
 		}
 
 
 		$foreign_keys          = array();
-		$recreate_foreign_keys = FALSE;
+		$recreate_foreign_keys = false;
 		if (in_array($data['type'], array('drop_column', 'rename_column', 'alter_type', 'set_not_null', 'drop_not_null', 'drop_primary_key', 'drop_unique'))) {
 			$foreign_keys = $this->getMySQLForeignKeys($data['table'], isset($data['column_names']) ? $data['column_names'] : ($data['column_name'] ?? ''));
 
@@ -3557,7 +3463,7 @@ class SQLSchemaTranslation
 				$new_foreign_keys[] = $foreign_key;
 			}
 			$foreign_keys = $new_foreign_keys;
-			$recreate_foreign_keys = TRUE;
+			$recreate_foreign_keys = true;
 		}
 
 		// Put the original SQL into the middle of the extra statements to ensure
@@ -3613,7 +3519,7 @@ class SQLSchemaTranslation
 	{
 		$data['schema']               = strtolower($this->database->getUsername());
 		$data['table_without_schema'] = $data['table'];
-		if (strpos($data['table'], '.') !== FALSE) {
+		if (strpos($data['table'], '.') !== false) {
 			list ($data['schema'], $data['table_without_schema']) = explode('.', $data['table']);
 		}
 
@@ -3660,9 +3566,9 @@ class SQLSchemaTranslation
 			}
 		}
 
-		$constraint_name = NULL;
-		$not_null_result = NULL;
-		$not_null        = FALSE;
+		$constraint_name = null;
+		$not_null_result = null;
+		$not_null        = false;
 
 		if ($data['type'] == 'drop_check_constraint' || $data['type'] == 'set_check_constraint') {
 			$constraints = $this->fetchAllRowArrays($this->query(
@@ -3690,7 +3596,7 @@ class SQLSchemaTranslation
 				$data['column_name']
 			));
 
-			$constraint_name = NULL;
+			$constraint_name = null;
 			foreach ($constraints as $row) {
 				if (preg_match("#^\s*\"?\w+\"?\s+IN\s+(\(\s*(?:(?<!')'(?:''|[^']+)*'|%\d+\\\$s)(?:\s*,\s*(?:(?<!')'(?:''|[^']+)*'|%\d+\\\$s))*\s*\))\s*$#i", $this->stringValue($row['search_condition']))) {
 					$constraint_name = $this->stringValue($row['constraint_name']);
@@ -3727,10 +3633,8 @@ class SQLSchemaTranslation
 
 		if ($data['type'] == 'column_comment') {
 			// Oracle handles the normalized syntax
-
 		} elseif ($data['type'] == 'rename_table') {
 			// Oracle handles the normalized syntax
-
 		} elseif ($data['type'] == 'rename_column') {
 			// When renaming a primary key column we need to check
 			// for triggers that implement autoincrement
@@ -3754,7 +3658,7 @@ class SQLSchemaTranslation
 				if (!preg_match('#\s+:new\."?' . preg_quote($data['column_name'], '#') . '"?\s+FROM\s+DUAL#i', $this->stringValue($row['trigger_body']))) {
 					continue;
 				}
-				$trigger  = 'CREATE OR REPLACE TRIGGER '. $this->stringValue($row['trigger_name']) . "\n";
+				$trigger  = 'CREATE OR REPLACE TRIGGER ' . $this->stringValue($row['trigger_name']) . "\n";
 				$trigger .= "BEFORE INSERT ON " . $data['table_without_schema'] . "\n";
 				$trigger .= "FOR EACH ROW\n";
 				$trigger .= preg_replace(
@@ -3765,7 +3669,6 @@ class SQLSchemaTranslation
 
 				$extra_statements[] = $trigger;
 			}
-
 		} elseif ($data['type'] == 'add_column') {
 			// If NOT NULL DEFAULT '' is present, both are removed since Oracle converts '' to NULL
 			$data['column_definition'] = preg_replace('#(\bNOT\s+NULL\s+DEFAULT\s+\'\'|\bDEFAULT\s+\'\'\s+NOT\s+NULL)#', '', $data['column_definition']) ?? $data['column_definition'];
@@ -3784,8 +3687,7 @@ class SQLSchemaTranslation
 			$sql = $this->translateDataTypes($sql);
 
 			// Create sequences and triggers for Oracle
-			if (stripos($sql, 'autoincrement') !== FALSE && preg_match('#^\s*(?:[a-z]+)(?:\((?:\d+)\))?.*?\bAUTOINCREMENT\b.*$#iD', $sql, $matches)) {
-
+			if (stripos($sql, 'autoincrement') !== false && preg_match('#^\s*(?:[a-z]+)(?:\((?:\d+)\))?.*?\bAUTOINCREMENT\b.*$#iD', $sql, $matches)) {
 				// If we are creating a new autoincrementing primary key on an existing
 				// table we have to take some extra steps to pre-populate the
 				// auto-incrementing column, otherwise Oracle will error out
@@ -3805,7 +3707,7 @@ class SQLSchemaTranslation
 					);
 				}
 
-				$table_column  = substr(str_replace('"' , '', $data['table']) . '_' . str_replace('"', '', $data['column_name']), 0, 26);
+				$table_column  = substr(str_replace('"', '', $data['table']) . '_' . str_replace('"', '', $data['column_name']), 0, 26);
 
 				$sequence_name = $table_column . '_seq';
 				$trigger_name  = $table_column . '_trg';
@@ -3822,7 +3724,7 @@ class SQLSchemaTranslation
 					EXECUTE IMMEDIATE create_seq_sql\;
 				END\;";
 
-				$trigger  = 'CREATE OR REPLACE TRIGGER '. $trigger_name . "\n";
+				$trigger  = 'CREATE OR REPLACE TRIGGER ' . $trigger_name . "\n";
 				$trigger .= "BEFORE INSERT ON " . $data['table'] . "\n";
 				$trigger .= "FOR EACH ROW\n";
 				$trigger .= "BEGIN\n";
@@ -3836,7 +3738,6 @@ class SQLSchemaTranslation
 
 				$sql = preg_replace('#\s+autoincrement\b#i', '', $sql) ?? $sql;
 			}
-
 		} elseif ($data['type'] == 'drop_column') {
 			$sql .= ' CASCADE CONSTRAINTS';
 
@@ -3865,9 +3766,7 @@ class SQLSchemaTranslation
 				$extra_statements[] = $this->escape("DROP SEQUENCE %r", $match[1]);
 				$extra_statements[] = $this->escape("DROP TRIGGER %r", $row['trigger_name']);
 			}
-
 		} elseif ($data['type'] == 'alter_type') {
-
 			$data['data_type'] = $this->translateDataTypes($data['data_type']);
 
 			$sql = $this->escape(
@@ -3875,23 +3774,19 @@ class SQLSchemaTranslation
 				$data['table'],
 				$data['column_name']
 			) . $data['data_type'] . ')';
-
 		} elseif ($data['type'] == 'set_default') {
 			$sql = $this->escape(
 				"ALTER TABLE %r MODIFY (%r DEFAULT ",
 				$data['table'],
 				$data['column_name']
 			) . $data['default_value'] . ')';
-
 		} elseif ($data['type'] == 'drop_default') {
 			$sql = $this->escape(
 				"ALTER TABLE %r MODIFY (%r DEFAULT NULL)",
 				$data['table'],
 				$data['column_name']
 			);
-
 		} elseif ($data['type'] == 'set_not_null') {
-
 			// If it is already NOT NULL, don't set it again since it will cause an error
 			if ($not_null_result && $not_null_result->countReturnedRows() && $not_null) {
 				if (isset($data['default'])) {
@@ -3914,9 +3809,7 @@ class SQLSchemaTranslation
 				}
 				$sql .= ' NOT NULL)';
 			}
-
 		} elseif ($data['type'] == 'drop_not_null') {
-
 			if (!$not_null_result || !$not_null_result->countReturnedRows() || $not_null) {
 				$sql = $this->escape(
 					"ALTER TABLE %r MODIFY (%r",
@@ -3940,9 +3833,7 @@ class SQLSchemaTranslation
 					$sql = "SELECT 'noop - no NOT NULL to drop' FROM dual";
 				}
 			}
-
 		} elseif ($data['type'] == 'drop_check_constraint') {
-
 			if (!$constraint_name) {
 				$this->throwException(
 					self::compose(
@@ -3958,9 +3849,7 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint_name
 			);
-
 		} elseif ($data['type'] == 'set_check_constraint') {
-
 			if ($constraint_name) {
 				$extra_statements[] = $this->escape(
 					"ALTER TABLE %r DROP CONSTRAINT %r",
@@ -3976,9 +3865,7 @@ class SQLSchemaTranslation
 
 			$extra_statements[] = $sql;
 			$sql = array_shift($extra_statements);
-
 		} elseif ($data['type'] == 'drop_primary_key') {
-
 			$constraint_columns = $this->fetchAllRowArrays($this->query(
 				"SELECT
 					AC.CONSTRAINT_NAME CONSTRAINT_NAME,
@@ -4006,9 +3893,9 @@ class SQLSchemaTranslation
 				$data['table_without_schema']
 			));
 
-			$constraint_name     = NULL;
+			$constraint_name     = null;
 			$primary_key_columns = array();
-			$nullable            = FALSE;
+			$nullable            = false;
 			foreach ($constraint_columns as $row) {
 				$constraint_name       = $this->stringValue($row['constraint_name']);
 				$primary_key_columns[] = $this->stringValue($row['column']);
@@ -4070,9 +3957,7 @@ class SQLSchemaTranslation
 					reset($primary_key_columns)
 				);
 			}
-
 		} elseif ($data['type'] == 'add_primary_key') {
-
 			$sql = $this->escape(
 				"ALTER TABLE %r ADD CONSTRAINT %r PRIMARY KEY (%r)",
 				$data['table'],
@@ -4081,7 +3966,6 @@ class SQLSchemaTranslation
 			);
 
 			if ($data['autoincrement']) {
-
 				$extra_statements[] = $sql;
 
 				$sql = $this->escape(
@@ -4090,7 +3974,7 @@ class SQLSchemaTranslation
 					$data['column_name'] ?? ''
 				);
 
-				$table_column  = substr(str_replace('"' , '', $data['table']) . '_' . str_replace('"', '', $data['column_name'] ?? ''), 0, 26);
+				$table_column  = substr(str_replace('"', '', $data['table']) . '_' . str_replace('"', '', $data['column_name'] ?? ''), 0, 26);
 
 				$sequence_name = $table_column . '_seq';
 				$trigger_name  = $table_column . '_trg';
@@ -4107,7 +3991,7 @@ class SQLSchemaTranslation
 					EXECUTE IMMEDIATE create_seq_sql\;
 				END\;";
 
-				$trigger  = 'CREATE OR REPLACE TRIGGER '. $trigger_name . "\n";
+				$trigger  = 'CREATE OR REPLACE TRIGGER ' . $trigger_name . "\n";
 				$trigger .= "BEFORE INSERT ON " . $data['table'] . "\n";
 				$trigger .= "FOR EACH ROW\n";
 				$trigger .= "BEGIN\n";
@@ -4119,7 +4003,6 @@ class SQLSchemaTranslation
 				$extra_statements[] = $sequence;
 				$extra_statements[] = $trigger;
 			}
-
 		} elseif ($data['type'] == 'drop_foreign_key') {
 			$constraint = $this->query(
 				"SELECT
@@ -4153,9 +4036,7 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint->fetchScalar()
 			);
-
 		} elseif ($data['type'] == 'add_foreign_key') {
-
 			// Oracle does not support ON UPDATE clauses
 			$data['references'] = preg_replace('#(\sON\s+UPDATE\s+(CASCADE|SET\s+NULL|NO\s+ACTION|RESTRICT))#i', '', $data['references']);
 
@@ -4165,7 +4046,6 @@ class SQLSchemaTranslation
 				$this->generateConstraintName($sql, 'fk'),
 				$data['column_name']
 			);
-
 		} elseif ($data['type'] == 'drop_unique') {
 			$constraint_rows = $this->fetchAllRowArrays($this->query(
 				"SELECT
@@ -4191,7 +4071,7 @@ class SQLSchemaTranslation
 				}
 				$constraints[$constraint_name][] = $row['column'];
 			}
-			$constraint_name = NULL;
+			$constraint_name = null;
 			sort($data['column_names']);
 			foreach ($constraints as $name => $columns) {
 				sort($columns);
@@ -4221,7 +4101,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint_name
 			);
-
 		} elseif ($data['type'] == 'add_unique') {
 			$sql = $this->escape(
 				"ALTER TABLE %r ADD CONSTRAINT %r UNIQUE (%r)",
@@ -4248,7 +4127,7 @@ class SQLSchemaTranslation
 	{
 		$data['schema']               = 'public';
 		$data['table_without_schema'] = $data['table'];
-		if (strpos($data['table'], '.') !== FALSE) {
+		if (strpos($data['table'], '.') !== false) {
 			list ($data['schema'], $data['table_without_schema']) = explode('.', $data['table']);
 		}
 
@@ -4318,7 +4197,7 @@ class SQLSchemaTranslation
 				$data['table_without_schema'],
 				$data['column_name']
 			);
-			$constraint_name = NULL;
+			$constraint_name = null;
 			if ($constraint->countReturnedRows()) {
 				$constraint_name = $constraint->fetchScalar();
 			}
@@ -4326,30 +4205,21 @@ class SQLSchemaTranslation
 
 		if ($data['type'] == 'column_comment') {
 			// PostgreSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'rename_table') {
 			// PostgreSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'rename_column') {
 			// PostgreSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'add_column') {
-
 			$sql = $this->translateDataTypes($sql);
 			$sql = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\b#i', 'SERIAL', $sql) ?? $sql;
-
 		} elseif ($data['type'] == 'drop_column') {
 			$sql .= ' CASCADE';
-
 		} elseif ($data['type'] == 'alter_type') {
 			$sql = $this->translateDataTypes($sql);
-
 		} elseif ($data['type'] == 'set_default') {
 			// PostgreSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'drop_default') {
 			// PostgreSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'set_not_null') {
 			if (isset($data['default'])) {
 				$sql = $this->escape(
@@ -4363,10 +4233,8 @@ class SQLSchemaTranslation
 					$data['column_name']
 				) . $data['default'];
 			}
-
 		} elseif ($data['type'] == 'drop_not_null') {
 			// PostgreSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'set_check_constraint') {
 			if ($constraint_name) {
 				$extra_statements[] = $this->escape(
@@ -4382,9 +4250,7 @@ class SQLSchemaTranslation
 
 			$extra_statements[] = $sql;
 			$sql = array_shift($extra_statements);
-
 		} elseif ($data['type'] == 'drop_check_constraint') {
-
 			if (!$constraint_name) {
 				$this->throwException(
 					self::compose(
@@ -4400,7 +4266,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint_name
 			);
-
 		} elseif ($data['type'] == 'drop_primary_key') {
 			$column_info = $this->query(
 				"SELECT
@@ -4457,9 +4322,7 @@ class SQLSchemaTranslation
 					);
 				}
 			}
-
 		} elseif ($data['type'] == 'add_primary_key') {
-
 			if ($data['autoincrement']) {
 				$sequence_name = $this->generateConstraintName($sql, 'seq');
 				$extra_statements[] = $this->escape(
@@ -4488,7 +4351,6 @@ class SQLSchemaTranslation
 
 				$sql = preg_replace('#\s+autoincrement#i', '', $sql) ?? $sql;
 			}
-
 		} elseif ($data['type'] == 'drop_foreign_key') {
 			$constraint = $this->query(
 				"SELECT
@@ -4525,10 +4387,8 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint->fetchScalar()
 			);
-
 		} elseif ($data['type'] == 'add_foreign_key') {
 			// PostgreSQL handles the normalized syntax
-
 		} elseif ($data['type'] == 'drop_unique') {
 			$constraint_rows = $this->fetchAllRowArrays($this->query(
 				"SELECT
@@ -4557,7 +4417,7 @@ class SQLSchemaTranslation
 				}
 				$constraints[$constraint_name][] = $row['column'];
 			}
-			$constraint_name = NULL;
+			$constraint_name = null;
 			sort($data['column_names']);
 			foreach ($constraints as $name => $columns) {
 				sort($columns);
@@ -4587,7 +4447,6 @@ class SQLSchemaTranslation
 				$data['table'],
 				$constraint_name
 			);
-
 		} elseif ($data['type'] == 'add_unique') {
 			// PostgreSQL handles the normalized syntax
 		}
@@ -4607,21 +4466,21 @@ class SQLSchemaTranslation
 	 */
 	private function translateSQLiteAlterTableStatements(string $sql, array &$extra_statements, array $data): string
 	{
-		$toggle_foreign_key_support = FALSE;
+		$toggle_foreign_key_support = false;
 		if (!isset($this->schema_info['foreign_keys_enabled'])) {
-			$toggle_foreign_key_support = TRUE;
+			$toggle_foreign_key_support = true;
 			$foreign_keys_res = $this->query('PRAGMA foreign_keys');
 			if ($foreign_keys_res->countReturnedRows() && $foreign_keys_res->fetchScalar()) {
-				$this->schema_info['foreign_keys_enabled'] = TRUE;
+				$this->schema_info['foreign_keys_enabled'] = true;
 				$this->query("PRAGMA foreign_keys = 0");
 			} else {
-				$this->schema_info['foreign_keys_enabled'] = FALSE;
+				$this->schema_info['foreign_keys_enabled'] = false;
 			}
 		}
 
 
 		$temp_create_table_sql = $this->getSQLiteCreateTable($data['table']);
-		if ($temp_create_table_sql === NULL) {
+		if ($temp_create_table_sql === null) {
 			$this->throwException(
 				self::compose(
 					'The table "%1$s" does not exist',
@@ -4656,11 +4515,10 @@ class SQLSchemaTranslation
 			);
 		}
 
-		$dropped_unique = FALSE;
-		$dropped_foreign_key = FALSE;
+		$dropped_unique = false;
+		$dropped_foreign_key = false;
 
 		if (in_array($data['type'], array('column_comment', 'alter_type', 'set_not_null', 'drop_not_null', 'drop_default', 'set_default', 'drop_primary_key', 'add_primary_key', 'drop_foreign_key', 'add_foreign_key', 'drop_unique', 'add_unique', 'set_check_constraint', 'drop_check_constraint'))) {
-
 			$column_info = self::parseSQLiteColumnDefinitions($temp_create_table_sql);
 
 			if (isset($data['column_name']) && !isset($column_info[$data['column_name']])) {
@@ -4675,46 +4533,36 @@ class SQLSchemaTranslation
 			}
 
 			foreach ($column_info as $column => $info) {
-
 				if (isset($data['column_name']) && $column == $data['column_name']) {
 					if ($data['type'] == 'alter_type') {
 						$info['pieces']['data_type'] = ' ' . $data['data_type'];
-
 					} elseif ($data['type'] == 'set_not_null') {
 						$info['pieces']['not_null'] = ' NOT NULL';
 						$info['pieces']['null']     = '';
 						if (isset($data['default'])) {
 							$info['pieces']['default'] = ' DEFAULT ' . $data['default'];
 						}
-
 					} elseif ($data['type'] == 'drop_not_null') {
 						$info['pieces']['not_null'] = '';
 						$info['pieces']['null']     = '';
-
 					} elseif ($data['type'] == 'set_default') {
 						$info['pieces']['default'] = ' DEFAULT ' . $data['default_value'];
-
 					} elseif ($data['type'] == 'drop_default') {
 						$info['pieces']['default'] = '';
-
 					} elseif ($data['type'] == 'set_check_constraint') {
 						$info['pieces']['check_constraint'] = $data['constraint'];
-
 					} elseif ($data['type'] == 'drop_check_constraint') {
 						$info['pieces']['check_constraint'] = '';
-
 					} elseif ($data['type'] == 'add_primary_key') {
 						$info['pieces']['primary_key'] = ' PRIMARY KEY' . (version_compare($this->database->getVersion(), '3', '>=') && $data['autoincrement'] ? ' AUTOINCREMENT' : '');
-
 					} elseif ($data['type'] == 'drop_foreign_key') {
 						if (trim($info['pieces']['foreign_key'])) {
-							$dropped_foreign_key = TRUE;
+							$dropped_foreign_key = true;
 						}
 						$info['pieces']['foreign_key'] = '';
-
 					} elseif ($data['type'] == 'add_foreign_key') {
 						$foreign_create_table = $this->getSQLiteCreateTable($data['foreign_table']);
-						if ($foreign_create_table === NULL) {
+						if ($foreign_create_table === null) {
 							$this->throwException(
 								self::compose(
 									'The referenced table "%1$s" does not exist',
@@ -4736,16 +4584,13 @@ class SQLSchemaTranslation
 						}
 
 						$info['pieces']['foreign_key'] = ' REFERENCES ' . $data['references'];
-
 					} elseif ($data['type'] == 'drop_unique') {
 						if (trim($info['pieces']['unique'])) {
-							$dropped_unique = TRUE;
+							$dropped_unique = true;
 						}
 						$info['pieces']['unique'] = '';
-
 					} elseif ($data['type'] == 'add_unique') {
 						$info['pieces']['unique'] = ' UNIQUE';
-
 					} elseif ($data['type'] == 'column_comment') {
 						if (preg_match('#(^\s*,)|(^\s*/\*\s*((?:(?!\*/).)*?)\s*\*/\s*,)#', $info['pieces']['comment/end'])) {
 							$info['pieces']['comment/end'] = ',';
@@ -4755,7 +4600,6 @@ class SQLSchemaTranslation
 							$info['pieces']['comment/end'] .= ' -- ' . $comment . "\n";
 						}
 					}
-
 				} elseif ($data['type'] == 'drop_primary_key') {
 					if (trim($info['pieces']['primary_key'])) {
 						$data['column_name'] = $column;
@@ -4791,7 +4635,6 @@ class SQLSchemaTranslation
 
 				if ($data['type'] == 'drop_primary_key' && count($columns) == 1) {
 					$data['column_name'] = implode('', $columns);
-
 				} elseif ($data['type'] == 'drop_column') {
 					if (!in_array($data['column_name'] ?? '', $columns)) {
 						continue;
@@ -4811,7 +4654,7 @@ class SQLSchemaTranslation
 				if (strtolower($match[2]) != ($data['column_name'] ?? '')) {
 					continue;
 				}
-				$dropped_foreign_key = TRUE;
+				$dropped_foreign_key = true;
 
 				$temp_create_table_sql = self::removeFromSQLiteCreateTable($temp_create_table_sql, $match[0]);
 			}
@@ -4841,13 +4684,12 @@ class SQLSchemaTranslation
 					if (!in_array($data['column_name'] ?? '', $columns)) {
 						continue;
 					}
-
 				} else {
 					sort($data['column_names']);
 					if ($columns != $data['column_names']) {
 						continue;
 					}
-					$dropped_unique = TRUE;
+					$dropped_unique = true;
 				}
 
 				$temp_create_table_sql = self::removeFromSQLiteCreateTable($temp_create_table_sql, $match[0]);
@@ -4978,7 +4820,6 @@ class SQLSchemaTranslation
 
 
 		if ($data['type'] == 'add_column') {
-
 			if (!preg_match('#\s*"?\w+"?\s+\w+#', $data['column_definition'])) {
 				$this->throwException(
 					self::compose(
@@ -5018,7 +4859,6 @@ class SQLSchemaTranslation
 			if (version_compare($this->database->getVersion(), '3', '>=')) {
 				$data['column_definition'] = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\s+primary\s+key\b#i', 'INTEGER PRIMARY KEY AUTOINCREMENT', $data['column_definition']) ?? $data['column_definition'];
 				$data['column_definition'] = preg_replace("#datetime\(\s*CURRENT_TIMESTAMP\s*,\s*'localtime'\s*\)#i", 'CURRENT_TIMESTAMP', $data['column_definition']) ?? $data['column_definition'];
-
 			} else {
 				$data['column_definition'] = preg_replace('#\binteger(?:\(\d+\))?\s+autoincrement\s+primary\s+key\b#i', 'INTEGER PRIMARY KEY', $data['column_definition']) ?? $data['column_definition'];
 				$data['column_definition'] = preg_replace('#CURRENT_TIMESTAMP\(\)#i', 'CURRENT_TIMESTAMP', $data['column_definition']) ?? $data['column_definition'];
@@ -5037,7 +4877,6 @@ class SQLSchemaTranslation
 		// SQLite 3 supports renaming a table, so we need the full create
 		// table with all of the translated triggers, etc
 		if (version_compare($this->database->getVersion(), '3', '>=')) {
-
 			// We rename string placeholders to prevent confusion with
 			// string placeholders that are added by call to Database
 			$temp_create_table_sql = str_replace(
@@ -5046,7 +4885,7 @@ class SQLSchemaTranslation
 				$temp_create_table_sql
 			);
 
-			foreach (str_replace('%%', '%', $this->database->preprocess($temp_create_table_sql, array(), TRUE)) as $statement) {
+			foreach (str_replace('%%', '%', $this->database->preprocess($temp_create_table_sql, array(), true)) as $statement) {
 				$extra_statements[] = $statement;
 			}
 
@@ -5064,14 +4903,12 @@ class SQLSchemaTranslation
 			$new_column_names = $column_names;
 			$column_position  = array_search($data['column_name'], $new_column_names);
 			$new_column_names[$column_position] = $data['new_column_name'];
-
 		} elseif ($data['type'] == 'drop_column') {
 			$column_names     = array_diff(
 				$this->getSQLiteColumns($data['table']),
 				array($data['column_name'] ?? '')
 			);
 			$new_column_names = $column_names;
-
 		} else {
 			$column_names     = $this->getSQLiteColumns($data['table']);
 			$new_column_names = $column_names;
@@ -5109,18 +4946,16 @@ class SQLSchemaTranslation
 					preg_replace($column_regex, '"' . $data['new_column_name'] . '"', $match[3]) ?? $match[3],
 					$create_sql
 				);
-
 			} elseif ($data['type'] == 'drop_column') {
 				if (in_array($data['column_name'] ?? '', $columns)) {
 					continue;
 				}
-
 			} elseif ($data['type'] == 'drop_unique') {
 				sort($columns);
 				sort($data['column_names']);
 
 				if ($columns == $data['column_names']) {
-					$dropped_unique = TRUE;
+					$dropped_unique = true;
 					continue;
 				}
 			}
@@ -5190,11 +5025,13 @@ class SQLSchemaTranslation
 			$foreign_keys = $this->getSQLiteForeignKeys($data['table'], $data['column_name'] ?? '');
 
 			foreach ($foreign_keys as $key) {
-				foreach ($this->database->preprocess(
-					"ALTER TABLE %r DROP FOREIGN KEY (%r)",
-					array($key['table'], $key['column']),
-					TRUE
-				) as $statement) {
+				foreach (
+                    $this->database->preprocess(
+                        "ALTER TABLE %r DROP FOREIGN KEY (%r)",
+                        array($key['table'], $key['column']),
+                        true
+                    ) as $statement
+                ) {
 					$extra_statements[] = $statement;
 				}
 			}
@@ -5202,17 +5039,19 @@ class SQLSchemaTranslation
 
 
 		// Drop the original table
-		foreach ($this->database->preprocess("DROP TABLE %r", array($data['table']), TRUE) as $statement) {
+		foreach ($this->database->preprocess("DROP TABLE %r", array($data['table']), true) as $statement) {
 			$extra_statements[] = $statement;
 		}
 
 
 		// Rename the temp table to the original name
-		foreach ($this->database->preprocess(
-			"ALTER TABLE %r RENAME TO %r",
-			array('fl_tmp_' . $data['table'], $data['table']),
-			TRUE
-		) as $statement) {
+		foreach (
+            $this->database->preprocess(
+                "ALTER TABLE %r RENAME TO %r",
+                array('fl_tmp_' . $data['table'], $data['table']),
+                true
+            ) as $statement
+        ) {
 			$extra_statements[] = $statement;
 		}
 
@@ -5220,11 +5059,13 @@ class SQLSchemaTranslation
 		// Re-add the foreign key constraints for renamed columns
 		if ($data['type'] == 'rename_column') {
 			foreach ($foreign_keys as $key) {
-				foreach ($this->database->preprocess(
-					"ALTER TABLE %r ADD FOREIGN KEY (%r) REFERENCES %r(%r) ON UPDATE " . $key['on_update'] . " ON DELETE " . $key['on_delete'],
-					array($key['table'], $key['column'], $data['table'], $data['new_column_name']),
-					TRUE
-				) as $statement) {
+				foreach (
+                    $this->database->preprocess(
+                        "ALTER TABLE %r ADD FOREIGN KEY (%r) REFERENCES %r(%r) ON UPDATE " . $key['on_update'] . " ON DELETE " . $key['on_delete'],
+                        array($key['table'], $key['column'], $data['table'], $data['new_column_name']),
+                        true
+                    ) as $statement
+                ) {
 					$extra_statements[] = $statement;
 				}
 			}
@@ -5326,14 +5167,16 @@ class SQLSchemaTranslation
 		// We start by dropping all references to this table
 		$foreign_keys = $this->getSQLiteForeignKeys($data['table']);
 		foreach ($foreign_keys as $foreign_key) {
-			foreach ($this->database->preprocess(
-				"ALTER TABLE %r DROP FOREIGN KEY (%r)",
-				array(
+			foreach (
+                $this->database->preprocess(
+                    "ALTER TABLE %r DROP FOREIGN KEY (%r)",
+                    array(
 					$foreign_key['table'],
 					$foreign_key['column']
-				),
-				TRUE
-			) as $statement) {
+                    ),
+                    true
+                ) as $statement
+            ) {
 				$extra_statements[] = $statement;
 			}
 		}
@@ -5341,7 +5184,6 @@ class SQLSchemaTranslation
 		// SQLite 2 does not natively support renaming tables, so we have to do
 		// it by creating a new table name and copying all data and indexes
 		if (version_compare($this->database->getVersion(), '3', '<')) {
-
 			$renamed_create_sql = preg_replace(
 				'#^\s*CREATE\s+TABLE\s+["\[`\']?\w+["\]`\']?\s+#i',
 				'CREATE TABLE "' . $data['new_table_name'] . '" ',
@@ -5364,7 +5206,7 @@ class SQLSchemaTranslation
 				$this->database->preprocess(
 					$renamed_create_sql,
 					array(),
-					TRUE
+					true
 				)
 			);
 
@@ -5427,11 +5269,13 @@ class SQLSchemaTranslation
 			}
 
 
-			foreach ($this->database->preprocess(
-				"DROP TABLE %r",
-				array($data['table']),
-				TRUE
-			) as $statement) {
+			foreach (
+                $this->database->preprocess(
+                    "DROP TABLE %r",
+                    array($data['table']),
+                    true
+                ) as $statement
+            ) {
 				$extra_statements[] = $statement;
 			}
 
@@ -5439,7 +5283,6 @@ class SQLSchemaTranslation
 		// SQLite 3 natively supports renaming tables, but it does not fix
 		// references to the old table name inside of trigger bodies
 		} else {
-
 			// We add the rename SQL in the middle so it happens after we drop the
 			// foreign key constraints and before we re-add them
 			$extra_statements[] = $sql;
@@ -5497,16 +5340,18 @@ class SQLSchemaTranslation
 
 		// Here we recreate the references that we dropped at the beginning
 		foreach ($foreign_keys as $foreign_key) {
-			foreach ($this->database->preprocess(
-				"ALTER TABLE %r ADD FOREIGN KEY (%r) REFERENCES %r(%r) ON UPDATE " . $foreign_key['on_update'] . " ON DELETE " . $foreign_key['on_delete'],
-				array(
+			foreach (
+                $this->database->preprocess(
+                    "ALTER TABLE %r ADD FOREIGN KEY (%r) REFERENCES %r(%r) ON UPDATE " . $foreign_key['on_update'] . " ON DELETE " . $foreign_key['on_delete'],
+                    array(
 					$foreign_key['table'],
 					$foreign_key['column'],
 					$data['new_table_name'],
 					$foreign_key['foreign_column']
-				),
-				TRUE
-			) as $statement) {
+                    ),
+                    true
+                ) as $statement
+            ) {
 				$extra_statements[] = $statement;
 			}
 		}

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides encoding and decoding for JSON
  *
@@ -33,12 +35,12 @@ class JSON
 	 * @param  boolean $assoc  If this is TRUE, JSON objects will be represented as an assocative array instead of a `stdClass` object
 	 * @return mixed  A PHP equivalent of the JSON string
 	 */
-	static public function decode(string $json, bool $assoc=FALSE): mixed
+	public static function decode(string $json, bool $assoc = false): mixed
 	{
 		$json = trim($json);
 
 		if ($json === '') {
-			return NULL;
+			return null;
 		}
 
 		return json_decode($json, $assoc);
@@ -51,7 +53,7 @@ class JSON
 	 * @param  mixed  $value   The PHP value to encode
 	 * @return string  The JSON string that is equivalent to the PHP value
 	 */
-	static public function encode(mixed $value): string
+	public static function encode(mixed $value): string
 	{
 		if (is_resource($value)) {
 			return 'null';
@@ -59,7 +61,7 @@ class JSON
 
 		$json = json_encode($value);
 
-		if ($json === FALSE) {
+		if ($json === false) {
 			throw new UnexpectedException('Unable to encode value as JSON: ' . json_last_error_msg());
 		}
 
@@ -73,7 +75,7 @@ class JSON
 	 * @param  mixed $value  The PHP value to output as JSON
 	 * @return void
 	 */
-	static public function output(mixed $value): void
+	public static function output(mixed $value): void
 	{
 		self::sendHeader();
 		echo self::encode($value);
@@ -85,7 +87,7 @@ class JSON
 	 *
 	 * @return void
 	 */
-	static public function sendHeader(): void
+	public static function sendHeader(): void
 	{
 		header('Content-Type: application/json; charset=utf-8');
 	}
@@ -96,7 +98,9 @@ class JSON
 	 *
 	 * @return JSON
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

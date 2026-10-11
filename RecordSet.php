@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * A lightweight, iterable set of ActiveRecord-based objects
  *
@@ -200,7 +202,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer $page              The page offset to use when limiting records
 	 * @return RecordSet  A set of ActiveRecord objects
 	 */
-	static public function build(string $class, array $where_conditions=array(), array $order_bys=array(), ?int $limit=NULL, ?int $page=NULL): RecordSet
+	public static function build(string $class, array $where_conditions = array(), array $order_bys = array(), ?int $limit = null, ?int $page = null): RecordSet
 	{
 		ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
@@ -214,7 +216,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		if ($where_conditions) {
 			$having_conditions = ORMDatabase::splitHavingConditions($where_conditions);
 		} else {
-			$having_conditions = NULL;
+			$having_conditions = null;
 		}
 
 		if ($where_conditions) {
@@ -243,8 +245,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$params = ORMDatabase::injectFromAndGroupByClauses($db, $schema, $params, $table);
 
 		// Add the limit clause and create a query to get the non-limited total
-		$non_limited_count_sql = NULL;
-		if ($limit !== NULL) {
+		$non_limited_count_sql = null;
+		if ($limit !== null) {
 			$pk_columns = array();
 			foreach ($schema->getKeys($table, 'primary') as $pk_column) {
 				$pk_columns[] = $table . '.' . $pk_column;
@@ -261,17 +263,16 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$stripped_count_sql    = preg_replace('#\s+ORDER BY.*$#', '', $non_limited_count_sql);
 			$stripped_count_sql    = is_string($stripped_count_sql) ? $stripped_count_sql : '';
 			$count_sql             = $db->escape('SELECT count(*) FROM (' . $stripped_count_sql . ') subquery', array_slice($params, 1));
-			$non_limited_count_sql = is_string($count_sql) ? $count_sql : NULL;
+			$non_limited_count_sql = is_string($count_sql) ? $count_sql : null;
 
 			$params[0] = (is_string($params[0]) ? $params[0] : '') . ' LIMIT ' . $limit;
 
-			if ($page !== NULL) {
-
+			if ($page !== null) {
 				if ($page < 1) {
 					$page = 1;
 				}
 
-				$params[0] .= ' OFFSET ' . (($page-1) * $limit);
+				$params[0] .= ' OFFSET ' . (($page - 1) * $limit);
 			}
 		} else {
 			$page = 1;
@@ -293,7 +294,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer      $page           The page of records the array is from - this is informational only and does not affect the array
 	 * @return RecordSet  A set of ActiveRecord objects
 	 */
-	static public function buildFromArray(mixed $class, array $records, ?int $total_records=NULL, ?int $limit=NULL, int $page=1): RecordSet
+	public static function buildFromArray(mixed $class, array $records, ?int $total_records = null, ?int $limit = null, int $page = 1): RecordSet
 	{
 		if (is_array($class)) {
 			foreach ($class as $_class) {
@@ -323,15 +324,15 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @phpstan-assert-if-true array<int, ActiveRecord> $records
 	 */
-	static private function containsOnlyRecords(array $records): bool
+	private static function containsOnlyRecords(array $records): bool
 	{
 		foreach ($records as $record) {
 			if (!$record instanceof ActiveRecord) {
-				return FALSE;
+				return false;
 			}
 		}
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -394,12 +395,12 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer       $page                   The page of records the SQL statement returned - this is information only and does not affect the SQL
 	 * @return RecordSet  A set of ActiveRecord objects
 	 */
-	static public function buildFromSQL(string $class, mixed $sql, mixed $non_limited_count_sql=NULL, ?int $limit=NULL, int $page=1): RecordSet
+	public static function buildFromSQL(string $class, mixed $sql, mixed $non_limited_count_sql = null, ?int $limit = null, int $page = 1): RecordSet
 	{
 		ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
 
-		$sql_statement = is_array($sql) ? ($sql[0] ?? NULL) : $sql;
+		$sql_statement = is_array($sql) ? ($sql[0] ?? null) : $sql;
 		$sql_display   = is_string($sql_statement) ? $sql_statement : (is_scalar($sql_statement) ? (string) $sql_statement : '');
 
 		if (!is_string($sql_statement) || !preg_match('#^\s*SELECT\s*(DISTINCT|ALL)?\s*(("?\w+"?\.)?"?\w+"?\.)?\*\s*FROM#i', $sql_statement)) {
@@ -422,7 +423,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		} else {
 			$escaped_count = $non_limited_count_sql;
 		}
-		$non_limited_count_sql = (is_string($escaped_count) || is_int($escaped_count)) ? $escaped_count : NULL;
+		$non_limited_count_sql = (is_string($escaped_count) || is_int($escaped_count)) ? $escaped_count : null;
 
 		return new RecordSet(
 			$class,
@@ -440,10 +441,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_map(static function (mixed $arg): bool|float|int|string|null {
-			if ($arg === NULL || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
+			if ($arg === null || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
 				return $arg;
 			}
 			if ($arg instanceof Stringable) {
@@ -455,7 +456,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			);
 		}, array_slice(func_get_args(), 1));
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -473,7 +474,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  array<array-key, mixed> $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 */
-	static private function runQuery(Database $db, array $params): Result
+	private static function runQuery(Database $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -494,7 +495,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  array<array-key, mixed> $values  The values to convert
 	 * @return array<array-key, string>  The values converted to strings
 	 */
-	static private function stringifyValues(array $values): array
+	private static function stringifyValues(array $values): array
 	{
 		$output = array();
 		foreach ($values as $key => $value) {
@@ -517,7 +518,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
      * @param  mixed   $where_conditions  An array of where clause parameters in the same format as ::build()
      * @return integer  The number of records
      */
-    static public function tally(string $class, mixed $where_conditions=array()): int
+    public static function tally(string $class, mixed $where_conditions = array()): int
     {
         ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
@@ -538,7 +539,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		if ($where_conditions) {
 			$having_conditions = ORMDatabase::splitHavingConditions($where_conditions);
 		} else {
-			$having_conditions = NULL;
+			$having_conditions = null;
 		}
 
 		if ($where_conditions) {
@@ -573,7 +574,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @var integer
 	 */
-	private ?int $limit = NULL;
+	private ?int $limit = null;
 
 	/**
 	 * The page of results the record set represents
@@ -648,14 +649,14 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		list($action, $subject) = ORM::parseMethod($method_name);
 
-		$route = (isset($parameters[0]) && is_string($parameters[0])) ? $parameters[0] : NULL;
+		$route = (isset($parameters[0]) && is_string($parameters[0])) ? $parameters[0] : null;
 
 		// This check prevents Grammar exceptions being thrown when an unknown method is called
 		$related_class = '';
 		$related_class_sans_namespace = '';
 		if (in_array($action, array('build', 'prebuild', 'precount', 'precreate'))) {
 			$related_class = Grammar::singularize($subject);
-			if ($related_class === FALSE) {
+			if ($related_class === false) {
 				$related_class = '';
 			}
 			$related_class_sans_namespace = $related_class;
@@ -700,11 +701,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer        $page               The page of records that was built
 	 * @return RecordSet
 	 */
-	protected function __construct(mixed $class, mixed $records=NULL, mixed $non_limited_count=NULL, mixed $limit=NULL, mixed $page=1)
+	protected function __construct(mixed $class, mixed $records = null, mixed $non_limited_count = null, mixed $limit = null, mixed $page = 1)
 	{
 		$this->class = (is_array($class) && count($class) == 1) ? current($class) : $class;
 
-		if ($non_limited_count !== NULL) {
+		if ($non_limited_count !== null) {
 			$this->non_limited_count = $non_limited_count;
 		}
 
@@ -770,7 +771,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string|null  $route       The route to this table from another table
 	 * @return array<array-key, mixed>  The params with the `ORDER BY` clause added
 	 */
-	private function addOrderByParams(Database $db, Schema $schema, array $params, string $related_class, ?string $route=NULL): array
+	private function addOrderByParams(Database $db, Schema $schema, array $params, string $related_class, ?string $route = null): array
 	{
 		$table = ORM::tablize($this->getSingleClass());
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
@@ -795,12 +796,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			if (is_array($primary_key)) {
 				$conditions = array();
 				foreach ($pk_columns as $pk_column) {
-
 					$value = $primary_key[$pk_column];
 
 					// This makes sure the query performs the way an insert will
-					$pk_info = $column_info[$pk_column] ?? NULL;
-					if ($value === NULL && is_array($pk_info) && ($pk_info['not_null'] ?? NULL) && ($pk_info['default'] ?? NULL) !== NULL) {
+					$pk_info = $column_info[$pk_column] ?? null;
+					if ($value === null && is_array($pk_info) && ($pk_info['not_null'] ?? null) && ($pk_info['default'] ?? null) !== null) {
 						$value = $pk_info['default'];
 					}
 
@@ -812,7 +812,6 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 					$params[] = $value;
 				}
 				$sql .= join(' AND ', $conditions);
-
 			} else {
 				$sql .= str_replace(
 					'%r',
@@ -847,7 +846,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string   $route   The route to this table from another table
 	 * @return array<array-key, mixed>  The params with the `WHERE` clause added
 	 */
-	private function addWhereParams(Database $db, Schema $schema, array $params, ?string $route=NULL): array
+	private function addWhereParams(Database $db, Schema $schema, array $params, ?string $route = null): array
 	{
 		$table = ORM::tablize($this->getSingleClass());
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
@@ -856,7 +855,6 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		// We have a multi-field primary key, making things kinda ugly
 		if (sizeof($pk_columns) > 1) {
-
 			$escaped_pk_columns = array();
 			foreach ($pk_columns as $pk_column) {
 				$escaped_pk_columns[$pk_column] = $db->escape('%r', $table_with_route . '.' . $pk_column);
@@ -870,15 +868,15 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			foreach ($this->getPrimaryKeys() as $primary_key) {
 				$sub_conditions = array();
 				foreach ($pk_columns as $pk_column) {
-					$pk_info = is_array($column_info[$pk_column] ?? NULL) ? $column_info[$pk_column] : array();
-					$value   = is_array($primary_key) ? ($primary_key[$pk_column] ?? NULL) : NULL;
+					$pk_info = is_array($column_info[$pk_column] ?? null) ? $column_info[$pk_column] : array();
+					$value   = is_array($primary_key) ? ($primary_key[$pk_column] ?? null) : null;
 
 					// This makes sure the query performs the way an insert will
-					if ($value === NULL && !empty($pk_info['not_null']) && array_key_exists('default', $pk_info) && $pk_info['default'] !== NULL) {
+					if ($value === null && !empty($pk_info['not_null']) && array_key_exists('default', $pk_info) && $pk_info['default'] !== null) {
 						$value = $pk_info['default'];
 					}
 
-					$escaped_pk = $escaped_pk_columns[$pk_column] ?? NULL;
+					$escaped_pk = $escaped_pk_columns[$pk_column] ?? null;
 					$escaped_pk = is_string($escaped_pk) ? $escaped_pk : '';
 
 					$sub_conditions[] = str_replace(
@@ -931,13 +929,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$class = get_class($record);
 
 			if (!isset($classes[$class])) {
-				$classes[$class] = TRUE;
+				$classes[$class] = true;
 			}
 		}
 
 		// If no objects were returned we need to fake the class
 		if (!$classes) {
-			$classes = array('ActiveRecord' => TRUE);
+			$classes = array('ActiveRecord' => true);
 		}
 
 		return new RecordSet(array_keys($classes), array_values($result));
@@ -969,13 +967,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$class = get_class($record);
 
 			if (!isset($classes[$class])) {
-				$classes[$class] = TRUE;
+				$classes[$class] = true;
 			}
 		}
 
 		// If no objects were returned we need to fake the class
 		if (!$classes) {
-			$classes = array('ActiveRecord' => TRUE);
+			$classes = array('ActiveRecord' => true);
 		}
 
 		return new RecordSet(array_keys($classes), array_values($result));
@@ -1020,9 +1018,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	public function chunk(int $number): array
 	{
 		$output = array();
-		$number_of_sets = ceil($this->count()/$number);
-		for ($i=0; $i < $number_of_sets; $i++) {
-			$output[] = new RecordSet($this->class, array_slice($this->records, $i*$number, $number));
+		$number_of_sets = ceil($this->count() / $number);
+		for ($i = 0; $i < $number_of_sets; $i++) {
+			$output[] = new RecordSet($this->class, array_slice($this->records, $i * $number, $number));
 		}
 		return $output;
 	}
@@ -1038,7 +1036,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	{
 		$class = get_class($record);
 		if (!in_array($class, (array) $this->class)) {
-			return FALSE;
+			return false;
 		}
 
 		if (!$record->exists()) {
@@ -1054,11 +1052,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 				continue;
 			}
 			if ($hash == ActiveRecord::hash($_record)) {
-				return TRUE;
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -1068,9 +1066,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  boolean $ignore_limit  If set to `TRUE`, this method will return the number of records that would be in the set if there was no `LIMIT` clause
 	 * @return integer  The number of records in the set
 	 */
-	public function count(mixed $ignore_limit=FALSE): int
+	public function count(mixed $ignore_limit = false): int
 	{
-		if ($ignore_limit !== TRUE || $this->non_limited_count === NULL) {
+		if ($ignore_limit !== true || $this->non_limited_count === null) {
 			return sizeof($this->records);
 		}
 
@@ -1096,7 +1094,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records not present in the passed records
 	 */
-	public function diff(mixed $records, bool $remember_original_count=FALSE): RecordSet
+	public function diff(mixed $records, bool $remember_original_count = false): RecordSet
 	{
 		$remove_records = array();
 
@@ -1111,7 +1109,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			}
 			$class = get_class($record);
 			$hash  = ActiveRecord::hash($record);
-			$remove_records[$class . '::' . $hash] = TRUE;
+			$remove_records[$class . '::' . $hash] = true;
 		}
 
 		$new_records = array();
@@ -1122,7 +1120,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$hash  = ActiveRecord::hash($record);
 			if (!isset($remove_records[$class . '::' . $hash])) {
 				$new_records[]   = $record;
-				$classes[$class] = TRUE;
+				$classes[$class] = true;
 			}
 		}
 
@@ -1135,7 +1133,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		return new RecordSet(
 			$class,
 			$new_records,
-			$remember_original_count ? $this->count() : NULL
+			$remember_original_count ? $this->count() : null
 		);
 	}
 
@@ -1193,7 +1191,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  boolean               $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  A new RecordSet with the filtered records
 	 */
-	public function filter(mixed $procedure, bool $remember_original_count=FALSE): RecordSet
+	public function filter(mixed $procedure, bool $remember_original_count = false): RecordSet
 	{
 		if (!$this->records) {
 			return clone $this;
@@ -1205,21 +1203,19 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			foreach ($procedure as $condition_key => $condition_value) {
 				$conditions[(string) $condition_key] = $condition_value;
 			}
-
 		} elseif (is_string($procedure) && preg_match('#^\{record\}::([a-z0-9_\-]+)$#iD', $procedure, $matches)) {
 			$type   = 'psuedo-callback';
 			$method = $matches[1];
-
 		} else {
 			$type     = 'callback';
 			$callback = $procedure;
-			if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+			if (is_string($callback) && strpos($callback, '::') !== false) {
 				$callback = explode('::', $callback);
 			}
 		}
 
 		$new_records = array();
-		$classes     = (!is_array($this->class)) ? array($this->class => TRUE) : array();
+		$classes     = (!is_array($this->class)) ? array($this->class => true) : array();
 
 		foreach ($this->records as $record) {
 			switch ($type) {
@@ -1242,7 +1238,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			}
 
 			if ($value) {
-				$classes[get_class($record)] = TRUE;
+				$classes[get_class($record)] = true;
 
 				$new_records[] = $record;
 			}
@@ -1251,7 +1247,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		return new RecordSet(
 			array_keys($classes),
 			$new_records,
-			$remember_original_count ? $this->count() : NULL
+			$remember_original_count ? $this->count() : null
 		);
 	}
 
@@ -1289,7 +1285,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 */
 	public function getLimit(): ?int
 	{
-		return (!$this->limit) ? NULL : $this->limit;
+		return (!$this->limit) ? null : $this->limit;
 	}
 
 
@@ -1314,7 +1310,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		if (!$this->limit) {
 			return 1;
 		}
-		return (int) ceil($this->count(TRUE) / $this->limit);
+		return (int) ceil($this->count(true) / $this->limit);
 	}
 
 
@@ -1367,7 +1363,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$keys = array();
 
 			foreach ($pk_columns as $pk_column) {
-				$method = 'get' . Grammar::camelize($pk_column, TRUE);
+				$method = 'get' . Grammar::camelize($pk_column, true);
 				$keys[$pk_column] = $record->$method();
 			}
 
@@ -1385,7 +1381,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records present in the current record set that are also present in the passed records
 	 */
-	public function intersect(mixed $records, bool $remember_original_count=FALSE): RecordSet
+	public function intersect(mixed $records, bool $remember_original_count = false): RecordSet
 	{
 		$hashes = array();
 
@@ -1400,7 +1396,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			}
 			$class = get_class($record);
 			$hash  = ActiveRecord::hash($record);
-			$hashes[$class . '::' . $hash] = TRUE;
+			$hashes[$class . '::' . $hash] = true;
 		}
 
 		$new_records = array();
@@ -1411,7 +1407,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$hash  = ActiveRecord::hash($record);
 			if (isset($hashes[$class . '::' . $hash])) {
 				$new_records[]   = $record;
-				$classes[$class] = TRUE;
+				$classes[$class] = true;
 			}
 		}
 
@@ -1424,7 +1420,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		return new RecordSet(
 			$class,
 			$new_records,
-			$remember_original_count ? $this->count() : NULL
+			$remember_original_count ? $this->count() : null
 		);
 	}
 
@@ -1465,27 +1461,26 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		}
 
 		$parameters_array = array();
-		$found_record     = FALSE;
+		$found_record     = false;
 		$total_records    = sizeof($this->records);
 
 		foreach ($parameters as $parameter) {
 			if (!is_array($parameter)) {
 				if (is_string($parameter) && preg_match('#^\{record\}::([a-z0-9_\-]+)$#iD', $parameter, $matches)) {
 					$parameters_array[] = $this->call($matches[1]);
-					$found_record = TRUE;
+					$found_record = true;
 				} elseif ($parameter === '{record}') {
 					$parameters_array[] = $this->records;
-					$found_record = TRUE;
+					$found_record = true;
 				} elseif ($parameter === '{index}') {
 					$parameters_array[] = array_keys($this->records);
 				} else {
 					$parameters_array[] = array_pad(array(), $total_records, $parameter);
 				}
-
 			} elseif (sizeof($parameter) > $total_records) {
 				$parameters_array[] = array_slice($parameter, 0, $total_records);
 			} elseif (sizeof($parameter) < $total_records) {
-				$parameters_array[] = array_pad($parameter, $total_records, NULL);
+				$parameters_array[] = array_pad($parameter, $total_records, null);
 			} else {
 				$parameters_array[] = $parameter;
 			}
@@ -1495,7 +1490,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			array_unshift($parameters_array, $this->records);
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 
@@ -1520,7 +1515,6 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		if ($records instanceof RecordSet) {
 			$new_records = $records->records;
 			$classes    += array_flip((array) $records->class);
-
 		} elseif (is_array($records)) {
 			$new_records = array();
 			foreach ($records as $record) {
@@ -1531,13 +1525,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 					);
 				}
 				$new_records[] = $record;
-				$classes[get_class($record)] = TRUE;
+				$classes[get_class($record)] = true;
 			}
-
 		} elseif ($records instanceof ActiveRecord) {
 			$new_records = array($records);
-			$classes[get_class($records)] = TRUE;
-
+			$classes[get_class($records)] = true;
 		} else {
 			throw new ProgrammerException(
 				'The records specified, %1$s, are invalid. Must be an %2$s, %3$s or an array of %4$s.',
@@ -1575,7 +1567,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	public function offsetExists(mixed $offset): bool
 	{
 		if (!is_int($offset) && !is_string($offset)) {
-			return FALSE;
+			return false;
 		}
 		return isset($this->records[$offset]);
 	}
@@ -1658,7 +1650,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $route          This should be a column name or a join table name and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
 	 */
-	private function prebuild(string $related_class, ?string $route=NULL): RecordSet
+	private function prebuild(string $related_class, ?string $route = null): RecordSet
 	{
 		if (!$this->records) {
 			return $this;
@@ -1683,8 +1675,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$route        = ORMSchema::getRouteName($schema, $table, $related_table, $route, '*-to-many');
 		$relationship = ORMSchema::getRoute($schema, $table, $related_table, $route, '*-to-many');
 
-		$relationship_column         = is_string($relationship['column'] ?? NULL) ? $relationship['column'] : '';
-		$relationship_related_column = is_string($relationship['related_column'] ?? NULL) ? $relationship['related_column'] : '';
+		$relationship_column         = is_string($relationship['column'] ?? null) ? $relationship['column'] : '';
+		$relationship_related_column = is_string($relationship['related_column'] ?? null) ? $relationship['related_column'] : '';
 		$has_join_table              = isset($relationship['join_table']);
 
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
@@ -1710,7 +1702,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$params[0] = is_string($params[0]) ? $params[0] : '';
 
 		// Add the joining column to the group by
-		if (strpos($params[0], 'GROUP BY') !== FALSE) {
+		if (strpos($params[0], 'GROUP BY') !== false) {
 			$escaped_order = $db->escape(', %r ORDER BY', $table . '.' . $relationship_column);
 			$params[0] = str_replace(
 				' ORDER BY',
@@ -1723,9 +1715,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$result = self::runQuery($db, $params);
 
 		$total_records = sizeof($this->records);
-		for ($i=0; $i < $total_records; $i++) {
-
-
+		for ($i = 0; $i < $total_records; $i++) {
 			// Get the record we are injecting into
 			$record = $this->records[$i];
 			$keys   = array();
@@ -1736,13 +1726,14 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 				try {
 					$current_row = $result->current();
 					if (is_array($current_row)) {
-						$keys[$relationship_column] = $current_row[$relationship_column] ?? NULL;
+						$keys[$relationship_column] = $current_row[$relationship_column] ?? null;
 					}
-				} catch (ExpectedException $e) { }
+				} catch (ExpectedException $e) {
+                }
 
 			// If it is a straight join, keep track of the value by the related column value
 			} else {
-				$method = 'get' . Grammar::camelize($relationship_column, TRUE);
+				$method = 'get' . Grammar::camelize($relationship_column, true);
 				$keys[$relationship_related_column] = $record->$method();
 			}
 
@@ -1764,7 +1755,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 					$current = $result->current();
 				}
-			} catch (ExpectedException $e) { }
+			} catch (ExpectedException $e) {
+            }
 
 
 			// Set up the result object for the new record set
@@ -1786,7 +1778,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $route          This should be a column name or a join table name and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
 	 */
-	private function precount(string $related_class, ?string $route=NULL): RecordSet
+	private function precount(string $related_class, ?string $route = null): RecordSet
 	{
 		if (!$this->records) {
 			return $this;
@@ -1811,18 +1803,17 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$route        = ORMSchema::getRouteName($schema, $table, $related_table, $route, '*-to-many');
 		$relationship = ORMSchema::getRoute($schema, $table, $related_table, $route, '*-to-many');
 
-		$relationship_column = is_string($relationship['column'] ?? NULL) ? $relationship['column'] : '';
+		$relationship_column = is_string($relationship['column'] ?? null) ? $relationship['column'] : '';
 
 		// Build the query out
 		$table_and_column = $table . '.' . $relationship_column;
 
 		if (isset($relationship['join_table'])) {
 			$table_to_join  = is_string($relationship['join_table']) ? $relationship['join_table'] : '';
-			$column_to_join = is_string($relationship['join_column'] ?? NULL) ? $relationship['join_column'] : '';
-
+			$column_to_join = is_string($relationship['join_column'] ?? null) ? $relationship['join_column'] : '';
 		} else {
 			$table_to_join  = $related_table;
-			$column_to_join = is_string($relationship['related_column'] ?? NULL) ? $relationship['related_column'] : '';
+			$column_to_join = is_string($relationship['related_column'] ?? null) ? $relationship['related_column'] : '';
 		}
 
 		$table_to_join_alias = $table_to_join;
@@ -1831,7 +1822,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		}
 
 		// For tables in a specific schema, this prevents the alias from having a . in it
-		if (strpos($table_to_join_alias, '.') !== FALSE) {
+		if (strpos($table_to_join_alias, '.') !== false) {
 			$alias = preg_replace('#"?."?#', '_', $table_to_join_alias);
 			$table_to_join_alias = is_string($alias) ? $alias : '';
 		}
@@ -1859,7 +1850,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			if (!is_array($row)) {
 				continue;
 			}
-			$count_column = $row['flourish__column'] ?? NULL;
+			$count_column = $row['flourish__column'] ?? null;
 			if (!is_string($count_column)) {
 				continue;
 			}
@@ -1870,10 +1861,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		unset($result);
 
 		$total_records = sizeof($this->records);
-		$get_method   = 'get' . Grammar::camelize($relationship_column, TRUE);
+		$get_method   = 'get' . Grammar::camelize($relationship_column, true);
 		$tally_method = 'tally' . Grammar::pluralize($related_class);
 
-		for ($i=0; $i < $total_records; $i++) {
+		for ($i = 0; $i < $total_records; $i++) {
 			$record = $this->records[$i];
 			$value  = $record->$get_method();
 			$key    = is_scalar($value) ? (string) $value : '';
@@ -1892,7 +1883,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $route          This should be the column name of the foreign key and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
 	 */
-	private function precreate(string $related_class, ?string $route=NULL): RecordSet
+	private function precreate(string $related_class, ?string $route = null): RecordSet
 	{
 		if (!$this->records) {
 			return $this;
@@ -1916,10 +1907,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			'*-to-one'
 		);
 
-		$relationship_column         = is_string($relationship['column'] ?? NULL) ? $relationship['column'] : '';
-		$relationship_related_column = is_string($relationship['related_column'] ?? NULL) ? $relationship['related_column'] : '';
+		$relationship_column         = is_string($relationship['column'] ?? null) ? $relationship['column'] : '';
+		$relationship_related_column = is_string($relationship['related_column'] ?? null) ? $relationship['related_column'] : '';
 
-		$values = $this->call('get' . Grammar::camelize($relationship_column, TRUE));
+		$values = $this->call('get' . Grammar::camelize($relationship_column, true));
 		$values = array_unique(self::stringifyValues($values));
 
 		self::build(
@@ -1956,7 +1947,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  mixed    $initial_value  The initial value to seed reduce with
 	 * @return mixed  The result of the reduce operation
 	 */
-	public function reduce(callable $callback, mixed $initial_value=NULL): mixed
+	public function reduce(callable $callback, mixed $initial_value = null): mixed
 	{
 		if (!$this->records) {
 			return $initial_value;
@@ -1964,7 +1955,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		$result = $initial_value;
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1973,7 +1964,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			);
 		}
 
-		foreach($this->records as $record) {
+		foreach ($this->records as $record) {
 			$result = call_user_func($callback, $result, $record);
 		}
 
@@ -1989,9 +1980,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The new slice of records
 	 */
-	public function slice(int $offset, ?int $length=NULL, bool $remember_original_count=FALSE): RecordSet
+	public function slice(int $offset, ?int $length = null, bool $remember_original_count = false): RecordSet
 	{
-		if ($length === NULL) {
+		if ($length === null) {
 			if ($offset >= 0) {
 				$length = sizeof($this->records) - $offset;
 			} else {
@@ -1999,7 +1990,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			}
 		}
 
-		$limit = NULL;
+		$limit = null;
 		$page  = 1;
 
 		if ($remember_original_count && $offset % $length == 0) {
@@ -2010,7 +2001,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		return new RecordSet(
 			$this->class,
 			array_slice($this->records, $offset, $length),
-			$remember_original_count ? $this->count() : NULL,
+			$remember_original_count ? $this->count() : null,
 			$limit,
 			$page
 		);
@@ -2112,9 +2103,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	public function split(int $number): array
 	{
 		$output = array();
-		$records_per_set = (int) ceil($this->count()/$number);
-		for ($i=0; $i < $number; $i++) {
-			$output[] = new RecordSet($this->class, array_slice($this->records, $i*$records_per_set, $records_per_set));
+		$records_per_set = (int) ceil($this->count() / $number);
+		for ($i = 0; $i < $number; $i++) {
+			$output[] = new RecordSet($this->class, array_slice($this->records, $i * $records_per_set, $records_per_set));
 		}
 		return $output;
 	}
@@ -2128,13 +2119,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $message  The message to use for the exception if there are no records in this set
 	 * @return RecordSet  The record set object, to allow for method chaining
 	 */
-	public function tossIfEmpty(?string $message=NULL): RecordSet
+	public function tossIfEmpty(?string $message = null): RecordSet
 	{
 		if ($this->records) {
 			return $this;
 		}
 
-		if ($message === NULL) {
+		if ($message === null) {
 			if (is_array($this->class)) {
 				$names = array_map(array('ORM', 'getRecordName'), $this->class);
 				$names = array_map(array('Grammar', 'pluralize'), $names);
@@ -2159,7 +2150,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The new record set with only unique records
 	 */
-	public function unique(bool $remember_original_count=FALSE): RecordSet
+	public function unique(bool $remember_original_count = false): RecordSet
 	{
 		$records = array();
 

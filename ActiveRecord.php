@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * An [http://en.wikipedia.org/wiki/Active_record_pattern active record pattern] base class
  *
@@ -116,14 +118,14 @@ abstract class ActiveRecord
 	 *
 	 * @var array<string, array<string, callable(mixed ...): mixed|string|false>>
 	 */
-	static protected array $callback_cache = array();
+	protected static array $callback_cache = array();
 
 	/**
 	 * An array of flags indicating a class has been configured
 	 *
 	 * @var array<string, bool>
 	 */
-	static protected array $configured = array();
+	protected static array $configured = array();
 
 
 	/**
@@ -131,7 +133,7 @@ abstract class ActiveRecord
 	 *
 	 * @var array<string, array<string, ActiveRecord>>
 	 */
-	static protected array $identity_map = array();
+	protected static array $identity_map = array();
 
 
 	/**
@@ -139,7 +141,7 @@ abstract class ActiveRecord
 	 *
 	 * @var array<string, array{action: string, subject: string}>
 	 */
-	static protected array $method_name_cache = array();
+	protected static array $method_name_cache = array();
 
 
 	/**
@@ -147,7 +149,7 @@ abstract class ActiveRecord
 	 *
 	 * @var integer
 	 */
-	static protected int $replicate_level = 0;
+	protected static int $replicate_level = 0;
 
 
 	/**
@@ -155,7 +157,7 @@ abstract class ActiveRecord
 	 *
 	 * @var array<string, array<string, ActiveRecord>>
 	 */
-	static protected array $replicate_map = array();
+	protected static array $replicate_map = array();
 
 
 	/**
@@ -163,7 +165,7 @@ abstract class ActiveRecord
 	 *
 	 * @var array<string, array<string, callable(mixed ...): mixed|string|false>>
 	 **/
-	static protected array $static_callback_cache = array();
+	protected static array $static_callback_cache = array();
 
 
 	/**
@@ -171,7 +173,7 @@ abstract class ActiveRecord
 	 *
 	 * @var array<string, array<string, string>>
 	 */
-	static protected array $unescape_map = array();
+	protected static array $unescape_map = array();
 
 
 	/**
@@ -186,7 +188,7 @@ abstract class ActiveRecord
 	 * @param  array<int, mixed> $parameters  The parameters passed
 	 * @return mixed  The value returned by the method called
 	 */
-	static public function __callStatic(mixed $method_name, mixed $parameters)
+	public static function __callStatic(mixed $method_name, mixed $parameters)
 	{
 		$class = get_called_class();
 
@@ -197,7 +199,7 @@ abstract class ActiveRecord
 				self::$static_callback_cache[$class] = array();
 			}
 			$callback = ORM::getActiveRecordStaticMethod($class, $method_name);
-			self::$static_callback_cache[$class][$method_name] = is_callable($callback) ? $callback : FALSE;
+			self::$static_callback_cache[$class][$method_name] = is_callable($callback) ? $callback : false;
 		}
 
 		if ($callback = self::$static_callback_cache[$class][$method_name]) {
@@ -232,7 +234,7 @@ abstract class ActiveRecord
 	 * @param  mixed  $value        The value to set
 	 * @return void
 	 */
-	static public function assign(mixed &$values, mixed &$old_values, string $column, mixed $value): void
+	public static function assign(mixed &$values, mixed &$old_values, string $column, mixed $value): void
 	{
 		$old = $old_values[$column] ?? array();
 		if (!is_array($old)) {
@@ -254,14 +256,14 @@ abstract class ActiveRecord
 	 * @param  string $column       The column to check
 	 * @return boolean  If the value for the column specified has changed
 	 */
-	static public function changed(mixed &$values, mixed &$old_values, string $column): bool
+	public static function changed(mixed &$values, mixed &$old_values, string $column): bool
 	{
 		if (!isset($old_values[$column])) {
-			return FALSE;
+			return false;
 		}
 
 		$oldest       = $old_values[$column];
-		$oldest_value = is_array($oldest) ? $oldest[0] : NULL;
+		$oldest_value = is_array($oldest) ? $oldest[0] : null;
 		$new_value    = $values[$column];
 
 		// We do a strict comparison when one of the values is NULL since
@@ -269,7 +271,7 @@ abstract class ActiveRecord
 		// However, since we cast blank strings to NULL in ::set() but a blank
 		// string could come out of the database, we consider them to be
 		// equivalent, so we don't do a strict comparison
-		if (($oldest_value === NULL && $new_value !== '') || ($new_value === NULL && $oldest_value !== '')) {
+		if (($oldest_value === null && $new_value !== '') || ($new_value === null && $oldest_value !== '')) {
 			return $oldest_value !== $new_value;
 		}
 
@@ -285,16 +287,16 @@ abstract class ActiveRecord
 	 * @param  string $class  The class to check
 	 * @return boolean  If the class is an ActiveRecord descendant
 	 */
-	static public function checkClass(string $class): bool
+	public static function checkClass(string $class): bool
 	{
 		if (isset(self::$configured[$class])) {
-			return TRUE;
+			return true;
 		}
 
 		if (!$class || !class_exists($class) || !($class == 'ActiveRecord' || is_subclass_of($class, 'ActiveRecord'))) {
-			return FALSE;
+			return false;
 		}
-		return TRUE;
+		return true;
 	}
 
 
@@ -308,7 +310,7 @@ abstract class ActiveRecord
 	 * @param  mixed $result     The result of the method call(s)
 	 * @return boolean  If the comparison was successful
 	 */
-	static private function checkCondition(string $operator, mixed $value, mixed $result): bool
+	private static function checkCondition(string $operator, mixed $value, mixed $result): bool
 	{
 		$value_is_array = is_array($value);
 		$value_array    = $value_is_array ? $value : array($value);
@@ -339,7 +341,7 @@ abstract class ActiveRecord
 		$result = $result_is_array ? $result_array : $result_array[0];
 
 		if ($operator == '~' && !is_array($value) && is_array($result) && is_string($value)) {
-			$value = ORMDatabase::parseSearchTerms($value, TRUE);
+			$value = ORMDatabase::parseSearchTerms($value, true);
 		}
 
 		if (in_array($operator, array('~', '&~', '!~', '^~', '$~'))) {
@@ -353,25 +355,24 @@ abstract class ActiveRecord
 		switch ($operator) {
 			case '&~':
 				foreach ($value_array as $_value) {
-					if (UTF8::ipos(self::toString($result_array[0] ?? ''), self::toString($_value)) === FALSE) {
-						return FALSE;
+					if (UTF8::ipos(self::toString($result_array[0] ?? ''), self::toString($_value)) === false) {
+						return false;
 					}
 				}
 				break;
 
 			case '~':
-
 				// Handles fuzzy search on multiple method calls
 				if (count($result_array) > 1) {
 					foreach ($value_array as $_value) {
-						$found = FALSE;
+						$found = false;
 						foreach ($result_array as $_result) {
-							if (UTF8::ipos(self::toString($_result), self::toString($_value)) !== FALSE) {
-								$found = TRUE;
+							if (UTF8::ipos(self::toString($_result), self::toString($_value)) !== false) {
+								$found = true;
 							}
 						}
 						if (!$found) {
-							return FALSE;
+							return false;
 						}
 					}
 					break;
@@ -390,73 +391,69 @@ abstract class ActiveRecord
 				foreach ($value_array as $_value) {
 					$pos = UTF8::ipos(self::toString($result_array[0] ?? ''), self::toString($_value));
 					if ($operator == '^~' && $pos === 0) {
-						return TRUE;
+						return true;
 					} elseif ($operator == '$~' && $pos === $result_len - UTF8::len(self::toString($_value))) {
-						return TRUE;
-					} elseif ($pos !== FALSE) {
+						return true;
+					} elseif ($pos !== false) {
 						return $operator != '!~';
 					}
 				}
 
 				if ($operator != '!~') {
-					return FALSE;
+					return false;
 				}
 				break;
 
 			case '=':
 				if ($value instanceof ActiveRecord && $result instanceof ActiveRecord) {
 					if (get_class($value) != get_class($result) || !$value->exists() || !$result->exists() || self::hash($value) != self::hash($result)) {
-						return FALSE;
+						return false;
 					}
-
 				} elseif (is_array($value) && !in_array($result, $value)) {
-					return FALSE;
-
+					return false;
 				} elseif (!is_array($value) && $result != $value) {
-					return FALSE;
+					return false;
 				}
 				break;
 
 			case '!':
 				if ($value instanceof ActiveRecord && $result instanceof ActiveRecord) {
 					if (get_class($value) == get_class($result) && $value->exists() && $result->exists() && self::hash($value) == self::hash($result)) {
-						return FALSE;
+						return false;
 					}
-
 				} elseif (is_array($value) && in_array($result, $value)) {
-					return FALSE;
-
+					return false;
 				} elseif (!is_array($value) && $result == $value) {
-					return FALSE;
+					return false;
 				}
 				break;
 
 			case '<':
 				if ($result >= $value) {
-					return FALSE;
+					return false;
 				}
 				break;
 
 			case '<=':
 				if ($result > $value) {
-					return FALSE;
+					return false;
 				}
 				break;
 
 			case '>':
 				if ($result <= $value) {
-					return FALSE;
+					return false;
 				}
 				break;
 
 			case '>=':
 				if ($result < $value) {
-					return FALSE;
+					return false;
 				}
 				break;
 		}
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -469,10 +466,9 @@ abstract class ActiveRecord
 	 * @param  array<string, mixed> $conditions  The conditions to check - see RecordSet::filter() for format details
 	 * @return boolean  If the record meets all conditions
 	 */
-	static public function checkConditions(ActiveRecord $record, array $conditions): bool
+	public static function checkConditions(ActiveRecord $record, array $conditions): bool
 	{
 		foreach ($conditions as $method => $value) {
-
 			// Split the operator off of the end of the method name
 			if (in_array(substr($method, -2), array('<=', '>=', '!=', '<>', '!~', '&~', '^~', '$~', '><'))) {
 				$operator = strtr(
@@ -489,7 +485,6 @@ abstract class ActiveRecord
 			}
 
 			if (preg_match('#(?<!\|)\|(?!\|)#', $method)) {
-
 				$methods   = explode('|', $method);
 				$values    = is_array($value) ? $value : array($value);
 				$operators = array();
@@ -513,21 +508,18 @@ abstract class ActiveRecord
 
 
 				if (sizeof($operators) == 1) {
-
 					// Handle fuzzy searches
 					if ($operator == '~') {
-
 						$results = array();
 						foreach ($methods as $method) {
 							$results[] = $record->$method();
 						}
 						if (!self::checkCondition($operator, $value, $results)) {
-							return FALSE;
+							return false;
 						}
 
 					// Handle intersection
 					} elseif ($operator == '><') {
-
 						if (sizeof($methods) != 2 || sizeof($values) != 2) {
 							throw new ProgrammerException(
 								'The intersection operator, %s, requires exactly two methods and two values',
@@ -539,33 +531,29 @@ abstract class ActiveRecord
 						$results[0] = $record->{$methods[0]}();
 						$results[1] = $record->{$methods[1]}();
 
-						if ($results[1] === NULL && $values[1] === NULL) {
+						if ($results[1] === null && $values[1] === null) {
 							if (!self::checkCondition('=', $values[0], $results[0])) {
-								return FALSE;
+								return false;
 							}
-
-
 						} else {
+							$starts_between_values = false;
+							$overlaps_value_1      = false;
 
-							$starts_between_values = FALSE;
-							$overlaps_value_1      = FALSE;
-
-							if ($values[1] !== NULL) {
+							if ($values[1] !== null) {
 								$start_lt_value_1      = self::checkCondition('<', $values[0], $results[0]);
 								$start_gt_value_2      = self::checkCondition('>', $values[1], $results[0]);
 								$starts_between_values = !$start_lt_value_1 && !$start_gt_value_2;
 							}
-							if ($results[1] !== NULL) {
+							if ($results[1] !== null) {
 								$start_gt_value_1 = self::checkCondition('>', $values[0], $results[0]);
 								$end_lt_value_1   = self::checkCondition('<', $values[0], $results[1]);
 								$overlaps_value_1 = !$start_gt_value_1 && !$end_lt_value_1;
 							}
 
 							if (!$starts_between_values && !$overlaps_value_1) {
-								return FALSE;
+								return false;
 							}
 						}
-
 					} else {
 						throw new ProgrammerException(
 							'An invalid comparison operator, %s, was specified for multiple columns',
@@ -575,7 +563,6 @@ abstract class ActiveRecord
 
 				// Handle OR conditions
 				} else {
-
 					if (sizeof($methods) != sizeof($values)) {
 						throw new ProgrammerException(
 							'When performing an %1$s comparison there must be an equal number of methods and values, however there are not',
@@ -594,26 +581,25 @@ abstract class ActiveRecord
 
 					$results    = array();
 					$iterations = sizeof($methods);
-					for ($i=0; $i<$iterations; $i++) {
+					for ($i = 0; $i < $iterations; $i++) {
 						$results[] = self::checkCondition($operators[$i], $values[$i], $record->{$methods[$i]}());
 					}
 
 					if (!array_filter($results)) {
-						return FALSE;
+						return false;
 					}
-
 				}
 
 			// Single method comparisons
 			} else {
 				$result = $record->$method();
 				if (!self::checkCondition($operator, $value, $result)) {
-					return FALSE;
+					return false;
 				}
 			}
 		}
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -622,7 +608,7 @@ abstract class ActiveRecord
 	 *
 	 * @return void
 	 */
-	static public function clearIdentityMap(): void
+	public static function clearIdentityMap(): void
 	{
 		self::$identity_map = array();
 	}
@@ -634,11 +620,11 @@ abstract class ActiveRecord
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -646,7 +632,7 @@ abstract class ActiveRecord
 		} else {
 			$safe_args = array();
 			foreach ($args as $arg) {
-				if (is_scalar($arg) || $arg === NULL) {
+				if (is_scalar($arg) || $arg === null) {
 					$safe_args[] = $arg;
 				} elseif ($arg instanceof Stringable) {
 					$safe_args[] = $arg->__toString();
@@ -667,25 +653,24 @@ abstract class ActiveRecord
 	 * @param string|NULL $route  The route to the subject
 	 * @return array{0: string, 1: string, 2: bool}  An array with the structure: array(0 => $subject, 1 => $route, 2 => $plural)
 	 */
-	static private function determineSubject(string $class, string $subject, ?string $route): array
+	private static function determineSubject(string $class, string $subject, ?string $route): array
 	{
 		$schema  = ORMSchema::retrieve($class);
 		$table   = ORM::tablize($class);
 		$type    = '*-to-many';
-		$plural  = FALSE;
+		$plural  = false;
 
 		// one-to-many relationships need to use plural forms
-		$singular_form = Grammar::singularize($subject, TRUE);
+		$singular_form = Grammar::singularize($subject, true);
 		if ($singular_form && ORM::isClassMappedToTable($singular_form)) {
 			$subject = $singular_form;
-			$plural  = TRUE;
-
+			$plural  = true;
 		} elseif (!ORM::isClassMappedToTable($subject) && in_array(Grammar::underscorize($subject), $schema->getTables())) {
 			$singular_subject = Grammar::singularize($subject);
-			if ($singular_subject !== FALSE) {
+			if ($singular_subject !== false) {
 				$subject = $singular_subject;
 			}
-			$plural  = TRUE;
+			$plural  = true;
 		}
 
 		$related_table = ORM::tablize($subject);
@@ -716,7 +701,7 @@ abstract class ActiveRecord
 	 * @param  string $class  The class to configure
 	 * @return void
 	 */
-	static public function forceConfigure(string $class): void
+	public static function forceConfigure(string $class): void
 	{
 		if (isset(self::$configured[$class])) {
 			return;
@@ -734,13 +719,13 @@ abstract class ActiveRecord
 	 * @param  string                         $class    The class name, if $record isn't an ActiveRecord
 	 * @return string|NULL  A hash of the record's primary key value or NULL if the record doesn't exist yet
 	 */
-	static public function hash(mixed $record, ?string $class=NULL): mixed
+	public static function hash(mixed $record, ?string $class = null): mixed
 	{
 		if ($record instanceof ActiveRecord && !$record->exists()) {
-			return NULL;
+			return null;
 		}
 
-		if ($class === NULL) {
+		if ($class === null) {
 			if (!$record instanceof ActiveRecord) {
 				throw new ProgrammerException(
 					'The class of the record must be provided if the record specified is not an instance of ActiveRecord'
@@ -758,10 +743,8 @@ abstract class ActiveRecord
 		foreach ($pk_columns as $pk_column) {
 			if ($record instanceof ActiveRecord) {
 				$value = (self::hasOld($record->old_values, $pk_column)) ? self::retrieveOld($record->old_values, $pk_column) : $record->values[$pk_column];
-
 			} elseif (is_array($record)) {
 				$value = $record[$pk_column];
-
 			} else {
 				$value = $record;
 			}
@@ -790,7 +773,7 @@ abstract class ActiveRecord
 	 * @param  string $column       The column to set
 	 * @return boolean  If an old value for that column exists
 	 */
-	static public function hasOld(mixed &$old_values, string $column): bool
+	public static function hasOld(mixed &$old_values, string $column): bool
 	{
 		return array_key_exists($column, $old_values);
 	}
@@ -803,7 +786,7 @@ abstract class ActiveRecord
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$callback_cache    = array();
 		self::$configured        = array();
@@ -824,7 +807,7 @@ abstract class ActiveRecord
 	 * @param  boolean $return_all   Return the array of all old values for this column instead of just the oldest
 	 * @return mixed  The old value for the column
 	 */
-	static public function retrieveOld(mixed &$old_values, string $column, mixed $default=NULL, bool $return_all=FALSE): mixed
+	public static function retrieveOld(mixed &$old_values, string $column, mixed $default = null, bool $return_all = false): mixed
 	{
 		if (!isset($old_values[$column])) {
 			return $default;
@@ -832,7 +815,7 @@ abstract class ActiveRecord
 
 		$old = $old_values[$column];
 
-		if ($return_all === TRUE) {
+		if ($return_all === true) {
 			return $old;
 		}
 
@@ -850,10 +833,10 @@ abstract class ActiveRecord
 	 *
 	 * @phpstan-assert class-string<ActiveRecord> $class
 	 */
-	static public function validateClass(string $class): mixed
+	public static function validateClass(string $class): mixed
 	{
 		if (isset(self::$configured[$class])) {
-			return TRUE;
+			return true;
 		}
 
 		if (!self::checkClass($class)) {
@@ -864,7 +847,7 @@ abstract class ActiveRecord
 			);
 		}
 
-		return NULL;
+		return null;
 	}
 
 
@@ -878,7 +861,7 @@ abstract class ActiveRecord
 	 * @param  string $table   The table to get the column info for
 	 * @return array<string, array<mixed>>  The info for each column
 	 */
-	static private function getColumnInfo(Schema $schema, string $table): array
+	private static function getColumnInfo(Schema $schema, string $table): array
 	{
 		$info   = $schema->getColumnInfo($table);
 		$result = array();
@@ -905,7 +888,7 @@ abstract class ActiveRecord
 	 * @param  string $column  The column to get the info for
 	 * @return array<mixed>  The info for the column
 	 */
-	static private function getColumnInfoForColumn(Schema $schema, string $table, string $column): array
+	private static function getColumnInfoForColumn(Schema $schema, string $table, string $column): array
 	{
 		$info = $schema->getColumnInfo($table, $column);
 
@@ -922,7 +905,7 @@ abstract class ActiveRecord
 	 * @param  string $element  The element to return
 	 * @return string  The element value
 	 */
-	static private function getColumnInfoString(Schema $schema, string $table, string $column, string $element): string
+	private static function getColumnInfoString(Schema $schema, string $table, string $column, string $element): string
 	{
 		$value = $schema->getColumnInfo($table, $column, $element);
 
@@ -939,7 +922,7 @@ abstract class ActiveRecord
 	 * @param  string $element  The element to return
 	 * @return int  The element value
 	 */
-	static private function getColumnInfoInt(Schema $schema, string $table, string $column, string $element): int
+	private static function getColumnInfoInt(Schema $schema, string $table, string $column, string $element): int
 	{
 		$value = $schema->getColumnInfo($table, $column, $element);
 
@@ -953,7 +936,7 @@ abstract class ActiveRecord
 	 * @param  mixed $value  The value to convert
 	 * @return string  The string representation of the value
 	 */
-	static private function toString(mixed $value): string
+	private static function toString(mixed $value): string
 	{
 		if (is_string($value)) {
 			return $value;
@@ -976,9 +959,9 @@ abstract class ActiveRecord
 	 * @param  string                $key           The relationship value to get
 	 * @return string  The string value for the key specified
 	 */
-	static private function relationshipString(array $relationship, string $key): string
+	private static function relationshipString(array $relationship, string $key): string
 	{
-		$value = $relationship[$key] ?? NULL;
+		$value = $relationship[$key] ?? null;
 
 		if (!is_string($value)) {
 			throw new ProgrammerException(
@@ -1000,7 +983,7 @@ abstract class ActiveRecord
 	 * @param  array<array-key, mixed> $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 */
-	static private function runQuery(Database $db, array $params): Result
+	private static function runQuery(Database $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -1024,9 +1007,9 @@ abstract class ActiveRecord
 	 * @param  mixed $value  The value passed for a route
 	 * @return string|NULL  The route string, or NULL if not a string
 	 */
-	static private function routeValue(mixed $value): ?string
+	private static function routeValue(mixed $value): ?string
 	{
-		return is_string($value) ? $value : NULL;
+		return is_string($value) ? $value : null;
 	}
 
 
@@ -1036,7 +1019,7 @@ abstract class ActiveRecord
 	 * @param  mixed $value  The value passed for an integer argument
 	 * @return int  The integer value
 	 */
-	static private function intValue(mixed $value): int
+	private static function intValue(mixed $value): int
 	{
 		if (is_int($value)) {
 			return $value;
@@ -1055,7 +1038,7 @@ abstract class ActiveRecord
 	 * @param  mixed $value  The value passed for a set of records
 	 * @return array<mixed>|RecordSet  The records
 	 */
-	static private function recordsValue(mixed $value): array|RecordSet
+	private static function recordsValue(mixed $value): array|RecordSet
 	{
 		if ($value instanceof RecordSet || is_array($value)) {
 			return $value;
@@ -1071,13 +1054,13 @@ abstract class ActiveRecord
 	 * @param  mixed $value  The value passed for a record
 	 * @return ActiveRecord|array<mixed>|int|string  The record value
 	 */
-	static private function recordValue(mixed $value): ActiveRecord|array|int|string
+	private static function recordValue(mixed $value): ActiveRecord|array|int|string
 	{
 		if ($value instanceof ActiveRecord || is_array($value) || is_int($value) || is_string($value)) {
 			return $value;
 		}
 
-		if (is_scalar($value) || $value === NULL) {
+		if (is_scalar($value) || $value === null) {
 			return (string) $value;
 		}
 
@@ -1092,7 +1075,7 @@ abstract class ActiveRecord
 	 * @param  string $class  The record class the set contains
 	 * @return RecordSet  The record set
 	 */
-	static private function recordSetValue(mixed $value, string $class): RecordSet
+	private static function recordSetValue(mixed $value, string $class): RecordSet
 	{
 		if ($value instanceof RecordSet) {
 			return $value;
@@ -1177,7 +1160,7 @@ abstract class ActiveRecord
 				self::$callback_cache[$class] = array();
 			}
 			$callback = ORM::getActiveRecordMethod($class, $method_name);
-			self::$callback_cache[$class][$method_name] = is_callable($callback) ? $callback : FALSE;
+			self::$callback_cache[$class][$method_name] = is_callable($callback) ? $callback : false;
 		}
 
 		if ($callback = self::$callback_cache[$class][$method_name]) {
@@ -1204,7 +1187,7 @@ abstract class ActiveRecord
 			} else {
 				if (in_array($action, array('build', 'count', 'inject', 'link', 'list', 'tally'))) {
 					$singular_subject = Grammar::singularize($subject);
-					if ($singular_subject !== FALSE) {
+					if ($singular_subject !== false) {
 						$subject = $singular_subject;
 					}
 				}
@@ -1220,7 +1203,6 @@ abstract class ActiveRecord
 		}
 
 		switch ($action) {
-
 			// Value methods
 			case 'get':
 				return $this->get($subject);
@@ -1262,7 +1244,7 @@ abstract class ActiveRecord
 				}
 
 				$records = self::recordValue($parameters[0]);
-				$route   = isset($parameters[1]) ? self::routeValue($parameters[1]) : NULL;
+				$route   = isset($parameters[1]) ? self::routeValue($parameters[1]) : null;
 
 				list ($subject, $route, $plural) = self::determineSubject($class, $subject, $route);
 
@@ -1292,7 +1274,7 @@ abstract class ActiveRecord
 				return ORMRelated::createRecord($class, $this->values, $this->related_records, $subject);
 
 			case 'has':
-				$route = isset($parameters[0]) ? self::routeValue($parameters[0]) : NULL;
+				$route = isset($parameters[0]) ? self::routeValue($parameters[0]) : null;
 
 				list ($subject, $route, ) = self::determineSubject($class, $subject, $route);
 
@@ -1311,7 +1293,7 @@ abstract class ActiveRecord
 				} else {
 					ORMRelated::setRecordSet($class, $this->related_records, $subject, self::recordSetValue($parameters[0], $subject));
 				}
-				return NULL;
+				return null;
 
 			case 'link':
 				if (isset($parameters[0])) {
@@ -1328,11 +1310,11 @@ abstract class ActiveRecord
 				return ORMRelated::getPrimaryKeys($class, $this->values, $this->related_records, $subject);
 
 			case 'populate':
-				$route = isset($parameters[0]) ? $parameters[0] : NULL;
-				$recursive = FALSE;
+				$route = isset($parameters[0]) ? $parameters[0] : null;
+				$recursive = false;
 				if (is_bool($route)) {
 					$recursive = $route;
-					$route = isset($parameters[1]) ? $parameters[1] : NULL;
+					$route = isset($parameters[1]) ? $parameters[1] : null;
 				}
 				$route = self::routeValue($route);
 
@@ -1354,7 +1336,7 @@ abstract class ActiveRecord
 				} else {
 					ORMRelated::setCount($class, $this->related_records, $subject, self::intValue($parameters[0]));
 				}
-				return NULL;
+				return null;
 
 			// Error handler
 			default:
@@ -1414,7 +1396,7 @@ abstract class ActiveRecord
 		$this->old_values =& $new_old_values;
 
 		foreach (array_keys($this->values) as $key) {
-			$this->old_values[$key] = array(NULL);
+			$this->old_values[$key] = array(null);
 		}
 
 		// If we have a single auto incrementing primary key, remove the value
@@ -1423,7 +1405,7 @@ abstract class ActiveRecord
 		$pk_columns = $schema->getKeys($table, 'primary');
 
 		if (sizeof($pk_columns) == 1 && $schema->getColumnInfo($table, $pk_columns[0], 'auto_increment')) {
-			$this->values[$pk_columns[0]] = NULL;
+			$this->values[$pk_columns[0]] = null;
 			unset($this->old_values[$pk_columns[0]]);
 		}
 	}
@@ -1437,14 +1419,14 @@ abstract class ActiveRecord
 	 * @param  mixed $key  The primary key or unique key value(s) - single column primary keys will accept a scalar value, all others must be an associative array of `(string) {column} => (mixed) {value}`
 	 * @return ActiveRecord
 	 */
-	public function __construct(mixed $key=NULL)
+	public function __construct(mixed $key = null)
 	{
 		$class  = get_class($this);
 		$schema = ORMSchema::retrieve($class);
 
 		// If the features of this class haven't been set yet, do it
 		if (!isset(self::$configured[$class])) {
-			self::$configured[$class] = TRUE;
+			self::$configured[$class] = true;
 			$this->configure();
 
 			$table = ORM::tablize($class);
@@ -1478,7 +1460,7 @@ abstract class ActiveRecord
 				self::$callback_cache[$class] = array();
 			}
 			$callback = ORM::getActiveRecordMethod($class, '__construct');
-			self::$callback_cache[$class]['__construct'] = $callback ? $callback : FALSE;
+			self::$callback_cache[$class]['__construct'] = $callback ? $callback : false;
 		}
 		if ($callback = self::$callback_cache[$class]['__construct']) {
 			$this->__call('__construct', array());
@@ -1486,23 +1468,21 @@ abstract class ActiveRecord
 
 		// Handle loading by a result object passed via the RecordSet class
 		if ($key instanceof Iterator) {
-
 			$this->loadFromResult($key);
 
 		// Handle loading an object from the database
-		} elseif ($key !== NULL) {
-
+		} elseif ($key !== null) {
 			$table      = ORM::tablize($class);
 			$pk_columns = $schema->getKeys($table, 'primary');
 
 			// If the primary key does not look properly formatted, check to see if it is a UNIQUE key
-			$is_unique_key = FALSE;
+			$is_unique_key = false;
 			if (is_array($key) && (sizeof($pk_columns) == 1 || array_diff(array_keys($key), $pk_columns))) {
 				$unique_keys = $schema->getKeys($table, 'unique');
 				$key_keys    = array_keys($key);
 				foreach ($unique_keys as $unique_key) {
 					if (!array_diff($key_keys, $unique_key)) {
-						$is_unique_key = TRUE;
+						$is_unique_key = true;
 					}
 				}
 			}
@@ -1519,7 +1499,6 @@ abstract class ActiveRecord
 			}
 
 			if ($is_unique_key) {
-
 				if (!is_array($key)) {
 					throw new ProgrammerException(
 						'An invalidly formatted unique key was passed to this %s object',
@@ -1529,9 +1508,7 @@ abstract class ActiveRecord
 
 				$result = $this->fetchResultFromUniqueKey($key);
 				$this->loadFromResult($result);
-
 			} else {
-
 				$hash = self::hash($key, $class);
 				if (!is_string($hash)) {
 					throw new ProgrammerException(
@@ -1559,8 +1536,8 @@ abstract class ActiveRecord
 		} else {
 			$column_info = self::getColumnInfo($schema, ORM::tablize($class));
 			foreach ($column_info as $column => $info) {
-				$this->values[$column] = NULL;
-				if ($info['default'] !== NULL) {
+				$this->values[$column] = null;
+				if ($info['default'] !== null) {
 					self::assign(
 						$this->values,
 						$this->old_values,
@@ -1609,7 +1586,7 @@ abstract class ActiveRecord
 
 		if (!isset(self::$configured[$class])) {
 			$this->configure();
-			self::$configured[$class] = TRUE;
+			self::$configured[$class] = true;
 		}
 	}
 
@@ -1644,12 +1621,12 @@ abstract class ActiveRecord
 		$table       = ORM::tablize($class);
 		$column_info = self::getColumnInfo($schema, $table);
 		foreach ($column_info as $column => $info) {
-			if ($schema->getColumnInfo($table, $column, 'auto_increment') && $schema->getColumnInfo($table, $column, 'not_null') && $this->values[$column] === NULL) {
+			if ($schema->getColumnInfo($table, $column, 'auto_increment') && $schema->getColumnInfo($table, $column, 'not_null') && $this->values[$column] === null) {
 				continue;
 			}
 
 			$value = ORM::scalarize($class, $column, $this->values[$column]);
-			if ($value === NULL && $info['not_null'] && $info['default'] !== NULL) {
+			if ($value === null && $info['not_null'] && $info['default'] !== null) {
 				$value = $info['default'];
 			}
 
@@ -1657,7 +1634,7 @@ abstract class ActiveRecord
 			$values[]  = $value;
 
 			$column_placeholders[] = '%r';
-			$placeholder = $info['placeholder'] ?? NULL;
+			$placeholder = $info['placeholder'] ?? null;
 			$value_placeholders[]  = is_string($placeholder) ? $placeholder : '';
 		}
 
@@ -1691,10 +1668,10 @@ abstract class ActiveRecord
 				continue;
 			}
 
-			$assignments[] = '%r = ' . (is_string($info['placeholder'] ?? NULL) ? $info['placeholder'] : '');
+			$assignments[] = '%r = ' . (is_string($info['placeholder'] ?? null) ? $info['placeholder'] : '');
 
 			$value = ORM::scalarize($class, $column, $this->values[$column]);
-			if ($value === NULL && $info['not_null'] && $info['default'] !== NULL) {
+			if ($value === null && $info['not_null'] && $info['default'] !== null) {
 				$value = $info['default'];
 			}
 
@@ -1717,7 +1694,7 @@ abstract class ActiveRecord
 	 * @param  boolean $force_cascade  When TRUE, this will cause all child objects to be deleted, even if the ON DELETE clause is RESTRICT or NO ACTION
 	 * @return ActiveRecord|null  The record object, to allow for method chaining
 	 */
-	public function delete(bool $force_cascade=FALSE): mixed
+	public function delete(bool $force_cascade = false): mixed
 	{
 		// This flag prevents recursive relationships, such as one-to-one
 		// relationships, from creating infinite loops
@@ -1756,7 +1733,6 @@ abstract class ActiveRecord
 		$inside_db_transaction = $db->isInsideTransaction();
 
 		try {
-
 			if (!$inside_db_transaction) {
 				$db->translatedQuery('BEGIN');
 			}
@@ -1780,10 +1756,9 @@ abstract class ActiveRecord
 
 			$restriction_messages = array();
 
-			$this->cache['ActiveRecord::delete()::being_deleted'] = TRUE;
+			$this->cache['ActiveRecord::delete()::being_deleted'] = true;
 
 			foreach ($relationships as $relationship) {
-
 				// Figure out how to check for related records
 				if (isset($relationship['join_table'])) {
 					$type = 'many-to-many';
@@ -1800,7 +1775,6 @@ abstract class ActiveRecord
 					if (!$related_record instanceof ActiveRecord || !$related_record->exists()) {
 						continue;
 					}
-
 				} else {
 					$method     = 'build' . Grammar::pluralize($related_class);
 					$record_set = $this->$method($route);
@@ -1815,7 +1789,6 @@ abstract class ActiveRecord
 
 				// If we are focing the cascade we have to delete child records and join table entries before this record
 				if ($force_cascade) {
-
 					if ($type == 'one-to-one') {
 						$related_record->delete($force_cascade);
 
@@ -1832,7 +1805,7 @@ abstract class ActiveRecord
 						$join_table  = self::relationshipString($relationship, 'join_table');
 						$join_column = self::relationshipString($relationship, 'join_column');
 						$join_column_placeholder = $schema->getColumnInfo($join_table, $join_column, 'placeholder');
-						$column_get_method       = 'get' . Grammar::camelize(self::relationshipString($relationship, 'column'), TRUE);
+						$column_get_method       = 'get' . Grammar::camelize(self::relationshipString($relationship, 'column'), true);
 
 						$sql = $db->escape(
 							'DELETE FROM %r WHERE %r = ',
@@ -1847,7 +1820,6 @@ abstract class ActiveRecord
 
 				// Otherwise we have a restriction and we can to create a nice error message for the user
 				} elseif ($relationship['on_delete'] == 'restrict' || $relationship['on_delete'] == 'no_action') {
-
 					$related_class_name  = ORM::classize(self::relationshipString($relationship, 'related_table'));
 					$related_class_name  = ORM::getRelatedClass($class, $related_class_name);
 					$related_record_name = ORM::getRecordName($related_class_name);
@@ -1908,9 +1880,7 @@ abstract class ActiveRecord
 				$this->related_records,
 				$this->cache
 			);
-
 		} catch (FlourishException $e) {
-
 			if (!$inside_db_transaction) {
 				$db->translatedQuery('ROLLBACK');
 			}
@@ -1928,7 +1898,7 @@ abstract class ActiveRecord
 			if ($e instanceof ValidationException) {
 				$message = $e->getMessage();
 				$search  = self::compose('This %s can not be deleted because:', ORM::getRecordName($class));
-				if (stripos($message, $search) === FALSE) {
+				if (stripos($message, $search) === false) {
 					$regex       = self::compose('This %s can not be deleted because:', '__');
 					$regex_parts = explode('__', $regex);
 					$regex       = '#(' . preg_quote($regex_parts[0], '#') . ').*?(' . preg_quote($regex_parts[0], '#') . ')#';
@@ -1964,7 +1934,7 @@ abstract class ActiveRecord
 		// lets delete that value from the object since it is no longer valid
 		$pk_columns  = $schema->getKeys($table, 'primary');
 		if (sizeof($pk_columns) == 1 && $schema->getColumnInfo($table, $pk_columns[0], 'auto_increment')) {
-			$this->values[$pk_columns[0]] = NULL;
+			$this->values[$pk_columns[0]] = null;
 			unset($this->old_values[$pk_columns[0]]);
 		}
 
@@ -1987,10 +1957,10 @@ abstract class ActiveRecord
 	 * @param  mixed  $formatting  The formatting string
 	 * @return string  The encoded value for the column specified
 	 */
-	protected function encode(string $column, mixed $formatting=NULL): string
+	protected function encode(string $column, mixed $formatting = null): string
 	{
 		$column_exists = array_key_exists($column, $this->values);
-		$method_name   = 'get' . Grammar::camelize($column, TRUE);
+		$method_name   = 'get' . Grammar::camelize($column, true);
 		$method_exists = method_exists($this, $method_name);
 
 		if (!$column_exists && !$method_exists) {
@@ -2015,7 +1985,7 @@ abstract class ActiveRecord
 				);
 			}
 
-			if ($formatting !== NULL && in_array($column_type, array('boolean', 'integer'))) {
+			if ($formatting !== null && in_array($column_type, array('boolean', 'integer'))) {
 				throw new ProgrammerException(
 					'The column specified, %s, does not support any formatting options',
 					$column
@@ -2033,7 +2003,7 @@ abstract class ActiveRecord
 
 		// Date/time objects
 		if (in_array($column_type, array('date', 'time', 'timestamp')) && ($value instanceof Date || $value instanceof Time || $value instanceof Timestamp)) {
-			if ($formatting === NULL) {
+			if ($formatting === null) {
 				throw new ProgrammerException(
 					'The column specified, %s, requires one formatting parameter, a valid date() formatting string',
 					$column
@@ -2052,7 +2022,7 @@ abstract class ActiveRecord
 		// Make sure we don't mangle a non-float value
 		if ($column_type == 'float' && is_numeric($value)) {
 			// If the user passed in a formatting value, use it
-			if ($formatting !== NULL && is_numeric($formatting)) {
+			if ($formatting !== null && is_numeric($formatting)) {
 				$decimal_places = (int) $formatting;
 
 			// If the column has a pre-defined number of decimal places, use that
@@ -2064,7 +2034,7 @@ abstract class ActiveRecord
 		}
 
 		// Turn line-breaks into breaks for text fields and add links
-		if ($formatting === TRUE && in_array($column_type, array('varchar', 'char', 'text'))) {
+		if ($formatting === true && in_array($column_type, array('varchar', 'char', 'text'))) {
 			return HTML::makeLinks(HTML::convertNewlines(HTML::encode(self::toString($value))));
 		}
 
@@ -2089,12 +2059,12 @@ abstract class ActiveRecord
 		$schema     = ORMSchema::retrieve($class);
 		$table      = ORM::tablize($class);
 		$pk_columns = $schema->getKeys($table, 'primary');
-		$exists     = FALSE;
+		$exists     = false;
 
 		foreach ($pk_columns as $pk_column) {
 			$has_old = self::hasOld($this->old_values, $pk_column);
-			if (($has_old && self::retrieveOld($this->old_values, $pk_column) !== NULL) || (!$has_old && $this->values[$pk_column] !== NULL)) {
-				$exists = TRUE;
+			if (($has_old && self::retrieveOld($this->old_values, $pk_column) !== null) || (!$has_old && $this->values[$pk_column] !== null)) {
+				$exists = true;
 			}
 		}
 
@@ -2118,7 +2088,7 @@ abstract class ActiveRecord
 		$schema = ORMSchema::retrieve($class);
 
 		try {
-			if ($values === array_combine(array_keys($values), array_fill(0, sizeof($values), NULL))) {
+			if ($values === array_combine(array_keys($values), array_fill(0, sizeof($values), null))) {
 				throw new ExpectedException('The values specified for the unique key are all NULL');
 			}
 
@@ -2129,11 +2099,10 @@ abstract class ActiveRecord
 
 			$conditions = array();
 			foreach ($values as $column => $value) {
-
 				$column = (string) $column;
 
 				// This makes sure the query performs the way an insert will
-				if ($value === NULL && $column_info[$column]['not_null'] && $column_info[$column]['default'] !== NULL) {
+				if ($value === null && $column_info[$column]['not_null'] && $column_info[$column]['default'] !== null) {
 					$value = $column_info[$column]['default'];
 				}
 
@@ -2146,7 +2115,6 @@ abstract class ActiveRecord
 
 			$result = self::runQuery($db, $params);
 			$result->tossIfNoRows();
-
 		} catch (ExpectedException $e) {
 			throw new NotFoundException(
 				'The %s requested could not be found',
@@ -2183,7 +2151,7 @@ abstract class ActiveRecord
 	 * @param  string $element  The metadata element to retrieve
 	 * @return mixed  The metadata array for the column, or the metadata element specified
 	 */
-	protected function inspect(string $column, ?string $element=NULL): mixed
+	protected function inspect(string $column, ?string $element = null): mixed
 	{
 		if (!array_key_exists($column, $this->values)) {
 			throw new ProgrammerException(
@@ -2215,7 +2183,7 @@ abstract class ActiveRecord
 			unset($info['max_value']);
 		}
 
-		$info['feature'] = NULL;
+		$info['feature'] = null;
 
 		ORM::callInspectCallbacks(get_class($this), $column, $info);
 
@@ -2259,7 +2227,6 @@ abstract class ActiveRecord
 
 			$result = self::runQuery($db, $params);
 			$result->tossIfNoRows();
-
 		} catch (ExpectedException $e) {
 			throw new NotFoundException(
 				'The %s requested could not be found',
@@ -2267,7 +2234,7 @@ abstract class ActiveRecord
 			);
 		}
 
-		$this->loadFromResult($result, TRUE);
+		$this->loadFromResult($result, true);
 
 		// Clears the cached related records so they get pulled from the database
 		$this->related_records = array();
@@ -2283,7 +2250,7 @@ abstract class ActiveRecord
 	 * @param  boolean  $ignore_identity_map  If the identity map should be ignored and the values loaded no matter what
 	 * @return boolean  If the record was loaded from the identity map
 	 */
-	protected function loadFromResult(Iterator $result, bool $ignore_identity_map=FALSE): bool
+	protected function loadFromResult(Iterator $result, bool $ignore_identity_map = false): bool
 	{
 		$class  = get_class($this);
 		$table  = ORM::tablize($class);
@@ -2311,8 +2278,8 @@ abstract class ActiveRecord
 
 		$pk_columns = $schema->getKeys($table, 'primary');
 		foreach ($pk_columns as $column) {
-			$value = isset($row[$column]) ? $row[$column] : NULL;
-			if ($value !== NULL && isset(self::$unescape_map[$class][$column])) {
+			$value = isset($row[$column]) ? $row[$column] : null;
+			if ($value !== null && isset(self::$unescape_map[$class][$column])) {
 				$value = $db->unescape(self::$unescape_map[$class][$column], $value);
 			}
 
@@ -2327,14 +2294,14 @@ abstract class ActiveRecord
 			);
 		}
 		if (!$ignore_identity_map && $this->loadFromIdentityMap($this->values, $hash)) {
-			return TRUE;
+			return true;
 		}
 
 		foreach ($row as $column => $value) {
 			if (!is_string($column)) {
 				continue;
 			}
-			if ($value !== NULL && isset(self::$unescape_map[$class][$column])) {
+			if ($value !== null && isset(self::$unescape_map[$class][$column])) {
 				$value = $db->unescape(self::$unescape_map[$class][$column], $value);
 			}
 
@@ -2356,7 +2323,7 @@ abstract class ActiveRecord
 			$this->cache
 		);
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -2372,11 +2339,11 @@ abstract class ActiveRecord
 		$class = get_class($this);
 
 		if (!isset(self::$identity_map[$class])) {
-			return FALSE;
+			return false;
 		}
 
 		if (!isset(self::$identity_map[$class][$hash])) {
-			return FALSE;
+			return false;
 		}
 
 		$object = self::$identity_map[$class][$hash];
@@ -2396,7 +2363,7 @@ abstract class ActiveRecord
 			$this->cache
 		);
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -2406,7 +2373,7 @@ abstract class ActiveRecord
 	 * @param  boolean $recursive  If all one-to-many tables and one-to-one relationships should be populated
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	public function populate(mixed $recursive=FALSE): mixed
+	public function populate(mixed $recursive = false): mixed
 	{
 		$class = get_class($this);
 
@@ -2429,8 +2396,8 @@ abstract class ActiveRecord
 		$column_info = self::getColumnInfo($schema, $table);
 		foreach ($column_info as $column => $info) {
 			if (Request::check($column)) {
-				$method = 'set' . Grammar::camelize($column, TRUE);
-				$cast_to = ($info['type'] == 'blob') ? 'binary' : NULL;
+				$method = 'set' . Grammar::camelize($column, true);
+				$cast_to = ($info['type'] == 'blob') ? 'binary' : null;
 				$this->$method(Request::get($column, $cast_to));
 			}
 		}
@@ -2450,14 +2417,14 @@ abstract class ActiveRecord
 				$route_name = ORMSchema::getRouteNameFromRelationship('one-to-many', $relationship);
 				$related_class = ORM::classize(self::relationshipString($relationship, 'related_table'));
 				$method = 'populate' . Grammar::pluralize($related_class);
-				$this->$method(TRUE, $route_name);
+				$this->$method(true, $route_name);
 			}
 
 			$one_to_one_relationships = $schema->getRelationships($table, 'one-to-one');
 			foreach ($one_to_one_relationships as $relationship) {
 				$route_name = ORMSchema::getRouteNameFromRelationship('one-to-one', $relationship);
 				$related_class = ORM::classize(self::relationshipString($relationship, 'related_table'));
-				$this->__call('populate' . $related_class, array(TRUE, $route_name));
+				$this->__call('populate' . $related_class, array(true, $route_name));
 			}
 		}
 
@@ -2481,10 +2448,10 @@ abstract class ActiveRecord
 	 * @param  mixed  $formatting  The formatting parameter, if applicable
 	 * @return string  The formatted value for the column specified
 	 */
-	protected function prepare(string $column, mixed $formatting=NULL): string
+	protected function prepare(string $column, mixed $formatting = null): string
 	{
 		$column_exists = array_key_exists($column, $this->values);
-		$method_name   = 'get' . Grammar::camelize($column, TRUE);
+		$method_name   = 'get' . Grammar::camelize($column, true);
 		$method_exists = method_exists($this, $method_name);
 
 		if (!$column_exists && !$method_exists) {
@@ -2510,7 +2477,7 @@ abstract class ActiveRecord
 				);
 			}
 
-			if ($formatting !== NULL && in_array($column_type, array('integer', 'boolean'))) {
+			if ($formatting !== null && in_array($column_type, array('integer', 'boolean'))) {
 				throw new ProgrammerException(
 					'The column specified, %s, does not support any formatting options',
 					$column
@@ -2529,7 +2496,7 @@ abstract class ActiveRecord
 
 		// Date/time objects
 		if (in_array($column_type, array('date', 'time', 'timestamp')) && ($value instanceof Date || $value instanceof Time || $value instanceof Timestamp)) {
-			if ($formatting === NULL) {
+			if ($formatting === null) {
 				throw new ProgrammerException(
 					'The column specified, %s, requires one formatting parameter, a valid date() formatting string',
 					$column
@@ -2556,7 +2523,7 @@ abstract class ActiveRecord
 
 		if ($column_type == 'float' && is_numeric($value)) {
 			// If the user passed in a formatting value, use it
-			if ($formatting !== NULL && is_numeric($formatting)) {
+			if ($formatting !== null && is_numeric($formatting)) {
 				$decimal_places = (int) $formatting;
 
 			// If the column has a pre-defined number of decimal places, use that
@@ -2573,7 +2540,7 @@ abstract class ActiveRecord
 		}
 
 		// Turn line-breaks into breaks for text fields and add links
-		if ($formatting === TRUE && in_array($column_type, array('varchar', 'char', 'text'))) {
+		if ($formatting === true && in_array($column_type, array('varchar', 'char', 'text'))) {
 			return HTML::makeLinks(HTML::convertNewlines(HTML::prepare(self::toString($value))));
 		}
 
@@ -2590,7 +2557,7 @@ abstract class ActiveRecord
 	 * @param  boolean $include_doc_comments  If the doc block comments for each method should be included
 	 * @return array<string, string>  An associative array of method name => method signature
 	 */
-	public function reflect(bool $include_doc_comments=FALSE): array
+	public function reflect(bool $include_doc_comments = false): array
 	{
 		$signatures = array();
 
@@ -2599,12 +2566,12 @@ abstract class ActiveRecord
 		$schema       = ORMSchema::retrieve($class);
 		$columns_info = self::getColumnInfo($schema, $table);
 		foreach ($columns_info as $column => $column_info) {
-			$camelized_column = Grammar::camelize($column, TRUE);
+			$camelized_column = Grammar::camelize($column, true);
 
 			// Get and set methods
 			$signature = '';
 			if ($include_doc_comments) {
-				$fixed_type = is_string($column_info['type'] ?? NULL) ? $column_info['type'] : '';
+				$fixed_type = is_string($column_info['type'] ?? null) ? $column_info['type'] : '';
 				if ($fixed_type == 'blob') {
 					$fixed_type = 'string';
 				}
@@ -2632,7 +2599,7 @@ abstract class ActiveRecord
 
 			$signature = '';
 			if ($include_doc_comments) {
-				$fixed_type = is_string($column_info['type'] ?? NULL) ? $column_info['type'] : '';
+				$fixed_type = is_string($column_info['type'] ?? null) ? $column_info['type'] : '';
 				if ($fixed_type == 'blob') {
 					$fixed_type = 'string';
 				}
@@ -2798,7 +2765,7 @@ abstract class ActiveRecord
 				}
 
 				$type = $parameter->getType();
-				if ($type !== NULL) {
+				if ($type !== null) {
 					$type_name = ($type instanceof ReflectionNamedType) ? $type->getName() : (string) $type;
 					if ($type_name === 'array') {
 						$signature .= 'array ';
@@ -2812,7 +2779,7 @@ abstract class ActiveRecord
 				$signature .= '$' . $parameter->getName();
 
 				if ($parameter->isDefaultValueAvailable()) {
-					$val = var_export($parameter->getDefaultValue(), TRUE);
+					$val = var_export($parameter->getDefaultValue(), true);
 					if ($val == 'true') {
 						$val = 'TRUE';
 					}
@@ -2868,7 +2835,7 @@ abstract class ActiveRecord
 	 * @param  string $related_class  The plural related class to replicate - see method description for details
 	 * @return ActiveRecord  The cloned record
 	 */
-	public function replicate(?string $related_class=NULL): ActiveRecord
+	public function replicate(?string $related_class = null): ActiveRecord
 	{
 		$replicate_level = ActiveRecord::$replicate_level;
 		ORM::callHookCallbacks(
@@ -2908,21 +2875,20 @@ abstract class ActiveRecord
 			if (sizeof($pk_columns) == 1 && $schema->getColumnInfo($table, $pk_columns[0], 'auto_increment')) {
 				ActiveRecord::$replicate_map[$class][$hash]->values[$pk_columns[0]] = $this->values[$pk_columns[0]];
 			}
-
 		}
 		$clone = ActiveRecord::$replicate_map[$class][$hash];
 
 		$parameters = func_get_args();
 
-		$recursive                  = FALSE;
+		$recursive                  = false;
 		$many_to_many_relationships = $schema->getRelationships($table, 'many-to-many');
 		$one_to_many_relationships  = $schema->getRelationships($table, 'one-to-many');
 
 
 		// When just TRUE is passed we recursively replicate all related records
-		if (sizeof($parameters) == 1 && $parameters[0] === TRUE) {
+		if (sizeof($parameters) == 1 && $parameters[0] === true) {
 			$parameters = array();
-			$recursive  = TRUE;
+			$recursive  = true;
 
 			foreach ($many_to_many_relationships as $relationship) {
 				$parameters[] = Grammar::pluralize(ORM::classize(self::relationshipString($relationship, 'related_table'))) . '{' . self::relationshipString($relationship, 'join_table') . '}';
@@ -2940,10 +2906,10 @@ abstract class ActiveRecord
 			}
 
 			// Parse the Class{route} strings
-			if (strpos($parameter, '{') !== FALSE) {
+			if (strpos($parameter, '{') !== false) {
 				$brace         = strpos($parameter, '{');
 				$related_class = Grammar::singularize(substr($parameter, 0, $brace));
-				if ($related_class === FALSE) {
+				if ($related_class === false) {
 					throw new ProgrammerException(
 						'The related class name %1$s could not be converted to a class',
 						$parameter
@@ -2951,10 +2917,10 @@ abstract class ActiveRecord
 				}
 				$related_class = ORM::getRelatedClass($class, $related_class);
 				$related_table = ORM::tablize($related_class);
-				$route         = substr($parameter, $brace+1, -1);
+				$route         = substr($parameter, $brace + 1, -1);
 			} else {
 				$related_class = Grammar::singularize($parameter);
-				if ($related_class === FALSE) {
+				if ($related_class === false) {
 					throw new ProgrammerException(
 						'The related class name %1$s could not be converted to a class',
 						$parameter
@@ -2966,19 +2932,19 @@ abstract class ActiveRecord
 			}
 
 			// Determine the kind of relationship
-			$many_to_many = FALSE;
-			$one_to_many  = FALSE;
+			$many_to_many = false;
+			$one_to_many  = false;
 
 			foreach ($many_to_many_relationships as $relationship) {
 				if ($relationship['related_table'] == $related_table && $relationship['join_table'] == $route) {
-					$many_to_many = TRUE;
+					$many_to_many = true;
 					break;
 				}
 			}
 
 			foreach ($one_to_many_relationships as $relationship) {
 				if ($relationship['related_table'] == $related_table && $relationship['related_column'] == $route) {
-					$one_to_many = TRUE;
+					$one_to_many = true;
 					break;
 				}
 			}
@@ -2997,14 +2963,14 @@ abstract class ActiveRecord
 			// One-to-many records need to be replicated, possibly recursively
 			if ($one_to_many) {
 				if ($recursive) {
-					$records = $record_set->call('replicate', TRUE);
+					$records = $record_set->call('replicate', true);
 				} else {
 					$records = $record_set->call('replicate');
 				}
 				$record_set = RecordSet::buildFromArray($related_class, $records);
 				$record_set->call(
-					'set' . Grammar::camelize($route, TRUE),
-					NULL
+					'set' . Grammar::camelize($route, true),
+					null
 				);
 			}
 
@@ -3022,7 +2988,7 @@ abstract class ActiveRecord
 					continue;
 				}
 				foreach ($records as $hash => $record) {
-					$record->values[$pk_columns[0]] = NULL;
+					$record->values[$pk_columns[0]] = null;
 				}
 			}
 			ActiveRecord::$replicate_map = array();
@@ -3078,7 +3044,7 @@ abstract class ActiveRecord
 
 		// We consider an empty string or a string of spaces to be equivalent to NULL
 		if ($value === '' || (is_string($value) && trim($value) === '')) {
-			$value = NULL;
+			$value = null;
 		}
 
 		$class = get_class($this);
@@ -3111,7 +3077,7 @@ abstract class ActiveRecord
 	 * @param  boolean $force_cascade  When storing related records, this will force deleting child records even if they have their own children in a relationship with an RESTRICT or NO ACTION for the ON DELETE clause
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	public function store(bool $force_cascade=FALSE): ActiveRecord
+	public function store(bool $force_cascade = false): ActiveRecord
 	{
 		$class = get_class($this);
 
@@ -3136,15 +3102,15 @@ abstract class ActiveRecord
 			$table = ORM::tablize($class);
 
 			// New auto-incrementing records require lots of special stuff, so we'll detect them here
-			$new_autoincrementing_record = FALSE;
-			$pk_column                  = NULL;
+			$new_autoincrementing_record = false;
+			$pk_column                  = null;
 			if (!$this->exists()) {
 				$pk_columns           = $schema->getKeys($table, 'primary');
 				$pk_column            = $pk_columns[0];
 				$pk_auto_incrementing = $schema->getColumnInfo($table, $pk_column, 'auto_increment');
 
 				if (sizeof($pk_columns) == 1 && $pk_auto_incrementing && !$this->values[$pk_column]) {
-					$new_autoincrementing_record = TRUE;
+					$new_autoincrementing_record = true;
 				}
 			}
 
@@ -3228,7 +3194,7 @@ abstract class ActiveRecord
 				$old_value      = ActiveRecord::retrieveOld($this->old_values, $column);
 				$value          = $this->values[$column];
 
-				if ($old_value === NULL) {
+				if ($old_value === null) {
 					continue;
 				}
 				foreach ($record_set as $record) {
@@ -3270,9 +3236,7 @@ abstract class ActiveRecord
 				$this->related_records,
 				$this->cache
 			);
-
 		} catch (FlourishException $e) {
-
 			if (!$inside_db_transaction) {
 				$db->translatedQuery('ROLLBACK');
 			}
@@ -3338,7 +3302,7 @@ abstract class ActiveRecord
 	 * @param  boolean $remove_column_names  If column names should be removed from the returned messages, leaving just the message itself
 	 * @return array<mixed>|void  If $return_messages is TRUE, an array of validation messages will be returned
 	 */
-	public function validate(bool $return_messages=FALSE, bool $remove_column_names=FALSE): mixed
+	public function validate(bool $return_messages = false, bool $remove_column_names = false): mixed
 	{
 		$class = get_class($this);
 
@@ -3347,7 +3311,7 @@ abstract class ActiveRecord
 			if (is_array($validation_result)) {
 				return $validation_result;
 			}
-			return $return_messages ? array() : NULL;
+			return $return_messages ? array() : null;
 		}
 
 		$validation_messages = array();

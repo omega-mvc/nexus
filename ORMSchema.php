@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides Schema class related functions for ORM code
  *
@@ -28,7 +30,7 @@ class ORMSchema
 	 *
 	 * @var array<string, array<string, array<string, array<string, mixed>>>>
 	 */
-	static private array $cache = array(
+	private static array $cache = array(
 		'getRoutes' => array()
 	);
 
@@ -38,7 +40,7 @@ class ORMSchema
 	 *
 	 * @var array<string, Schema>
 	 */
-	static private array $schema_objects = array();
+	private static array $schema_objects = array();
 
 
 	/**
@@ -48,7 +50,7 @@ class ORMSchema
 	 * @param  string  $name    The name of the database this schema is for
 	 * @return void
 	 */
-	static public function attach(Schema $schema, string $name='default'): void
+	public static function attach(Schema $schema, string $name = 'default'): void
 	{
 		self::$schema_objects[$name] = $schema;
 	}
@@ -66,10 +68,10 @@ class ORMSchema
 	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-meny'`, `'many-to-one'`, `'many-to-many'`
 	 * @return array<string, mixed>  The relationship information for the route specified
 	 */
-	static public function getRoute(Schema $schema, string $table, string $related_table, ?string $route=NULL, ?string $relationship_type=NULL): array
+	public static function getRoute(Schema $schema, string $table, string $related_table, ?string $route = null, ?string $relationship_type = null): array
 	{
 		$valid_relationship_types = array(
-			NULL,
+			null,
 			'*-to-many',
 			'*-to-one',
 			'!many-to-one',
@@ -87,7 +89,7 @@ class ORMSchema
 			);
 		}
 
-		if ($route === NULL) {
+		if ($route === null) {
 			$route = self::getRouteName($schema, $table, $related_table, $route, $relationship_type);
 		}
 
@@ -120,10 +122,10 @@ class ORMSchema
 	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
 	 * @return string  The only route from the main table to the related table
 	 */
-	static public function getRouteName(Schema $schema, string $table, string $related_table, ?string $route=NULL, ?string $relationship_type=NULL): string
+	public static function getRouteName(Schema $schema, string $table, string $related_table, ?string $route = null, ?string $relationship_type = null): string
 	{
 		$valid_relationship_types = array(
-			NULL,
+			null,
 			'*-to-many',
 			'*-to-one',
 			'!many-to-one',
@@ -189,7 +191,7 @@ class ORMSchema
 	 * @param  array<string, mixed>  $relationship  The relationship array from Schema::getKeys()
 	 * @return string  The name of the route
 	 */
-	static public function getRouteNameFromRelationship(string $type, array $relationship): string
+	public static function getRouteNameFromRelationship(string $type, array $relationship): string
 	{
 		$valid_types = array('*-to-one', 'one-to-one', 'one-to-many', 'many-to-one', 'many-to-many');
 		if (!in_array($type, $valid_types)) {
@@ -201,11 +203,11 @@ class ORMSchema
 		}
 
 		if (isset($relationship['join_table']) || $type == 'many-to-many') {
-			$route_name = $relationship['join_table'] ?? NULL;
+			$route_name = $relationship['join_table'] ?? null;
 		} elseif ($type == 'one-to-many') {
-			$route_name = $relationship['related_column'] ?? NULL;
+			$route_name = $relationship['related_column'] ?? null;
 		} else {
-			$route_name = $relationship['column'] ?? NULL;
+			$route_name = $relationship['column'] ?? null;
 		}
 
 		if (!is_string($route_name)) {
@@ -230,7 +232,7 @@ class ORMSchema
 	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
 	 * @return array<string, array<string, mixed>>  All of the routes from the main table to the related table, keyed by the route name
 	 */
-	static public function getRoutes(Schema $schema, string $table, string $related_table, ?string $relationship_type=NULL): array
+	public static function getRoutes(Schema $schema, string $table, string $related_table, ?string $relationship_type = null): array
 	{
 		$key = $table . '::' . $related_table . '::' . $relationship_type;
 		if (isset(self::$cache['getRoutes'][$key])) {
@@ -238,7 +240,7 @@ class ORMSchema
 		}
 
 		$valid_relationship_types = array(
-			NULL,
+			null,
 			'*-to-many',
 			'*-to-one',
 			'!many-to-one',
@@ -268,15 +270,14 @@ class ORMSchema
 		$routes = array();
 
 		foreach ($all_relationships as $type => $relationships) {
-
 			// Filter the relationships by the relationship type
-			if ($relationship_type !== NULL) {
+			if ($relationship_type !== null) {
 				if ($relationship_type == '!many-to-one') {
 					if ($type == 'many-to-one') {
 						continue;
 					}
 				} else {
-					if (strpos($type, str_replace('*', '', $relationship_type)) === FALSE) {
+					if (strpos($type, str_replace('*', '', $relationship_type)) === false) {
 						continue;
 					}
 				}
@@ -288,11 +289,11 @@ class ORMSchema
 				}
 
 				if ($type == 'many-to-many') {
-					$route_name = $relationship['join_table'] ?? NULL;
+					$route_name = $relationship['join_table'] ?? null;
 				} elseif ($type == 'one-to-many') {
-					$route_name = $relationship['related_column'] ?? NULL;
+					$route_name = $relationship['related_column'] ?? null;
 				} else {
-					$route_name = $relationship['column'] ?? NULL;
+					$route_name = $relationship['column'] ?? null;
 				}
 
 				if (!is_string($route_name)) {
@@ -325,11 +326,11 @@ class ORMSchema
 	 * @param  string  $route          The route between the two tables
 	 * @return boolean  If the table is in a one-to-one relationship with the related table over the route specified
 	 */
-	static public function isOneToOne(Schema $schema, string $table, string $related_table, ?string $route=NULL): bool
+	public static function isOneToOne(Schema $schema, string $table, string $related_table, ?string $route = null): bool
 	{
 		$relationships = self::getRoutes($schema, $table, $related_table, 'one-to-one');
 
-		if ($route === NULL && sizeof($relationships) > 1) {
+		if ($route === null && sizeof($relationships) > 1) {
 			throw new ProgrammerException(
 				'There is more than one route for the%1$srelationship between %2$s and %3$s. Please specify one of the following: %4$s.',
 				' one-to-one ',
@@ -339,16 +340,16 @@ class ORMSchema
 			);
 		}
 		if (!$relationships) {
-			return FALSE;
+			return false;
 		}
 
 		foreach ($relationships as $relationship) {
-			if ($route === NULL || $route == $relationship['column']) {
-				return TRUE;
+			if ($route === null || $route == $relationship['column']) {
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -359,7 +360,7 @@ class ORMSchema
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$schema_objects = array();
 	}
@@ -371,7 +372,7 @@ class ORMSchema
 	 * @param  string $class  The class the object will be used with
 	 * @return Schema  The schema instance
 	 */
-	static public function retrieve(string $class='ActiveRecord'): Schema
+	public static function retrieve(string $class = 'ActiveRecord'): Schema
 	{
 		if (substr($class, 0, 5) == 'name:') {
 			$database_name = substr($class, 5);
@@ -392,7 +393,9 @@ class ORMSchema
 	 *
 	 * @return ORMSchema
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

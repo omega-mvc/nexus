@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Handles related record tasks for ActiveRecord classes
  *
@@ -76,28 +78,28 @@ class ORMRelated
 	 *
 	 * @var array<string, bool>
 	 */
-	static private array $cache = array();
+	private static array $cache = array();
 
 	/**
 	 * Rules that control what order related data is returned in
 	 *
 	 * @var array<string, array<string, array<string, array<string, string>>>>
 	 */
-	static private array $order_bys = array();
+	private static array $order_bys = array();
 
 	/**
 	 * Names for related records
 	 *
 	 * @var array<string, array<string, array<string, string>>>
 	 */
-	static private array $related_record_names = array();
+	private static array $related_record_names = array();
 
 	/**
 	 * Methods to use for getting the name of related records when performing validation
 	 *
 	 * @var array<string, array<string, array<string, string>>>
 	 */
-	static private array $validation_name_methods = array();
+	private static array $validation_name_methods = array();
 
 
 	/**
@@ -112,7 +114,7 @@ class ORMRelated
 	 * @param  ?string                                   $route             The route to use between the current class and the related class
 	 * @return void
 	 */
-	static public function associateRecord(string $class, array &$related_records, string $related_class, mixed $record, ?string $route=NULL): void
+	public static function associateRecord(string $class, array &$related_records, string $related_class, mixed $record, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -120,7 +122,7 @@ class ORMRelated
 		$table         = ORM::tablize($class);
 		$related_table = ORM::tablize($related_class);
 
-		if ($record !== NULL) {
+		if ($record !== null) {
 			if (!$record instanceof ActiveRecord) {
 				$record = new $related_class($record);
 			}
@@ -150,7 +152,7 @@ class ORMRelated
 	 * @param  ?string                                    $route                 The route to use between the current class and the related class
 	 * @return void
 	 */
-	static public function associateRecords(string $class, array &$related_records, string $related_class, mixed $records_to_associate, ?string $route=NULL): void
+	public static function associateRecords(string $class, array &$related_records, string $related_class, mixed $records_to_associate, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -158,23 +160,20 @@ class ORMRelated
 		$table         = ORM::tablize($class);
 		$related_table = ORM::tablize($related_class);
 
-		$primary_keys = FALSE;
+		$primary_keys = false;
 
 		if ($records_to_associate instanceof ActiveRecord) {
 			$records = RecordSet::buildFromArray($related_class, array($records_to_associate));
-
 		} elseif ($records_to_associate instanceof RecordSet) {
 			$records = clone $records_to_associate;
-
 		} elseif (!sizeof($records_to_associate)) {
 			$records = RecordSet::buildFromArray($related_class, array());
-
 		} elseif (self::containsOnlyRecords($records_to_associate)) {
 			$records = RecordSet::buildFromArray($related_class, array_values($records_to_associate));
 
 		// This indicates we are working with just primary keys, so we have to call a different method
 		} else {
-			$primary_keys = TRUE;
+			$primary_keys = true;
 		}
 
 		$schema = ORMSchema::retrieve($class);
@@ -201,7 +200,7 @@ class ORMRelated
 	 * @param  ?string $route            The route to follow for the class specified
 	 * @return RecordSet  A record set of the related records
 	 */
-	static public function buildRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route=NULL): RecordSet
+	public static function buildRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): RecordSet
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -228,10 +227,8 @@ class ORMRelated
 			$record_set         = RecordSet::build($related_class, $where_conditions, $order_bys);
 			$related_records[$related_table][$route]['record_set'] = $record_set;
 			return $record_set;
-
-		} elseif ($values[$column] === NULL) {
+		} elseif ($values[$column] === null) {
 			$record_set = RecordSet::buildFromArray($related_class, array());
-
 		} else {
 			$where_column   = $table . '{' . $route . '}.' . $column;
 			$where_conditions = array($where_column . '=' => $values[$column]);
@@ -251,11 +248,11 @@ class ORMRelated
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static private function compose(string $message): string
+	private static function compose(string $message): string
 	{
 		$args = array();
 		foreach (array_slice(func_get_args(), 1) as $arg) {
-			if ($arg !== NULL && !is_scalar($arg)) {
+			if ($arg !== null && !is_scalar($arg)) {
 				throw new ProgrammerException(
 					'Only scalar values can be composed into a message, %1$s given',
 					get_debug_type($arg)
@@ -264,7 +261,7 @@ class ORMRelated
 			$args[] = $arg;
 		}
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -282,9 +279,9 @@ class ORMRelated
 	 * @param  string                $key           The relationship value to get
 	 * @return string  The string value for the key specified
 	 */
-	static private function relationshipString(array $relationship, string $key): string
+	private static function relationshipString(array $relationship, string $key): string
 	{
-		$value = $relationship[$key] ?? NULL;
+		$value = $relationship[$key] ?? null;
 
 		if (!is_string($value)) {
 			throw new ProgrammerException(
@@ -307,15 +304,15 @@ class ORMRelated
 	 *
 	 * @phpstan-assert-if-true array<array-key, ActiveRecord> $records
 	 */
-	static private function containsOnlyRecords(array $records): bool
+	private static function containsOnlyRecords(array $records): bool
 	{
 		foreach ($records as $record) {
 			if (!$record instanceof ActiveRecord) {
-				return FALSE;
+				return false;
 			}
 		}
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -325,12 +322,12 @@ class ORMRelated
 	 * @param  array<array-key, mixed>  $values  The values to remove duplicates from
 	 * @return array<int, string|int|float|bool|null>  The unique values
 	 */
-	static private function uniqueValues(array $values): array
+	private static function uniqueValues(array $values): array
 	{
 		$unique = array();
 
 		foreach ($values as $value) {
-			if ($value !== NULL && !is_scalar($value)) {
+			if ($value !== null && !is_scalar($value)) {
 				throw new ProgrammerException(
 					'Only scalar values and NULL can be related through a join table, %1$s given',
 					get_debug_type($value)
@@ -351,7 +348,7 @@ class ORMRelated
 	 * @param  mixed     ...$values  The value(s) to escape
 	 * @return string  The escaped SQL
 	 */
-	static private function escape(Database $db, string $sql, mixed ...$values): string
+	private static function escape(Database $db, string $sql, mixed ...$values): string
 	{
 		$escaped = $db->escape($sql, ...$values);
 
@@ -374,7 +371,7 @@ class ORMRelated
 	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 */
-	static private function runQuery(Database $db, array $params): Result
+	private static function runQuery(Database $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -399,7 +396,7 @@ class ORMRelated
 	 * @param  mixed     $value   The value to unescape
 	 * @return mixed  The unescaped value
 	 */
-	static private function unescapeValue(Database $db, Schema $schema, string $table, string $column, mixed $value): mixed
+	private static function unescapeValue(Database $db, Schema $schema, string $table, string $column, mixed $value): mixed
 	{
 		$data_type = $schema->getColumnInfo($table, $column, 'type');
 
@@ -423,7 +420,7 @@ class ORMRelated
 	 * @param  string  $column  The column to get the placeholder for
 	 * @return string  The placeholder for the column specified
 	 */
-	static private function placeholder(Schema $schema, string $table, string $column): string
+	private static function placeholder(Schema $schema, string $table, string $column): string
 	{
 		$placeholder = $schema->getColumnInfo($table, $column, 'placeholder');
 
@@ -445,7 +442,7 @@ class ORMRelated
 	 * @param  mixed  $value  The value to convert
 	 * @return int  The count represented by the value
 	 */
-	static private function countValue(mixed $value): int
+	private static function countValue(mixed $value): int
 	{
 		return is_numeric($value) ? (int) $value : 0;
 	}
@@ -463,7 +460,7 @@ class ORMRelated
 	 * @param  ?string $route            The route to follow for the class specified
 	 * @return integer  The number of related records
 	 */
-	static public function countRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route=NULL): int
+	public static function countRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): int
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -485,7 +482,7 @@ class ORMRelated
 		$column       = self::relationshipString($relationship, 'column');
 
 		// Determine how we are going to build the sequence
-		if ($values[$column] === NULL) {
+		if ($values[$column] === null) {
 			$count = 0;
 		} else {
 			$value = $values[$column];
@@ -509,7 +506,6 @@ class ORMRelated
 
 			// Many-to-many relationships allow counting just from the join table
 			} else {
-
 				$params = array(self::escape(
 					$db,
 					"SELECT count(*) FROM %r WHERE %r = ",
@@ -544,7 +540,7 @@ class ORMRelated
 	 * @param  ?string $route            The route to the related class
 	 * @return ActiveRecord  An instance of the class specified
 	 */
-	static public function createRecord(string $class, array $values, array &$related_records, string $related_class, ?string $route=NULL): ActiveRecord
+	public static function createRecord(string $class, array $values, array &$related_records, string $related_class, ?string $route = null): ActiveRecord
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -560,13 +556,12 @@ class ORMRelated
 		// Determine if the relationship is one-to-one
 		if (isset(self::$cache['one-to-one::' . $table . '::' . $related_table . '::' . $route])) {
 			$one_to_one = self::$cache['one-to-one::' . $table . '::' . $related_table . '::' . $route];
-
 		} else {
-			$one_to_one = FALSE;
+			$one_to_one = false;
 			$one_to_one_relationships = ORMSchema::getRoutes($schema, $table, $related_table, 'one-to-one');
 			foreach ($one_to_one_relationships as $one_to_one_relationship) {
 				if ($route == $one_to_one_relationship['column']) {
-					$one_to_one = TRUE;
+					$one_to_one = true;
 					break;
 				}
 			}
@@ -584,7 +579,7 @@ class ORMRelated
 			}
 
 			// If the value is NULL, don't pass it to the constructor because an NotFoundException will be thrown
-			if ($values[$route] !== NULL) {
+			if ($values[$route] !== null) {
 				try {
 					$records = array(new $related_class(array($related_column => $values[$route])));
 				} catch (NotFoundException $e) {
@@ -603,7 +598,7 @@ class ORMRelated
 		}
 
 		// This allows records without a related record to return a non-existent one
-		if ($values[$route] === NULL) {
+		if ($values[$route] === null) {
 			return new $related_class();
 		}
 
@@ -622,7 +617,7 @@ class ORMRelated
 	 * @param  ?string $route         The route to the related class
 	 * @return string  The first primary key column in the related class
 	 */
-	static public function determineFirstPKColumn(string $class, string $related_class, ?string $route=NULL): string
+	public static function determineFirstPKColumn(string $class, string $related_class, ?string $route = null): string
 	{
 		$table         = ORM::tablize($class);
 		$related_table = ORM::tablize($related_class);
@@ -632,8 +627,7 @@ class ORMRelated
 
 		// If there is a multi-fiend primary key we want to populate based on any field BUT the foreign key to the current class
 		if (sizeof($pk_columns) > 1) {
-
-			$first_pk_column = NULL;
+			$first_pk_column = null;
 			$relationships   = ORMSchema::getRoutes($schema, $related_table, $table, '*-to-one');
 			foreach ($pk_columns as $pk_column) {
 				foreach ($relationships as $relationship) {
@@ -648,7 +642,6 @@ class ORMRelated
 			if (!$first_pk_column) {
 				$first_pk_column = $pk_columns[0];
 			}
-
 		} else {
 			$first_pk_column = $pk_columns[0];
 		}
@@ -667,7 +660,7 @@ class ORMRelated
 	 * @param  ?string $route         The route to the related class
 	 * @return string  The prefix to filter the request fields by
 	 */
-	static public function determineRequestFilter(string $class, string $related_class, ?string $route=NULL): string
+	public static function determineRequestFilter(string $class, string $related_class, ?string $route = null): string
 	{
 		$table           = ORM::tablize($class);
 		$schema          = ORMSchema::retrieve($class);
@@ -705,7 +698,7 @@ class ORMRelated
 	 * @param  string $route             The route to use between the current class and the related class
 	 * @return void
 	 */
-	static public function flagForAssociation(string $class, array &$related_records, string $related_class, ?string $route=NULL): void
+	public static function flagForAssociation(string $class, array &$related_records, string $related_class, ?string $route = null): void
 	{
 		$table         = ORM::tablize($class);
 		$related_table = ORM::tablize($related_class);
@@ -722,7 +715,7 @@ class ORMRelated
 			);
 		}
 
-		$related_records[$related_table][$route]['associate'] = TRUE;
+		$related_records[$related_table][$route]['associate'] = true;
 	}
 
 
@@ -736,7 +729,7 @@ class ORMRelated
 	 * @param  string $route          The route to the related table, should be a column name in the current table or a join table name
 	 * @return array<string, string>  An array of the order bys - see RecordSet::build() for format
 	 */
-	static public function getOrderBys(string $class, string $related_class, string $route): array
+	public static function getOrderBys(string $class, string $related_class, string $route): array
 	{
 		$table         = ORM::tablize($class);
 		$related_table = ORM::tablize($related_class);
@@ -764,7 +757,7 @@ class ORMRelated
 	 * @param  string $route             The route to follow for the class specified
 	 * @return array<int|string, mixed>  The primary keys of the related records
 	 */
-	static public function getPrimaryKeys(string $class, array &$values, array &$related_records, string $related_class, ?string $route=NULL): array
+	public static function getPrimaryKeys(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): array
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -858,9 +851,9 @@ class ORMRelated
 					}
 				}
 
-				$related_info['record_set']   = NULL;
+				$related_info['record_set']   = null;
 				$related_info['count']        = sizeof($primary_keys);
-				$related_info['associate']    = FALSE;
+				$related_info['associate']    = false;
 				$related_info['primary_keys'] = $primary_keys;
 			}
 		}
@@ -882,7 +875,7 @@ class ORMRelated
 	 * @param  ?string $route  The route to the related class, if any
 	 * @return string  The record name for the related class specified
 	 */
-	static public function getRelatedRecordName(string $class, string $related_class, ?string $route=NULL): string
+	public static function getRelatedRecordName(string $class, string $related_class, ?string $route = null): string
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -893,14 +886,16 @@ class ORMRelated
 		$schema = ORMSchema::retrieve($class);
 		$route  = ORMSchema::getRouteName($schema, $table, $related_table, $route);
 
-		if (!isset(self::$related_record_names[$table]) ||
+		if (
+            !isset(self::$related_record_names[$table]) ||
 			  !isset(self::$related_record_names[$table][$related_class]) ||
-			  !isset(self::$related_record_names[$table][$related_class][$route])) {
+			  !isset(self::$related_record_names[$table][$related_class][$route])
+        ) {
 			return ORM::getRecordName($related_class);
 		}
 
 		// If Text is loaded, use it
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func(
 				array('Text', 'compose'),
 				str_replace('%', '%%', self::$related_record_names[$table][$related_class][$route])
@@ -923,7 +918,7 @@ class ORMRelated
 	 * @param  string $route             The route to the related class
 	 * @return bool  Whether the related records exist for the record specified
 	 */
-	static public function hasRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route=NULL): bool
+	public static function hasRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): bool
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -942,7 +937,7 @@ class ORMRelated
 			}
 		}
 
-		return (bool) ($related_records[$related_table][$route]['count'] ?? NULL);
+		return (bool) ($related_records[$related_table][$route]['count'] ?? null);
 	}
 
 
@@ -957,7 +952,7 @@ class ORMRelated
 	 * @param  string $route             The route to the related class
 	 * @return void
 	 */
-	static public function linkRecords(string $class, array &$related_records, string $related_class, ?string $route=NULL): void
+	public static function linkRecords(string $class, array &$related_records, string $related_class, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -976,7 +971,7 @@ class ORMRelated
 		$field_with_route = $field_table . '{' . $route_name . '}' . $field_column;
 
 		// If there is only one route and they specified the route instead of leaving it off, use that
-		if ($route !== NULL || (!Request::check($field) && Request::check($field_with_route))) {
+		if ($route !== null || (!Request::check($field) && Request::check($field_with_route))) {
 			$field = $field_with_route;
 		}
 
@@ -998,14 +993,14 @@ class ORMRelated
 	 * @param  array<int|string, mixed> $array2  The array of items to remove
 	 * @return array<int|string, mixed>  The items in `$array1` that were not also in `$array2`
 	 */
-	static private function multidimensionArrayDiff(array $array1, array $array2): array
+	private static function multidimensionArrayDiff(array $array1, array $array2): array
 	{
 		$output = array();
 		foreach ($array1 as $sub_array1) {
-			$remove = FALSE;
+			$remove = false;
 			foreach ($array2 as $sub_array2) {
 				if ($sub_array1 == $sub_array2) {
-					$remove = TRUE;
+					$remove = true;
 				}
 			}
 			if (!$remove) {
@@ -1028,7 +1023,7 @@ class ORMRelated
 	 * @param  ?string $route          The route to the related class
 	 * @return void
 	 */
-	static public function overrideRelatedRecordName(mixed $class, string $related_class, string $record_name, ?string $route=NULL): void
+	public static function overrideRelatedRecordName(mixed $class, string $related_class, string $record_name, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -1067,7 +1062,7 @@ class ORMRelated
 	 * @param  boolean $recursive         If a recursive populate should be performed on the child records
 	 * @return void
 	 */
-	static public function populateRecords(string $class, array &$related_records, string $related_class, ?string $route=NULL, bool $recursive=FALSE): void
+	public static function populateRecords(string $class, array &$related_records, string $related_class, ?string $route = null, bool $recursive = false): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -1101,7 +1096,6 @@ class ORMRelated
 				}
 
 				$record = new $related_class($primary_key_values);
-
 			} catch (NotFoundException $e) {
 				$record = new $related_class();
 			}
@@ -1128,7 +1122,7 @@ class ORMRelated
 	 * @param  boolean $include_doc_comments  If the doc block comments for each method should be included
 	 * @return void
 	 */
-	static public function reflect(string $class, array &$signatures, bool $include_doc_comments): void
+	public static function reflect(string $class, array &$signatures, bool $include_doc_comments): void
 	{
 		$table  = ORM::tablize($class);
 		$schema = ORMSchema::retrieve($class);
@@ -1179,7 +1173,7 @@ class ORMRelated
 
 			$signatures[$create_method] = $signature;
 
-			$to_one_created[$related_class] = TRUE;
+			$to_one_created[$related_class] = true;
 		}
 
 		$one_to_one_created = array();
@@ -1261,7 +1255,7 @@ class ORMRelated
 
 			$signatures[$has_method] = $signature;
 
-			$one_to_one_created[$related_class] = TRUE;
+			$one_to_one_created[$related_class] = true;
 		}
 
 		$to_many_created = array();
@@ -1286,7 +1280,6 @@ class ORMRelated
 					$route_name = ORMSchema::getRouteNameFromRelationship('many-to-many', $route);
 					$route_names[]              = $route_name;
 					$many_to_many_route_names[] = $route_name;
-
 				} else {
 					$route_name = ORMSchema::getRouteNameFromRelationship('one-to-many', $route);
 					$route_names[]             = $route_name;
@@ -1450,7 +1443,7 @@ class ORMRelated
 			$signatures[$count_method] = $signature;
 
 
-			$to_many_created[$related_class] = TRUE;
+			$to_many_created[$related_class] = true;
 		}
 	}
 
@@ -1464,7 +1457,7 @@ class ORMRelated
 	 * @param ?string              $route          The route to the related class
 	 * @return void
 	 */
-	static public function registerValidationNameMethod(mixed $class, string $related_class, string $method, ?string $route=NULL): void
+	public static function registerValidationNameMethod(mixed $class, string $related_class, string $method, ?string $route = null): void
 	{
 		$class         = ORM::getClass($class);
 		$table         = ORM::tablize($class);
@@ -1490,7 +1483,7 @@ class ORMRelated
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$cache                = array();
 		self::$order_bys            = array();
@@ -1507,7 +1500,7 @@ class ORMRelated
 	 * @param  string $route           The route to the related table, this should be a column name in the current table or a join table name
 	 * @return void
 	 */
-	static public function setOrderBys(mixed $class, string $related_class, array $order_bys, ?string $route=NULL): void
+	public static function setOrderBys(mixed $class, string $related_class, array $order_bys, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -1545,7 +1538,7 @@ class ORMRelated
 	 * @param  string  $route             The route to follow for the class specified
 	 * @return void
 	 */
-	static public function setCount(string $class, array &$related_records, string $related_class, int $count, ?string $route=NULL): void
+	public static function setCount(string $class, array &$related_records, string $related_class, int $count, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -1565,9 +1558,9 @@ class ORMRelated
 		}
 
 		if (!isset($related_records[$related_table][$route]['record_set'])) {
-			$related_records[$related_table][$route]['record_set']   = NULL;
-			$related_records[$related_table][$route]['associate']    = FALSE;
-			$related_records[$related_table][$route]['primary_keys'] = NULL;
+			$related_records[$related_table][$route]['record_set']   = null;
+			$related_records[$related_table][$route]['associate']    = false;
+			$related_records[$related_table][$route]['primary_keys'] = null;
 		}
 
 		$related_records[$related_table][$route]['count'] = $count;
@@ -1586,7 +1579,7 @@ class ORMRelated
 	 * @param  string $route             The route to use between the current class and the related class
 	 * @return void
 	 */
-	static public function setPrimaryKeys(string $class, array &$related_records, string $related_class, array $primary_keys, ?string $route=NULL): void
+	public static function setPrimaryKeys(string $class, array &$related_records, string $related_class, array $primary_keys, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -1604,9 +1597,9 @@ class ORMRelated
 			$related_records[$related_table][$route] = array();
 		}
 
-		$related_records[$related_table][$route]['record_set']   = NULL;
+		$related_records[$related_table][$route]['record_set']   = null;
 		$related_records[$related_table][$route]['count']        = sizeof($primary_keys);
-		$related_records[$related_table][$route]['associate']    = FALSE;
+		$related_records[$related_table][$route]['associate']    = false;
 		$related_records[$related_table][$route]['primary_keys'] = $primary_keys;
 	}
 
@@ -1623,7 +1616,7 @@ class ORMRelated
 	 * @param  string $route             The route to use between the current class and the related class
 	 * @return void
 	 */
-	static public function setRecordSet(string $class, array &$related_records, string $related_class, RecordSet $records, ?string $route=NULL): void
+	public static function setRecordSet(string $class, array &$related_records, string $related_class, RecordSet $records, ?string $route = null): void
 	{
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
@@ -1643,8 +1636,8 @@ class ORMRelated
 
 		$related_records[$related_table][$route]['record_set']   = $records;
 		$related_records[$related_table][$route]['count']        = $records->count();
-		$related_records[$related_table][$route]['associate']    = FALSE;
-		$related_records[$related_table][$route]['primary_keys'] = NULL;
+		$related_records[$related_table][$route]['associate']    = false;
+		$related_records[$related_table][$route]['primary_keys'] = null;
 	}
 
 
@@ -1659,14 +1652,14 @@ class ORMRelated
 	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related records that are being deleted
 	 * @return void
 	 */
-	static public function store(string $class, array &$values, array &$related_records, bool $force_cascade): void
+	public static function store(string $class, array &$values, array &$related_records, bool $force_cascade): void
 	{
 		$table  = ORM::tablize($class);
 		$schema = ORMSchema::retrieve($class);
 
 		foreach ($related_records as $related_table => $relationships) {
 			foreach ($relationships as $route => $related_info) {
-				if (!($related_info['associate'] ?? FALSE)) {
+				if (!($related_info['associate'] ?? false)) {
 					continue;
 				}
 
@@ -1694,7 +1687,7 @@ class ORMRelated
 	 * @param  RelatedInfo  $related_info  An array containing the keys `'record_set'`, `'count'`, `'primary_keys'` and `'associate'`
 	 * @return void
 	 */
-	static public function storeManyToMany(string $class, array &$values, array $relationship, array $related_info): void
+	public static function storeManyToMany(string $class, array &$values, array $relationship, array $related_info): void
 	{
 		$db     = ORMDatabase::retrieve($class, 'write');
 		$schema = ORMSchema::retrieve($class);
@@ -1723,21 +1716,21 @@ class ORMRelated
 		$related_column_values = array();
 
 		// If the related column is the primary key, we can just use the primary keys if we have them
-		if ($related_pk_columns[0] == $related_column && ($related_info['primary_keys'] ?? NULL)) {
+		if ($related_pk_columns[0] == $related_column && ($related_info['primary_keys'] ?? null)) {
 			$related_column_values = $related_info['primary_keys'];
 
 		// Otherwise we need to pull the related values out of the record set
 		} else {
-			$record_set = $related_info['record_set'] ?? NULL;
+			$record_set = $related_info['record_set'] ?? null;
 
 			// If there is no record set, build it from the primary keys
 			if (!$record_set instanceof RecordSet) {
 				$related_class = ORM::classize($related_table);
 				$related_class = ORM::getRelatedClass($class, $related_class);
-				$record_set    = RecordSet::build($related_class, array($related_pk_columns[0] . '=' => ($related_info['primary_keys'] ?? NULL)));
+				$record_set    = RecordSet::build($related_class, array($related_pk_columns[0] . '=' => ($related_info['primary_keys'] ?? null)));
 			}
 
-			$get_related_method_name = 'get' . Grammar::camelize($related_column, TRUE);
+			$get_related_method_name = 'get' . Grammar::camelize($related_column, true);
 
 			foreach ($record_set as $record) {
 				$related_column_values[] = $record->$get_related_method_name();
@@ -1778,7 +1771,7 @@ class ORMRelated
 	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related records that are being deleted
 	 * @return void
 	 */
-	static public function storeOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route, bool $force_cascade): void
+	public static function storeOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route, bool $force_cascade): void
 	{
 		ActiveRecord::validateClass($related_class);
 
@@ -1813,17 +1806,16 @@ class ORMRelated
 
 			// don't delete record if the relationship does not call for it
 			if ($relationship['on_delete'] == 'set_null') {
-				$related_set_method = 'set' . Grammar::camelize($related_column, TRUE);
-				$object_to_delete->$related_set_method(NULL);
+				$related_set_method = 'set' . Grammar::camelize($related_column, true);
+				$object_to_delete->$related_set_method(null);
 				$object_to_delete->store();
 				continue;
 			}
 
 			$object_to_delete->delete($force_cascade);
-
 		}
 
-		$set_method_name = 'set' . Grammar::camelize($related_column, TRUE);
+		$set_method_name = 'set' . Grammar::camelize($related_column, true);
 
 		$first_pk_column = self::determineFirstPKColumn($class, $related_class, $route);
 		$filter          = self::determineRequestFilter(ORM::classize(self::relationshipString($relationship, 'table')), $related_class, $route);
@@ -1854,7 +1846,7 @@ class ORMRelated
 	 * @param  RelatedRecords  &$related_records  The related records for the object
 	 * @return array<string, string|array{name: string, errors: array<string, string>}>  The validation messages for the related records
 	 */
-	static public function validate(string $class, array &$values, array &$related_records): array
+	public static function validate(string $class, array &$values, array &$related_records): array
 	{
 		$table  = ORM::tablize($class);
 		$schema = ORMSchema::retrieve($class);
@@ -1864,7 +1856,7 @@ class ORMRelated
 		// Find the record sets to validate
 		foreach ($related_records as $related_table => $routes) {
 			foreach ($routes as $route => $related_info) {
-				if (!($related_info['count'] ?? NULL) || !($related_info['associate'] ?? NULL)) {
+				if (!($related_info['count'] ?? null) || !($related_info['associate'] ?? null)) {
 					continue;
 				}
 
@@ -1896,7 +1888,7 @@ class ORMRelated
 	 * @param  string $route             The route between the table and related table
 	 * @return array<string, string|array{name: string, errors: array<string, string>}>  An array of validation messages
 	 */
-	static private function validateOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route): array
+	private static function validateOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route): array
 	{
 		$schema              = ORMSchema::retrieve($class);
 		$table               = ORM::tablize($class);
@@ -1917,14 +1909,13 @@ class ORMRelated
 		$one_to_one = ORMSchema::isOneToOne($schema, $table, $related_table, $route);
 		if ($one_to_one) {
 			$records = array(self::createRecord($class, $values, $related_records, $related_class, $route));
-
 		} else {
 			$records = self::buildRecords($class, $values, $related_records, $related_class, $route);
 		}
 
 		foreach ($records as $i => $record) {
 			Request::filter($filter, isset($input_keys[$i]) ? $input_keys[$i] : $i);
-			$record_messages = $record->validate(TRUE);
+			$record_messages = $record->validate(true);
 			if (!is_array($record_messages)) {
 				$record_messages = array();
 			}
@@ -1957,19 +1948,18 @@ class ORMRelated
 						ValidationException::formatField($column_name),
 						$message_text
 					);
-
 				} else {
 					$main_key = $related_table . '[' . $i . ']';
 					if (!isset($messages[$main_key]) || !is_array($messages[$main_key])) {
 						if (isset(self::$validation_name_methods[$class][$related_class][$route])) {
-							$name = $record->{self::$validation_name_methods[$class][$related_class][$route]}($i+1);
+							$name = $record->{self::$validation_name_methods[$class][$related_class][$route]}($i + 1);
 							if (is_scalar($name)) {
 								$name = (string) $name;
 							} else {
 								$name = '';
 							}
 						} else {
-							$name = $related_record_name . ' #' . ($i+1);
+							$name = $related_record_name . ' #' . ($i + 1);
 						}
 						$messages[$main_key] = array(
 							'name'   => $name,
@@ -1979,8 +1969,6 @@ class ORMRelated
 
 					$messages[$main_key]['errors'][$column] = $record_message;
 				}
-
-
 			}
 			Request::unfilter();
 		}
@@ -1998,14 +1986,14 @@ class ORMRelated
 	 * @param  RelatedInfo  $related_info   The related info to validate
 	 * @return array<string, string>  An array of validation messages
 	 */
-	static private function validateManyToMany(string $class, string $related_class, string $route, array $related_info): array
+	private static function validateManyToMany(string $class, string $related_class, string $route, array $related_info): array
 	{
 		$related_record_name = self::getRelatedRecordName($class, $related_class, $route);
 		$record_number = 1;
 
 		$messages = array();
 
-		$related_records = ($related_info['record_set'] ?? NULL) ?? ($related_info['primary_keys'] ?? NULL);
+		$related_records = ($related_info['record_set'] ?? null) ?? ($related_info['primary_keys'] ?? null);
 
 		if (!$related_records) {
 			return $messages;
@@ -2037,7 +2025,9 @@ class ORMRelated
 	 *
 	 * @return ORMRelated
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

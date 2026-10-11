@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Handles filesystem-level tasks including filesystem transactions and the reference map to keep all File and Directory objects in sync
  *
@@ -40,35 +42,35 @@ class Filesystem
 	 *
 	 * @var list<array{action: 'delete', filename?: string, object?: File|Directory}>|null
 	 */
-	static private ?array $commit_operations = NULL;
+	private static ?array $commit_operations = null;
 
 	/**
 	 * Maps deletion backtraces to all instances of a file or directory, providing consistency
 	 *
 	 * @var array<string, list<TraceEntry>|null>
 	 */
-	static private array $deleted_map = array();
+	private static array $deleted_map = array();
 
 	/**
 	 * Stores file and directory names by reference, allowing all object instances to be updated at once
 	 *
 	 * @var array<string>
 	 */
-	static private array $filename_map = array();
+	private static array $filename_map = array();
 
 	/**
 	 * Stores the operations to perform if a rollback occurs
 	 *
 	 * @var list<array{action: 'append', filename: string, length: int}|array{action: 'delete', filename: string}|array{action: 'delete', object: File|Directory}|array{action: 'write', filename: string, old_data: string|false}|array{action: 'rename', old_name: string, new_name: string}>|null
 	 */
-	static private ?array $rollback_operations = NULL;
+	private static ?array $rollback_operations = null;
 
 	/**
 	 * Stores a list of search => replace strings for web path translations
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $web_path_translations = array();
+	private static array $web_path_translations = array();
 
 
 	/**
@@ -85,7 +87,7 @@ class Filesystem
 	 * @param  string $replace_path  The path to replace with
 	 * @return void
 	 */
-	static public function addWebPathTranslation(string $search_path, string $replace_path): void
+	public static function addWebPathTranslation(string $search_path, string $replace_path): void
 	{
 		// Ensure we have the correct kind of slash for the OS being used
 		$search_path  = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $search_path);
@@ -106,9 +108,9 @@ class Filesystem
 	 *
 	 * @return void
 	 */
-	static public function begin(): void
+	public static function begin(): void
 	{
-		if (self::$commit_operations !== NULL) {
+		if (self::$commit_operations !== null) {
 			throw new ProgrammerException(
 				'There is already a filesystem transaction in progress'
 			);
@@ -123,17 +125,17 @@ class Filesystem
 	 *
 	 * @return void
 	 */
-	static public function commit(): void
+	public static function commit(): void
 	{
 		$commit_operations = self::$commit_operations;
-		if ($commit_operations === NULL) {
+		if ($commit_operations === null) {
 			throw new ProgrammerException(
 				'There is no filesystem transaction in progress to commit'
 			);
 		}
 
-		self::$commit_operations   = NULL;
-		self::$rollback_operations = NULL;
+		self::$commit_operations   = null;
+		self::$rollback_operations = null;
 
 		$commit_operations = array_reverse($commit_operations);
 
@@ -157,7 +159,7 @@ class Filesystem
 	 * @param  string $size  The size to convert to bytes
 	 * @return integer  The number of bytes represented by the size
 	 */
-	static public function convertToBytes(string $size): int
+	public static function convertToBytes(string $size): int
 	{
 		if (!preg_match('#^(\d+(?:\.\d+)?)\s*(k|m|g|t)?(ilo|ega|era|iga)?( )?b?(yte(s)?)?$#D', strtolower(trim($size)), $matches)) {
 			throw new ProgrammerException(
@@ -188,7 +190,7 @@ class Filesystem
 	 * @param  string $path  The path to the filesystem object
 	 * @return Directory|File|Image
 	 */
-	static public function createObject(string $path): mixed
+	public static function createObject(string $path): mixed
 	{
 		if (empty($path)) {
 			throw new ValidationException(
@@ -204,14 +206,14 @@ class Filesystem
 		}
 
 		if (is_dir($path)) {
-			return new Directory($path, TRUE);
+			return new Directory($path, true);
 		}
 
 		if (Image::isImageCompatible($path)) {
-			return new Image($path, TRUE);
+			return new Image($path, true);
 		}
 
-		return new File($path, TRUE);
+		return new File($path, true);
 	}
 
 
@@ -222,7 +224,7 @@ class Filesystem
 	 * @param  integer $decimal_places  The number of decimal places to display
 	 * @return string
 	 */
-	static public function formatFilesize(int $bytes, int $decimal_places=1): string
+	public static function formatFilesize(int $bytes, int $decimal_places = 1): string
 	{
 		if ($bytes < 0) {
 			$bytes = 0;
@@ -235,7 +237,7 @@ class Filesystem
 		} elseif ($suffix > 4) {
 			$suffix = 4;
 		}
-		return number_format($bytes/$sizes[$suffix], ($suffix == 0) ? 0 : $decimal_places) . ' ' . $suffixes[$suffix];
+		return number_format($bytes / $sizes[$suffix], ($suffix == 0) ? 0 : $decimal_places) . ' ' . $suffixes[$suffix];
 	}
 
 
@@ -246,10 +248,10 @@ class Filesystem
 	 * @param  ?string  $element  The piece of information to return: `'dirname'`, `'basename'`, `'extension'`, or `'filename'`
 	 * @return ($element is null ? array{dirname: string, basename: string, extension: string, filename: string} : string)
 	 */
-	static public function getPathInfo(string $path, ?string $element=NULL): string|array
+	public static function getPathInfo(string $path, ?string $element = null): string|array
 	{
 		$valid_elements = array('dirname', 'basename', 'extension', 'filename');
-		if ($element !== NULL && !in_array($element, $valid_elements)) {
+		if ($element !== null && !in_array($element, $valid_elements)) {
 			throw new ProgrammerException(
 				'The element specified, %1$s, is invalid. Must be one of: %2$s.',
 				$element,
@@ -268,7 +270,7 @@ class Filesystem
 		}
 		$path_info['dirname'] .= DIRECTORY_SEPARATOR;
 
-		if ($element !== NULL) {
+		if ($element !== null) {
 			return $path_info[$element];
 		}
 
@@ -287,10 +289,10 @@ class Filesystem
 	 * @param  string $file  The name of the file or directory
 	 * @return list<TraceEntry>|null  Will return `NULL` if no match, or the backtrace array if a match occurs
 	 */
-	static public function &hookDeletedMap(string $file): ?array
+	public static function &hookDeletedMap(string $file): ?array
 	{
 		if (!isset(self::$deleted_map[$file])) {
-			self::$deleted_map[$file] = NULL;
+			self::$deleted_map[$file] = null;
 		}
 		return self::$deleted_map[$file];
 	}
@@ -307,7 +309,7 @@ class Filesystem
 	 * @param  string $file  The name of the file or directory
 	 * @return string  The filename, returned by reference so all objects representing it are updated on a rename
 	 */
-	static public function &hookFilenameMap(string $file): string
+	public static function &hookFilenameMap(string $file): string
 	{
 		if (!isset(self::$filename_map[$file])) {
 			self::$filename_map[$file] = $file;
@@ -321,7 +323,7 @@ class Filesystem
 	 *
 	 * @return bool
 	 */
-	static public function isInsideTransaction(): bool
+	public static function isInsideTransaction(): bool
 	{
 		return is_array(self::$commit_operations);
 	}
@@ -333,7 +335,7 @@ class Filesystem
 	 * @param  string $filename  The filename to clean up
 	 * @return string  The cleaned up filename
 	 */
-	static public function makeURLSafe(string $filename): string
+	public static function makeURLSafe(string $filename): string
 	{
 		$filename = strtolower(trim($filename));
 		$filename = str_replace("'", '', $filename);
@@ -349,12 +351,12 @@ class Filesystem
 	 * @param  string $new_extension  The new extension for the filename, should not include `.`
 	 * @return string  The unique file name
 	 */
-	static public function makeUniqueName(string $file, ?string $new_extension=NULL): string
+	public static function makeUniqueName(string $file, ?string $new_extension = null): string
 	{
 		$info = self::getPathInfo($file);
 
 		// Change the file extension
-		if ($new_extension !== NULL) {
+		if ($new_extension !== null) {
 			$new_extension = ($new_extension) ? '.' . $new_extension : $new_extension;
 			$file = $info['dirname'] . $info['filename'] . $new_extension;
 			$info = self::getPathInfo($file);
@@ -366,7 +368,7 @@ class Filesystem
 		// Remove _copy# from the filename to start
 		$pattern  = '#_copy(\d+)' . preg_quote($extension, '#') . '$#D';
 		$stripped = preg_replace($pattern, $extension, $file);
-		if ($stripped === NULL) {
+		if ($stripped === null) {
 			throw new ProgrammerException(
 				'Unable to update the copy number of the filename %s',
 				$file
@@ -379,7 +381,7 @@ class Filesystem
 			$info = self::getPathInfo($file);
 			if (preg_match($pattern, $file, $match)) {
 				$next = preg_replace($pattern, '_copy' . ((int) $match[1] + 1) . $extension, $file);
-				if ($next === NULL) {
+				if ($next === null) {
 					throw new ProgrammerException(
 						'Unable to update the copy number of the filename %s',
 						$file
@@ -404,7 +406,7 @@ class Filesystem
 	 * @param  list<TraceEntry>|null  $backtrace  The backtrace for this file/directory, `NULL` when no backtrace should be kept
 	 * @return void
 	 */
-	static public function updateDeletedMap(string $file, ?array $backtrace): void
+	public static function updateDeletedMap(string $file, ?array $backtrace): void
 	{
 		self::$deleted_map[$file] = $backtrace;
 	}
@@ -419,7 +421,7 @@ class Filesystem
 	 * @param  string $new_filename       The new filename
 	 * @return void
 	 */
-	static public function updateFilenameMap(string $existing_filename, string $new_filename): void
+	public static function updateFilenameMap(string $existing_filename, string $new_filename): void
 	{
 		if ($existing_filename == $new_filename) {
 			return;
@@ -446,7 +448,7 @@ class Filesystem
 	 * @param  string $new_dirname       The new dirname
 	 * @return void
 	 */
-	static public function updateFilenameMapForDirectory(string $existing_dirname, string $new_dirname): void
+	public static function updateFilenameMapForDirectory(string $existing_dirname, string $new_dirname): void
 	{
 		if ($existing_dirname == $new_dirname) {
 			return;
@@ -472,7 +474,7 @@ class Filesystem
 					strtr($new_dirname, array('\\' => '\\\\', '$' => '\\$')),
 					$filename
 				);
-				if ($new_filename === NULL) {
+				if ($new_filename === null) {
 					continue;
 				}
 
@@ -483,7 +485,6 @@ class Filesystem
 				unset(self::$deleted_map[$filename]);
 
 				self::$filename_map[$new_filename] = $new_filename;
-
 			}
 		}
 	}
@@ -498,7 +499,7 @@ class Filesystem
 	 * @param  string $data  The data being appended to the file
 	 * @return void
 	 */
-	static public function recordAppend(File $file, string $data): void
+	public static function recordAppend(File $file, string $data): void
 	{
 		self::$rollback_operations[] = array(
 			'action'   => 'append',
@@ -516,7 +517,7 @@ class Filesystem
 	 * @param  File|Directory $object  The new file or directory to get rid of on rollback
 	 * @return void
 	 */
-	static public function recordCreate(File|Directory $object): void
+	public static function recordCreate(File|Directory $object): void
 	{
 		self::$rollback_operations[] = array(
 			'action' => 'delete',
@@ -533,7 +534,7 @@ class Filesystem
 	 * @param  File|Directory $object  The filesystem object to delete
 	 * @return void
 	 */
-	static public function recordDelete(File|Directory $object): void
+	public static function recordDelete(File|Directory $object): void
 	{
 		self::$commit_operations[] = array(
 			'action' => 'delete',
@@ -550,7 +551,7 @@ class Filesystem
 	 * @param  File $file  The duplicate file to get rid of on rollback
 	 * @return void
 	 */
-	static public function recordDuplicate(File $file): void
+	public static function recordDuplicate(File $file): void
 	{
 		self::$rollback_operations[] = array(
 			'action'   => 'delete',
@@ -568,7 +569,7 @@ class Filesystem
 	 * @param  string $new_name  The new file or directory name
 	 * @return void
 	 */
-	static public function recordRename(string $old_name, string $new_name): void
+	public static function recordRename(string $old_name, string $new_name): void
 	{
 		self::$rollback_operations[] = array(
 			'action'   => 'rename',
@@ -594,7 +595,7 @@ class Filesystem
 	 * @param  File $file  The file that is being written to
 	 * @return void
 	 */
-	static public function recordWrite(File $file): void
+	public static function recordWrite(File $file): void
 	{
 		self::$rollback_operations[] = array(
 			'action'   => 'write',
@@ -611,13 +612,13 @@ class Filesystem
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::rollback();
-		self::$commit_operations     = NULL;
+		self::$commit_operations     = null;
 		self::$deleted_map           = array();
 		self::$filename_map          = array();
-		self::$rollback_operations   = NULL;
+		self::$rollback_operations   = null;
 		self::$web_path_translations = array();
 	}
 
@@ -627,19 +628,18 @@ class Filesystem
 	 *
 	 * @return void
 	 */
-	static public function rollback(): void
+	public static function rollback(): void
 	{
 		$rollback_operations = self::$rollback_operations;
-		if ($rollback_operations === NULL) {
+		if ($rollback_operations === null) {
 			return;
 		}
 
 		$rollback_operations = array_reverse($rollback_operations);
 
-		$clear_cache = FALSE;
+		$clear_cache = false;
 		foreach ($rollback_operations as $operation) {
-			switch($operation['action']) {
-
+			switch ($operation['action']) {
 				case 'append':
 					$current_length = filesize($operation['filename']);
 					$handle         = fopen($operation['filename'], 'r+');
@@ -647,7 +647,7 @@ class Filesystem
 						ftruncate($handle, max(0, $current_length - $operation['length']));
 						fclose($handle);
 					}
-					$clear_cache = TRUE;
+					$clear_cache = true;
 					break;
 
 				case 'delete':
@@ -657,20 +657,19 @@ class Filesystem
 							debug_backtrace()
 						);
 						unlink($operation['filename']);
-						Filesystem::updateFilenameMap($operation['filename'], '*DELETED at ' . time() . ' with token ' . uniqid('', TRUE) . '* ' . $operation['filename']);
+						Filesystem::updateFilenameMap($operation['filename'], '*DELETED at ' . time() . ' with token ' . uniqid('', true) . '* ' . $operation['filename']);
 					}
 					break;
 
 				case 'write':
 					file_put_contents($operation['filename'], is_string($operation['old_data']) ? $operation['old_data'] : '');
-					$clear_cache = TRUE;
+					$clear_cache = true;
 					break;
 
 				case 'rename':
 					Filesystem::updateFilenameMap($operation['new_name'], $operation['old_name']);
 					rename($operation['new_name'], $operation['old_name']);
 					break;
-
 			}
 		}
 
@@ -679,14 +678,14 @@ class Filesystem
 		foreach ($commit_operations as $operation) {
 			if (isset($operation['object'])) {
 				$path = $operation['object']->getPath();
-				self::updateDeletedMap($path, NULL);
+				self::updateDeletedMap($path, null);
 				$clean = preg_replace('#\*DELETED at \d+ with token [\w.]+\* #', '', $path);
 				Filesystem::updateFilenameMap($path, is_string($clean) ? $clean : $path);
 			}
 		}
 
-		self::$commit_operations   = NULL;
-		self::$rollback_operations = NULL;
+		self::$commit_operations   = null;
+		self::$rollback_operations = null;
 
 		if ($clear_cache) {
 			clearstatcache();
@@ -700,11 +699,11 @@ class Filesystem
 	 * @param  string $path  The path to translate
 	 * @return string  The filesystem path translated to a web path
 	 */
-	static public function translateToWebPath(string $path): string
+	public static function translateToWebPath(string $path): string
 	{
 		$document_root = isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
 		$resolved      = realpath($document_root);
-		$translations  = array(($resolved === FALSE ? '' : $resolved) => '') + self::$web_path_translations;
+		$translations  = array(($resolved === false ? '' : $resolved) => '') + self::$web_path_translations;
 
 		foreach ($translations as $search => $replace) {
 			$translated = preg_replace(
@@ -726,7 +725,9 @@ class Filesystem
 	 *
 	 * @return Filesystem
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

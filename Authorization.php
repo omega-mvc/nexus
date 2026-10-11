@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Allows defining and checking user authentication via ACLs, authorization levels or a simple logged in/not logged in scheme
  *
@@ -25,21 +27,21 @@ class Authorization
 	 *
 	 * @var ?array<string, int>
 	 */
-	static private ?array $levels = NULL;
+	private static ?array $levels = null;
 
 	/**
 	 * The login page
 	 *
 	 * @var ?string
 	 */
-	static private ?string $login_page = NULL;
+	private static ?string $login_page = null;
 
 	/**
 	 * Named IP ranges
 	 *
 	 * @var array<string, mixed>
 	 */
-	static private array $named_ip_ranges = array();
+	private static array $named_ip_ranges = array();
 
 
 	/**
@@ -52,7 +54,7 @@ class Authorization
 	 * @param  mixed  $ip_ranges  This can be string (or array of strings) of the IPs or IP ranges to restrict to - please see ::checkIP() for format details
 	 * @return void
 	 */
-	static public function addNamedIPRange(string $name, mixed $ip_ranges): void
+	public static function addNamedIPRange(string $name, mixed $ip_ranges): void
 	{
 		self::$named_ip_ranges[$name] = $ip_ranges;
 	}
@@ -65,32 +67,32 @@ class Authorization
 	 * @param  string $permission  The permission to require from the user
 	 * @return boolean  If the user has the required permissions
 	 */
-	static public function checkACL(string $resource, string $permission): bool
+	public static function checkACL(string $resource, string $permission): bool
 	{
 		$acls = self::getUserACLs();
-		if ($acls === NULL) {
-			return FALSE;
+		if ($acls === null) {
+			return false;
 		}
 
 		if (!isset($acls[$resource]) && !isset($acls['*'])) {
-			return FALSE;
+			return false;
 		}
 
 		if (isset($acls[$resource])) {
 			$resource_permissions = $acls[$resource];
 			if (is_array($resource_permissions) && (in_array($permission, $resource_permissions) || in_array('*', $resource_permissions))) {
-				return TRUE;
+				return true;
 			}
 		}
 
 		if (isset($acls['*'])) {
 			$wildcard_permissions = $acls['*'];
 			if (is_array($wildcard_permissions) && (in_array($permission, $wildcard_permissions) || in_array('*', $wildcard_permissions))) {
-				return TRUE;
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -100,11 +102,10 @@ class Authorization
 	 * @param  string $level  The level to check against the logged in user's level
 	 * @return boolean  If the user has the required auth level
 	 */
-	static public function checkAuthLevel(string $level): bool
+	public static function checkAuthLevel(string $level): bool
 	{
 		$user_level = self::getUserAuthLevel();
 		if ($user_level) {
-
 			$levels = self::validateAuthLevel($user_level);
 			self::validateAuthLevel($level);
 
@@ -112,11 +113,11 @@ class Authorization
 			$required_number = $levels[$level];
 
 			if ($user_number >= $required_number) {
-				return TRUE;
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -139,7 +140,7 @@ class Authorization
 	 * @param  mixed $ip_ranges  A string (or array of strings) of the IPs or IP ranges to restrict to - see method description for details
 	 * @return boolean  If the user is coming from (one of) the IPs or ranges specified
 	 */
-	static public function checkIP(mixed $ip_ranges): bool
+	public static function checkIP(mixed $ip_ranges): bool
 	{
 		// Check to see if a named IP range was specified
 		if (is_string($ip_ranges) && isset(self::$named_ip_ranges[$ip_ranges])) {
@@ -147,7 +148,7 @@ class Authorization
 		}
 
 		if (!isset($_SERVER['REMOTE_ADDR'])) {
-			return FALSE;
+			return false;
 		}
 
 		// Get the remote IP and remove any IPv6 to IPv4 mapping
@@ -157,12 +158,12 @@ class Authorization
 		}
 		$user_ip      = str_replace('::ffff:', '', $remote_addr);
 		$user_ip_long = ip2long($user_ip);
-		if ($user_ip_long === FALSE) {
+		if ($user_ip_long === false) {
 			$user_ip_long = 0;
 		}
 
 		if (!is_array($ip_ranges)) {
-			$ip_ranges = ($ip_ranges === NULL) ? array() : array($ip_ranges);
+			$ip_ranges = ($ip_ranges === null) ? array() : array($ip_ranges);
 		}
 
 		foreach ($ip_ranges as $ip_range) {
@@ -173,7 +174,7 @@ class Authorization
 				$ip_range = (string) $ip_range;
 			}
 
-			if (strpos($ip_range, '/') === FALSE) {
+			if (strpos($ip_range, '/') === false) {
 				$ip_range .= '/32';
 			}
 
@@ -183,13 +184,13 @@ class Authorization
 				$mask_long = (int) (pow(2, 32) - pow(2, 32 - (int) $range_mask));
 			} else {
 				$mask_long = ip2long($range_mask);
-				if ($mask_long === FALSE) {
+				if ($mask_long === false) {
 					$mask_long = 0;
 				}
 			}
 
 			$range_ip_long = ip2long($range_ip);
-			if ($range_ip_long === FALSE) {
+			if ($range_ip_long === false) {
 				$range_ip_long = 0;
 			}
 
@@ -204,11 +205,11 @@ class Authorization
 			}
 
 			if (($user_ip_long & $mask_long) == $range_ip_long) {
-				return TRUE;
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -217,14 +218,16 @@ class Authorization
 	 *
 	 * @return boolean  If the user is logged in
 	 */
-	static public function checkLoggedIn(): bool
+	public static function checkLoggedIn(): bool
 	{
-		if (Session::get(__CLASS__ . '::user_auth_level', NULL) !== NULL ||
-			Session::get(__CLASS__ . '::user_acls', NULL) !== NULL ||
-			Session::get(__CLASS__ . '::user_token', NULL) !== NULL) {
-			return TRUE;
+		if (
+            Session::get(__CLASS__ . '::user_auth_level', null) !== null ||
+			Session::get(__CLASS__ . '::user_acls', null) !== null ||
+			Session::get(__CLASS__ . '::user_token', null) !== null
+        ) {
+			return true;
 		}
-		return FALSE;
+		return false;
 	}
 
 
@@ -233,7 +236,7 @@ class Authorization
 	 *
 	 * @return void
 	 */
-	static public function destroyUserInfo(): void
+	public static function destroyUserInfo(): void
 	{
 		Session::delete(__CLASS__ . '::user_auth_level');
 		Session::delete(__CLASS__ . '::user_acls');
@@ -247,9 +250,9 @@ class Authorization
 	 *
 	 * @return string  The login page users are redirected to if they don't have the required authorization
 	 */
-	static public function getLoginPage(): string
+	public static function getLoginPage(): string
 	{
-		if (self::$login_page === NULL) {
+		if (self::$login_page === null) {
 			throw new ProgrammerException(
 				'No login page has been set, please call %s',
 				__CLASS__ . '::setLoginPage()'
@@ -265,7 +268,7 @@ class Authorization
 	 * @param  string  $default_url  The default URL to return if the user was not redirected
 	 * @return string  The URL that was requested before they were redirected to the login page
 	 */
-	static public function getRequestedURL(bool $clear, ?string $default_url=NULL): string
+	public static function getRequestedURL(bool $clear, ?string $default_url = null): string
 	{
 		$requested_url = Session::get(__CLASS__ . '::requested_url', $default_url);
 		if ($clear) {
@@ -280,11 +283,11 @@ class Authorization
 	 *
 	 * @return ?array<string, mixed>  The logged in user's ACLs, `NULL` if none are set
 	 */
-	static public function getUserACLs(): ?array
+	public static function getUserACLs(): ?array
 	{
 		/** @var array<string, mixed>|null $acls  The ACLs stored for the logged in user */
-		$acls = Session::get(__CLASS__ . '::user_acls', NULL);
-		return is_array($acls) ? $acls : NULL;
+		$acls = Session::get(__CLASS__ . '::user_acls', null);
+		return is_array($acls) ? $acls : null;
 	}
 
 
@@ -293,10 +296,10 @@ class Authorization
 	 *
 	 * @return ?string  The logged in user's auth level, `NULL` if none is set
 	 */
-	static public function getUserAuthLevel(): ?string
+	public static function getUserAuthLevel(): ?string
 	{
-		$level = Session::get(__CLASS__ . '::user_auth_level', NULL);
-		return is_string($level) ? $level : NULL;
+		$level = Session::get(__CLASS__ . '::user_auth_level', null);
+		return is_string($level) ? $level : null;
 	}
 
 
@@ -305,9 +308,9 @@ class Authorization
 	 *
 	 * @return mixed  The user token that had been set, `NULL` if none
 	 */
-	static public function getUserToken(): mixed
+	public static function getUserToken(): mixed
 	{
-		return Session::get(__CLASS__ . '::user_token', NULL);
+		return Session::get(__CLASS__ . '::user_token', null);
 	}
 
 
@@ -316,7 +319,7 @@ class Authorization
 	 *
 	 * @return void
 	 */
-	static private function redirect(): void
+	private static function redirect(): void
 	{
 		self::setRequestedURL(URL::getWithQueryString());
 		URL::redirect(self::$login_page);
@@ -330,7 +333,7 @@ class Authorization
 	 * @param  string $permission  The permission to require from the user
 	 * @return void
 	 */
-	static public function requireACL(string $resource, string $permission): void
+	public static function requireACL(string $resource, string $permission): void
 	{
 		self::validateLoginPage();
 
@@ -348,7 +351,7 @@ class Authorization
 	 * @param  string $level  The level to check against the logged in user's level
 	 * @return void
 	 */
-	static public function requireAuthLevel(string $level): void
+	public static function requireAuthLevel(string $level): void
 	{
 		self::validateLoginPage();
 
@@ -365,7 +368,7 @@ class Authorization
 	 *
 	 * @return void
 	 */
-	static public function requireLoggedIn(): void
+	public static function requireLoggedIn(): void
 	{
 		self::validateLoginPage();
 
@@ -384,10 +387,10 @@ class Authorization
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
-		self::$levels          = NULL;
-		self::$login_page      = NULL;
+		self::$levels          = null;
+		self::$login_page      = null;
 		self::$named_ip_ranges = array();
 	}
 
@@ -398,7 +401,7 @@ class Authorization
 	 * @param  array<string, int> $levels  An associative array of `(string) {level} => (int) {value}`, for each level
 	 * @return void
 	 */
-	static public function setAuthLevels(array $levels): void
+	public static function setAuthLevels(array $levels): void
 	{
 		self::$levels = $levels;
 	}
@@ -410,7 +413,7 @@ class Authorization
 	 * @param  string $url  The URL of the login page
 	 * @return void
 	 */
-	static public function setLoginPage(string $url): void
+	public static function setLoginPage(string $url): void
 	{
 		self::$login_page = $url;
 	}
@@ -422,7 +425,7 @@ class Authorization
 	 * @param  string  $url  The URL to save as the requested URL
 	 * @return void
 	 */
-	static public function setRequestedURL(string $url): void
+	public static function setRequestedURL(string $url): void
 	{
 		Session::set(__CLASS__ . '::requested_url', $url);
 	}
@@ -447,7 +450,7 @@ class Authorization
 	 * @param  array<string, array<int, mixed>> $acls  The logged in user's ACLs - see method description for format
 	 * @return void
 	 */
-	static public function setUserACLs(array $acls): void
+	public static function setUserACLs(array $acls): void
 	{
 		Session::set(__CLASS__ . '::user_acls', $acls);
 		Session::regenerateID();
@@ -460,7 +463,7 @@ class Authorization
 	 * @param  string $level  The logged in user's auth level
 	 * @return void
 	 */
-	static public function setUserAuthLevel(string $level): void
+	public static function setUserAuthLevel(string $level): void
 	{
 		self::validateAuthLevel($level);
 		Session::set(__CLASS__ . '::user_auth_level', $level);
@@ -474,7 +477,7 @@ class Authorization
 	 * @param  mixed $token  The user's token. This could be a user id, an email address, a user object, etc.
 	 * @return void
 	 */
-	static public function setUserToken(mixed $token): void
+	public static function setUserToken(mixed $token): void
 	{
 		Session::set(__CLASS__ . '::user_token', $token);
 		Session::regenerateID();
@@ -487,15 +490,15 @@ class Authorization
 	 * @param  ?string $level  The level to validate
 	 * @return array<string, int>  The validated authorization levels
 	 */
-	static private function validateAuthLevel(?string $level=NULL): array
+	private static function validateAuthLevel(?string $level = null): array
 	{
-		if (self::$levels === NULL) {
+		if (self::$levels === null) {
 			throw new ProgrammerException(
 				'No authorization levels have been set, please call %s',
 				__CLASS__ . '::setAuthLevels()'
 			);
 		}
-		if ($level !== NULL && !isset(self::$levels[$level])) {
+		if ($level !== null && !isset(self::$levels[$level])) {
 			throw new ProgrammerException(
 				'The authorization level specified, %1$s, is invalid. Must be one of: %2$s.',
 				$level,
@@ -511,9 +514,9 @@ class Authorization
 	 *
 	 * @return void
 	 */
-	static private function validateLoginPage(): void
+	private static function validateLoginPage(): void
 	{
-		if (self::$login_page === NULL) {
+		if (self::$login_page === null) {
 			throw new ProgrammerException(
 				'No login page has been set, please call %s',
 				__CLASS__ . '::setLoginPage()'
@@ -527,7 +530,9 @@ class Authorization
 	 *
 	 * @return Authorization
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

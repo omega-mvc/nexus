@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Representation of a result from a query against the Database class
  *
@@ -34,7 +36,7 @@ class Result implements Iterator
 	 *
 	 * @var boolean
 	 */
-	static private bool $silence_notices = FALSE;
+	private static bool $silence_notices = false;
 
 
 	/**
@@ -43,14 +45,14 @@ class Result implements Iterator
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_map(
-			fn(mixed $arg): bool|float|int|string|null => $arg === NULL || is_scalar($arg) ? $arg : get_debug_type($arg),
+			fn(mixed $arg): bool|float|int|string|null => $arg === null || is_scalar($arg) ? $arg : get_debug_type($arg),
 			array_slice(func_get_args(), 1)
 		);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return Text::compose($message, $args);
 		}
 
@@ -68,11 +70,11 @@ class Result implements Iterator
 	 * @param string $string       The string to convert
 	 * @return string  The converted string
 	 */
-	static private function iconv(string $in_charset, string $out_charset, string $string): string
+	private static function iconv(string $in_charset, string $out_charset, string $string): string
 	{
 		$converted = iconv($in_charset, $out_charset, $string);
 
-		return $converted === FALSE ? '' : $converted;
+		return $converted === false ? '' : $converted;
 	}
 
 
@@ -81,9 +83,9 @@ class Result implements Iterator
 	 *
 	 * @return void
 	 */
-	static public function silenceNotices(): void
+	public static function silenceNotices(): void
 	{
-		self::$silence_notices = TRUE;
+		self::$silence_notices = true;
 	}
 
 
@@ -99,21 +101,21 @@ class Result implements Iterator
 	 *
 	 * @var int|string|null
 	 */
-	private int|string|null $auto_incremented_value = NULL;
+	private int|string|null $auto_incremented_value = null;
 
 	/**
 	 * The character set to transcode from for MSSQL queries
 	 *
 	 * @var string
 	 */
-	private ?string $character_set = NULL;
+	private ?string $character_set = null;
 
 	/**
 	 * The current row of the result set
 	 *
 	 * @var array<int|string, mixed>|null
 	 */
-	private ?array $current_row = NULL;
+	private ?array $current_row = null;
 
 	/**
 	 * The database object this result was created from
@@ -134,7 +136,7 @@ class Result implements Iterator
 	 *
 	 * @var boolean
 	 */
-	private bool $output_objects = FALSE;
+	private bool $output_objects = false;
 
 	/**
 	 * The position of the pointer in the result set
@@ -148,7 +150,7 @@ class Result implements Iterator
 	 *
 	 * @var mixed
 	 */
-	private mixed $result = NULL;
+	private mixed $result = null;
 
 	/**
 	 * The number of rows returned by a select
@@ -176,7 +178,7 @@ class Result implements Iterator
 	 *
 	 * @var string
 	 */
-	private ?string $untranslated_sql = NULL;
+	private ?string $untranslated_sql = null;
 
 
 	/**
@@ -188,7 +190,7 @@ class Result implements Iterator
 	 * @param  string    $character_set  MSSQL only: the character set to transcode from since MSSQL doesn't do UTF-8
 	 * @return Result
 	 */
-	public function __construct(mixed $database, mixed $character_set=NULL)
+	public function __construct(mixed $database, mixed $character_set = null)
 	{
 		if (!$database instanceof Database) {
 			throw new ProgrammerException(
@@ -229,7 +231,7 @@ class Result implements Iterator
 				break;
 		}
 
-		$this->result = NULL;
+		$this->result = null;
 	}
 
 
@@ -261,7 +263,7 @@ class Result implements Iterator
 			$rows = array();
 		}
 
-		$row = NULL;
+		$row = null;
 		$pointer = $this->pointer ?? 0;
 
 		switch ($this->extension) {
@@ -269,7 +271,7 @@ class Result implements Iterator
 				if ($this->result instanceof mysqli_result) {
 					$row = mysqli_fetch_assoc($this->result);
 				} else {
-					$row = $rows[$pointer] ?? NULL;
+					$row = $rows[$pointer] ?? null;
 				}
 				break;
 
@@ -277,12 +279,12 @@ class Result implements Iterator
 				if ($this->result instanceof PgSql\Result) {
 					$row = pg_fetch_assoc($this->result);
 				} else {
-					$row = $rows[$pointer] ?? NULL;
+					$row = $rows[$pointer] ?? null;
 				}
 				break;
 
 			case 'pdo':
-				$row = $rows[$pointer] ?? NULL;
+				$row = $rows[$pointer] ?? null;
 				if (is_array($row) && $row !== array() && $type == 'mssql') {
 					$row = $this->fixDblibMSSQLDriver($row);
 				}
@@ -291,7 +293,7 @@ class Result implements Iterator
 			case 'ibm_db2':
 			case 'oci8':
 			case 'sqlsrv':
-				$row = $rows[$pointer] ?? NULL;
+				$row = $rows[$pointer] ?? null;
 				break;
 		}
 
@@ -328,7 +330,9 @@ class Result implements Iterator
 
 		if ($this->unescape_map) {
 			foreach ($this->unescape_map as $column => $column_data_type) {
-				if (!isset($row[$column])) { continue; }
+				if (!isset($row[$column])) {
+                    continue;
+                }
 				$row[$column] = $this->database->unescape($column_data_type, $row[$column]);
 			}
 		}
@@ -344,7 +348,7 @@ class Result implements Iterator
 	 */
 	public function asObjects(): Result
 	{
-		$this->output_objects = TRUE;
+		$this->output_objects = true;
 		return $this;
 	}
 
@@ -382,7 +386,7 @@ class Result implements Iterator
 	 */
 	public function current(): mixed
 	{
-		if(!$this->returned_rows) {
+		if (!$this->returned_rows) {
 			throw new NoRowsException('The query did not return any rows');
 		}
 
@@ -391,13 +395,13 @@ class Result implements Iterator
 		}
 
 		// Primes the result set
-		if ($this->pointer === NULL) {
+		if ($this->pointer === null) {
 			$this->pointer = 0;
 			$this->advanceCurrentRow();
 		}
 
 		$row = $this->current_row;
-		if ($row === NULL) {
+		if ($row === null) {
 			throw new NoRemainingException('There are no remaining rows');
 		}
 
@@ -417,7 +421,7 @@ class Result implements Iterator
 	 */
 	private function decodeMSSQLNationalColumns(array $row): array
 	{
-		if (strpos($this->sql, 'fmssqln__') === FALSE) {
+		if (strpos($this->sql, 'fmssqln__') === false) {
 			return $row;
 		}
 
@@ -490,7 +494,7 @@ class Result implements Iterator
 
 		$value = array_shift($row);
 
-		return is_scalar($value) ? $value : NULL;
+		return is_scalar($value) ? $value : null;
 	}
 
 
@@ -506,10 +510,9 @@ class Result implements Iterator
 		static $using_dblib = array();
 
 		if (!isset($using_dblib[$this->extension])) {
-
 			// If it is not a windows box we are definitely not using dblib
 			if (!Core::checkOS('windows')) {
-				$using_dblib[$this->extension] = FALSE;
+				$using_dblib[$this->extension] = false;
 
 			// Check this windows box for dblib
 			} else {
@@ -518,7 +521,7 @@ class Result implements Iterator
 				$module_info = ob_get_contents();
 				ob_end_clean();
 
-				if ($module_info === FALSE) {
+				if ($module_info === false) {
 					$module_info = '';
 				}
 
@@ -628,7 +631,7 @@ class Result implements Iterator
 	 */
 	public function key(): int
 	{
-		if ($this->pointer === NULL) {
+		if ($this->pointer === null) {
 			$this->current();
 		}
 
@@ -647,7 +650,7 @@ class Result implements Iterator
 	 */
 	public function next(): void
 	{
-		if ($this->pointer === NULL) {
+		if ($this->pointer === null) {
 			$this->current();
 		}
 
@@ -656,7 +659,7 @@ class Result implements Iterator
 		if ($this->valid()) {
 			$this->advanceCurrentRow();
 		} else {
-			$this->current_row = NULL;
+			$this->current_row = null;
 		}
 	}
 
@@ -672,7 +675,8 @@ class Result implements Iterator
 	{
 		try {
 			$this->seek(0);
-		} catch (Exception $e) { }
+		} catch (Exception $e) {
+        }
 	}
 
 
@@ -686,7 +690,7 @@ class Result implements Iterator
 	 */
 	public function seek(int $row): void
 	{
-		if(!$this->returned_rows) {
+		if (!$this->returned_rows) {
 			throw new NoRowsException('The query did not return any rows');
 		}
 
@@ -696,19 +700,19 @@ class Result implements Iterator
 
 		$this->pointer = $row;
 
-		$success = FALSE;
+		$success = false;
 
 		switch ($this->extension) {
 			case 'mysqli':
 				$success = $this->result instanceof mysqli_result
 					? mysqli_data_seek($this->result, $row)
-					: TRUE;
+					: true;
 				break;
 
 			case 'pgsql':
 				$success = $this->result instanceof PgSql\Result
 					? pg_result_seek($this->result, $row)
-					: TRUE;
+					: true;
 				break;
 
 			case 'ibm_db2':
@@ -716,7 +720,7 @@ class Result implements Iterator
 			case 'pdo':
 			case 'sqlsrv':
 				// Do nothing since we already changed the pointer
-				$success = TRUE;
+				$success = true;
 				break;
 		}
 
@@ -741,7 +745,9 @@ class Result implements Iterator
 	 */
 	public function setAffectedRows(int $affected_rows): void
 	{
-		if ($affected_rows === -1) { $affected_rows = 0; }
+		if ($affected_rows === -1) {
+            $affected_rows = 0;
+        }
 		$this->affected_rows = (int) $affected_rows;
 	}
 
@@ -756,8 +762,8 @@ class Result implements Iterator
 	 */
 	public function setAutoIncrementedValue(int|string|null $auto_incremented_value): void
 	{
-		if ($auto_incremented_value === NULL || $auto_incremented_value === 0 || $auto_incremented_value === '0') {
-			$this->auto_incremented_value = NULL;
+		if ($auto_incremented_value === null || $auto_incremented_value === 0 || $auto_incremented_value === '0') {
+			$this->auto_incremented_value = null;
 		} else {
 			$this->auto_incremented_value = $auto_incremented_value;
 		}
@@ -831,10 +837,10 @@ class Result implements Iterator
 	 * @param  string $message  The message to use for the exception if there are no rows in this result set
 	 * @return Result  The result object, to allow for method chaining
 	 */
-	public function tossIfNoRows(?string $message=NULL): Result
+	public function tossIfNoRows(?string $message = null): Result
 	{
 		if (!$this->returned_rows && !$this->affected_rows) {
-			if ($message === NULL) {
+			if ($message === null) {
 				$message = 'No rows were returned or affected by the query';
 			}
 			throw new NoRowsException($message);
@@ -869,11 +875,11 @@ class Result implements Iterator
 	public function valid(): bool
 	{
 		if (!$this->returned_rows) {
-			return FALSE;
+			return false;
 		}
 
-		if ($this->pointer === NULL) {
-			return TRUE;
+		if ($this->pointer === null) {
+			return true;
 		}
 
 		return ($this->pointer < $this->returned_rows);

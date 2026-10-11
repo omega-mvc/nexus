@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides functionality for XML files
  *
@@ -35,7 +37,7 @@ class XML implements ArrayAccess
 	 * @param  string $content  The content to encode
 	 * @return string  The encoded content
 	 */
-	static public function encode(string $content): string
+	public static function encode(string $content): string
 	{
 		return htmlspecialchars(html_entity_decode($content, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
 	}
@@ -51,7 +53,7 @@ class XML implements ArrayAccess
 	 * @param string $string       The string to convert
 	 * @return string  The converted string
 	 */
-	static private function iconv(string $in_charset, string $out_charset, string $string): string
+	private static function iconv(string $in_charset, string $out_charset, string $string): string
 	{
 		$result = iconv($in_charset, $out_charset, $string);
 		return $result === false ? $string : $result;
@@ -63,7 +65,7 @@ class XML implements ArrayAccess
 	 *
 	 * @return void
 	 */
-	static public function sendHeader(): void
+	public static function sendHeader(): void
 	{
 		header('Content-Type: text/xml; charset=utf-8');
 	}
@@ -76,7 +78,7 @@ class XML implements ArrayAccess
 	 */
 	private function dom(): DOMAttr|DOMElement
 	{
-		if ($this->__dom === NULL) {
+		if ($this->__dom === null) {
 			throw new ProgrammerException('The %s object does not have an associated XML element', __CLASS__);
 		}
 		return $this->__dom;
@@ -89,9 +91,9 @@ class XML implements ArrayAccess
 	 * @param  mixed $offset  The offset to convert
 	 * @return string  The offset as a string
 	 */
-	static private function offsetToString(mixed $offset): string
+	private static function offsetToString(mixed $offset): string
 	{
-		if (!is_scalar($offset) && $offset !== NULL && !$offset instanceof Stringable) {
+		if (!is_scalar($offset) && $offset !== null && !$offset instanceof Stringable) {
 			throw new ProgrammerException('The offset must be a string, %s given', get_debug_type($offset));
 		}
 		return (string) $offset;
@@ -131,7 +133,7 @@ class XML implements ArrayAccess
 	 *
 	 * @var array<string, bool>
 	 */
-	static private array $methods = array(
+	private static array $methods = array(
 		'__construct'     => true,
 		'__get'           => true,
 		'__isset'         => true,
@@ -166,15 +168,15 @@ class XML implements ArrayAccess
 	 * @param  boolean                 $fix_entities_encoding  This will fix two common XML authoring errors and should only be used when experiencing decoding issues - HTML entities that haven't been encoded as XML, and XML content published in ISO-8859-1 or Windows-1252 encoding without an explicit encoding attribute
 	 * @return XML
 	 */
-	public function __construct(mixed $source, mixed $http_timeout=NULL, mixed $fix_entities_encoding=NULL)
+	public function __construct(mixed $source, mixed $http_timeout = null, mixed $fix_entities_encoding = null)
 	{
 		if (is_bool($http_timeout)) {
 			$fix_entities_encoding = $http_timeout;
-			$http_timeout = NULL;
+			$http_timeout = null;
 		}
 
 		// Prevent spitting out errors to we can throw exceptions
-		$old_setting = libxml_use_internal_errors(TRUE);
+		$old_setting = libxml_use_internal_errors(true);
 
 		$exception_message = '';
 		try {
@@ -184,15 +186,13 @@ class XML implements ArrayAccess
 
 			if ($source instanceof DOMElement) {
 				$this->__dom = $source;
-				$xml         = TRUE;
-
+				$xml         = true;
 			} elseif ($source instanceof File) {
 				$xml = simplexml_load_file($source->getPath());
 
 			// This handles URLs specially by adding a reasonable timeout
 			} elseif (preg_match('#^(?P<protocol>http(s)?)://#', $source, $matches)) {
-
-				if ($http_timeout === NULL) {
+				if ($http_timeout === null) {
 					$http_timeout = ini_get('default_socket_timeout');
 				}
 
@@ -203,7 +203,7 @@ class XML implements ArrayAccess
 
 				// If the URL is not loaded in time, this supresses the file_get_contents() warning
 				Core::startErrorCapture(E_WARNING);
-				$xml = file_get_contents($source, FALSE, $context);
+				$xml = file_get_contents($source, false, $context);
 				Core::stopErrorCapture();
 
 				if (!$xml) {
@@ -215,7 +215,6 @@ class XML implements ArrayAccess
 				}
 
 				$xml = new SimpleXMLElement($xml);
-
 			} else {
 				$is_path = $source && !preg_match('#^\s*<#', $source);
 
@@ -223,37 +222,36 @@ class XML implements ArrayAccess
 					if ($is_path) {
 						$path   = $source;
 						$source = file_get_contents($path);
-						if ($source === FALSE) {
+						if ($source === false) {
 							throw new ExpectedException('The file specified, %s, could not be loaded', $path);
 						}
-						$is_path = FALSE;
+						$is_path = false;
 					}
 					$source = $this->fixEntitiesEncoding($source);
 				}
 
 				$xml     = new SimpleXMLElement($source, 0, $is_path);
 			}
-
 		} catch (Exception $e) {
 			$exception_message = $e->getMessage();
-			$xml = FALSE;
+			$xml = false;
 		}
 
 		// We want it to be clear when XML parsing issues occur
-		if ($xml === FALSE) {
+		if ($xml === false) {
 			$errors = libxml_get_errors();
 			foreach ($errors as $error) {
 				$exception_message .= "\n" . rtrim($error->message);
 			}
 			// If internal errors were off before, turn them back off
 			if (!$old_setting) {
-				libxml_use_internal_errors(FALSE);
+				libxml_use_internal_errors(false);
 			}
 			throw new ValidationException(str_replace('%', '%%', $exception_message));
 		}
 
 		if (!$old_setting) {
-			libxml_use_internal_errors(FALSE);
+			libxml_use_internal_errors(false);
 		}
 
 		if (!$this->__dom) {
@@ -289,7 +287,7 @@ class XML implements ArrayAccess
 			return array($this, $name);
 		}
 
-		if ($this->dom()->namespaceURI && $this->dom()->prefix == '' && strpos($name, ':') === FALSE) {
+		if ($this->dom()->namespaceURI && $this->dom()->prefix == '' && strpos($name, ':') === false) {
 			$name = '__:' . $name;
 		}
 		$first_child = $this->query($name . '[1]');
@@ -317,7 +315,7 @@ class XML implements ArrayAccess
 	 */
 	public function __isset(string $name)
 	{
-		if ($this->dom()->namespaceURI && $this->dom()->prefix == '' && strpos($name, ':') === FALSE) {
+		if ($this->dom()->namespaceURI && $this->dom()->prefix == '' && strpos($name, ':') === false) {
 			$name = '__:' . $name;
 		}
 		return (bool) $this->query($name . '[1]')->length;
@@ -387,11 +385,11 @@ class XML implements ArrayAccess
 	 */
 	public function __wakeup()
 	{
-		if ($this->__xml === NULL) {
+		if ($this->__xml === null) {
 			throw new ProgrammerException('The %s object does not have any XML to unserialize', __CLASS__);
 		}
 		$this->__dom = dom_import_simplexml(new SimpleXMLElement($this->__xml));
-		$this->__xml = NULL;
+		$this->__xml = null;
 	}
 
 
@@ -426,10 +424,10 @@ class XML implements ArrayAccess
 	private function fixEntitiesEncoding(string $xml): string
 	{
 		preg_match('#^<\?xml.*? encoding="([^"]+)".*?\?>#i', $xml, $match);
-		$encoding = empty($match[1]) ? NULL : $match[1];
+		$encoding = empty($match[1]) ? null : $match[1];
 
 		// Try to detect the encoding via the BOM
-		if ($encoding === NULL) {
+		if ($encoding === null) {
 			if (substr($xml, 0, 3) == "\x0\x0\xFE\xFF") {
 				$encoding = 'UTF-32BE';
 			} elseif (substr($xml, 0, 3) == "\xFF\xFE\x0\x0") {
@@ -558,11 +556,11 @@ class XML implements ArrayAccess
 		$attribute = $this->query('@' . $offset . '[1]');
 		if ($attribute->length) {
 			$item = $attribute->item(0);
-			if ($item !== NULL) {
+			if ($item !== null) {
 				return $item->nodeValue;
 			}
 		}
-		return NULL;
+		return null;
 	}
 
 
@@ -604,7 +602,7 @@ class XML implements ArrayAccess
 	{
 		if (!$this->__xpath) {
 			$owner_document = $this->dom()->ownerDocument;
-			if ($owner_document === NULL) {
+			if ($owner_document === null) {
 				throw new ProgrammerException('The %s object does not have an owner document', __CLASS__);
 			}
 			$this->__xpath = new DOMXPath($owner_document);
@@ -616,12 +614,12 @@ class XML implements ArrayAccess
 		}
 
 		// Prevent spitting out errors to we can throw exceptions
-		$old_setting = libxml_use_internal_errors(TRUE);
+		$old_setting = libxml_use_internal_errors(true);
 
 		$result = $this->__xpath->query($path, $this->__dom);
 
 		// We want it to be clear when XML parsing issues occur
-		if ($result === FALSE) {
+		if ($result === false) {
 			$errors            = libxml_get_errors();
 			$exception_message = '';
 
@@ -631,14 +629,14 @@ class XML implements ArrayAccess
 
 			// If internal errors were off before, turn them back off
 			if (!$old_setting) {
-				libxml_use_internal_errors(FALSE);
+				libxml_use_internal_errors(false);
 			}
 
 			throw new ProgrammerException(str_replace('%', '%%', trim($exception_message)));
 		}
 
 		if (!$old_setting) {
-			libxml_use_internal_errors(FALSE);
+			libxml_use_internal_errors(false);
 		}
 
 		return $result;
@@ -654,13 +652,13 @@ class XML implements ArrayAccess
 	{
 		$dom            = $this->dom();
 		$owner_document = $dom->ownerDocument;
-		if ($owner_document === NULL) {
+		if ($owner_document === null) {
 			throw new ProgrammerException('The %s object does not have an owner document', __CLASS__);
 		}
 		$parent_node = $dom->parentNode;
-		$node        = ($parent_node !== NULL && $parent_node === $owner_document) ? $parent_node : $dom;
+		$node        = ($parent_node !== null && $parent_node === $owner_document) ? $parent_node : $dom;
 		$xml         = $owner_document->saveXML($node);
-		if ($xml === FALSE) {
+		if ($xml === false) {
 			throw new ProgrammerException('The %s object could not be converted to XML', __CLASS__);
 		}
 		return $xml;
@@ -674,23 +672,25 @@ class XML implements ArrayAccess
 	 * @param  boolean $first_only  If only the first match should be returned
 	 * @return array<int|string, mixed>|string|XML|null  An array of matching elements, or a string or XML object if `$first_only` is `TRUE`
 	 */
-	public function xpath(string $path, bool $first_only=FALSE): mixed
+	public function xpath(string $path, bool $first_only = false): mixed
 	{
 		$result = $this->query($path);
 
 		if ($first_only) {
-			if (!$result->length) { return NULL; }
+			if (!$result->length) {
+                return null;
+            }
 			$result = array($result->item(0));
-
 		} else {
-			if (!$result->length) { return array(); }
+			if (!$result->length) {
+                return array();
+            }
 		}
 
 		$keys_to_remove = array();
 		$output         = array();
 
 		foreach ($result as $element) {
-
 			if ($element instanceof DOMElement) {
 				$child = new XML($element);
 				$child->__custom_prefixes = $this->__custom_prefixes;
@@ -698,12 +698,9 @@ class XML implements ArrayAccess
 					$child->addCustomPrefix('__', $child->dom()->namespaceURI);
 				}
 				$output[] = $child;
-
 			} elseif ($element instanceof DOMCharacterData) {
 				$output[] = $element->data;
-
 			} elseif ($element instanceof DOMAttr) {
-
 				$key      = $element->name;
 				if ($element->prefix) {
 					$key = $element->prefix . ':' . $key;
@@ -725,10 +722,9 @@ class XML implements ArrayAccess
 					unset($keys_to_remove[$key_1]);
 
 					$key = $key . '[' . $i . ']';
-
 				} else {
 					$output[$key_1] = $element->nodeValue;
-					$keys_to_remove[$key_1] = TRUE;
+					$keys_to_remove[$key_1] = true;
 				}
 
 				$output[$key] = $element->nodeValue;
@@ -741,7 +737,7 @@ class XML implements ArrayAccess
 
 		if ($first_only) {
 			$first = current($output);
-			return $first === FALSE ? NULL : $first;
+			return $first === false ? null : $first;
 		}
 
 		return $output;

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Prints pagination links for RecordSet or other paginated records
  *
@@ -22,7 +24,7 @@ class Pagination
 	 *
 	 * @var array<int, string>
 	 */
-	static private array $filters = array(
+	private static array $filters = array(
 		'inflect',
 		'lower',
 		'url_encode',
@@ -34,7 +36,7 @@ class Pagination
 	 *
 	 * @var array<string, array{type: string, size: int, pieces: array<string, string>}>
 	 */
-	static private array $templates = array(
+	private static array $templates = array(
 		'default' => array(
 			'type'   => 'without_first_last',
 			'size'   => 4,
@@ -116,7 +118,7 @@ class Pagination
 	 * @param array<string, string> $pieces  The chunks of HTML to create the paginator from - see method description for details
 	 * @return void
 	 */
-	static public function defineTemplate(string $name, string $type, int $size, array $pieces): void
+	public static function defineTemplate(string $name, string $type, int $size, array $pieces): void
 	{
 		$valid_types = array('without_first_last', 'with_first_last');
 		if (!in_array($type, $valid_types)) {
@@ -178,7 +180,7 @@ class Pagination
 	 *
 	 * @return void
 	 */
-	static public function extend(): void
+	public static function extend(): void
 	{
 		ORM::registerRecordSetMethod('printInfo', array(self::class, 'printRecordSetInfo'));
 		ORM::registerRecordSetMethod('showLinks', array(self::class, 'showRecordSetLinks'));
@@ -192,7 +194,7 @@ class Pagination
 	 * @param string|array<int, string> $class  The class or classes present in the record set
 	 * @return array<array-key, mixed>  The merged data
 	 */
-	static private function extendRecordSetInfo(array $data, mixed $class): array
+	private static function extendRecordSetInfo(array $data, mixed $class): array
 	{
 		if (is_array($class)) {
 			$record_name = array_map(static fn(string $record_class): string => ORM::getRecordName($record_class), $class);
@@ -221,17 +223,17 @@ class Pagination
 	 * @param array<array-key, mixed> $parameters   The parameters passed to the method
 	 * @return void
 	 */
-	static public function printRecordSetInfo(RecordSet $object, mixed $class, mixed &$records, string $method_name, array $parameters): void
+	public static function printRecordSetInfo(RecordSet $object, mixed $class, mixed &$records, string $method_name, array $parameters): void
 	{
 		list($template, $data) = self::extractTemplateAndData($parameters);
 		$data     = self::extendRecordSetInfo($data, $class);
 		$per_page = $object->getLimit();
-		if ($per_page === NULL) {
+		if ($per_page === null) {
 			throw new ProgrammerException(
 				'The record set does not have a limit, so it can not be paginated'
 			);
 		}
-		self::printTemplatedInfo($template, $data, $object->getPage(), $per_page, $object->count(TRUE));
+		self::printTemplatedInfo($template, $data, $object->getPage(), $per_page, $object->count(true));
 	}
 
 
@@ -242,7 +244,7 @@ class Pagination
 	 * @param array<array-key, mixed> $parameters  The parameters passed to the method
 	 * @return array{0: string, 1: array<array-key, mixed>}  The template name and data
 	 */
-	static private function extractTemplateAndData(array $parameters): array
+	private static function extractTemplateAndData(array $parameters): array
 	{
 		$template = count($parameters) < 1 ? 'default' : $parameters[0];
 		if (!is_string($template)) {
@@ -272,9 +274,9 @@ class Pagination
 	 * @param integer $total_records  The total number of records
 	 * @return void
 	 */
-	static private function printTemplatedInfo(string $template, array $data, int $page, int $per_page, int $total_records): void
+	private static function printTemplatedInfo(string $template, array $data, int $page, int $per_page, int $total_records): void
 	{
-		$total_pages = ceil($total_records/$per_page);
+		$total_pages = ceil($total_records / $per_page);
 
 		self::printPiece(
 			$template,
@@ -300,7 +302,7 @@ class Pagination
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$filters = array(
 			'inflect',
@@ -339,17 +341,17 @@ class Pagination
 	 * @param array<array-key, mixed> $parameters   The parameters passed to the method
 	 * @return boolean  If the links were shown
 	 */
-	static public function showRecordSetLinks(RecordSet $object, mixed $class, mixed &$records, string $method_name, array $parameters): bool
+	public static function showRecordSetLinks(RecordSet $object, mixed $class, mixed &$records, string $method_name, array $parameters): bool
 	{
 		list($template, $data) = self::extractTemplateAndData($parameters);
 		$data     = self::extendRecordSetInfo($data, $class);
 		$per_page = $object->getLimit();
-		if ($per_page === NULL) {
+		if ($per_page === null) {
 			throw new ProgrammerException(
 				'The record set does not have a limit, so it can not be paginated'
 			);
 		}
-		return self::showTemplatedLinks($template, $data, $object->getPage(), $per_page, $object->count(TRUE));
+		return self::showTemplatedLinks($template, $data, $object->getPage(), $per_page, $object->count(true));
 	}
 
 
@@ -363,13 +365,13 @@ class Pagination
 	 * @param integer $total_records  The total number of records
 	 * @return boolean  If the links were shown
 	 */
-	static private function showTemplatedLinks(string $template, array $data, int $page, int $per_page, int $total_records): bool
+	private static function showTemplatedLinks(string $template, array $data, int $page, int $per_page, int $total_records): bool
 	{
 		if ($total_records <= $per_page) {
-			return FALSE;
+			return false;
 		}
 
-		$total_pages = ceil($total_records/$per_page);
+		$total_pages = ceil($total_records / $per_page);
 
 		self::printPiece(
 			$template,
@@ -406,17 +408,16 @@ class Pagination
 		}
 
 		$size = self::$templates[$template]['size'];
-		$start_separator = FALSE;
-		$end_separator   = FALSE;
+		$start_separator = false;
+		$end_separator   = false;
 		if (self::$templates[$template]['type'] == 'without_first_last') {
 			$start_page = max(1, $page - $size);
 			$end_page   = min($total_pages, $page + $size);
-
 		} else {
-			$start_separator = TRUE;
+			$start_separator = true;
 			$start_page      = $page - ($size - 2);
 			if ($start_page <= 2) {
-				$start_separator = FALSE;
+				$start_separator = false;
 				$start_page = 1;
 			}
 			$extra_end_pages = 0;
@@ -424,10 +425,10 @@ class Pagination
 				$extra_end_pages = $size - $page + 1;
 			}
 
-			$end_separator = TRUE;
+			$end_separator = true;
 			$end_page      = $page + ($size - 2);
 			if ($end_page >= $total_pages - 1) {
-				$end_separator = FALSE;
+				$end_separator = false;
 				$end_page = $total_pages;
 			}
 			$extra_start_pages = 0;
@@ -437,12 +438,12 @@ class Pagination
 
 			$start_page -= $extra_start_pages;
 			if ($start_page <= 3) {
-				$start_separator = FALSE;
+				$start_separator = false;
 				$start_page = 1;
 			}
 			$end_page += $extra_end_pages;
 			if ($end_page >= $total_pages - 2) {
-				$end_separator = FALSE;
+				$end_separator = false;
 				$end_page = $total_pages;
 			}
 		}
@@ -540,7 +541,7 @@ class Pagination
 			)
 		);
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -552,7 +553,7 @@ class Pagination
 	 * @param array<array-key, mixed> $data      The data to replace the variables with
 	 * @return void
 	 */
-	static private function printPiece(string $template, string $name, array $data): void
+	private static function printPiece(string $template, string $name, array $data): void
 	{
 		if (!isset(self::$templates[$template]['pieces'][$name])) {
 			throw new ProgrammerException(
@@ -565,7 +566,7 @@ class Pagination
 		preg_match_all('#\{\{ (\w+)((?:\|\w+)+)? \}\}#', $piece, $matches, PREG_SET_ORDER);
 		foreach ($matches as $match) {
 			$variable = $match[1];
-			$value    = (!isset($data[$variable])) ? NULL : $data[$variable];
+			$value    = (!isset($data[$variable])) ? null : $data[$variable];
 			if (isset($match[2])) {
 				$filters  = array_slice(explode('|', $match[2]), 1);
 				foreach ($filters as $filter) {
@@ -640,25 +641,24 @@ class Pagination
 	 * @param  mixed $page      The page number
 	 * @return void
 	 */
-	public function __construct(mixed $records, mixed $per_page=NULL, mixed $page=NULL)
+	public function __construct(mixed $records, mixed $per_page = null, mixed $page = null)
 	{
 		if ($records instanceof RecordSet) {
-			$this->total_records = $records->count(TRUE);
+			$this->total_records = $records->count(true);
 
-			$per_page = ($per_page === NULL) ? $records->getLimit() : $per_page;
-			if ($per_page === NULL) {
+			$per_page = ($per_page === null) ? $records->getLimit() : $per_page;
+			if ($per_page === null) {
 				throw new ProgrammerException(
 					'The record set does not have a limit, so the number of records per page could not be determined'
 				);
 			}
 			$this->per_page = self::normalizeInteger($per_page, '$per_page');
 
-			$page = ($page === NULL) ? $records->getPage() : $page;
-
+			$page = ($page === null) ? $records->getPage() : $page;
 		} else {
 			$this->total_records = self::normalizeInteger($records, '$records');
 
-			if ($per_page === NULL) {
+			if ($per_page === null) {
 				throw new ProgrammerException(
 					'No value was specified for the parameter %s',
 					'$per_page'
@@ -666,7 +666,7 @@ class Pagination
 			}
 			$this->per_page = self::normalizeInteger($per_page, '$per_page');
 
-			if ($page === NULL) {
+			if ($page === null) {
 				throw new ProgrammerException(
 					'No value was specified for the parameter %s',
 					'$page'
@@ -712,7 +712,7 @@ class Pagination
 	 * @param string $name   The name of the parameter, used in the exception message
 	 * @return integer  The normalized integer
 	 */
-	static private function normalizeInteger(mixed $value, string $name): int
+	private static function normalizeInteger(mixed $value, string $name): int
 	{
 		if (is_int($value)) {
 			return $value;
@@ -736,9 +736,9 @@ class Pagination
 	 * @param  string $template  The template to use
 	 * @return void
 	 */
-	public function printInfo(?string $template=NULL): void
+	public function printInfo(?string $template = null): void
 	{
-		if ($template === NULL) {
+		if ($template === null) {
 			$template = self::getDefaultTemplate($this->data);
 		}
 		self::printTemplatedInfo($template, $this->data, $this->page, $this->per_page, $this->total_records);
@@ -751,7 +751,7 @@ class Pagination
 	 * @param array<array-key, mixed> $data  The data for the paginator
 	 * @return string  The name of the template
 	 */
-	static private function getDefaultTemplate(array $data): string
+	private static function getDefaultTemplate(array $data): string
 	{
 		$template = $data['__template__'] ?? 'default';
 		if (!is_string($template)) {
@@ -772,7 +772,7 @@ class Pagination
 	 * @param mixed  $value  The value to set
 	 * @return void
 	 */
-	public function set(string|array $key, mixed $value=NULL): void
+	public function set(string|array $key, mixed $value = null): void
 	{
 		if (is_array($key)) {
 			$this->data = array_merge($this->data, $key);
@@ -788,9 +788,9 @@ class Pagination
 	 * @param  string $template  The template to use
 	 * @return boolean  If link were printed
 	 */
-	public function showLinks(?string $template=NULL): bool
+	public function showLinks(?string $template = null): bool
 	{
-		if ($template === NULL) {
+		if ($template === null) {
 			$template = self::getDefaultTemplate($this->data);
 		}
 		return self::showTemplatedLinks($template, $this->data, $this->page, $this->per_page, $this->total_records);

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides a single, simplified interface for [http://php.net/outcontrol output buffering] to prevent nested buffering issues and provide a more logical API
  *
@@ -22,14 +24,14 @@ class Buffer
 	 *
 	 * @var boolean
 	 */
-	static private bool $capturing = FALSE;
+	private static bool $capturing = false;
 
 	/**
 	 * If output buffering has been started
 	 *
 	 * @var boolean
 	 */
-	static private bool $started = FALSE;
+	private static bool $started = false;
 
 
 	/**
@@ -37,7 +39,7 @@ class Buffer
 	 *
 	 * @return void
 	 */
-	static public function erase(): void
+	public static function erase(): void
 	{
 		if (!self::$started) {
 			throw new ProgrammerException(
@@ -58,7 +60,7 @@ class Buffer
 	 *
 	 * @return string  The contents of the output buffer
 	 */
-	static public function get(): string
+	public static function get(): string
 	{
 		if (!self::$started) {
 			throw new ProgrammerException(
@@ -71,7 +73,7 @@ class Buffer
 			);
 		}
 		$contents = ob_get_contents();
-		return $contents === FALSE ? '' : $contents;
+		return $contents === false ? '' : $contents;
 	}
 
 
@@ -80,7 +82,7 @@ class Buffer
 	 *
 	 * @return boolean  If buffering has been started
 	 */
-	static public function isStarted(): bool
+	public static function isStarted(): bool
 	{
 		return self::$started;
 	}
@@ -93,7 +95,7 @@ class Buffer
 	 * @param  string $replace  The string to replace
 	 * @return void
 	 */
-	static public function replace(string $find, string $replace): void
+	public static function replace(string $find, string $replace): void
 	{
 		if (!self::$started) {
 			throw new ProgrammerException(
@@ -109,7 +111,7 @@ class Buffer
 		// ob_get_clean() actually turns off output buffering, so we do it the long way
 		$contents = ob_get_contents();
 		ob_clean();
-		if ($contents === FALSE) {
+		if ($contents === false) {
 			$contents = '';
 		}
 
@@ -124,7 +126,7 @@ class Buffer
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		if (self::$capturing) {
 			self::stopCapture();
@@ -142,7 +144,7 @@ class Buffer
 	 * @param  boolean $gzip  If the buffered output should be gzipped using [http://php.net/ob_gzhandler `ob_gzhandler()`]
 	 * @return void
 	 */
-	static public function start(bool $gzip=FALSE): void
+	public static function start(bool $gzip = false): void
 	{
 		if (self::$started) {
 			throw new ProgrammerException(
@@ -160,8 +162,8 @@ class Buffer
 				'zlib'
 			);
 		}
-		ob_start($gzip ? 'ob_gzhandler' : NULL);
-		self::$started = TRUE;
+		ob_start($gzip ? 'ob_gzhandler' : null);
+		self::$started = true;
 	}
 
 
@@ -170,7 +172,7 @@ class Buffer
 	 *
 	 * @return void
 	 */
-	static public function startCapture(): void
+	public static function startCapture(): void
 	{
 		if (self::$capturing) {
 			throw new ProgrammerException(
@@ -178,7 +180,7 @@ class Buffer
 			);
 		}
 		ob_start();
-		self::$capturing = TRUE;
+		self::$capturing = true;
 	}
 
 
@@ -187,7 +189,7 @@ class Buffer
 	 *
 	 * @return void
 	 */
-	static public function stop(): void
+	public static function stop(): void
 	{
 		if (!self::$started) {
 			throw new ProgrammerException(
@@ -208,7 +210,7 @@ class Buffer
 			ob_end_clean();
 		}
 
-		self::$started = FALSE;
+		self::$started = false;
 	}
 
 
@@ -217,16 +219,16 @@ class Buffer
 	 *
 	 * @return string  The captured output
 	 */
-	static public function stopCapture(): string
+	public static function stopCapture(): string
 	{
 		if (!self::$capturing) {
 			throw new ProgrammerException(
 				'Output capturing can not be stopped since it has not been started'
 			);
 		}
-		self::$capturing = FALSE;
+		self::$capturing = false;
 		$contents = ob_get_clean();
-		return $contents === FALSE ? '' : $contents;
+		return $contents === false ? '' : $contents;
 	}
 
 
@@ -235,7 +237,9 @@ class Buffer
 	 *
 	 * @return Buffer
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

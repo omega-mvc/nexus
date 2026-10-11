@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * An exception when an RecordSet does not contain any elements
  *

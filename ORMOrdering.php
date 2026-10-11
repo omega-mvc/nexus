@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Allows a column in an ActiveRecord class to be a relative sort order column
  *
@@ -39,7 +41,7 @@ class ORMOrdering
 	 *
 	 * @var array<string, array<string, array<array-key, string>>>
 	 */
-	static private array $ordering_columns = array();
+	private static array $ordering_columns = array();
 
 
 	/**
@@ -48,10 +50,10 @@ class ORMOrdering
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static private function compose(string $message): string
+	private static function compose(string $message): string
 	{
 		$args = array_map(static function (mixed $arg): bool|float|int|string|null {
-			if ($arg === NULL || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
+			if ($arg === null || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
 				return $arg;
 			}
 			if ($arg instanceof Stringable) {
@@ -63,7 +65,7 @@ class ORMOrdering
 			);
 		}, array_slice(func_get_args(), 1));
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -81,7 +83,7 @@ class ORMOrdering
 	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 */
-	static private function runQuery(Database $db, array $params): Result
+	private static function runQuery(Database $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -106,7 +108,7 @@ class ORMOrdering
 	 * @param  string $column  The column to set as an ordering column
 	 * @return void
 	 */
-	static public function configureOrderingColumn(mixed $class, string $column): void
+	public static function configureOrderingColumn(mixed $class, string $column): void
 	{
 		$class       = ORM::getClass($class);
 		$table       = ORM::tablize($class);
@@ -124,7 +126,7 @@ class ORMOrdering
 			);
 		}
 
-		$min_value = $info['min_value'] ?? NULL;
+		$min_value = $info['min_value'] ?? null;
 		if ($min_value instanceof Number && $min_value->eq('0')) {
 			throw new ProgrammerException(
 				'The column specified, %1$s, does not allow for negative values. Please adjust the data type to an integer type that allows for negative values.',
@@ -132,13 +134,13 @@ class ORMOrdering
 			);
 		}
 
-		$found = FALSE;
+		$found = false;
 		$other_columns = array();
 		foreach ($unique_keys as $unique_key) {
 			settype($unique_key, 'array');
 			if (in_array($column, $unique_key)) {
 				$other_columns = array_diff($unique_key, array($column));
-				$found = TRUE;
+				$found = true;
 				break;
 			}
 		}
@@ -162,7 +164,7 @@ class ORMOrdering
 
 		ORM::registerReflectCallback($class, array(self::class, 'reflect'));
 
-		ORM::registerActiveRecordMethod($class, 'inspect' . Grammar::camelize($column, TRUE), array(self::class, 'inspect'));
+		ORM::registerActiveRecordMethod($class, 'inspect' . Grammar::camelize($column, true), array(self::class, 'inspect'));
 
 		self::$ordering_columns[$class][$column] = $other_columns;
 	}
@@ -179,7 +181,7 @@ class ORMOrdering
 	 * @param  array<array-key, mixed>  &$old_values    The record's old values
 	 * @return array<array-key, mixed>  The updated params for Database::query()
 	 */
-	static private function addOldOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values, mixed &$old_values): array
+	private static function addOldOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values, mixed &$old_values): array
 	{
 		$column_info = $schema->getColumnInfo($table);
 		$column_info = is_array($column_info) ? $column_info : array();
@@ -188,10 +190,10 @@ class ORMOrdering
 		foreach ($other_columns as $other_column) {
 			$value = ActiveRecord::retrieveOld($old_values, $other_column, $values[$other_column]);
 
-			$other_info = $column_info[$other_column] ?? NULL;
+			$other_info = $column_info[$other_column] ?? null;
 
 			// This makes sure the query performs the way an insert will
-			if ($value === NULL && is_array($other_info) && ($other_info['not_null'] ?? NULL) && ($other_info['default'] ?? NULL) !== NULL) {
+			if ($value === null && is_array($other_info) && ($other_info['not_null'] ?? null) && ($other_info['default'] ?? null) !== null) {
 				$value = $other_info['default'];
 			}
 
@@ -217,7 +219,7 @@ class ORMOrdering
 	 * @param  array<array-key, mixed>  &$values        The values to match with
 	 * @return array<array-key, mixed>  The updated params for Database::query()
 	 */
-	static private function addOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values): array
+	private static function addOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values): array
 	{
 		$column_info = $schema->getColumnInfo($table);
 		$column_info = is_array($column_info) ? $column_info : array();
@@ -226,10 +228,10 @@ class ORMOrdering
 		foreach ($other_columns as $other_column) {
 			$value = $values[$other_column];
 
-			$other_info = $column_info[$other_column] ?? NULL;
+			$other_info = $column_info[$other_column] ?? null;
 
 			// This makes sure the query performs the way an insert will
-			if ($value === NULL && is_array($other_info) && ($other_info['not_null'] ?? NULL) && ($other_info['default'] ?? NULL) !== NULL) {
+			if ($value === null && is_array($other_info) && ($other_info['not_null'] ?? null) && ($other_info['default'] ?? null) !== null) {
 				$value = $other_info['default'];
 			}
 
@@ -257,7 +259,7 @@ class ORMOrdering
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		$class = get_class($object);
 		$table = ORM::tablize($class);
@@ -266,7 +268,6 @@ class ORMOrdering
 		$schema = ORMSchema::retrieve($class);
 
 		foreach (self::$ordering_columns[$class] as $column => $other_columns) {
-
 			$current_value = $values[$column];
 			$old_value     = ActiveRecord::retrieveOld($old_values, $column, $current_value);
 
@@ -364,7 +365,7 @@ class ORMOrdering
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return mixed  The metadata array or element specified
 	 */
-	static public function inspect(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
+	public static function inspect(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -377,7 +378,7 @@ class ORMOrdering
 
 		$info       = $schema->getColumnInfo($table, $column);
 		$info       = is_array($info) ? $info : array();
-		$element    = (isset($parameters[0]) && is_string($parameters[0])) ? $parameters[0] : NULL;
+		$element    = (isset($parameters[0]) && is_string($parameters[0])) ? $parameters[0] : null;
 
 		$other_columns = self::$ordering_columns[$class][$column];
 
@@ -400,7 +401,7 @@ class ORMOrdering
 		ORM::callInspectCallbacks($class, $column, $info);
 
 		if ($element) {
-			return (isset($info[$element])) ? $info[$element] : NULL;
+			return (isset($info[$element])) ? $info[$element] : null;
 		}
 
 		return $info;
@@ -416,34 +417,34 @@ class ORMOrdering
 	 * @param  array<array-key, mixed>  &$old_values      The old values of the record
 	 * @return boolean  If the record is part of a new ordering set
 	 */
-	static private function isInNewSet(string $ordering_column, array $other_columns, mixed &$values, mixed &$old_values): bool
+	private static function isInNewSet(string $ordering_column, array $other_columns, mixed &$values, mixed &$old_values): bool
 	{
 		$value_empty      = !$values[$ordering_column];
-		$old_value_empty  = !ActiveRecord::retrieveOld($old_values, $ordering_column, TRUE);
+		$old_value_empty  = !ActiveRecord::retrieveOld($old_values, $ordering_column, true);
 		$no_old_value_set = !ActiveRecord::hasOld($old_values, $ordering_column);
 
 		// If the value appears to be new, the record must be new to the order
 		if ($old_value_empty || ($value_empty && $no_old_value_set)) {
-			return TRUE;
+			return true;
 		}
 
 		// If there aren't any other columns to check, there is
 		// only a single order, so it must have already existed
 		if (!$other_columns) {
-			return FALSE;
+			return false;
 		}
 
 		// Check through each of the other columns to see if the set could have
 		// changed because of a new value in one of those columns
 		foreach ($other_columns as $other_column) {
 			if (ActiveRecord::changed($values, $old_values, $other_column)) {
-				return TRUE;
+				return true;
 			}
 		}
 
 		// If none of the multi-column values changed, the record must be part
 		// of the same set it was
-		return FALSE;
+		return false;
 	}
 
 
@@ -457,14 +458,14 @@ class ORMOrdering
 	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
-	static public function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
+	public static function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
 		if (!isset(self::$ordering_columns[$class])) {
 			return;
 		}
 
-		foreach(self::$ordering_columns[$class] as $column => $enabled) {
-			$camelized_column = Grammar::camelize($column, TRUE);
+		foreach (self::$ordering_columns[$class] as $column => $enabled) {
+			$camelized_column = Grammar::camelize($column, true);
 
 			$signature = '';
 			if ($include_doc_comments) {
@@ -495,7 +496,7 @@ class ORMOrdering
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function reorder(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function reorder(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		$class = get_class($object);
 		$table = ORM::tablize($class);
@@ -504,7 +505,6 @@ class ORMOrdering
 		$schema = ORMSchema::retrieve($class);
 
 		foreach (self::$ordering_columns[$class] as $column => $other_columns) {
-
 			$current_value = $values[$column];
 			if (!$object->exists()) {
 				$old_value = ActiveRecord::retrieveOld($old_values, $column);
@@ -528,29 +528,29 @@ class ORMOrdering
 				$new_max_value = $current_max_value + 1;
 			}
 
-			$changed = FALSE;
+			$changed = false;
 
 			// If a blank value was set, correct it to the old value (if there
 			// was one), or a new value at the end of the set
-			if ($current_value === '' || $current_value === NULL) {
+			if ($current_value === '' || $current_value === null) {
 				if ($old_value) {
 					$current_value = $old_value;
 				} else {
 					$current_value = $new_max_value;
 				}
-				$changed = TRUE;
+				$changed = true;
 			}
 
 			// When we move an object into a new set and the value didn't change then move it to the end of the new set
-			if ($new_set && $object->exists() && ($old_value === NULL || $old_value == $current_value)) {
+			if ($new_set && $object->exists() && ($old_value === null || $old_value == $current_value)) {
 				$current_value = $new_max_value;
-				$changed = TRUE;
+				$changed = true;
 			}
 
 			// If the value is too high, then set it to the last value
 			if ($current_value > $new_max_value) {
 				$current_value = $new_max_value;
-				$changed = TRUE;
+				$changed = true;
 			}
 
 			if ($changed) {
@@ -571,7 +571,7 @@ class ORMOrdering
 
 			// If the object already exists in the database, grab the ordering value
 			// right now in case some other object reordered it since it was loaded
-			$db_value = NULL;
+			$db_value = null;
 			if ($object->exists()) {
 				$params = array("SELECT %r FROM %r WHERE ", $column, $table);
 				$params = ORMDatabase::addPrimaryKeyWhereParams($schema, $params, $table, $table, $values, $old_values);
@@ -664,7 +664,6 @@ class ORMOrdering
 
 			// If there was an old set, we need to close the gap
 			if ($object->exists() && $new_set) {
-
 				$params = array("SELECT MAX(%r) FROM %r WHERE ", $column, $table);
 				$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
 
@@ -728,7 +727,7 @@ class ORMOrdering
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$ordering_columns = array();
 	}
@@ -747,7 +746,7 @@ class ORMOrdering
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	static public function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
+	public static function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{
 		$class = get_class($object);
 		$table = ORM::tablize($class);
@@ -756,7 +755,6 @@ class ORMOrdering
 		$schema = ORMSchema::retrieve($class);
 
 		foreach (self::$ordering_columns[$class] as $column => $other_columns) {
-
 			$current_value = $values[$column];
 			$old_value     = ActiveRecord::retrieveOld($old_values, $column);
 
@@ -786,16 +784,14 @@ class ORMOrdering
 			$validation_messages = $filtered_messages;
 
 			// If we have a completely empty value, we don't need to validate since a valid value will be generated
-			if ($current_value === '' || $current_value === NULL) {
+			if ($current_value === '' || $current_value === null) {
 				continue;
 			}
 
 			if (!is_numeric($current_value) || strlen((string) (int) $current_value) != strlen((string) $current_value)) {
 				$validation_messages[$column] = self::compose('%sPlease enter an integer', ValidationException::formatField($column_name));
-
 			} elseif ($current_value < 1) {
 				$validation_messages[$column] = self::compose('%sThe value can not be less than 1', ValidationException::formatField($column_name));
-
 			}
 		}
 	}
@@ -806,7 +802,9 @@ class ORMOrdering
 	 *
 	 * @return ORMOrdering
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

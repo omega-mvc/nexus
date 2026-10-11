@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides special column functionality for ActiveRecord classes
  *
@@ -35,35 +37,35 @@ class ORMColumn
 	 *
 	 * @var array<string, array<string, bool>>
 	 */
-	static private array $email_columns = array();
+	private static array $email_columns = array();
 
 	/**
 	 * Columns that should be formatted as links
 	 *
 	 * @var array<string, array<string, bool>>
 	 */
-	static private array $link_columns = array();
+	private static array $link_columns = array();
 
 	/**
 	 * Columns that should be returned as Number objects
 	 *
 	 * @var array<string, array<string, bool>>
 	 */
-	static private array $number_columns = array();
+	private static array $number_columns = array();
 
 	/**
 	 * Columns that should store passwords
 	 *
 	 * @var array<string, array<string, array{min_length: int}>>
 	 */
-	static private array $password_columns = array();
+	private static array $password_columns = array();
 
 	/**
 	 * Columns that should be formatted as a random string
 	 *
 	 * @var array<string, array<string, array{type: string, length: int}>>
 	 */
-	static private array $random_columns = array();
+	private static array $random_columns = array();
 
 
 	/**
@@ -72,10 +74,10 @@ class ORMColumn
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static private function compose(string $message): string
+	private static function compose(string $message): string
 	{
 		$args = array_map(static function (mixed $arg): bool|float|int|string|null {
-			if ($arg === NULL || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
+			if ($arg === null || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
 				return $arg;
 			}
 			if ($arg instanceof Stringable) {
@@ -87,7 +89,7 @@ class ORMColumn
 			);
 		}, array_slice(func_get_args(), 1));
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -105,7 +107,7 @@ class ORMColumn
 	 * @param  string $column  The column to format as an email address
 	 * @return void
 	 */
-	static public function configureEmailColumn(mixed $class, string $column): void
+	public static function configureEmailColumn(mixed $class, string $column): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -124,7 +126,7 @@ class ORMColumn
 
 		ORM::registerActiveRecordMethod(
 			$class,
-			'set' . Grammar::camelize($column, TRUE),
+			'set' . Grammar::camelize($column, true),
 			array(self::class, 'setEmailColumn')
 		);
 
@@ -138,7 +140,7 @@ class ORMColumn
 			self::$email_columns[$class] = array();
 		}
 
-		self::$email_columns[$class][$column] = TRUE;
+		self::$email_columns[$class][$column] = true;
 	}
 
 
@@ -149,7 +151,7 @@ class ORMColumn
 	 * @param  string $column  The column to format as a link
 	 * @return void
 	 */
-	static public function configureLinkColumn(mixed $class, string $column): void
+	public static function configureLinkColumn(mixed $class, string $column): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -168,7 +170,7 @@ class ORMColumn
 
 		ORM::registerActiveRecordMethod(
 			$class,
-			'prepare' . Grammar::camelize($column, TRUE),
+			'prepare' . Grammar::camelize($column, true),
 			array(self::class, 'prepareLinkColumn')
 		);
 
@@ -183,7 +185,7 @@ class ORMColumn
 			self::$link_columns[$class] = array();
 		}
 
-		self::$link_columns[$class][$column] = TRUE;
+		self::$link_columns[$class][$column] = true;
 	}
 
 
@@ -194,7 +196,7 @@ class ORMColumn
 	 * @param  string $column  The column to return as an Number object
 	 * @return void
 	 */
-	static public function configureNumberColumn(mixed $class, string $column): void
+	public static function configureNumberColumn(mixed $class, string $column): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -211,7 +213,7 @@ class ORMColumn
 			);
 		}
 
-		$camelized_column = Grammar::camelize($column, TRUE);
+		$camelized_column = Grammar::camelize($column, true);
 
 		ORM::registerActiveRecordMethod(
 			$class,
@@ -233,7 +235,7 @@ class ORMColumn
 			self::$number_columns[$class] = array();
 		}
 
-		self::$number_columns[$class][$column] = TRUE;
+		self::$number_columns[$class][$column] = true;
 	}
 
 	/**
@@ -244,7 +246,7 @@ class ORMColumn
 	 * @param  integer  $minimum_length  The minimum password a user can use
 	 * @return void
 	 */
-	static function configurePasswordColumn(mixed $class, string $column, int $minimum_length): void
+	public static function configurePasswordColumn(mixed $class, string $column, int $minimum_length): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -263,8 +265,7 @@ class ORMColumn
 
 		$max_length = $schema->getColumnInfo($table, $column, 'max_length');
 		$required_length = 80;
-		if ($max_length < $required_length)
-		{
+		if ($max_length < $required_length) {
 			throw new ProgrammerException(
 				'The column specified, %1$s, has a maximum length of %2$s. Must be at least %3$s to be set as a password column.',
 				$column,
@@ -275,7 +276,7 @@ class ORMColumn
 
 		ORM::registerActiveRecordMethod(
 			$class,
-			'verify' . Grammar::camelize($column, TRUE),
+			'verify' . Grammar::camelize($column, true),
 			array(self::class, 'verifyPassword')
 		);
 
@@ -303,7 +304,7 @@ class ORMColumn
 	 * @param  integer $length  The length of the random string
 	 * @return void
 	 */
-	static public function configureRandomColumn(mixed $class, string $column, string $type, int $length): void
+	public static function configureRandomColumn(mixed $class, string $column, string $type, int $length): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -338,7 +339,7 @@ class ORMColumn
 
 		ORM::registerActiveRecordMethod(
 			$class,
-			'generate' . Grammar::camelize($column, TRUE),
+			'generate' . Grammar::camelize($column, true),
 			array(self::class, 'generate')
 		);
 
@@ -370,7 +371,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> $parameters       The parameters passed to the method
 	 * @return string  The encoded number
 	 */
-	static public function encodeNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
+	public static function encodeNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -382,7 +383,7 @@ class ORMColumn
 		$value       = $values[$column];
 
 		if ($value instanceof Number) {
-			if (is_array($column_info) && ($column_info['type'] ?? NULL) == 'float') {
+			if (is_array($column_info) && ($column_info['type'] ?? null) == 'float') {
 				if (isset($parameters[0]) && is_scalar($parameters[0])) {
 					$decimal_places = (int) $parameters[0];
 				} elseif (isset($column_info['decimal_places']) && is_numeric($column_info['decimal_places'])) {
@@ -416,7 +417,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The newly generated random value
 	 */
-	static public function generate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
+	public static function generate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -431,11 +432,11 @@ class ORMColumn
 
 		// Check to see if this is a unique column
 		$unique_keys      = $schema->getKeys($table, 'unique');
-		$is_unique_column = FALSE;
+		$is_unique_column = false;
 		$value            = '';
 		foreach ($unique_keys as $unique_key) {
 			if ($unique_key == array($column)) {
-				$is_unique_column = TRUE;
+				$is_unique_column = true;
 				$sql = "SELECT %r FROM %r WHERE %r = %s";
 				do {
 					$value = Cryptography::randomString($settings['length'], $settings['type']);
@@ -464,7 +465,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
-	static public function inspect(string $class, string $column, mixed &$metadata): void
+	public static function inspect(string $class, string $column, mixed &$metadata): void
 	{
 		if (!empty(self::$email_columns[$class][$column])) {
 			$metadata['feature'] = 'email';
@@ -498,7 +499,7 @@ class ORMColumn
 	 * @param  mixed  $value   The value
 	 * @return mixed  The Number object or raw value
 	 */
-	static public function objectifyNumber(string $class, string $column, mixed $value): mixed
+	public static function objectifyNumber(string $class, string $column, mixed $value): mixed
 	{
 		if (is_string($value)) {
 			$string_value = $value;
@@ -538,7 +539,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The formatted link
 	 */
-	static public function prepareLinkColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
+	public static function prepareLinkColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -553,7 +554,7 @@ class ORMColumn
 
 		$value = HTML::prepare($value);
 
-		if (isset($parameters[0]) && $parameters[0] === TRUE) {
+		if (isset($parameters[0]) && $parameters[0] === true) {
 			return '<a href="' . $value . '">' . $value . '</a>';
 		}
 
@@ -575,7 +576,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The formatted link
 	 */
-	static public function prepareNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
+	public static function prepareNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -587,15 +588,15 @@ class ORMColumn
 		$value       = $values[$column];
 
 		if ($value instanceof Number) {
-			if (is_array($column_info) && ($column_info['type'] ?? NULL) == 'float') {
+			if (is_array($column_info) && ($column_info['type'] ?? null) == 'float') {
 				if (isset($parameters[0]) && is_scalar($parameters[0])) {
 					$decimal_places = (int) $parameters[0];
 				} elseif (isset($column_info['decimal_places']) && is_numeric($column_info['decimal_places'])) {
 					$decimal_places = (int) $column_info['decimal_places'];
 				} else {
-					$decimal_places = NULL;
+					$decimal_places = null;
 				}
-				if ($decimal_places !== NULL) {
+				if ($decimal_places !== null) {
 					$value = $value->trunc($decimal_places)->format();
 				} else {
 					$value = $value->format();
@@ -621,11 +622,11 @@ class ORMColumn
 	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
-	static public function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
+	public static function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
 
 		if (isset(self::$link_columns[$class])) {
-			foreach(self::$link_columns[$class] as $column => $enabled) {
+			foreach (self::$link_columns[$class] as $column => $enabled) {
 				$signature = '';
 				if ($include_doc_comments) {
 					$signature .= "/**\n";
@@ -637,7 +638,7 @@ class ORMColumn
 					$signature .= " * @return string  The HTML-ready value\n";
 					$signature .= " */\n";
 				}
-				$prepare_method = 'prepare' . Grammar::camelize($column, TRUE);
+				$prepare_method = 'prepare' . Grammar::camelize($column, true);
 				$signature .= 'public function ' . $prepare_method . '($create_link=FALSE)';
 
 				$signatures[$prepare_method] = $signature;
@@ -645,12 +646,11 @@ class ORMColumn
 		}
 
 		if (isset(self::$number_columns[$class])) {
-
 			$table  = ORM::tablize($class);
 			$schema = ORMSchema::retrieve($class);
 
-			foreach(self::$number_columns[$class] as $column => $enabled) {
-				$camelized_column = Grammar::camelize($column, TRUE);
+			foreach (self::$number_columns[$class] as $column => $enabled) {
+				$camelized_column = Grammar::camelize($column, true);
 				$type             = $schema->getColumnInfo($table, $column, 'type');
 
 				// Get and set methods
@@ -731,7 +731,7 @@ class ORMColumn
 		}
 
 		if (isset(self::$password_columns[$class])) {
-			foreach(self::$password_columns[$class] as $column => $settings) {
+			foreach (self::$password_columns[$class] as $column => $settings) {
 				$signature = '';
 				if ($include_doc_comments) {
 					$signature .= "/**\n";
@@ -743,7 +743,7 @@ class ORMColumn
 					$signature .= " * @return void\n";
 					$signature .= " */\n";
 				}
-				$verify_method = 'verify' . Grammar::camelize($column, TRUE);
+				$verify_method = 'verify' . Grammar::camelize($column, true);
 				$signature .= 'public function ' . $verify_method . '()';
 
 				$signatures[$verify_method] = $signature;
@@ -751,7 +751,7 @@ class ORMColumn
 		}
 
 		if (isset(self::$random_columns[$class])) {
-			foreach(self::$random_columns[$class] as $column => $settings) {
+			foreach (self::$random_columns[$class] as $column => $settings) {
 				$signature = '';
 				if ($include_doc_comments) {
 					$signature .= "/**\n";
@@ -762,7 +762,7 @@ class ORMColumn
 					$signature .= " * @return string  The randomly generated string\n";
 					$signature .= " */\n";
 				}
-				$generate_method = 'generate' . Grammar::camelize($column, TRUE);
+				$generate_method = 'generate' . Grammar::camelize($column, true);
 				$signature .= 'public function ' . $generate_method . '()';
 
 				$signatures[$generate_method] = $signature;
@@ -778,7 +778,7 @@ class ORMColumn
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$email_columns    = array();
 		self::$link_columns     = array();
@@ -801,7 +801,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	static function resetPasswordColumn(ActiveRecord $self, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
+	public static function resetPasswordColumn(ActiveRecord $self, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{
 		$class = ORM::getClass($self);
 
@@ -809,7 +809,7 @@ class ORMColumn
 			return;
 		}
 
-		foreach(self::$password_columns[$class] as $column => $options) {
+		foreach (self::$password_columns[$class] as $column => $options) {
 			$password  = is_string($values[$column]) ? $values[$column] : '';
 			$has_value = !empty($password) && UTF8::len($password) > 0;
 
@@ -817,8 +817,8 @@ class ORMColumn
 				$values[$column] = Cryptography::hashPassword($password);
 			}
 			if (!$has_value) {
-				$old_value      = $old_values[$column] ?? NULL;
-				$values[$column] = is_array($old_value) ? ($old_value[0] ?? NULL) : NULL;
+				$old_value      = $old_values[$column] ?? null;
+				$values[$column] = is_array($old_value) ? ($old_value[0] ?? null) : null;
 			}
 		}
 	}
@@ -838,7 +838,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	static public function setEmailColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
+	public static function setEmailColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -858,7 +858,7 @@ class ORMColumn
 		}
 
 		if ($email === '') {
-			$email = NULL;
+			$email = null;
 		}
 
 		ActiveRecord::assign($values, $old_values, $column, $email);
@@ -879,7 +879,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function setRandomStrings(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function setRandomStrings(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		if ($object->exists()) {
 			return;
@@ -898,7 +898,7 @@ class ORMColumn
 				$old_values,
 				$related_records,
 				$cache,
-				'generate' . Grammar::camelize($column, TRUE),
+				'generate' . Grammar::camelize($column, true),
 				array()
 			);
 		}
@@ -918,7 +918,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	static public function validateEmailColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
+	public static function validateEmailColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{
 		$class = get_class($object);
 
@@ -953,7 +953,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	static public function validateLinkColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
+	public static function validateLinkColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{
 		$class = get_class($object);
 
@@ -992,7 +992,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	static public function validatePasswordColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
+	public static function validatePasswordColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{
 		$class = get_class($object);
 
@@ -1020,7 +1020,6 @@ class ORMColumn
 						'%sPlease enter a value',
 						ValidationException::formatField($confirm_column_name)
 					);
-
 				} elseif ($request_value != $confirm_value) {
 					$validation_messages[$column] = self::compose(
 						'%1$sThe value entered does not match %2$s',
@@ -1049,7 +1048,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return void
 	 */
-	static public function verifyPassword(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): void
+	public static function verifyPassword(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): void
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -1074,7 +1073,9 @@ class ORMColumn
 	 *
 	 * @return ORMColumn
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

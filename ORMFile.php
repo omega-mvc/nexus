@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides file manipulation functionality for ActiveRecord classes
  *
@@ -60,42 +62,42 @@ class ORMFile
 	 *
 	 * @var array<string, array<string, list<string>>>
 	 */
-	static private array $column_inheritence = array();
+	private static array $column_inheritence = array();
 
 	/**
 	 * Methods to be called on Upload before the file is uploaded
 	 *
 	 * @var array<string, array<string, list<array{method: string, parameters: array<array-key, mixed>}>>>
 	 */
-	static private array $fupload_method_calls = array();
+	private static array $fupload_method_calls = array();
 
 	/**
 	 * Columns that can be filled by file uploads
 	 *
 	 * @var array<string, array<string, Directory>>
 	 */
-	static private array $file_upload_columns = array();
+	private static array $file_upload_columns = array();
 
 	/**
 	 * Methods to be called on the Image instance
 	 *
 	 * @var array<string, array<string, list<array{method: string, parameters: array<array-key, mixed>}>>>
 	 */
-	static private array $fimage_method_calls = array();
+	private static array $fimage_method_calls = array();
 
 	/**
 	 * Columns that can be filled by image uploads
 	 *
 	 * @var array<string, array<string, bool>>
 	 */
-	static private array $image_upload_columns = array();
+	private static array $image_upload_columns = array();
 
 	/**
 	 * Keeps track of the nesting level of the filesystem transaction so we know when to start, commit, rollback, etc
 	 *
 	 * @var integer
 	 */
-	static private int $transaction_level = 0;
+	private static int $transaction_level = 0;
 
 
 	/**
@@ -111,7 +113,7 @@ class ORMFile
 	 * @param  array<array-key, mixed>  $parameters  The parameters to pass to the method
 	 * @return void
 	 */
-	static public function addFImageMethodCall(mixed $class, string $column, string $method, array $parameters=array()): void
+	public static function addFImageMethodCall(mixed $class, string $column, string $method, array $parameters = array()): void
 	{
 		$class = ORM::getClass($class);
 
@@ -145,7 +147,7 @@ class ORMFile
 	 * @param  array<array-key, mixed>  $parameters  The parameters to pass to the method
 	 * @return void
 	 */
-	static public function addFUploadMethodCall(mixed $class, string $column, string $method, array $parameters=array()): void
+	public static function addFUploadMethodCall(mixed $class, string $column, string $method, array $parameters = array()): void
 	{
 		if ($method == 'enableOverwrite') {
 			throw new ProgrammerException(
@@ -185,7 +187,7 @@ class ORMFile
 	 *
 	 * @return void
 	 */
-	static public function begin(): void
+	public static function begin(): void
 	{
 		// If the transaction was started by something else, don't even track it
 		if (self::$transaction_level == 0 && Filesystem::isInsideTransaction()) {
@@ -207,7 +209,7 @@ class ORMFile
 	 *
 	 * @return void
 	 */
-	static public function commit(): void
+	public static function commit(): void
 	{
 		// If the transaction was started by something else, don't even track it
 		if (self::$transaction_level == 0) {
@@ -228,10 +230,10 @@ class ORMFile
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static private function compose(string $message): string
+	private static function compose(string $message): string
 	{
 		$args = array_map(static function (mixed $arg): bool|float|int|string|null {
-			if ($arg === NULL || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
+			if ($arg === null || is_bool($arg) || is_int($arg) || is_float($arg) || is_string($arg)) {
 				return $arg;
 			}
 			if ($arg instanceof Stringable) {
@@ -243,7 +245,7 @@ class ORMFile
 			);
 		}, array_slice(func_get_args(), 1));
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -270,7 +272,7 @@ class ORMFile
 	 * @param  Directory|string $directory  The directory to upload/move to
 	 * @return void
 	 */
-	static public function configureFileUploadColumn(mixed $class, string $column, mixed $directory): void
+	public static function configureFileUploadColumn(mixed $class, string $column, mixed $directory): void
 	{
 		$class     = ORM::getClass($class);
 		$table     = ORM::tablize($class);
@@ -298,7 +300,7 @@ class ORMFile
 			);
 		}
 
-		$camelized_column = Grammar::camelize($column, TRUE);
+		$camelized_column = Grammar::camelize($column, true);
 
 		ORM::registerActiveRecordMethod(
 			$class,
@@ -365,7 +367,7 @@ class ORMFile
 	 * @param  string $inherit_from_column  The column to inherit the uploaded file from
 	 * @return void
 	 */
-	static public function configureColumnInheritance(mixed $class, string $column, string $inherit_from_column): void
+	public static function configureColumnInheritance(mixed $class, string $column, string $inherit_from_column): void
 	{
 		$class = ORM::getClass($class);
 
@@ -408,13 +410,13 @@ class ORMFile
 	 * @param  Directory|string $directory   The directory to upload to
 	 * @return void
 	 */
-	static public function configureImageUploadColumn(mixed $class, string $column, mixed $directory): void
+	public static function configureImageUploadColumn(mixed $class, string $column, mixed $directory): void
 	{
 		self::configureFileUploadColumn($class, $column, $directory);
 
 		$class = ORM::getClass($class);
 
-		$camelized_column = Grammar::camelize($column, TRUE);
+		$camelized_column = Grammar::camelize($column, true);
 
 		ORM::registerActiveRecordMethod(
 			$class,
@@ -426,7 +428,7 @@ class ORMFile
 			self::$image_upload_columns[$class] = array();
 		}
 
-		self::$image_upload_columns[$class][$column] = TRUE;
+		self::$image_upload_columns[$class][$column] = true;
 
 		self::addFUploadMethodCall(
 			$class,
@@ -457,19 +459,18 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		$class = get_class($object);
 
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
-
 			// Remove the current file for the column
 			if ($values[$column] instanceof File) {
 				$values[$column]->delete();
 			}
 
 			// Remove the old files for the column
-			$old_files = ActiveRecord::retrieveOld($old_values, $column, array(), TRUE);
+			$old_files = ActiveRecord::retrieveOld($old_values, $column, array(), true);
 			foreach ((is_array($old_files) ? $old_files : array()) as $file) {
 				if ($file instanceof File) {
 					$file->delete();
@@ -491,14 +492,14 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function deleteOld(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function deleteOld(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		$class = get_class($object);
 
 		// Remove the old files for the column
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
 			$current_file = $values[$column];
-			$old_files = ActiveRecord::retrieveOld($old_values, $column, array(), TRUE);
+			$old_files = ActiveRecord::retrieveOld($old_values, $column, array(), true);
 			foreach ((is_array($old_files) ? $old_files : array()) as $file) {
 				if ($file instanceof File && (!$current_file instanceof File || $current_file->getPath() != $file->getPath())) {
 					$file->delete();
@@ -522,13 +523,13 @@ class ORMFile
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return string  The HTML form-ready filename
 	 */
-	static public function encode(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
+	public static function encode(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column   = Grammar::underscorize($subject);
 		$filename = ($values[$column] instanceof File) ? $values[$column]->getName() : '';
-		if ($filename && strpos($values[$column]->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename) !== FALSE) {
+		if ($filename && strpos($values[$column]->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename) !== false) {
 			$filename = self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename;
 		}
 
@@ -546,11 +547,10 @@ class ORMFile
 	 * @param  array<array-key, mixed>  &$metadata  The array of metadata about a column
 	 * @return void
 	 */
-	static public function inspect(string $class, string $column, mixed &$metadata): void
+	public static function inspect(string $class, string $column, mixed &$metadata): void
 	{
 		if (!empty(self::$image_upload_columns[$class][$column])) {
 			$metadata['feature'] = 'image';
-
 		} elseif (!empty(self::$file_upload_columns[$class][$column])) {
 			$metadata['feature'] = 'file';
 		}
@@ -571,7 +571,7 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function moveFromTemp(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function moveFromTemp(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		foreach ($values as $column => $value) {
 			if (!$value instanceof File) {
@@ -579,10 +579,10 @@ class ORMFile
 			}
 
 			// If the file is in a temp dir, move it out
-			if (strpos($value->getParent()->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR) !== FALSE) {
+			if (strpos($value->getParent()->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR) !== false) {
 				$new_filename = str_replace(self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR, '', $value->getPath());
 				$new_filename = Filesystem::makeUniqueName($new_filename);
-				$value->rename($new_filename, FALSE);
+				$value->rename($new_filename, false);
 			}
 		}
 	}
@@ -598,7 +598,7 @@ class ORMFile
 	 * @param  mixed  $value   The value
 	 * @return mixed  The File, Image or raw value
 	 */
-	static public function objectify(string $class, string $column, mixed $value): mixed
+	public static function objectify(string $class, string $column, mixed $value): mixed
 	{
 		if (is_string($value)) {
 			$string_value = $value;
@@ -617,7 +617,6 @@ class ORMFile
 		$path = self::$file_upload_columns[$class][$column]->getPath() . $string_value;
 
 		try {
-
 			return Filesystem::createObject($path);
 
 		// If there was some error creating the file, just return the raw value
@@ -639,13 +638,13 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
 	 */
-	static public function populate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
+	public static function populate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
 		$class = get_class($object);
 
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
-			if (Upload::check($column, FALSE) || Request::check('existing-' . $column) || Request::check('delete-' . $column)) {
-				$method = 'upload' . Grammar::camelize($column, TRUE);
+			if (Upload::check($column, false) || Request::check('existing-' . $column) || Request::check('delete-' . $column)) {
+				$method = 'upload' . Grammar::camelize($column, true);
 				$object->$method();
 			}
 		}
@@ -666,7 +665,7 @@ class ORMFile
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return string  The HTML-ready value for the file
 	 */
-	static public function prepare(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
+	public static function prepare(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 		$column = Grammar::underscorize($subject);
@@ -678,11 +677,11 @@ class ORMFile
 			);
 		}
 
-		$translate_to_web_path = (empty($parameters[0])) ? FALSE : TRUE;
+		$translate_to_web_path = (empty($parameters[0])) ? false : true;
 		$value                 = $values[$column];
 
 		if ($value instanceof File) {
-			$path = ($translate_to_web_path) ? $value->getPath(TRUE) : $value->getName();
+			$path = ($translate_to_web_path) ? $value->getPath(true) : $value->getName();
 		} else {
 			$path = '';
 		}
@@ -697,7 +696,7 @@ class ORMFile
 	 * @param  Directory $folder  The folder to create a temporary directory inside of
 	 * @return Directory  The temporary directory for the folder specified
 	 */
-	static private function prepareTempDir(Directory $folder): Directory
+	private static function prepareTempDir(Directory $folder): Directory
 	{
 		// Let's clean out the upload temp dir
 		try {
@@ -731,7 +730,7 @@ class ORMFile
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	static public function process(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
+	public static function process(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
@@ -756,20 +755,20 @@ class ORMFile
 	 * @param  File  $image   The image object to manipulate
 	 * @return void
 	 */
-	static public function processImage(string $class, string $column, File $image): void
+	public static function processImage(string $class, string $column, File $image): void
 	{
 		// If we don't have an image or we haven't set it up to manipulate images, just exit
 		if (!$image instanceof Image || empty(self::$fimage_method_calls[$class][$column])) {
 			return;
 		}
 
-		$save_changes_called = FALSE;
+		$save_changes_called = false;
 
 		// Manipulate the image
 		if (!empty(self::$fimage_method_calls[$class][$column])) {
 			foreach (self::$fimage_method_calls[$class][$column] as $method_call) {
 				if ($method_call['method'] == 'saveChanges') {
-					$save_changes_called = TRUE;
+					$save_changes_called = true;
 				}
 				$callback   = array($image, $method_call['method']);
 				$parameters = $method_call['parameters'];
@@ -799,13 +798,13 @@ class ORMFile
 	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
-	static public function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
+	public static function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
 		$image_columns = (isset(self::$image_upload_columns[$class])) ? array_keys(self::$image_upload_columns[$class]) : array();
 		$file_columns  = (isset(self::$file_upload_columns[$class]))  ? array_keys(self::$file_upload_columns[$class])  : array();
 
-		foreach($file_columns as $column) {
-			$camelized_column = Grammar::camelize($column, TRUE);
+		foreach ($file_columns as $column) {
+			$camelized_column = Grammar::camelize($column, true);
 
 			$noun = 'file';
 			if (in_array($column, $image_columns)) {
@@ -923,14 +922,14 @@ class ORMFile
 	 * @param  mixed  $value   The value
 	 * @return mixed  The cloned File object
 	 */
-	static public function replicate(string $class, string $column, mixed $value): mixed
+	public static function replicate(string $class, string $column, mixed $value): mixed
 	{
 		if (!$value instanceof File) {
 			return $value;
 		}
 
 		// If the file we are replicating is in the temp dir, the copy can live there too
-		if (strpos($value->getParent()->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR) !== FALSE) {
+		if (strpos($value->getParent()->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR) !== false) {
 			$value = clone $value;
 
 		// Otherwise, the copy of the file must be placed in the temp dir so it is properly cleaned up
@@ -957,7 +956,7 @@ class ORMFile
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$column_inheritence   = array();
 		self::$fupload_method_calls = array();
@@ -975,7 +974,7 @@ class ORMFile
 	 *
 	 * @return void
 	 */
-	static public function rollback(): void
+	public static function rollback(): void
 	{
 		// If the transaction was started by something else, don't even track it
 		if (self::$transaction_level == 0) {
@@ -1006,7 +1005,7 @@ class ORMFile
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	static public function set(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
+	public static function set(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
 		$class = get_class($object);
 
@@ -1022,7 +1021,7 @@ class ORMFile
 			);
 		}
 
-		$file     = NULL;
+		$file     = null;
 		$file_path = $parameters[0];
 
 		// Handle objects being passed in
@@ -1037,7 +1036,7 @@ class ORMFile
 			);
 		}
 
-		if ($file_path !== NULL && $file_path !== '' && $file_path !== FALSE) {
+		if ($file_path !== null && $file_path !== '' && $file_path !== false) {
 			if (!is_string($file_path)) {
 				if (!is_scalar($file_path)) {
 					throw new ProgrammerException(
@@ -1082,9 +1081,8 @@ class ORMFile
 				);
 			}
 			$new_file = $file->duplicate($temp_dir);
-
 		} else {
-			$new_file = NULL;
+			$new_file = null;
 		}
 
 		ActiveRecord::assign($values, $old_values, $column, $new_file);
@@ -1092,7 +1090,7 @@ class ORMFile
 		// Perform column inheritance
 		if (!empty(self::$column_inheritence[$class][$column])) {
 			foreach (self::$column_inheritence[$class][$column] as $other_column) {
-				self::set($object, $values, $old_values, $related_records, $cache, 'set' . Grammar::camelize($other_column, TRUE), array($file));
+				self::set($object, $values, $old_values, $related_records, $cache, 'set' . Grammar::camelize($other_column, true), array($file));
 			}
 		}
 
@@ -1111,7 +1109,7 @@ class ORMFile
 	 * @param  string $column  The column to set up for
 	 * @return Upload  The configured Upload object
 	 */
-	static private function setUpFUpload(string $class, string $column): Upload
+	private static function setUpFUpload(string $class, string $column): Upload
 	{
 		$upload = new Upload();
 
@@ -1146,14 +1144,14 @@ class ORMFile
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return File|Directory|null  The uploaded file, or NULL if no new file was set
 	 */
-	static public function upload(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
+	public static function upload(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
 		$class = get_class($object);
 
 		list ($action, $subject) = ORM::parseMethod($method_name);
 		$column = Grammar::underscorize($subject);
 
-		$existing_temp_file = FALSE;
+		$existing_temp_file = false;
 
 
 		// Try to upload the file putting it in the temp dir incase there is a validation problem with the record
@@ -1170,17 +1168,14 @@ class ORMFile
 
 		// If there was an eror, check to see if we have an existing file
 		} catch (ExpectedException $e) {
-
 			// If there is an existing file and none was uploaded, substitute the existing file
 			$existing_file = Request::get('existing-' . $column);
 			$delete_file   = Request::get('delete-' . $column, 'boolean');
 			$no_upload     = $e->getMessage() == self::compose('Please upload a file');
 
 			if ($existing_file && $delete_file && $no_upload) {
-				$file = NULL;
-
+				$file = null;
 			} elseif ($existing_file) {
-
 				$file_path = $upload_dir->getPath() . (is_scalar($existing_file) ? (string) $existing_file : '');
 				$file      = Filesystem::createObject($file_path);
 
@@ -1191,10 +1186,9 @@ class ORMFile
 					return null;
 				}
 
-				$existing_temp_file = TRUE;
-
+				$existing_temp_file = true;
 			} else {
-				$file = NULL;
+				$file = null;
 			}
 		}
 
@@ -1204,9 +1198,7 @@ class ORMFile
 		// Perform the file upload inheritance
 		if (!empty(self::$column_inheritence[$class][$column])) {
 			foreach (self::$column_inheritence[$class][$column] as $other_column) {
-
 				if ($file) {
-
 					// Image columns will only inherit if it is an Image object
 					if (!$file instanceof Image && isset(self::$image_upload_columns[$class]) && array_key_exists($other_column, self::$image_upload_columns[$class])) {
 						continue;
@@ -1218,14 +1210,13 @@ class ORMFile
 					if ($existing_temp_file) {
 						$other_file = Filesystem::createObject($other_temp_dir->getPath() . $file->getName());
 					} elseif ($file instanceof File) {
-						$other_file = $file->duplicate($other_temp_dir, FALSE);
+						$other_file = $file->duplicate($other_temp_dir, false);
 					} else {
 						throw new ProgrammerException(
 							'The existing file specified for the column %s is not a file object',
 							$other_column
 						);
 					}
-
 				} else {
 					$other_file = $file;
 				}
@@ -1260,7 +1251,7 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$validation_messages  The existing validation messages
 	 * @return void
 	 */
-	static public function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
+	public static function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{
 		$class = get_class($object);
 
@@ -1293,7 +1284,9 @@ class ORMFile
 	 *
 	 * @return ORMFile
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

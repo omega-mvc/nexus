@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Representation of an unbuffered result from a query against the Database class
  *
@@ -34,7 +36,7 @@ class UnbufferedResult implements Iterator
 	 *
 	 * @var boolean
 	 */
-	static private bool $silence_notices = FALSE;
+	private static bool $silence_notices = false;
 
 
 	/**
@@ -43,14 +45,14 @@ class UnbufferedResult implements Iterator
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_map(
-			fn(mixed $arg): bool|float|int|string|null => $arg === NULL || is_scalar($arg) ? $arg : get_debug_type($arg),
+			fn(mixed $arg): bool|float|int|string|null => $arg === null || is_scalar($arg) ? $arg : get_debug_type($arg),
 			array_slice(func_get_args(), 1)
 		);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return Text::compose($message, $args);
 		}
 
@@ -68,11 +70,11 @@ class UnbufferedResult implements Iterator
 	 * @param string $string       The string to convert
 	 * @return string  The converted string
 	 */
-	static private function iconv(string $in_charset, string $out_charset, string $string): string
+	private static function iconv(string $in_charset, string $out_charset, string $string): string
 	{
 		$converted = iconv($in_charset, $out_charset, $string);
 
-		return $converted === FALSE ? '' : $converted;
+		return $converted === false ? '' : $converted;
 	}
 
 
@@ -81,9 +83,9 @@ class UnbufferedResult implements Iterator
 	 *
 	 * @return void
 	 */
-	static public function silenceNotices(): void
+	public static function silenceNotices(): void
 	{
-		self::$silence_notices = TRUE;
+		self::$silence_notices = true;
 	}
 
 
@@ -92,14 +94,14 @@ class UnbufferedResult implements Iterator
 	 *
 	 * @var string
 	 */
-	private ?string $character_set = NULL;
+	private ?string $character_set = null;
 
 	/**
 	 * The current row of the result set
 	 *
 	 * @var array<int|string, mixed>|null
 	 */
-	private ?array $current_row = NULL;
+	private ?array $current_row = null;
 
 	/**
 	 * The database object the result was created from
@@ -120,7 +122,7 @@ class UnbufferedResult implements Iterator
 	 *
 	 * @var boolean
 	 */
-	private bool $output_objects = FALSE;
+	private bool $output_objects = false;
 
 	/**
 	 * The position of the pointer in the result set
@@ -134,7 +136,7 @@ class UnbufferedResult implements Iterator
 	 *
 	 * @var mixed
 	 */
-	private mixed $result = NULL;
+	private mixed $result = null;
 
 	/**
 	 * The SQL query
@@ -155,7 +157,7 @@ class UnbufferedResult implements Iterator
 	 *
 	 * @var string
 	 */
-	private ?string $untranslated_sql = NULL;
+	private ?string $untranslated_sql = null;
 
 
 	/**
@@ -167,7 +169,7 @@ class UnbufferedResult implements Iterator
 	 * @param  string    $character_set  MSSQL only: the character set to transcode from since MSSQL doesn't do UTF-8
 	 * @return UnbufferedResult
 	 */
-	public function __construct(mixed $database, mixed $character_set=NULL)
+	public function __construct(mixed $database, mixed $character_set = null)
 	{
 		if (!$database instanceof Database) {
 			throw new ProgrammerException(
@@ -244,7 +246,7 @@ class UnbufferedResult implements Iterator
 				break;
 		}
 
-		$this->result = NULL;
+		$this->result = null;
 	}
 
 
@@ -271,7 +273,7 @@ class UnbufferedResult implements Iterator
 	{
 		$type = $this->database->getType();
 
-		$row = NULL;
+		$row = null;
 
 		switch ($this->extension) {
 			case 'ibm_db2':
@@ -294,7 +296,7 @@ class UnbufferedResult implements Iterator
 				}
 
 				$meta = $statement->result_metadata();
-				if ($meta === FALSE) {
+				if ($meta === false) {
 					break;
 				}
 
@@ -303,7 +305,7 @@ class UnbufferedResult implements Iterator
 				while ($field = $meta->fetch_field()) {
 					// Populating the key explicitly mirrors what taking a reference to a
 					// non-existent offset does, and lets the type of $fetched_row be seen
-					$fetched_row[$field->name] = NULL;
+					$fetched_row[$field->name] = null;
 					$row_references[] = &$fetched_row[$field->name];
 				}
 
@@ -380,7 +382,9 @@ class UnbufferedResult implements Iterator
 
 		if ($this->unescape_map) {
 			foreach ($this->unescape_map as $column => $column_data_type) {
-				if (!isset($row[$column])) { continue; }
+				if (!isset($row[$column])) {
+                    continue;
+                }
 				$row[$column] = $this->database->unescape($column_data_type, $row[$column]);
 			}
 		}
@@ -396,7 +400,7 @@ class UnbufferedResult implements Iterator
 	 */
 	public function asObjects(): UnbufferedResult
 	{
-		$this->output_objects = TRUE;
+		$this->output_objects = true;
 		return $this;
 	}
 
@@ -415,14 +419,13 @@ class UnbufferedResult implements Iterator
 		$this->validateState();
 
 		// Primes the result set
-		if ($this->pointer === NULL) {
+		if ($this->pointer === null) {
 			$this->pointer = 0;
 			$this->advanceCurrentRow();
 		}
 
-		if(!$this->current_row && $this->pointer == 0) {
+		if (!$this->current_row && $this->pointer == 0) {
 			throw new NoRowsException('The query did not return any rows');
-
 		} elseif (!$this->current_row) {
 			throw new NoRemainingException('There are no remaining rows');
 		}
@@ -442,7 +445,7 @@ class UnbufferedResult implements Iterator
 	 */
 	private function decodeMSSQLNationalColumns(array $row): array
 	{
-		if (strpos($this->sql, 'fmssqln__') === FALSE) {
+		if (strpos($this->sql, 'fmssqln__') === false) {
 			return $row;
 		}
 
@@ -496,10 +499,9 @@ class UnbufferedResult implements Iterator
 		static $using_dblib = array();
 
 		if (!isset($using_dblib[$this->extension])) {
-
 			// If it is not a windows box we are definitely not using dblib
 			if (!Core::checkOS('windows')) {
-				$using_dblib[$this->extension] = FALSE;
+				$using_dblib[$this->extension] = false;
 
 			// Check this windows box for dblib
 			} else {
@@ -508,7 +510,7 @@ class UnbufferedResult implements Iterator
 				$module_info = ob_get_contents();
 				ob_end_clean();
 
-				if ($module_info === FALSE) {
+				if ($module_info === false) {
 					$module_info = '';
 				}
 
@@ -611,7 +613,7 @@ class UnbufferedResult implements Iterator
 	{
 		$this->validateState();
 
-		if ($this->pointer === NULL) {
+		if ($this->pointer === null) {
 			$this->current();
 		}
 
@@ -632,7 +634,7 @@ class UnbufferedResult implements Iterator
 	{
 		$this->validateState();
 
-		if ($this->pointer === NULL) {
+		if ($this->pointer === null) {
 			$this->current();
 		}
 
@@ -710,12 +712,12 @@ class UnbufferedResult implements Iterator
 	 * @param  string $message  The message to use for the exception if there are no rows in this result set
 	 * @return UnbufferedResult  The result object, to allow for method chaining
 	 */
-	public function tossIfNoRows(?string $message=NULL): UnbufferedResult
+	public function tossIfNoRows(?string $message = null): UnbufferedResult
 	{
 		try {
 			$this->current();
 		} catch (NoRowsException $e) {
-			if ($message !== NULL) {
+			if ($message !== null) {
 				$e->setMessage($message);
 			}
 			throw $e;
@@ -751,7 +753,7 @@ class UnbufferedResult implements Iterator
 	{
 		$this->validateState();
 
-		if ($this->pointer === NULL) {
+		if ($this->pointer === null) {
 			$this->advanceCurrentRow();
 			$this->pointer = 0;
 		}
@@ -767,7 +769,7 @@ class UnbufferedResult implements Iterator
 	 */
 	private function validateState(): void
 	{
-		if ($this->result === NULL) {
+		if ($this->result === null) {
 			throw new ProgrammerException('This unbuffered result has been fully fetched, or replaced by a newer result');
 		}
 	}

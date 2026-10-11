@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Allows creating and sending a single email containing plaintext, HTML, attachments and S/MIME encryption
  *
@@ -103,21 +105,21 @@ class Email
 	 *
 	 * @var boolean
 	 */
-	static private bool $convert_crlf  = FALSE;
+	private static bool $convert_crlf  = false;
 
 	/**
 	 * The local fully-qualified domain name
 	 *
 	 * @var string|null
 	 */
-	static private ?string $fqdn;
+	private static ?string $fqdn;
 
 	/**
 	 * Flags if the class should use [http://php.net/popen popen()] to send mail via sendmail
 	 *
 	 * @var boolean
 	 */
-	static private bool $popen_sendmail = FALSE;
+	private static bool $popen_sendmail = false;
 
 
 	/**
@@ -133,7 +135,7 @@ class Email
 	 * @param  string $email  The email address
 	 * @return string  The '"name" <email>' or 'email' string
 	 */
-	static public function combineNameEmail(string $name, string $email): string
+	public static function combineNameEmail(string $name, string $email): string
 	{
 		// Strip lower ascii character since they aren't useful in email addresses
 		$email = preg_replace('#[\x0-\x19]+#', '', $email) ?? $email;
@@ -163,11 +165,11 @@ class Email
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -185,11 +187,11 @@ class Email
 	 * @param  list<mixed> $args  The arguments to sanitize
 	 * @return list<bool|float|int|string|null>  The sanitized arguments
 	 */
-	static private function sanitizeComposeArgs(array $args): array
+	private static function sanitizeComposeArgs(array $args): array
 	{
 		return array_map(
 			static function (mixed $arg): bool|float|int|string|null {
-				if ($arg === NULL || is_scalar($arg)) {
+				if ($arg === null || is_scalar($arg)) {
 					return $arg;
 				}
 				return get_debug_type($arg);
@@ -207,7 +209,7 @@ class Email
 	 *
 	 * @return void
 	 */
-	static public function fixQmail(): void
+	public static function fixQmail(): void
 	{
 		if (Core::checkOS('windows')) {
 			return;
@@ -216,7 +218,7 @@ class Email
 		$sendmail_command = (string) ini_get('sendmail_path');
 
 		if (!$sendmail_command) {
-			self::$convert_crlf = TRUE;
+			self::$convert_crlf = true;
 			trigger_error(
 				self::compose('The proper fix for sending through qmail is not possible since the sendmail path is not set'),
 				E_USER_WARNING
@@ -234,31 +236,30 @@ class Email
 		$sendmail_params = (isset($sendmail_command_parts[1])) ? $sendmail_command_parts[1] : '';
 
 		// Check to see if we can run sendmail via popen
-		$executable = FALSE;
-		$safe_mode  = FALSE;
+		$executable = false;
+		$safe_mode  = false;
 
 		if (!in_array(strtolower((string) ini_get('safe_mode')), array('0', '', 'off'))) {
-			$safe_mode = TRUE;
+			$safe_mode = true;
 			$exec_dirs = explode(';', (string) ini_get('safe_mode_exec_dir'));
 			foreach ($exec_dirs as $exec_dir) {
 				if (stripos($sendmail_dir, $exec_dir) !== 0) {
 					continue;
 				}
 				if (file_exists($sendmail_path) && is_executable($sendmail_path)) {
-					$executable = TRUE;
+					$executable = true;
 				}
 			}
-
 		} else {
 			if (file_exists($sendmail_path) && is_executable($sendmail_path)) {
-				$executable = TRUE;
+				$executable = true;
 			}
 		}
 
 		if ($executable) {
-			self::$popen_sendmail = TRUE;
+			self::$popen_sendmail = true;
 		} else {
-			self::$convert_crlf   = TRUE;
+			self::$convert_crlf   = true;
 			if ($safe_mode) {
 				trigger_error(
 					self::compose('The proper fix for sending through qmail is not possible since safe mode is turned on and the sendmail binary is not in one of the paths defined by the safe_mode_exec_dir ini setting'),
@@ -289,9 +290,9 @@ class Email
 	 *
 	 * @return string  The fully-qualified domain name of the server
 	 */
-	static public function getFQDN(): string
+	public static function getFQDN(): string
 	{
-		if (self::$fqdn !== NULL) {
+		if (self::$fqdn !== null) {
 			return self::$fqdn;
 		}
 
@@ -300,26 +301,24 @@ class Email
 		if (isset($_ENV['HOST']) && is_string($_ENV['HOST'])) {
 			$fqdn = $_ENV['HOST'];
 		}
-		if (strpos($fqdn, '.') === FALSE && isset($_ENV['HOSTNAME']) && is_string($_ENV['HOSTNAME'])) {
+		if (strpos($fqdn, '.') === false && isset($_ENV['HOSTNAME']) && is_string($_ENV['HOSTNAME'])) {
 			$fqdn = $_ENV['HOSTNAME'];
 		}
-		if (strpos($fqdn, '.') === FALSE) {
+		if (strpos($fqdn, '.') === false) {
 			$fqdn = php_uname('n');
 		}
 
-		if (strpos($fqdn, '.') === FALSE) {
-
+		if (strpos($fqdn, '.') === false) {
 			$can_exec = !in_array('exec', array_map('trim', explode(',', (string) ini_get('disable_functions')))) && !ini_get('safe_mode');
 			if (Core::checkOS('linux') && $can_exec) {
 				$hostname = shell_exec('hostname --fqdn');
 				if (is_string($hostname)) {
 					$fqdn = trim($hostname);
 				}
-
 			} elseif (Core::checkOS('windows')) {
 				$shell    = new COM('WScript.Shell');
 				$tcpip_key = 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip';
-				$domain    = NULL;
+				$domain    = null;
 				try {
 					$domain = $shell->RegRead($tcpip_key . '\Parameters\NV Domain');
 				} catch (com_exception $e) {
@@ -330,23 +329,26 @@ class Email
 							$adapters = $shell->RegRead($tcpip_key . '\Linkage\Route');
 							if (is_array($adapters)) {
 								foreach ($adapters as $adapter) {
-									if (!is_string($adapter) || $adapter[0] != '{') { continue; }
+									if (!is_string($adapter) || $adapter[0] != '{') {
+                                        continue;
+                                    }
 									try {
 										$domain = $shell->RegRead($tcpip_key . '\Interfaces\\' . $adapter . '\Domain');
 									} catch (com_exception $e) {
 										try {
 											$domain = $shell->RegRead($tcpip_key . '\Interfaces\\' . $adapter . '\DhcpDomain');
-										} catch (com_exception $e) { }
+										} catch (com_exception $e) {
+                                        }
 									}
 								}
 							}
-						} catch (com_exception $e) { }
+						} catch (com_exception $e) {
+                        }
 					}
 				}
 				if (!empty($domain) && is_string($domain)) {
 					$fqdn .= '.' . $domain;
 				}
-
 			} elseif (!ini_get('open_basedir') && file_exists('/etc/resolv.conf')) {
 				$output = file_get_contents('/etc/resolv.conf');
 				if (is_string($output) && preg_match('#^domain ([a-z0-9_.-]+)#im', $output, $match)) {
@@ -367,7 +369,7 @@ class Email
 	 * @param  integer $first_line_prefix_length  The length of any prefix applied to the first line of the encoded word - this allows properly accounting for a header name
 	 * @return string  The encoded string
 	 */
-	static private function makeEncodedWord(string $content, int $first_line_prefix_length): string
+	private static function makeEncodedWord(string $content, int $first_line_prefix_length): string
 	{
 		// Homogenize the line-endings to CRLF
 		$content = str_replace("\r\n", "\n", $content);
@@ -411,13 +413,12 @@ class Email
 		$output = $prefix;
 		$line_length = $prefix_length + $first_line_prefix_length;
 
-		for ($i=0; $i<$length; $i++) {
-
+		for ($i = 0; $i < $length; $i++) {
 			// Get info about the next character
 			$char_length = ($content[$i] == '=') ? 3 : 1;
 			$char        = $content[$i];
 			if ($char_length == 3) {
-				$char .= $content[$i+1] . $content[$i+2];
+				$char .= $content[$i + 1] . $content[$i + 2];
 			}
 
 			// If we have too long a line, wrap it
@@ -433,7 +434,7 @@ class Email
 			$line_length += $char_length;
 
 			// Skip characters if we have an encoded character
-			$i += $char_length-1;
+			$i += $char_length - 1;
 		}
 
 		if (substr($output, -2) != $suffix) {
@@ -451,11 +452,11 @@ class Email
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
-		self::$convert_crlf   = FALSE;
-		self::$fqdn           = NULL;
-		self::$popen_sendmail = FALSE;
+		self::$convert_crlf   = false;
+		self::$fqdn           = null;
+		self::$popen_sendmail = false;
 	}
 
 
@@ -465,15 +466,15 @@ class Email
 	 * @param  mixed $value  The value to check
 	 * @return boolean  If the value is string-like
 	 */
-	static protected function stringlike(mixed $value): bool
+	protected static function stringlike(mixed $value): bool
 	{
 		if (is_object($value)) {
 			if (!($value instanceof \Stringable)) {
-				return FALSE;
+				return false;
 			}
 			$value = (string) $value;
 		} elseif (!is_scalar($value)) {
-			return FALSE;
+			return false;
 		}
 
 		return strlen(trim((string) $value)) > 0;
@@ -486,7 +487,7 @@ class Email
 	 * @param string $text  The text to unindent and replace constants in
 	 * @return string  The unindented text
 	 */
-	static public function unindentExpand(string $text): string
+	public static function unindentExpand(string $text): string
 	{
 		$text = preg_replace('#^[ \t]*\n|\n[ \t]*$#D', '', $text) ?? $text;
 
@@ -496,9 +497,13 @@ class Email
 
 		preg_match_all('#\{([a-z][a-z0-9_]*)\}#i', $text, $constants, PREG_SET_ORDER);
 		foreach ($constants as $constant) {
-			if (!defined($constant[1])) { continue; }
+			if (!defined($constant[1])) {
+                continue;
+            }
 			$replacement = constant($constant[1]);
-			if (!is_string($replacement) && !is_int($replacement) && !is_float($replacement)) { continue; }
+			if (!is_string($replacement) && !is_int($replacement) && !is_float($replacement)) {
+                continue;
+            }
 			$text = preg_replace('#' . preg_quote($constant[0], '#') . '#', (string) $replacement, $text, 1) ?? $text;
 		}
 
@@ -525,7 +530,7 @@ class Email
 	 *
 	 * @var string|null
 	 */
-	private ?string $bounce_to_email = NULL;
+	private ?string $bounce_to_email = null;
 
 	/**
 	 * The email address(es) to CC to
@@ -546,14 +551,14 @@ class Email
 	 *
 	 * @var string|null
 	 */
-	private ?string $from_email = NULL;
+	private ?string $from_email = null;
 
 	/**
 	 * The HTML body of the email
 	 *
 	 * @var string
 	 */
-	private ?string $html_body = NULL;
+	private ?string $html_body = null;
 
 	/**
 	 * The Message-ID header for the email
@@ -567,14 +572,14 @@ class Email
 	 *
 	 * @var string
 	 */
-	private ?string $plaintext_body = NULL;
+	private ?string $plaintext_body = null;
 
 	/**
 	 * The recipient's S/MIME PEM certificate filename, used for encryption of the message
 	 *
 	 * @var string
 	 */
-	private ?string $recipients_smime_cert_file = NULL;
+	private ?string $recipients_smime_cert_file = null;
 
 	/**
 	 * The files to include as multipart/related
@@ -588,56 +593,56 @@ class Email
 	 *
 	 * @var string|null
 	 */
-	private ?string $reply_to_email = NULL;
+	private ?string $reply_to_email = null;
 
 	/**
 	 * The email address actually sending the email
 	 *
 	 * @var string|null
 	 */
-	private ?string $sender_email = NULL;
+	private ?string $sender_email = null;
 
 	/**
 	 * The senders's S/MIME PEM certificate filename, used for singing the message
 	 *
 	 * @var string
 	 */
-	private ?string $senders_smime_cert_file = NULL;
+	private ?string $senders_smime_cert_file = null;
 
 	/**
 	 * The senders's S/MIME private key filename, used for singing the message
 	 *
 	 * @var string
 	 */
-	private ?string $senders_smime_pk_file = NULL;
+	private ?string $senders_smime_pk_file = null;
 
 	/**
 	 * The senders's S/MIME private key password, used for singing the message
 	 *
 	 * @var string
 	 */
-	private ?string $senders_smime_pk_password = NULL;
+	private ?string $senders_smime_pk_password = null;
 
 	/**
 	 * If the message should be encrypted using the recipient's S/MIME certificate
 	 *
 	 * @var boolean
 	 */
-	private bool $smime_encrypt = FALSE;
+	private bool $smime_encrypt = false;
 
 	/**
 	 * If the message should be signed using the senders's S/MIME private key
 	 *
 	 * @var boolean
 	 */
-	private bool $smime_sign = FALSE;
+	private bool $smime_sign = false;
 
 	/**
 	 * The subject of the email
 	 *
 	 * @var string
 	 */
-	private ?string $subject = NULL;
+	private ?string $subject = null;
 
 	/**
 	 * The email address(es) to send to
@@ -682,7 +687,7 @@ class Email
 	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if incorrectly detected
 	 * @return Email  The email object, to allow for method chaining
 	 */
-	public function addAttachment(string|File $contents, ?string $filename=NULL, ?string $mime_type=NULL): Email
+	public function addAttachment(string|File $contents, ?string $filename = null, ?string $mime_type = null): Email
 	{
 		list($contents, $filename, $mime_type) = $this->extrapolateFileInfo($contents, $filename, $mime_type);
 
@@ -713,7 +718,7 @@ class Email
 	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if incorrectly detected
 	 * @return string  The fully-formed `cid:` URL for use in HTML `src` attributes
 	 */
-	public function addRelatedFile(string|File $contents, ?string $filename=NULL, ?string $mime_type=NULL): string
+	public function addRelatedFile(string|File $contents, ?string $filename = null, ?string $mime_type = null): string
 	{
 		list($contents, $filename, $mime_type) = $this->extrapolateFileInfo($contents, $filename, $mime_type);
 
@@ -740,7 +745,7 @@ class Email
 	 * @param  string $name   The recipient's name
 	 * @return Email|null  The email object, to allow for method chaining, or `NULL` if no email was specified
 	 */
-	public function addBCCRecipient(string $email, ?string $name=NULL): Email|null
+	public function addBCCRecipient(string $email, ?string $name = null): Email|null
 	{
 		if (!$email) {
 			return null;
@@ -759,7 +764,7 @@ class Email
 	 * @param  string $name   The recipient's name
 	 * @return Email|null  The email object, to allow for method chaining, or `NULL` if no email was specified
 	 */
-	public function addCCRecipient(string $email, ?string $name=NULL): Email|null
+	public function addCCRecipient(string $email, ?string $name = null): Email|null
 	{
 		if (!$email) {
 			return null;
@@ -785,7 +790,7 @@ class Email
 	 * @param  string $value     The value of the header
 	 * @return Email  The email object, to allow for method chaining
 	 */
-	public function addCustomHeader(string $name, ?string $value=NULL): Email
+	public function addCustomHeader(string $name, ?string $value = null): Email
 	{
 		$lower_name = UTF8::lower($name);
 		$this->custom_headers[$lower_name] = array($name, $value);
@@ -801,7 +806,7 @@ class Email
 	 * @param  string $name   The recipient's name
 	 * @return Email|null  The email object, to allow for method chaining, or `NULL` if no email was specified
 	 */
-	public function addRecipient(string $email, ?string $name=NULL): Email|null
+	public function addRecipient(string $email, ?string $name = null): Email|null
 	{
 		if (!$email) {
 			return null;
@@ -828,10 +833,14 @@ class Email
 			$emails = array($emails);
 		}
 
-		$first = TRUE;
+		$first = true;
 		$line  = 1;
 		foreach ($emails as $email) {
-			if ($first) { $first = FALSE; } else { $header .= ', '; }
+			if ($first) {
+                $first = false;
+            } else {
+                $header .= ', ';
+            }
 
 			// Try to stay within the recommended 78 character line limit
 			$last_crlf_pos = (int) strrpos($header, "\r\n");
@@ -941,7 +950,6 @@ class Email
 		}
 
 		if ($this->attachments) {
-
 			if ($this->html_body) {
 				$body .= '--' . end($boundary_stack) . "--\r\n";
 				array_pop($boundary_stack);
@@ -1006,14 +1014,12 @@ class Email
 		if (!$this->html_body && !$this->attachments) {
 			$headers .= "Content-Type: text/plain; charset=utf-8\r\n";
 			$headers .= "Content-Transfer-Encoding: quoted-printable\r\n";
-
 		} elseif ($this->html_body && !$this->attachments) {
 			if ($this->related_files) {
 				$headers .= 'Content-Type: multipart/related; boundary="' . $boundary . "\"\r\n";
 			} else {
 				$headers .= 'Content-Type: multipart/alternative; boundary="' . $boundary . "\"\r\n";
 			}
-
 		} elseif ($this->attachments) {
 			$headers .= 'Content-Type: multipart/mixed; boundary="' . $boundary . "\"\r\n";
 		}
@@ -1040,7 +1046,7 @@ class Email
 		$plaintext_file  = tempnam('', '__fEmail_');
 		$ciphertext_file = tempnam('', '__fEmail_');
 
-		if ($plaintext_file === FALSE || $ciphertext_file === FALSE) {
+		if ($plaintext_file === false || $ciphertext_file === false) {
 			throw new EnvironmentException('Unable to create a temporary file for S/MIME processing');
 		}
 
@@ -1072,20 +1078,20 @@ class Email
 		// Set up the neccessary S/MIME resources
 		if ($this->smime_sign) {
 			$senders_smime_cert_file = $this->senders_smime_cert_file;
-			if ($senders_smime_cert_file === NULL) {
+			if ($senders_smime_cert_file === null) {
 				throw new ProgrammerException('The sender S/MIME certificate file is not set');
 			}
 			$senders_smime_cert = file_get_contents($senders_smime_cert_file);
-			if ($senders_smime_cert === FALSE) {
+			if ($senders_smime_cert === false) {
 				throw new EnvironmentException('The sender S/MIME certificate file could not be read');
 			}
 
 			$senders_smime_pk_file = $this->senders_smime_pk_file;
-			if ($senders_smime_pk_file === NULL) {
+			if ($senders_smime_pk_file === null) {
 				throw new ProgrammerException('The sender S/MIME private key file is not set');
 			}
 			$senders_smime_pk_contents = file_get_contents($senders_smime_pk_file);
-			if ($senders_smime_pk_contents === FALSE) {
+			if ($senders_smime_pk_contents === false) {
 				throw new EnvironmentException('The sender S/MIME private key file could not be read');
 			}
 			$senders_private_key = openssl_pkey_get_private(
@@ -1093,7 +1099,7 @@ class Email
 				$this->senders_smime_pk_password
 			);
 
-			if ($senders_private_key === FALSE) {
+			if ($senders_private_key === false) {
 				throw new ValidationException(
 					"The sender's S/MIME private key password specified does not appear to be valid for the private key"
 				);
@@ -1102,11 +1108,11 @@ class Email
 
 		if ($this->smime_encrypt) {
 			$recipients_smime_cert_file = $this->recipients_smime_cert_file;
-			if ($recipients_smime_cert_file === NULL) {
+			if ($recipients_smime_cert_file === null) {
 				throw new ProgrammerException('The recipient S/MIME certificate file is not set');
 			}
 			$recipients_smime_cert = file_get_contents($recipients_smime_cert_file);
-			if ($recipients_smime_cert === FALSE) {
+			if ($recipients_smime_cert === false) {
 				throw new EnvironmentException('The recipient S/MIME certificate file could not be read');
 			}
 		}
@@ -1117,17 +1123,15 @@ class Email
 			openssl_pkcs7_sign($plaintext_file, $ciphertext_file, $senders_smime_cert, $senders_private_key, array());
 			openssl_pkcs7_encrypt($ciphertext_file, $plaintext_file, $recipients_smime_cert, array(), 0, OPENSSL_CIPHER_RC2_128);
 			openssl_pkcs7_sign($plaintext_file, $ciphertext_file, $senders_smime_cert, $senders_private_key, $headers_array);
-
 		} elseif ($this->smime_sign) {
 			openssl_pkcs7_sign($plaintext_file, $ciphertext_file, $senders_smime_cert, $senders_private_key, $headers_array);
-
 		} elseif ($this->smime_encrypt) {
 			openssl_pkcs7_encrypt($plaintext_file, $ciphertext_file, $recipients_smime_cert, $headers_array, 0, OPENSSL_CIPHER_RC2_128);
 		}
 
 		// It seems that the contents of the ciphertext is not always \r\n line breaks
 		$message = file_get_contents($ciphertext_file);
-		if ($message === FALSE) {
+		if ($message === false) {
 			throw new EnvironmentException('The S/MIME processed message could not be read from the temporary file');
 		}
 		$message = str_replace("\r\n", "\n", $message);
@@ -1171,7 +1175,7 @@ class Email
 			);
 		}
 
-		$this->smime_encrypt              = TRUE;
+		$this->smime_encrypt              = true;
 		$this->recipients_smime_cert_file = $recipients_smime_cert_file;
 
 		return $this;
@@ -1230,7 +1234,7 @@ class Email
 
 		$filename = (string) $filename;
 
-		if ($mime_type === NULL) {
+		if ($mime_type === null) {
 			$mime_type = File::determineMimeType($filename, $contents);
 		}
 
@@ -1269,7 +1273,7 @@ class Email
 	 * @param  array<string, string> $replacements  The method will search the contents of the file for each key and replace it with the corresponding value
 	 * @return Email  The email object, to allow for method chaining
 	 */
-	public function loadBody(mixed $file, array $replacements=array()): Email
+	public function loadBody(mixed $file, array $replacements = array()): Email
 	{
 		if (!$file instanceof File) {
 			$file = new File($file);
@@ -1298,7 +1302,7 @@ class Email
 	 * @param  array<string, string> $replacements  The method will search the contents of the file for each key and replace it with the corresponding value
 	 * @return Email  The email object, to allow for method chaining
 	 */
-	public function loadHTMLBody(mixed $file, array $replacements=array()): Email
+	public function loadHTMLBody(mixed $file, array $replacements = array()): Email
 	{
 		if (!$file instanceof File) {
 			$file = new File($file);
@@ -1365,19 +1369,18 @@ class Email
 
 		// This loop goes through and ensures we are wrapping by 76 chars
 		$line_length = 0;
-		for ($i=0; $i<$length; $i++) {
-
+		for ($i = 0; $i < $length; $i++) {
 			// Get info about the next character
 			$char_length = ($content[$i] == '=') ? 3 : 1;
 			$char        = $content[$i];
 			if ($char_length == 3) {
-				$char .= $content[$i+1] . $content[$i+2];
+				$char .= $content[$i + 1] . $content[$i + 2];
 			}
 
 			// Skip characters if we have an encoded character, this must be
 			// done before checking for whitespace at the beginning and end of
 			// lines or else characters in the content will be skipped
-			$i += $char_length-1;
+			$i += $char_length - 1;
 
 			// Spaces and tabs at the beginning and ending of lines have to be encoded
 			$begining_or_end = $line_length > 69 || $line_length == 0;
@@ -1421,13 +1424,13 @@ class Email
 	 * @param  SMTP $connection  The SMTP connection to send the message over
 	 * @return string  The message id for the message - see method description for details
 	 */
-	public function send(?SMTP $connection=NULL): string
+	public function send(?SMTP $connection = null): string
 	{
 		$this->validate();
 
 		// The mail() function on Windows doesn't support names in headers so
 		// we must strip them down to just the email address
-		if ($connection === NULL && Core::checkOS('windows')) {
+		if ($connection === null && Core::checkOS('windows')) {
 			$value = $this->bounce_to_email;
 			if (is_string($value) && preg_match(self::NAME_EMAIL_REGEX, $value, $match)) {
 				$this->bounce_to_email = $match[2];
@@ -1495,9 +1498,9 @@ class Email
 			$to_emails = array_merge($to_emails, $this->extractEmails($this->bcc_emails));
 
 			$from = $this->bounce_to_email;
-			if ($from === NULL) {
+			if ($from === null) {
 				$from = current($this->extractEmails(array($this->from_email ?? '')));
-				if ($from === FALSE) {
+				if ($from === false) {
 					$from = '';
 				}
 			}
@@ -1507,8 +1510,8 @@ class Email
 		}
 
 		// Sendmail when not in safe mode will allow you to set the envelope from address via the -f parameter
-		$parameters       = NULL;
-		$old_sendmail_from = NULL;
+		$parameters       = null;
+		$old_sendmail_from = null;
 		if (!Core::checkOS('windows') && $this->bounce_to_email) {
 			if (preg_match(self::EMAIL_REGEX, $this->bounce_to_email, $matches)) {
 				$parameters = '-f ' . $matches[0];
@@ -1589,7 +1592,7 @@ class Email
 	 * @param  boolean $unindent_expand_constants  If this is `TRUE`, the body will be unindented as much as possible and {CONSTANT_NAME} will be replaced with the value of the constant
 	 * @return Email  The email object, to allow for method chaining
 	 */
-	public function setBody(string $plaintext, bool $unindent_expand_constants=FALSE): Email
+	public function setBody(string $plaintext, bool $unindent_expand_constants = false): Email
 	{
 		if ($unindent_expand_constants) {
 			$plaintext = self::unindentExpand($plaintext);
@@ -1631,7 +1634,7 @@ class Email
 	 * @param  string $name   The from email user's name - unfortunately on windows this is ignored
 	 * @return Email|null  The email object, to allow for method chaining, or `NULL` if no email was specified
 	 */
-	public function setFromEmail(string $email, ?string $name=NULL): Email|null
+	public function setFromEmail(string $email, ?string $name = null): Email|null
 	{
 		if (!$email) {
 			return null;
@@ -1667,7 +1670,7 @@ class Email
 	 * @param  string $name   The reply-to email user's name
 	 * @return Email|null  The email object, to allow for method chaining, or `NULL` if no email was specified
 	 */
-	public function setReplyToEmail(string $email, ?string $name=NULL): Email|null
+	public function setReplyToEmail(string $email, ?string $name = null): Email|null
 	{
 		if (!$email) {
 			return null;
@@ -1689,7 +1692,7 @@ class Email
 	 * @param  string $name   The sender email user's name
 	 * @return Email|null  The email object, to allow for method chaining, or `NULL` if no email was specified
 	 */
-	public function setSenderEmail(string $email, ?string $name=NULL): Email|null
+	public function setSenderEmail(string $email, ?string $name = null): Email|null
 	{
 		if (!$email) {
 			return null;
@@ -1761,7 +1764,7 @@ class Email
 			);
 		}
 
-		$this->smime_sign                = TRUE;
+		$this->smime_sign                = true;
 		$this->senders_smime_cert_file   = $senders_smime_cert_file;
 		$this->senders_smime_pk_file     = $senders_smime_pk_file;
 		$this->senders_smime_pk_password = $senders_smime_pk_password;
@@ -1846,7 +1849,7 @@ class Email
 			);
 		}
 
-		if ($subject !== NULL && strpos($subject, "\n") !== FALSE) {
+		if ($subject !== null && strpos($subject, "\n") !== false) {
 			$validation_messages[] = self::compose(
 				"The subject contains one or more newline characters"
 			);

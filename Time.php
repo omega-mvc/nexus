@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Represents a time of day as a value object
  *
@@ -32,15 +34,15 @@ class Time
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_map(
 			static fn(mixed $arg): bool|float|int|string|null =>
-				($arg === NULL || is_scalar($arg)) ? $arg : get_debug_type($arg),
+				($arg === null || is_scalar($arg)) ? $arg : get_debug_type($arg),
 			array_slice(func_get_args(), 1)
 		);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -67,9 +69,9 @@ class Time
 	 * @param  Time|object|string|integer $time  The time to represent, `NULL` is interpreted as now
 	 * @return Time
 	 */
-	public function __construct(mixed $time=NULL)
+	public function __construct(mixed $time = null)
 	{
-		if ($time === NULL) {
+		if ($time === null) {
 			$timestamp = time();
 		} elseif (is_numeric($time) && preg_match('#^-?\d+$#D', (string) $time)) {
 			$timestamp = (int) $time;
@@ -93,7 +95,7 @@ class Time
 			$timestamp = strtotime($time);
 		}
 
-		$is_valid = ($timestamp !== FALSE);
+		$is_valid = ($timestamp !== false);
 
 		if (!$is_valid) {
 			throw new ValidationException(
@@ -103,7 +105,7 @@ class Time
 		}
 
 		$timestamp = strtotime(date('1970-01-01 H:i:s', $timestamp));
-		if ($timestamp === FALSE) {
+		if ($timestamp === false) {
 			throw new ProgrammerException(
 				'The time specified, %s, could not be converted back to a timestamp',
 				$time
@@ -151,7 +153,7 @@ class Time
 	{
 		$timestamp = strtotime($adjustment, $this->time);
 
-		if ($timestamp === FALSE || $timestamp === -1) {
+		if ($timestamp === false || $timestamp === -1) {
 			throw new ValidationException(
 				'The adjustment specified, %s, does not appear to be a valid relative time measurement',
 				$adjustment
@@ -168,7 +170,7 @@ class Time
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this time is equal to the one passed
 	 */
-	public function eq(mixed $other_time=NULL): bool
+	public function eq(mixed $other_time = null): bool
 	{
 		$other_time = new Time($other_time);
 		return $this->time == $other_time->time;
@@ -233,16 +235,16 @@ class Time
 	 * @param  boolean $simple  When `TRUE`, the returned value will only include the difference in the two times, but not `from now`, `ago`, `after` or `before`
 	 * @return string  The fuzzy difference in time between the this time and the one provided
 	 */
-	public function getFuzzyDifference(mixed $other_time=NULL, bool $simple=FALSE): string
+	public function getFuzzyDifference(mixed $other_time = null, bool $simple = false): string
 	{
 		if (is_bool($other_time)) {
 			$simple     = $other_time;
-			$other_time = NULL;
+			$other_time = null;
 		}
 
-		$relative_to_now = FALSE;
-		if ($other_time === NULL) {
-			$relative_to_now = TRUE;
+		$relative_to_now = false;
+		if ($other_time === null) {
+			$relative_to_now = true;
 		}
 		$other_time = new Time($other_time);
 
@@ -271,9 +273,11 @@ class Time
 		}
 
 		foreach ($break_points as $break_point => $unit_info) {
-			if (abs($diff) > $break_point) { continue; }
+			if (abs($diff) > $break_point) {
+                continue;
+            }
 
-			$unit_diff = round(abs($diff)/$unit_info[0]);
+			$unit_diff = round(abs($diff) / $unit_info[0]);
 			$units     = Grammar::inflectOnQuantity($unit_diff, $unit_info[1], $unit_info[2]);
 			break;
 		}
@@ -312,7 +316,7 @@ class Time
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as now
 	 * @return boolean  If this time is greater than the one passed
 	 */
-	public function gt(mixed $other_time=NULL): bool
+	public function gt(mixed $other_time = null): bool
 	{
 		$other_time = new Time($other_time);
 		return $this->time > $other_time->time;
@@ -325,7 +329,7 @@ class Time
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as now
 	 * @return boolean  If this time is greater than or equal to the one passed
 	 */
-	public function gte(mixed $other_time=NULL): bool
+	public function gte(mixed $other_time = null): bool
 	{
 		$other_time = new Time($other_time);
 		return $this->time >= $other_time->time;
@@ -338,7 +342,7 @@ class Time
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this time is less than the one passed
 	 */
-	public function lt(mixed $other_time=NULL): bool
+	public function lt(mixed $other_time = null): bool
 	{
 		$other_time = new Time($other_time);
 		return $this->time < $other_time->time;
@@ -351,7 +355,7 @@ class Time
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this time is less than or equal to the one passed
 	 */
-	public function lte(mixed $other_time=NULL): bool
+	public function lte(mixed $other_time = null): bool
 	{
 		$other_time = new Time($other_time);
 		return $this->time <= $other_time->time;
@@ -373,7 +377,7 @@ class Time
 	 */
 	public function modify(string $format): Time
 	{
-	   return new Time($this->format($format));
+        return new Time($this->format($format));
 	}
 }
 

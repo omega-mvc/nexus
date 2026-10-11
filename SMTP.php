@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Creates a connection to an SMTP server to be used by Email
  *
@@ -38,7 +40,7 @@ class SMTP
 	 *
 	 * @var boolean
 	 */
-	private bool $debug = FALSE;
+	private bool $debug = false;
 
 	/**
 	 * The hostname or IP of the SMTP server
@@ -120,12 +122,12 @@ class SMTP
 	 * @param integer $timeout  The timeout for the connection - defaults to the `default_socket_timeout` ini setting
 	 * @return SMTP
 	 */
-	public function __construct(mixed $host, mixed $port=NULL, mixed $secure=FALSE, mixed $timeout=NULL)
+	public function __construct(mixed $host, mixed $port = null, mixed $secure = false, mixed $timeout = null)
 	{
-		if ($timeout === NULL) {
+		if ($timeout === null) {
 			$timeout = ini_get('default_socket_timeout');
 		}
-		if ($port === NULL) {
+		if ($port === null) {
 			$port = !$secure ? 25 : 465;
 		}
 
@@ -202,7 +204,7 @@ class SMTP
 
 		$this->write('QUIT', 1);
 		fclose($this->connection);
-		$this->connection = NULL;
+		$this->connection = null;
 	}
 
 
@@ -228,7 +230,7 @@ class SMTP
 			throw new ConnectivityException('There was an error connecting to the server. A secure connection was requested, but was not available. Try a non-secure connection instead.');
 		}
 
-		if ($connection === FALSE) {
+		if ($connection === false) {
 			throw new ConnectivityException('There was an error connecting to the server');
 		}
 		$this->connection = $connection;
@@ -259,10 +261,10 @@ class SMTP
 					if (isset($res)) {
 						usleep(100000);
 					}
-					$res = stream_socket_enable_crypto($this->connection, TRUE, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+					$res = stream_socket_enable_crypto($this->connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
 				} while ($res === 0);
 			}
-			if (!$affirmative || $res === FALSE) {
+			if (!$affirmative || $res === false) {
 				throw new ConnectivityException('Error establishing secure connection');
 			}
 			$response = $this->write('EHLO ' . $fqdn, '#^250 #m');
@@ -284,7 +286,7 @@ class SMTP
 			return;
 		}
 
-		if ($this->password === NULL) {
+		if ($this->password === null) {
 			throw new ProgrammerException('An SMTP password must be set in order to authenticate');
 		}
 
@@ -321,7 +323,7 @@ class SMTP
 			$nc         = '00000001';
 			$digest_uri = 'smtp/' . $this->host;
 
-			$a1 = md5($this->username . ':' . $realm . ':' . $this->password, TRUE) . ':' . $nonce . ':' . $cnonce;
+			$a1 = md5($this->username . ':' . $realm . ':' . $this->password, true) . ':' . $nonce . ':' . $cnonce;
 			$a2 = 'AUTHENTICATE:' . $digest_uri;
 			$response = md5(md5($a1) . ':' . $nonce . ':' . $nc . ':' . $cnonce . ':auth:' . md5($a2));
 
@@ -338,18 +340,15 @@ class SMTP
 			);
 
 			$response = $this->write(base64_encode(join(',', $response_params)), 2);
-
 		} elseif (in_array('CRAM-MD5', $auth_methods)) {
 			$response = $this->write('AUTH CRAM-MD5', 1);
 			$match     = $this->find($response, '#^334 (.*)$#');
 			$challenge = base64_decode($match[0][1]);
 			$response  = $this->write(base64_encode($this->username . ' ' . Cryptography::hashHMAC('md5', $challenge, $this->password)), 1);
-
 		} elseif (in_array('LOGIN', $auth_methods)) {
 			$response = $this->write('AUTH LOGIN', 1);
 			$this->write(base64_encode($this->username), 1);
 			$response = $this->write(base64_encode($this->password), 1);
-
 		} elseif (in_array('PLAIN', $auth_methods)) {
 			$response = $this->write('AUTH PLAIN ' . base64_encode($this->username . "\0" . $this->username . "\0" . $this->password), 1);
 		}
@@ -456,15 +455,15 @@ class SMTP
 		if ($result = $this->select((int) $this->timeout, 0)) {
 			while (!feof($connection)) {
 				$line = fgets($connection);
-				if ($line === FALSE) {
+				if ($line === false) {
 					break;
 				}
 				$line       = substr($line, 0, -2);
 				$response[] = $line;
-				if ($expect !== NULL) {
-					$result = NULL;
+				if ($expect !== null) {
+					$result = null;
 					$matched_number = is_int($expect) && sizeof($response) == $expect;
-					$matched_regex  = is_string($expect) && preg_match($expect, $response[sizeof($response)-1]);
+					$matched_regex  = is_string($expect) && preg_match($expect, $response[sizeof($response) - 1]);
 					if ($matched_number || $matched_regex) {
 						break;
 					}
@@ -495,8 +494,8 @@ class SMTP
 			throw new ProgrammerException('The connection to the SMTP server has already been closed');
 		}
 		$read     = array($connection);
-		$write    = NULL;
-		$except   = NULL;
+		$write    = null;
+		$except   = null;
 
 		// Fixes an issue with stream_select throwing a warning on Windows
 		if (Core::checkOS('windows')) {
@@ -562,7 +561,6 @@ class SMTP
 			$rcpt_to = trim($rcpt_to);
 
 			$this->write($mail_from . $this->line_ending . $rcpt_to . $this->line_ending . "DATA" . $this->line_ending, $expect);
-
 		} else {
 			$this->write($mail_from, 1);
 			foreach ($to as $email) {
@@ -599,7 +597,7 @@ class SMTP
 
 		$res = fwrite($this->connection, $data);
 
-		if ($res === FALSE || $res === 0) {
+		if ($res === false || $res === 0) {
 			throw new ConnectivityException('Unable to write data to SMTP server %1$s on port %2$s', $this->host, $this->port);
 		}
 		$response = $this->read($expect);

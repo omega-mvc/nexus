@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides cryptography functionality, including hashing, symmetric-key encryption and public-key encryption
  *
@@ -37,7 +39,7 @@ class Cryptography
 	 * @param  string $hash      The hash to check against
 	 * @return boolean  If the password matches the hash
 	 */
-	static public function checkPasswordHash(string $password, string $hash): bool
+	public static function checkPasswordHash(string $password, string $hash): bool
 	{
 		// Hashes created before the class was renamed carry the old f-prefixed marker
 		if (str_starts_with($hash, 'fCryptography::')) {
@@ -46,17 +48,15 @@ class Cryptography
 
 		if (str_starts_with($hash, 'Cryptography::pwd3#')) {
 			return password_verify($password, substr($hash, strlen('Cryptography::pwd3#')));
-
 		} elseif (str_starts_with($hash, 'Cryptography::passwd_hashv2#')) {
 			$salt = substr($hash, strlen('Cryptography::passwd_hashv2#'), 10);
 			return self::hashWithSaltV2($password, $salt) === $hash;
-
 		} elseif (str_starts_with($hash, 'Cryptography::password_hash#')) {
 			$salt = substr($hash, strlen('Cryptography::password_hash#'), 10);
 			return self::hashWithSalt($password, $salt) === $hash;
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -69,7 +69,7 @@ class Cryptography
 	 * @param  string $password          The password for the private key
 	 * @return OpenSSLAsymmetricKey  The private key resource
 	 */
-	static private function createPrivateKeyResource(string $private_key_file, string $password): OpenSSLAsymmetricKey
+	private static function createPrivateKeyResource(string $private_key_file, string $password): OpenSSLAsymmetricKey
 	{
 		if (!file_exists($private_key_file)) {
 			throw new ProgrammerException(
@@ -85,7 +85,7 @@ class Cryptography
 		}
 
 		$private_key          = file_get_contents($private_key_file);
-		if ($private_key === FALSE) {
+		if ($private_key === false) {
 			throw new ProgrammerException(
 				'The PEM-encoded private key specified, %s, could not be read',
 				$private_key_file
@@ -93,7 +93,7 @@ class Cryptography
 		}
 		$private_key_resource = openssl_pkey_get_private($private_key, $password);
 
-		if ($private_key_resource === FALSE) {
+		if ($private_key_resource === false) {
 			throw new ValidationException(
 				'The private key file specified, %s, does not appear to be a valid private key or the password provided is incorrect',
 				$private_key_file
@@ -110,7 +110,7 @@ class Cryptography
 	 * @param  string $public_key_file  The path to an X.509 public key certificate
 	 * @return OpenSSLAsymmetricKey  The public key resource
 	 */
-	static private function createPublicKeyResource(string $public_key_file): OpenSSLAsymmetricKey
+	private static function createPublicKeyResource(string $public_key_file): OpenSSLAsymmetricKey
 	{
 		if (!file_exists($public_key_file)) {
 			throw new ProgrammerException(
@@ -126,7 +126,7 @@ class Cryptography
 		}
 
 		$public_key = file_get_contents($public_key_file);
-		if ($public_key === FALSE) {
+		if ($public_key === false) {
 			throw new ProgrammerException(
 				'The X.509 certificate specified, %s, could not be read',
 				$public_key_file
@@ -134,7 +134,7 @@ class Cryptography
 		}
 		$public_key_resource = openssl_pkey_get_public($public_key);
 
-		if ($public_key_resource === FALSE) {
+		if ($public_key_resource === false) {
 			throw new ProgrammerException(
 				'The public key certificate specified, %s, does not appear to be a valid certificate',
 				$public_key_file
@@ -155,7 +155,7 @@ class Cryptography
 	 * @param  string $key        The key to generate the HMAC with
 	 * @return string  The HMAC
 	 */
-	static public function hashHMAC(string $algorithm, string $data, string $key): string
+	public static function hashHMAC(string $algorithm, string $data, string $key): string
 	{
 		return hash_hmac($algorithm, $data, $key);
 	}
@@ -167,7 +167,7 @@ class Cryptography
 	 * @param  string $password  The password to hash
 	 * @return string  An 80 character string of the Flourish fingerprint, salt and hashed password
 	 */
-	static public function hashPassword(string $password): string
+	public static function hashPassword(string $password): string
 	{
 		return self::hashWithBcrypt($password);
 	}
@@ -180,7 +180,7 @@ class Cryptography
 	 * @param  string $salt    The salt for the hash
 	 * @return string  An 80 character string of the Flourish fingerprint, salt and hashed password
 	 */
-	static private function hashWithSalt(string $source, string $salt): string
+	private static function hashWithSalt(string $source, string $salt): string
 	{
 		$sha1 = sha1($salt . $source);
 		for ($i = 0; $i < 1000; $i++) {
@@ -200,7 +200,7 @@ class Cryptography
 	 * @param  string $salt    The salt for the hash
 	 * @return string  An 80 character string of the Flourish fingerprint, salt and hashed password
 	 */
-	static private function hashWithSaltV2(string $source, string $salt): string
+	private static function hashWithSaltV2(string $source, string $salt): string
 	{
 		$sha1 = sha1($salt . $source);
 		for ($i = 0; $i < 100000; $i++) {
@@ -217,7 +217,7 @@ class Cryptography
 	 * @param  string $source  The string to hash
 	 * @return string  An 80 character string of the Flourish fingerprint and crypt()-style hash
 	 */
-	static private function hashWithBcrypt(string $source): string
+	private static function hashWithBcrypt(string $source): string
 	{
 		return 'Cryptography::pwd3#' . password_hash($source, PASSWORD_BCRYPT);
 	}
@@ -236,7 +236,7 @@ class Cryptography
 	 * @param  string $password          The password for the private key
 	 * @return string  The decrypted plaintext
 	 */
-	static public function publicKeyDecrypt(string $ciphertext, string $private_key_file, string $password): string
+	public static function publicKeyDecrypt(string $ciphertext, string $private_key_file, string $password): string
 	{
 		self::verifyOpenSSLEnvironment();
 
@@ -265,11 +265,10 @@ class Cryptography
 			$provided_hmac = $elements[4];
 			$cipher        = 'aes-256-cbc';
 			$hmac_input    = $encrypted_key . $iv . $ciphertext;
-
 		} else {
 			// Legacy format was sealed with RC4 by older PHP versions, which is no
 			// longer available in OpenSSL 3 - re-encryption is required
-			if (!in_array('RC4', openssl_get_cipher_methods(), TRUE)) {
+			if (!in_array('RC4', openssl_get_cipher_methods(), true)) {
 				throw new EnvironmentException(
 					'The ciphertext provided was encrypted using the legacy RC4-based %s implementation, which is not supported by the current OpenSSL version. Please re-encrypt the data using the current implementation.',
 					__CLASS__ . '::publicKeyEncrypt()'
@@ -278,7 +277,7 @@ class Cryptography
 			$encrypted_key = base64_decode($elements[1]);
 			$ciphertext    = base64_decode($elements[2]);
 			$provided_hmac = $elements[3];
-			$iv            = NULL;
+			$iv            = null;
 			$cipher        = 'RC4';
 			$hmac_input    = $encrypted_key . $ciphertext;
 		}
@@ -286,7 +285,7 @@ class Cryptography
 		$plaintext = '';
 		$result = openssl_open($ciphertext, $plaintext, $encrypted_key, $private_key_resource, $cipher, $iv);
 
-		if ($result === FALSE) {
+		if ($result === false) {
 			throw new EnvironmentException(
 				'There was an unknown error decrypting the ciphertext provided'
 			);
@@ -321,7 +320,7 @@ class Cryptography
 	 * @param  string $public_key_file  The path to an X.509 public key certificate
 	 * @return string  A base-64 encoded result containing a Flourish fingerprint and suitable for decryption using ::publicKeyDecrypt()
 	 */
-	static public function publicKeyEncrypt(string $plaintext, string $public_key_file): string
+	public static function publicKeyEncrypt(string $plaintext, string $public_key_file): string
 	{
 		self::verifyOpenSSLEnvironment();
 
@@ -332,7 +331,7 @@ class Cryptography
 		$iv             = '';
 		$result = openssl_seal($plaintext, $ciphertext, $encrypted_keys, array($public_key_resource), 'aes-256-cbc', $iv);
 
-		if ($result === FALSE) {
+		if ($result === false) {
 			throw new EnvironmentException(
 				'There was an unknown error encrypting the plaintext provided'
 			);
@@ -344,7 +343,7 @@ class Cryptography
 			);
 		}
 
-		$encrypted_key = $encrypted_keys[0] ?? NULL;
+		$encrypted_key = $encrypted_keys[0] ?? null;
 		if (!is_string($encrypted_key) || !is_string($iv) || !is_string($ciphertext)) {
 			throw new EnvironmentException(
 				'There was an unknown error encrypting the plaintext provided'
@@ -370,7 +369,7 @@ class Cryptography
 	 * @param  string $password          The password for the private key
 	 * @return string  The base64-encoded signature suitable for verification using ::publicKeyVerify()
 	 */
-	static public function publicKeySign(string $plaintext, string $private_key_file, string $password): string
+	public static function publicKeySign(string $plaintext, string $private_key_file, string $password): string
 	{
 		self::verifyOpenSSLEnvironment();
 
@@ -405,7 +404,7 @@ class Cryptography
 	 * @param  string $public_key_file   The path to an X.509 public key certificate
 	 * @return boolean  If the public key file is the public key of the user who signed the plaintext
 	 */
-	static public function publicKeyVerify(string $plaintext, string $signature, string $public_key_file): bool
+	public static function publicKeyVerify(string $plaintext, string $signature, string $public_key_file): bool
 	{
 		self::verifyOpenSSLEnvironment();
 
@@ -419,7 +418,7 @@ class Cryptography
 			);
 		}
 
-		return ($result === 1) ? TRUE : FALSE;
+		return ($result === 1) ? true : false;
 	}
 
 
@@ -430,10 +429,10 @@ class Cryptography
 	 * @param  integer $max  The maximum number to return
 	 * @return integer  The psuedo-random number
 	 */
-	static public function random(?int $min=NULL, ?int $max=NULL): int
+	public static function random(?int $min = null, ?int $max = null): int
 	{
 		self::seedRandom();
-		if ($min !== NULL || $max !== NULL) {
+		if ($min !== null || $max !== null) {
 			return mt_rand($min ?? 0, $max ?? mt_getrandmax());
 		}
 		return mt_rand();
@@ -447,7 +446,7 @@ class Cryptography
 	 * @param  string  $type    The type of string to return: `'base64'`, `'base56'`, `'base36'`, `'alphanumeric'`, `'alpha'`, `'numeric'`, or `'hexadecimal'`, if a different string is provided, it will be used for the alphabet
 	 * @return string  A random string of the type and length specified
 	 */
-	static public function randomString(int $length, string $type='alphanumeric'): string
+	public static function randomString(int $length, string $type = 'alphanumeric'): string
 	{
 		if ($length < 1) {
 			throw new ProgrammerException(
@@ -494,7 +493,7 @@ class Cryptography
 		$output = '';
 
 		for ($i = 0; $i < $length; $i++) {
-			$output .= $alphabet[self::random(0, $alphabet_length-1)];
+			$output .= $alphabet[self::random(0, $alphabet_length - 1)];
 		}
 
 		return $output;
@@ -506,9 +505,9 @@ class Cryptography
 	 *
 	 * @return void
 	 */
-	static private function seedRandom(): void
+	private static function seedRandom(): void
 	{
-		static $seeded = FALSE;
+		static $seeded = false;
 
 		if ($seeded) {
 			return;
@@ -516,7 +515,7 @@ class Cryptography
 
 		Core::startErrorCapture(E_WARNING);
 
-		$bytes = NULL;
+		$bytes = null;
 
 		// On linux/unix/solaris we should be able to use /dev/urandom
 		if (!Core::checkOS('windows') && $handle = fopen('/dev/urandom', 'rb')) {
@@ -526,16 +525,16 @@ class Cryptography
 		// On windows the CAPICOM COM object provides a random source, however
 		// it was retired by Microsoft and the API no longer functions
 		} elseif (Core::checkOS('windows')) {
-			$bytes = NULL;
+			$bytes = null;
 		}
 
 		// If we could not use the OS random number generators we get some of the most unique info we can
 		if (!$bytes) {
 			$stats  = stat(__FILE__);
-			if ($stats === FALSE) {
+			if ($stats === false) {
 				$stats = array();
 			}
-			$string = microtime(TRUE) . uniqid('', TRUE) . join('', $stats) . disk_free_space(dirname(__FILE__));
+			$string = microtime(true) . uniqid('', true) . join('', $stats) . disk_free_space(dirname(__FILE__));
 			$bytes  = substr(pack('H*', md5($string)), 0, 4);
 		}
 
@@ -545,7 +544,7 @@ class Cryptography
 
 		mt_srand($seed);
 
-		$seeded = TRUE;
+		$seeded = true;
 	}
 
 
@@ -561,7 +560,7 @@ class Cryptography
 	 * @param  string $secret_key  The secret key to use for decryption
 	 * @return string  The decrypted plaintext
 	 */
-	static public function symmetricKeyDecrypt(string $ciphertext, string $secret_key): string
+	public static function symmetricKeyDecrypt(string $ciphertext, string $secret_key): string
 	{
 		self::verifyOpenSSLEnvironment();
 
@@ -602,9 +601,9 @@ class Cryptography
 			);
 		}
 
-		$key       = hash('sha256', $secret_key, TRUE);
+		$key       = hash('sha256', $secret_key, true);
 		$plaintext = openssl_decrypt($ciphertext, 'aes-256-cfb', $key, OPENSSL_RAW_DATA, $iv);
-		if ($plaintext === FALSE) {
+		if ($plaintext === false) {
 			throw new ValidationException(
 				'The ciphertext provided appears to have been tampered with or corrupted'
 			);
@@ -626,7 +625,7 @@ class Cryptography
 	 * @param  string $secret_key  The secret key to use for encryption - must be at least 8 characters
 	 * @return string  An encrypted and base-64 encoded result containing a Flourish fingerprint and suitable for decryption using ::symmetricKeyDecrypt()
 	 */
-	static public function symmetricKeyEncrypt(string $plaintext, string $secret_key): string
+	public static function symmetricKeyEncrypt(string $plaintext, string $secret_key): string
 	{
 		if (strlen($secret_key) < 8) {
 			throw new ValidationException(
@@ -641,11 +640,11 @@ class Cryptography
 		// added, ensuring we always get the exact same plaintext out of the
 		// decrypt method. The key is derived from the secret key and a random
 		// IV is generated for every encryption
-		$key = hash('sha256', $secret_key, TRUE);
+		$key = hash('sha256', $secret_key, true);
 		$iv  = random_bytes(16);
 
 		$ciphertext = openssl_encrypt($plaintext, 'aes-256-cfb', $key, OPENSSL_RAW_DATA, $iv);
-		if ($ciphertext === FALSE) {
+		if ($ciphertext === false) {
 			throw new EnvironmentException(
 				'The data could not be encrypted using the PHP %s extension',
 				'openssl'
@@ -669,7 +668,7 @@ class Cryptography
 	 *
 	 * @return void
 	 */
-	static private function verifyOpenSSLEnvironment(): void
+	private static function verifyOpenSSLEnvironment(): void
 	{
 		if (!extension_loaded('openssl')) {
 			throw new EnvironmentException(
@@ -685,7 +684,9 @@ class Cryptography
 	 *
 	 * @return void
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

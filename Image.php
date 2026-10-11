@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Represents an image on the filesystem, also provides image manipulation functionality
  *
@@ -61,28 +63,28 @@ class Image extends File
 	 *
 	 * @var string
 	 */
-	static private ?string $imagemagick_dir = NULL;
+	private static ?string $imagemagick_dir = null;
 
 	/**
 	 * A custom tmp path to use for ImageMagick
 	 *
 	 * @var string
 	 */
-	static private ?string $imagemagick_temp_dir = NULL;
+	private static ?string $imagemagick_temp_dir = null;
 
 	/**
 	 * The version of ImageMagick
 	 *
 	 * @var string
 	 */
-	static private ?string $imagemagick_version = NULL;
+	private static ?string $imagemagick_version = null;
 
 	/**
 	 * The processor to use for the image manipulation
 	 *
 	 * @var string
 	 */
-	static private ?string $processor = NULL;
+	private static ?string $processor = null;
 
 
 	/**
@@ -91,7 +93,7 @@ class Image extends File
 	 * @param  string $path  The path to ImageMagick on the filesystem
 	 * @return void
 	 */
-	static private function checkImageMagickBinary(string $path): void
+	private static function checkImageMagickBinary(string $path): void
 	{
 		// Make sure we can execute the convert binary
 		if (self::isSafeModeExecDirRestricted($path)) {
@@ -136,7 +138,7 @@ class Image extends File
 	 * @param  string $contents   The contents to write to the image
 	 * @return Image
 	 */
-	static public function create(string $file_path, string $contents): Image
+	public static function create(string $file_path, string $contents): Image
 	{
 		if (empty($file_path)) {
 			throw new ValidationException('No filename was specified');
@@ -172,15 +174,13 @@ class Image extends File
 	 *
 	 * @return void
 	 */
-	static public function determineProcessor(): void
+	public static function determineProcessor(): void
 	{
 		// Determine what processor to use
-		if (self::$processor === NULL) {
-
+		if (self::$processor === null) {
 			// Look for imagemagick first since it can handle more than GD
 			try {
-
-				$path = NULL;
+				$path = null;
 
 				// If exec is disabled we can't use imagemagick
 				if (in_array('exec', array_map('trim', explode(',', (string) ini_get('disable_functions'))))) {
@@ -188,20 +188,17 @@ class Image extends File
 				}
 
 				if (Core::checkOS('windows')) {
-
 						$win_search = 'dir /B "C:\Program Files\ImageMagick*" 2> NUL';
 						exec($win_search, $win_output);
 						$win_output = trim(join("\n", $win_output));
 
-						if (!$win_output || stripos($win_output, 'File not found') !== FALSE) {
-							throw new Exception();
-						}
+                    if (!$win_output || stripos($win_output, 'File not found') !== false) {
+                        throw new Exception();
+                    }
 
 						$path = 'C:\\Program Files\\' . $win_output . '\\';
-
 				} elseif (Core::checkOS('linux', 'bsd', 'solaris', 'osx', 'aix')) {
-
-					$found = FALSE;
+					$found = false;
 
 					if (Core::checkOS('solaris')) {
 						$locations = array(
@@ -209,7 +206,6 @@ class Image extends File
 							'/opt/bin/',
 							'/opt/csw/bin/'
 						);
-
 					} else {
 						$locations = array(
 							'/usr/local/bin/',
@@ -217,19 +213,19 @@ class Image extends File
 						);
 					}
 
-					foreach($locations as $location) {
+					foreach ($locations as $location) {
 						if (self::isSafeModeExecDirRestricted($location)) {
 							continue;
 						}
 						if (self::isOpenBaseDirRestricted($location)) {
 							exec($location . 'convert -version', $output);
 							if ($output) {
-								$found = TRUE;
+								$found = true;
 								$path  = $location;
 								break;
 							}
 						} elseif (is_executable($location . 'convert')) {
-							$found = TRUE;
+							$found = true;
 							$path  = $location;
 							break;
 						}
@@ -266,12 +262,11 @@ class Image extends File
 							$path = $matches[1];
 						}
 					}
-
 				} else {
-					$path = NULL;
+					$path = null;
 				}
 
-				if ($path === NULL) {
+				if ($path === null) {
 					throw new Exception();
 				}
 
@@ -279,14 +274,10 @@ class Image extends File
 
 				self::$imagemagick_dir = $path;
 				self::$processor = 'imagemagick';
-
 			} catch (Exception $e) {
-
 				// Look for GD last since it does not support tiff files
 				if (function_exists('gd_info')) {
-
 					self::$processor = 'gd';
-
 				} else {
 					self::$processor = 'none';
 				}
@@ -302,7 +293,7 @@ class Image extends File
 	 *
 	 * @return array<int, string>  The mime types that the detected image processor can manipulate
 	 */
-	static public function getCompatibleMimetypes(): array
+	public static function getCompatibleMimetypes(): array
 	{
 		self::determineProcessor();
 
@@ -333,12 +324,12 @@ class Image extends File
 	 * @param  string $element     The element to retrieve: `'type'`, `'width'`, `'height'`
 	 * @return array{type: string|null, width: int, height: int}|string|int|null  An associative array: `'type' => {string|null}, 'width' => {integer}, 'height' => {integer}`, or the element specified
 	 */
-	static protected function getInfo(string $image_path, ?string $element=NULL): mixed
+	protected static function getInfo(string $image_path, ?string $element = null): mixed
 	{
 		$extension = strtolower(Filesystem::getPathInfo($image_path, 'extension'));
 		if (!in_array($extension, array('jpg', 'jpeg', 'png', 'gif', 'tif', 'tiff'))) {
 			$type = self::getImageType($image_path);
-			if ($type === NULL) {
+			if ($type === null) {
 				throw new ValidationException(
 					'The file specified, %s, does not appear to be an image',
 					$image_path
@@ -350,7 +341,7 @@ class Image extends File
 		$image_info = getimagesize($image_path);
 		Core::stopErrorCapture();
 
-		if ($image_info == FALSE) {
+		if ($image_info == false) {
 			throw new ValidationException(
 				'The file specified, %s, is not an image',
 				$image_path
@@ -358,7 +349,7 @@ class Image extends File
 		}
 
 		$valid_elements = array('type', 'width', 'height');
-		if ($element !== NULL && !in_array($element, $valid_elements)) {
+		if ($element !== null && !in_array($element, $valid_elements)) {
 			throw new ProgrammerException(
 				'The element specified, %1$s, is invalid. Must be one of: %2$s.',
 				$element,
@@ -378,10 +369,10 @@ class Image extends File
 		if (isset($types[$image_info[2]])) {
 			$output['type'] = $types[$image_info[2]];
 		} else {
-			$output['type'] = NULL;
+			$output['type'] = null;
 		}
 
-		if ($element !== NULL) {
+		if ($element !== null) {
 			return $output[$element];
 		}
 
@@ -395,11 +386,11 @@ class Image extends File
 	 * @param  string $image  The image path to get the type for
 	 * @return string|NULL  The type of the image - `'jpg'`, `'gif'`, `'png'` or `'tif'` - NULL if not one of those
 	 */
-	static private function getImageType(string $image): string|null
+	private static function getImageType(string $image): string|null
 	{
 		$handle   = fopen($image, 'r');
-		if ($handle === FALSE) {
-			return NULL;
+		if ($handle === false) {
+			return null;
 		}
 		$contents = fread($handle, 32);
 		fclose($handle);
@@ -428,7 +419,7 @@ class Image extends File
 			return 'jpg';
 		}
 
-		return NULL;
+		return null;
 	}
 
 
@@ -442,7 +433,7 @@ class Image extends File
 	 * @param  string $image  The image to check for incompatibility
 	 * @return boolean  If the image is compatible with the detected image processor
 	 */
-	static public function isImageCompatible(string $image): bool
+	public static function isImageCompatible(string $image): bool
 	{
 		self::determineProcessor();
 
@@ -455,11 +446,11 @@ class Image extends File
 
 		$type = self::getImageType($image);
 
-		if ($type === NULL || ($type == 'tif' && self::$processor == 'gd')) {
-			return FALSE;
+		if ($type === null || ($type == 'tif' && self::$processor == 'gd')) {
+			return false;
 		}
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -469,24 +460,24 @@ class Image extends File
 	 * @param  string $path  The path to check
 	 * @return boolean  If the path is restricted by the `open_basedir` ini setting
 	 */
-	static private function isOpenBaseDirRestricted(string $path): bool
+	private static function isOpenBaseDirRestricted(string $path): bool
 	{
 		if (ini_get('open_basedir')) {
 			$open_basedirs = explode((Core::checkOS('windows')) ? ';' : ':', ini_get('open_basedir'));
-			$found = FALSE;
+			$found = false;
 
 			foreach ($open_basedirs as $open_basedir) {
 				if (strpos($path, $open_basedir) === 0) {
-					$found = TRUE;
+					$found = true;
 				}
 			}
 
 			if (!$found) {
-				return TRUE;
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -496,15 +487,15 @@ class Image extends File
 	 * @param  string $path  The path to check
 	 * @return boolean  If the path is restricted by the `safe_mode_exec_dir` ini setting
 	 */
-	static private function isSafeModeExecDirRestricted(string $path): bool
+	private static function isSafeModeExecDirRestricted(string $path): bool
 	{
 		if (!in_array(strtolower((string) ini_get('safe_mode')), array('0', '', 'off'))) {
 			$exec_dir = ini_get('safe_mode_exec_dir');
-			if (!$exec_dir || stripos($path, $exec_dir) === FALSE) {
-				return TRUE;
+			if (!$exec_dir || stripos($path, $exec_dir) === false) {
+				return true;
 			}
 		}
-		return FALSE;
+		return false;
 	}
 
 
@@ -515,11 +506,11 @@ class Image extends File
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
-		self::$imagemagick_dir      = NULL;
-		self::$imagemagick_temp_dir = NULL;
-		self::$processor            = NULL;
+		self::$imagemagick_dir      = null;
+		self::$imagemagick_temp_dir = null;
+		self::$processor            = null;
 	}
 
 
@@ -529,7 +520,7 @@ class Image extends File
 	 * @param  string $directory  The directory ImageMagick is installed in
 	 * @return void
 	 */
-	static public function setImageMagickDirectory(string $directory): void
+	public static function setImageMagickDirectory(string $directory): void
 	{
 		$directory = Directory::makeCanonical($directory);
 
@@ -546,7 +537,7 @@ class Image extends File
 	 * @param  string $temp_dir  The directory to use for the ImageMagick temp dir
 	 * @return void
 	 */
-	static public function setImageMagickTempDir(string $temp_dir): void
+	public static function setImageMagickTempDir(string $temp_dir): void
 	{
 		$temp_dir = new Directory($temp_dir);
 		if (!$temp_dir->isWritable()) {
@@ -576,7 +567,7 @@ class Image extends File
 	 * @param  boolean $skip_checks  If file checks should be skipped, which improves performance, but may cause undefined behavior - only skip these if they are duplicated elsewhere
 	 * @return Image
 	 */
-	public function __construct(mixed $file_path, mixed $skip_checks=FALSE)
+	public function __construct(mixed $file_path, mixed $skip_checks = false)
 	{
 		self::determineProcessor();
 
@@ -634,10 +625,10 @@ class Image extends File
 					$crop_from_x = 0;
 					break;
 				case 'center':
-					$crop_from_x = floor(max($orig_width-$new_width, 0)/2);
+					$crop_from_x = floor(max($orig_width - $new_width, 0) / 2);
 					break;
 				case 'right':
-					$crop_from_x = max($orig_width-$new_width, 0);
+					$crop_from_x = max($orig_width - $new_width, 0);
 					break;
 				default:
 					throw new ProgrammerException(
@@ -654,10 +645,10 @@ class Image extends File
 					$crop_from_y = 0;
 					break;
 				case 'center':
-					$crop_from_y = floor(max($orig_height-$new_height, 0)/2);
+					$crop_from_y = floor(max($orig_height - $new_height, 0) / 2);
 					break;
 				case 'bottom':
-					$crop_from_y = max($orig_height-$new_height, 0);
+					$crop_from_y = max($orig_height - $new_height, 0);
 					break;
 				default:
 					throw new ProgrammerException(
@@ -728,7 +719,7 @@ class Image extends File
 	 * @param  string  $vertical_position    A vertical position of `'top'`, `'center'` or `'bottom'`
 	 * @return Image  The image object, to allow for method chaining
 	 */
-	public function cropToRatio(mixed $ratio_width, mixed $ratio_height, string $horizontal_position='center', string $vertical_position='center'): Image
+	public function cropToRatio(mixed $ratio_width, mixed $ratio_height, string $horizontal_position = 'center', string $vertical_position = 'center'): Image
 	{
 		$this->tossIfDeleted();
 
@@ -825,9 +816,8 @@ class Image extends File
 				throw new ProgrammerException('The dimensions of the image could not be determined');
 			}
 			unset($output['type']);
-
 		} else {
-			$last_modification = $this->pending_modifications[sizeof($this->pending_modifications)-1];
+			$last_modification = $this->pending_modifications[sizeof($this->pending_modifications) - 1];
 			$output['width']  = $last_modification['width'];
 			$output['height'] = $last_modification['height'];
 		}
@@ -907,10 +897,10 @@ class Image extends File
 		if ($type == 'gif') {
 			$contents = file_get_contents($this->file);
 			if (is_string($contents) && preg_match('#\x00\x21\xF9\x04.{4}\x00\x2C#s', $contents)) {
-				return TRUE;
+				return true;
 			}
 		}
-		return FALSE;
+		return false;
 	}
 
 
@@ -924,7 +914,7 @@ class Image extends File
 	private function processWithGD(string $output_file, int $jpeg_quality): void
 	{
 		$type       = self::getImageType($this->file);
-		$save_alpha = FALSE;
+		$save_alpha = false;
 
 		$path_info = Filesystem::getPathInfo($output_file);
 		$new_type  = $path_info['extension'];
@@ -952,28 +942,27 @@ class Image extends File
 			}
 		}
 
-		$gd_res = FALSE;
+		$gd_res = false;
 		switch ($type) {
 			case 'gif':
 				$gd_res = imagecreatefromgif($this->file);
-				$save_alpha = TRUE;
+				$save_alpha = true;
 				break;
 			case 'jpg':
 				$gd_res = imagecreatefromjpeg($this->file);
 				break;
 			case 'png':
 				$gd_res = imagecreatefrompng($this->file);
-				$save_alpha = TRUE;
+				$save_alpha = true;
 				break;
 		}
 
-		if ($gd_res === FALSE) {
+		if ($gd_res === false) {
 			throw new EnvironmentException('The image could not be loaded using the GD extension');
 		}
 
 
 		foreach ($this->pending_modifications as $num => $mod) {
-
 			if (ini_get('memory_limit') != '-1') {
 				$old_byte_usage = $this->pending_modifications[0]['old_width'] * $this->pending_modifications[0]['old_height'] * 4;
 				$new_byte_usage = $this->pending_modifications[0]['width'] * $this->pending_modifications[0]['height'] * 4;
@@ -995,15 +984,15 @@ class Image extends File
 			}
 
 			$new_gd_res = imagecreatetruecolor($mod['width'], $mod['height']);
-			if ($new_gd_res === FALSE) {
+			if ($new_gd_res === false) {
 				throw new EnvironmentException('The new image for the modification could not be allocated');
 			}
 			if ($save_alpha) {
-				imagealphablending($new_gd_res, FALSE);
-				imagesavealpha($new_gd_res, TRUE);
+				imagealphablending($new_gd_res, false);
+				imagesavealpha($new_gd_res, true);
 				if ($new_type == 'gif') {
 					$transparent = imagecolorallocatealpha($new_gd_res, 255, 255, 255, 127);
-					if ($transparent === FALSE) {
+					if ($transparent === false) {
 						throw new EnvironmentException('The transparent color for the image could not be allocated');
 					}
 					imagefilledrectangle($new_gd_res, 0, 0, $mod['width'], $mod['height'], $transparent);
@@ -1013,43 +1002,53 @@ class Image extends File
 
 			// Perform the resize operation
 			if ($mod['operation'] == 'resize') {
-
-				imagecopyresampled($new_gd_res,       $gd_res,
-								   0,                 0,
-								   0,                 0,
-								   $mod['width'],     $mod['height'],
-								   $mod['old_width'], $mod['old_height']);
+				imagecopyresampled(
+                    $new_gd_res,
+                    $gd_res,
+                    0,
+                    0,
+                    0,
+                    0,
+                    $mod['width'],
+                    $mod['height'],
+                    $mod['old_width'],
+                    $mod['old_height']
+                );
 
 			// Perform the crop operation
 			} elseif ($mod['operation'] == 'crop') {
-
-				imagecopyresampled($new_gd_res,       $gd_res,
-								   0,                 0,
-								   $mod['start_x'],   $mod['start_y'],
-								   $mod['width'],     $mod['height'],
-								   $mod['width'],     $mod['height']);
+				imagecopyresampled(
+                    $new_gd_res,
+                    $gd_res,
+                    0,
+                    0,
+                    $mod['start_x'],
+                    $mod['start_y'],
+                    $mod['width'],
+                    $mod['height'],
+                    $mod['width'],
+                    $mod['height']
+                );
 
 			// Perform the desaturate operation
 			} elseif ($mod['operation'] == 'desaturate') {
-
 				// Create a palette of grays
 				$grays = array();
-				for ($i=0; $i < 256; $i++) {
+				for ($i = 0; $i < 256; $i++) {
 					$gray_color = imagecolorallocate($new_gd_res, $i, $i, $i);
-					if ($gray_color === FALSE) {
+					if ($gray_color === false) {
 						throw new EnvironmentException('The gray colors for the image could not be allocated');
 					}
 					$grays[$i] = $gray_color;
 				}
 				$transparent = imagecolorallocatealpha($new_gd_res, 255, 255, 255, 127);
-				if ($transparent === FALSE) {
+				if ($transparent === false) {
 					throw new EnvironmentException('The transparent color for the image could not be allocated');
 				}
 
 				// Loop through every pixel and convert the rgb values to grays
-				for ($x=0; $x < $mod['width']; $x++) {
-					for ($y=0; $y < $mod['height']; $y++) {
-
+				for ($x = 0; $x < $mod['width']; $x++) {
+					for ($y = 0; $y < $mod['height']; $y++) {
 						$color = imagecolorat($gd_res, $x, $y);
 						if (!is_int($color)) {
 							throw new EnvironmentException('The color of a pixel in the image could not be read');
@@ -1071,7 +1070,6 @@ class Image extends File
 						}
 
 						if (!$save_alpha || $alpha != 127) {
-
 							// Get the appropriate gray (http://en.wikipedia.org/wiki/YIQ)
 							$yiq = max(0, min(255, (int) round(($red * 0.299) + ($green * 0.587) + ($blue * 0.114))));
 
@@ -1083,7 +1081,6 @@ class Image extends File
 									throw new EnvironmentException('The transparent gray color for the image could not be allocated');
 								}
 							}
-
 						} else {
 							$new_color = $transparent;
 						}
@@ -1115,7 +1112,7 @@ class Image extends File
 					}
 
 					$new_gd_res = imagerotate($gd_res, $mod['degrees'], -1);
-					if ($new_gd_res === FALSE) {
+					if ($new_gd_res === false) {
 						throw new EnvironmentException('The image could not be rotated using the GD extension');
 					}
 
@@ -1126,12 +1123,11 @@ class Image extends File
 						imagealphablending($new_gd_res, false);
 						imagesavealpha($new_gd_res, true);
 					}
-
 				} else {
 					switch ($mod['degrees']) {
 						case 90:
-				            for ($x=0; $x < $mod['width']; $x++) {
-				                for ($y=0; $y < $mod['height']; $y++) {
+				            for ($x = 0; $x < $mod['width']; $x++) {
+				                for ($y = 0; $y < $mod['height']; $y++) {
 				                    imagecopy($new_gd_res, $gd_res, $mod['height'] - $y - 1, $x, $x, $y, 1, 1);
 								}
 							}
@@ -1141,14 +1137,14 @@ class Image extends File
 				        	// Rather than copying one pixel at a time, like with 90
 				        	// and 270 degrees, for 180 degrees we can copy one rpw
 				        	// at a time for better performance
-				            for ($x=0; $x < $mod['width']; $x++) {
+				            for ($x = 0; $x < $mod['width']; $x++) {
 				                imagecopy($new_gd_res, $gd_res, $mod['width'] - $x - 1, 0, $x, 0, 1, $mod['height']);
 							}
 				            $row = imagecreatetruecolor($mod['width'], 1);
-				            if ($row === FALSE) {
+				            if ($row === false) {
 								throw new EnvironmentException('The temporary image row could not be allocated');
 							}
-				            for ($y=0; $y < $mod['height']/2; $y++) {
+				            for ($y = 0; $y < $mod['height'] / 2; $y++) {
 				                imagecopy($row, $new_gd_res, 0, 0, 0, $mod['height'] - $y - 1, $mod['width'], 1);
 				                imagecopy($new_gd_res, $new_gd_res, 0, $mod['height'] - $y - 1, 0, $y, $mod['width'], 1);
 				                imagecopy($new_gd_res, $row, 0, $y, 0, 0, $mod['width'], 1);
@@ -1157,8 +1153,8 @@ class Image extends File
 				            break;
 
 				        case 270:
-				            for ($x=0; $x < $mod['width']; $x++) {
-				                for ($y=0; $y < $mod['height']; $y++) {
+				            for ($x = 0; $x < $mod['width']; $x++) {
+				                for ($y = 0; $y < $mod['height']; $y++) {
 				                    imagecopy($new_gd_res, $gd_res, $y, $mod['width'] - $x - 1, $x, $y, 1, 1);
 								}
 							}
@@ -1175,7 +1171,7 @@ class Image extends File
 		// Save the file
 		switch ($new_type) {
 			case 'gif':
-				imagetruecolortopalette($gd_res, TRUE, 256);
+				imagetruecolortopalette($gd_res, true, 256);
 				imagegif($gd_res, $output_file);
 				break;
 			case 'jpg':
@@ -1240,7 +1236,6 @@ class Image extends File
 		}
 
 		foreach ($this->pending_modifications as $mod) {
-
 			// Perform the resize operation
 			if ($mod['operation'] == 'resize') {
 				$command_line .= ' -resize "' . $mod['width'] . 'x' . $mod['height'];
@@ -1266,8 +1261,8 @@ class Image extends File
 		}
 
 		// Default to the RGB colorspace
-		if (strpos($command_line, ' -colorspace ') === FALSE) {
-			if (self::$imagemagick_version !== NULL && version_compare(self::$imagemagick_version, '6.7.5') >= 0) {
+		if (strpos($command_line, ' -colorspace ') === false) {
+			if (self::$imagemagick_version !== null && version_compare(self::$imagemagick_version, '6.7.5') >= 0) {
 				$command_line .= ' -colorspace sRGB ';
 			} else {
 				$command_line .= ' -colorspace RGB ';
@@ -1304,7 +1299,7 @@ class Image extends File
 	 * @param  boolean $allow_upsizing  If the image is smaller than the desired canvas, the image will be increased in size
 	 * @return Image  The image object, to allow for method chaining
 	 */
-	public function resize(int $canvas_width, int $canvas_height, bool $allow_upsizing=FALSE): Image
+	public function resize(int $canvas_width, int $canvas_height, bool $allow_upsizing = false): Image
 	{
 		$this->tossIfDeleted();
 
@@ -1334,15 +1329,13 @@ class Image extends File
 
 		if ($canvas_width == 0) {
 			$new_height = $canvas_height;
-			$new_width  = round(($new_height/$orig_height) * $orig_width);
-
+			$new_width  = round(($new_height / $orig_height) * $orig_width);
 		} elseif ($canvas_height == 0) {
 			$new_width  = $canvas_width;
-			$new_height = round(($new_width/$orig_width) * $orig_height);
-
+			$new_height = round(($new_width / $orig_width) * $orig_height);
 		} else {
-			$orig_ratio   = $orig_width/$orig_height;
-			$canvas_ratio = $canvas_width/$canvas_height;
+			$orig_ratio   = $orig_width / $orig_height;
+			$canvas_ratio = $canvas_width / $canvas_height;
 
 			if ($canvas_ratio > $orig_ratio) {
 				$new_height = $canvas_height;
@@ -1439,7 +1432,7 @@ class Image extends File
 	 * @param  boolean  $overwrite
 	 * @return Image  The image object, to allow for method chaining
 	 */
-	public function saveChanges(?string $new_image_type=NULL, int $jpeg_quality=90, bool $overwrite=FALSE): Image
+	public function saveChanges(?string $new_image_type = null, int $jpeg_quality = 90, bool $overwrite = false): Image
 	{
 		// This allows ommitting the $jpeg_quality parameter, which is very useful for non-jpegs
 		$args = func_get_args();
@@ -1466,7 +1459,7 @@ class Image extends File
 		}
 
 		$valid_image_types = array('jpg', 'gif', 'png');
-		if ($new_image_type !== NULL && !in_array($new_image_type, $valid_image_types)) {
+		if ($new_image_type !== null && !in_array($new_image_type, $valid_image_types)) {
 			throw new ProgrammerException(
 				'The new image type specified, %1$s, is invalid. Must be one of: %2$s.',
 				$new_image_type,
@@ -1498,7 +1491,6 @@ class Image extends File
 						$output_file
 					);
 				}
-
 			} else {
 				$output_dir = dirname($output_file);
 				if (!is_writable($output_dir)) {
@@ -1508,7 +1500,6 @@ class Image extends File
 					);
 				}
 			}
-
 		} else {
 			$output_file = $this->file;
 			if (!is_writable($output_file)) {

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Adds JSON functionality to ActiveRecord and RecordSet
  *
@@ -22,7 +24,7 @@ class ORMJSON
 	 *
 	 * @return void
 	 */
-	static public function extend(): void
+	public static function extend(): void
 	{
 		ORM::registerReflectCallback(
 			'*',
@@ -52,7 +54,7 @@ class ORMJSON
 	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
 	 */
-	static public function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
+	public static function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
 		$signature = '';
 		if ($include_doc_comments) {
@@ -82,7 +84,7 @@ class ORMJSON
 	 * @param  array<int, mixed> $parameters        The parameters passed to the method
 	 * @return string  The JSON object that represents the values of this record
 	 */
-	static public function toJSON(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
+	public static function toJSON(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
 		$output = array();
 		foreach ($values as $column => $value) {
@@ -106,7 +108,7 @@ class ORMJSON
 	 * @param  array<string, mixed> &$records    The ActiveRecord objects
 	 * @return string  The JSON object that represents an array of all of the ActiveRecord objects
 	 */
-	static public function toJSONRecordSet(RecordSet $record_set, string $class, mixed &$records): string
+	public static function toJSONRecordSet(RecordSet $record_set, string $class, mixed &$records): string
 	{
 		/** @var list<string> $json */
 		$json = $record_set->call('toJSON');
@@ -119,7 +121,9 @@ class ORMJSON
 	 *
 	 * @return ORMJSON
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

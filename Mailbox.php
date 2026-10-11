@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Retrieves and deletes messages from a email account via IMAP or POP3
  *
@@ -43,7 +45,7 @@ class Mailbox
 	 *
 	 * @var array<string, array{certificate: File, private_key: File|null, password: string|null}>
 	 */
-	static private array $smime_pairs = array();
+	private static array $smime_pairs = array();
 
 
 	/**
@@ -55,7 +57,7 @@ class Mailbox
 	 * @param string       $private_key_password  The password for the private key
 	 * @return void
 	 */
-	static public function addSMIMEPair(string $email_address, mixed $certificate_file, ?File $private_key_file=NULL, ?string $private_key_password=NULL): void
+	public static function addSMIMEPair(string $email_address, mixed $certificate_file, ?File $private_key_file = null, ?string $private_key_password = null): void
 	{
 		if (!$certificate_file instanceof File) {
 			$certificate_file = new File($certificate_file);
@@ -74,7 +76,7 @@ class Mailbox
 	 * @param string $date  The date to clean
 	 * @return string  The cleaned date
 	 */
-	static private function cleanDate(string $date): string
+	private static function cleanDate(string $date): string
 	{
 		$date = preg_replace('#\([^)]+\)#', ' ', trim($date)) ?? '';
 		$date = preg_replace('#\s+#', ' ', $date) ?? '';
@@ -90,10 +92,10 @@ class Mailbox
 	 * @param string $text  The header value to decode
 	 * @return string  The decoded UTF-8
 	 */
-	static private function decodeHeader(string $text): string
+	private static function decodeHeader(string $text): string
 	{
 		$parts = preg_split('#(=\?[^\?]+\?[QB]\?[^\?]+\?=)#i', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-		if ($parts === FALSE) {
+		if ($parts === false) {
 			return $text;
 		}
 
@@ -125,7 +127,6 @@ class Mailbox
 						$part_with_encoding[] = array('encoding' => $lower_encoding, 'string' => $part_string);
 					}
 				}
-
 			} else {
 				$last_key = count($part_with_encoding) - 1;
 				if (isset($part_with_encoding[$last_key]) && $part_with_encoding[$last_key]['encoding'] == 'iso-8859-1') {
@@ -151,13 +152,13 @@ class Mailbox
 	 * @param  array<array-key, mixed>    $structure  An array describing the structure of the message
 	 * @return array<string, mixed>  The modified $info array
 	 */
-	static private function handlePart(array $info, array $structure): array
+	private static function handlePart(array $info, array $structure): array
 	{
-		$structure_type = $structure['type'] ?? NULL;
-		$subtype        = $structure['subtype'] ?? NULL;
+		$structure_type = $structure['type'] ?? null;
+		$subtype        = $structure['subtype'] ?? null;
 
 		if ($structure_type == 'multipart') {
-			$parts = $structure['parts'] ?? NULL;
+			$parts = $structure['parts'] ?? null;
 			if (is_array($parts)) {
 				foreach ($parts as $part) {
 					if (is_array($part)) {
@@ -169,58 +170,58 @@ class Mailbox
 		}
 
 		if ($structure_type == 'application' && in_array($subtype, array('pkcs7-mime', 'x-pkcs7-mime'))) {
-			$to = NULL;
-			$info_headers = $info['headers'] ?? NULL;
-			$to_header    = is_array($info_headers) ? ($info_headers['to'] ?? NULL) : NULL;
+			$to = null;
+			$info_headers = $info['headers'] ?? null;
+			$to_header    = is_array($info_headers) ? ($info_headers['to'] ?? null) : null;
 			if (is_array($to_header) && isset($to_header[0]) && is_array($to_header[0])) {
-				$mailbox = $to_header[0]['mailbox'] ?? NULL;
+				$mailbox = $to_header[0]['mailbox'] ?? null;
 				if (is_string($mailbox)) {
 					$to = $mailbox;
 				}
-				$host = $to_header[0]['host'] ?? NULL;
-				if (is_string($host) && $to !== NULL && $host !== '') {
+				$host = $to_header[0]['host'] ?? null;
+				if (is_string($host) && $to !== null && $host !== '') {
 					$to .= '@' . $host;
 				}
 			}
 			if (is_string($to)) {
-				$smime_pair = self::$smime_pairs[$to] ?? NULL;
-				if ($smime_pair !== NULL && $smime_pair['private_key'] !== NULL && self::handleSMIMEDecryption($info, $structure, $smime_pair)) {
+				$smime_pair = self::$smime_pairs[$to] ?? null;
+				if ($smime_pair !== null && $smime_pair['private_key'] !== null && self::handleSMIMEDecryption($info, $structure, $smime_pair)) {
 					return $info;
 				}
 			}
 		}
 
 		if ($structure_type == 'application' && in_array($subtype, array('pkcs7-signature', 'x-pkcs7-signature'))) {
-			$from = NULL;
-			$info_headers = $info['headers'] ?? NULL;
-			$from_header  = is_array($info_headers) ? ($info_headers['from'] ?? NULL) : NULL;
+			$from = null;
+			$info_headers = $info['headers'] ?? null;
+			$from_header  = is_array($info_headers) ? ($info_headers['from'] ?? null) : null;
 			if (is_array($from_header)) {
-				$mailbox = $from_header['mailbox'] ?? NULL;
+				$mailbox = $from_header['mailbox'] ?? null;
 				if (is_string($mailbox)) {
 					$from = $mailbox;
 				}
-				$host = $from_header['host'] ?? NULL;
-				if (is_string($host) && $from !== NULL && $host !== '') {
+				$host = $from_header['host'] ?? null;
+				if (is_string($host) && $from !== null && $host !== '') {
 					$from .= '@' . $host;
 				}
 			}
 			if (is_string($from)) {
-				$smime_pair = self::$smime_pairs[$from] ?? NULL;
-				if ($smime_pair !== NULL && self::handleSMIMEVerification($info, $structure, $smime_pair)) {
+				$smime_pair = self::$smime_pairs[$from] ?? null;
+				if ($smime_pair !== null && self::handleSMIMEVerification($info, $structure, $smime_pair)) {
 					return $info;
 				}
 			}
 		}
 
-		$data = $structure['data'] ?? NULL;
+		$data = $structure['data'] ?? null;
 		$data = is_string($data) ? $data : '';
 
-		if (($structure['encoding'] ?? NULL) == 'base64') {
+		if (($structure['encoding'] ?? null) == 'base64') {
 			$content = '';
 			foreach (explode("\r\n", $data) as $line) {
 				$content .= base64_decode($line);
 			}
-		} elseif (($structure['encoding'] ?? NULL) == 'quoted-printable') {
+		} elseif (($structure['encoding'] ?? null) == 'quoted-printable') {
 			$content = quoted_printable_decode($data);
 		} else {
 			$content = $data;
@@ -228,7 +229,7 @@ class Mailbox
 
 		if ($structure_type == 'text') {
 			$charset = 'iso-8859-1';
-			$type_fields = $structure['type_fields'] ?? NULL;
+			$type_fields = $structure['type_fields'] ?? null;
 			if (is_array($type_fields)) {
 				foreach ($type_fields as $field => $value) {
 					if (is_string($field) && is_string($value) && strtolower($field) == 'charset') {
@@ -268,15 +269,14 @@ class Mailbox
 			$is_web_image = $structure_type == 'image' && in_array($subtype, array('gif', 'png', 'jpeg', 'pjpeg'));
 			$structure['disposition'] = $is_text || $is_html || $is_web_image ? 'inline' : 'attachment';
 			$structure['disposition_fields'] = array();
-			$has_disposition = TRUE;
+			$has_disposition = true;
 		}
 
 
 		// Attachments or inline content
 		if ($has_disposition) {
-
 			$filename = '';
-			$disposition_fields = $structure['disposition_fields'] ?? NULL;
+			$disposition_fields = $structure['disposition_fields'] ?? null;
 			if (is_array($disposition_fields)) {
 				foreach ($disposition_fields as $field => $value) {
 					if (is_string($field) && is_string($value) && strtolower($field) == 'filename') {
@@ -285,7 +285,7 @@ class Mailbox
 					}
 				}
 			}
-			$type_fields = $structure['type_fields'] ?? NULL;
+			$type_fields = $structure['type_fields'] ?? null;
 			if (is_array($type_fields)) {
 				foreach ($type_fields as $field => $value) {
 					if (is_string($field) && is_string($value) && strtolower($field) == 'name') {
@@ -340,25 +340,25 @@ class Mailbox
 	 * @param  array{certificate: File, private_key: File|null, password: string|null}  $smime_pair  An associative array containing an S/MIME certificate, private key and password
 	 * @return boolean  If the message was decrypted
 	 */
-	static private function handleSMIMEDecryption(array &$info, array $structure, array $smime_pair): bool
+	private static function handleSMIMEDecryption(array &$info, array $structure, array $smime_pair): bool
 	{
 		$plaintext_file  = tempnam('', '__fMailbox_');
 		$ciphertext_file = tempnam('', '__fMailbox_');
 		if (!is_string($plaintext_file) || !is_string($ciphertext_file)) {
-			return FALSE;
+			return false;
 		}
 
-		$structure_type = $structure['type'] ?? NULL;
-		$subtype        = $structure['subtype'] ?? NULL;
-		$encoding       = $structure['encoding'] ?? NULL;
-		$data           = $structure['data'] ?? NULL;
+		$structure_type = $structure['type'] ?? null;
+		$subtype        = $structure['subtype'] ?? null;
+		$encoding       = $structure['encoding'] ?? null;
+		$data           = $structure['data'] ?? null;
 
 		$headers   = array();
 		$headers[] = "Content-Type: " . (is_string($structure_type) ? $structure_type : '') . '/' . (is_string($subtype) ? $subtype : '');
 		$headers[] = "Content-Transfer-Encoding: " . (is_string($encoding) ? $encoding : '');
-		$disposition = $structure['disposition'] ?? NULL;
+		$disposition = $structure['disposition'] ?? null;
 		$header    = "Content-Disposition: " . (is_string($disposition) ? $disposition : '');
-		$disposition_fields = $structure['disposition_fields'] ?? NULL;
+		$disposition_fields = $structure['disposition_fields'] ?? null;
 		if (is_array($disposition_fields)) {
 			foreach ($disposition_fields as $field => $value) {
 				if (is_string($field) && is_string($value)) {
@@ -370,19 +370,19 @@ class Mailbox
 
 		file_put_contents($ciphertext_file, join("\r\n", $headers) . "\r\n\r\n" . (is_string($data) ? $data : ''));
 
-		if ($smime_pair['private_key'] === NULL) {
+		if ($smime_pair['private_key'] === null) {
 			unlink($ciphertext_file);
 			unlink($plaintext_file);
-			return FALSE;
+			return false;
 		}
 		$private_key = openssl_pkey_get_private(
 			$smime_pair['private_key']->read(),
 			$smime_pair['password']
 		);
-		if ($private_key === FALSE) {
+		if ($private_key === false) {
 			unlink($ciphertext_file);
 			unlink($plaintext_file);
-			return FALSE;
+			return false;
 		}
 		$certificate = $smime_pair['certificate']->read();
 
@@ -391,19 +391,19 @@ class Mailbox
 
 		if (!$result) {
 			unlink($plaintext_file);
-			return FALSE;
+			return false;
 		}
 
 		$contents = file_get_contents($plaintext_file);
 		unlink($plaintext_file);
 		if (!is_string($contents)) {
-			return FALSE;
+			return false;
 		}
 		$info['raw_message'] = $contents;
 		$info = self::handlePart($info, self::parseStructure($contents));
-		$info['decrypted'] = TRUE;
+		$info['decrypted'] = true;
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -416,15 +416,15 @@ class Mailbox
 	 * @param array{certificate: File, private_key: File|null, password: string|null}  $smime_pair  An associative array containing an S/MIME certificate file
 	 * @return boolean  If the message was verified
 	 */
-	static private function handleSMIMEVerification(array &$info, array $structure, array $smime_pair): bool
+	private static function handleSMIMEVerification(array &$info, array $structure, array $smime_pair): bool
 	{
 		$certificates_file = tempnam('', '__fMailbox_');
 		$ciphertext_file   = tempnam('', '__fMailbox_');
 		if (!is_string($certificates_file) || !is_string($ciphertext_file)) {
-			return FALSE;
+			return false;
 		}
 
-		$raw_message = $info['raw_message'] ?? NULL;
+		$raw_message = $info['raw_message'] ?? null;
 		file_put_contents($ciphertext_file, is_string($raw_message) ? $raw_message : '');
 
 		$result = openssl_pkcs7_verify(
@@ -438,12 +438,12 @@ class Mailbox
 		unlink($certificates_file);
 
 		if (!$result || $result === -1) {
-			return FALSE;
+			return false;
 		}
 
-		$info['verified'] = TRUE;
+		$info['verified'] = true;
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -457,7 +457,7 @@ class Mailbox
 	 * @param string $string       The string to convert
 	 * @return string  The converted string
 	 */
-	static private function iconv(string $in_charset, string $out_charset, string $string): string
+	private static function iconv(string $in_charset, string $out_charset, string $string): string
 	{
 		$result = iconv($in_charset, $out_charset, $string);
 		return is_string($result) ? $result : $string;
@@ -470,14 +470,16 @@ class Mailbox
 	 * @param array<array-key, mixed>  $emails  An array of emails split into personal, mailbox and host parts
 	 * @return string  An comma-delimited list of emails
 	 */
-	static private function joinEmails(array $emails): string
+	private static function joinEmails(array $emails): string
 	{
 		$output = '';
 		foreach ($emails as $email) {
 			if (!is_array($email)) {
 				continue;
 			}
-			if ($output) { $output .= ', '; }
+			if ($output) {
+                $output .= ', ';
+            }
 
 			if (!array_key_exists(0, $email)) {
 				$email[0] = isset($email['personal']) && is_string($email['personal']) ? $email['personal'] : '';
@@ -502,7 +504,7 @@ class Mailbox
 	 * @param  string $string  The email string to parse
 	 * @return MailboxAddress  An associative array with the key `mailbox`, and possibly `host` and `personal`
 	 */
-	static private function parseEmail(string $string): array
+	private static function parseEmail(string $string): array
 	{
 		$email_regex = '((?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")(?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*)@((?:[a-z0-9\\-]+\.)+[a-z]{2,}|\[(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])\])';
 		$name_regex  = '((?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*)(?:\.?[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*))*)';
@@ -517,7 +519,6 @@ class Mailbox
 				'mailbox' => self::decodeHeader($match[2]),
 				'host' => self::decodeHeader($match[3])
 			);
-
 		} elseif (preg_match('~^[ \t]*(?:<[ \t]*)?' . $email_regex . '(?:[ \t]*>)?[ \t]*$~ixD', $string, $match)) {
 			return array(
 				'mailbox' => self::decodeHeader($match[1]),
@@ -539,7 +540,7 @@ class Mailbox
 			);
 		}
 
-		if (strpos($string, '@') !== FALSE) {
+		if (strpos($string, '@') !== false) {
 			list ($mailbox, $host) = explode('@', $string, 2);
 			return array(
 				'mailbox' => self::decodeHeader($mailbox),
@@ -561,7 +562,7 @@ class Mailbox
 	 * @param  string $filter   Remove any headers that match this
 	 * @return array<string, mixed>  The parsed headers
 	 */
-	static private function parseHeaders(string $headers, ?string $filter=NULL): array
+	private static function parseHeaders(string $headers, ?string $filter = null): array
 	{
 		$headers = trim($headers);
 		if (!strlen($headers)) {
@@ -587,7 +588,7 @@ class Mailbox
 			list ($header, $value) = array_pad($header_value_parts, 2, '');
 			$header = strtolower($header);
 
-			if ($filter !== NULL && strpos($header, $filter) !== FALSE) {
+			if ($filter !== null && strpos($header, $filter) !== false) {
 				continue;
 			}
 
@@ -612,10 +613,8 @@ class Mailbox
 					}
 				}
 				$headers[$header]['fields'] = $fields;
-
 			} elseif ($is_single_email) {
 				$headers[$header] = self::parseEmail($value);
-
 			} elseif ($is_multi_email) {
 				$strings = array();
 
@@ -634,7 +633,7 @@ class Mailbox
 				$emails = array_map('trim', $emails);
 				foreach ($strings as $i => $string) {
 					$emails = preg_replace(
-						'#:string' . ($i+1) . '\b#',
+						'#:string' . ($i + 1) . '\b#',
 						strtr($string, array('\\' => '\\\\', '$' => '\\$')),
 						$emails,
 						1
@@ -646,19 +645,16 @@ class Mailbox
 					$email_list[] = self::parseEmail($email);
 				}
 				$headers[$header] = $email_list;
-
 			} elseif ($header == 'references') {
 				$references = preg_split('#(?<=>)\s+(?=<)#', $value);
 				if (!is_array($references)) {
 					$references = array();
 				}
 				$headers[$header] = array_map(array('Mailbox', 'decodeHeader'), $references);
-
 			} elseif ($header == 'received') {
 				$received_list = isset($headers[$header]) && is_array($headers[$header]) ? $headers[$header] : array();
 				$received_list[] = preg_replace('#\s+#', ' ', self::decodeHeader($value)) ?? '';
 				$headers[$header] = $received_list;
-
 			} else {
 				$headers[$header] = self::decodeHeader($value);
 			}
@@ -702,14 +698,14 @@ class Mailbox
 	 * @param boolean $convert_newlines  If `\r\n` should be converted to `\n` in the `text` and `html` parts the message
 	 * @return array<string, mixed>  The parsed email message - see method description for details
 	 */
-	static public function parseMessage(string $message, bool $convert_newlines=FALSE): array
+	public static function parseMessage(string $message, bool $convert_newlines = false): array
 	{
 		$info = array();
 		list ($headers, $body)   = explode("\r\n\r\n", $message, 2);
 		$parsed_headers          = self::parseHeaders($headers);
 
-		$received_info   = $parsed_headers['received'] ?? NULL;
-		$received_value  = is_array($received_info) ? ($received_info[0] ?? NULL) : $received_info;
+		$received_info   = $parsed_headers['received'] ?? null;
+		$received_value  = is_array($received_info) ? ($received_info[0] ?? null) : $received_info;
 		$received_value  = is_string($received_value) ? $received_value : '';
 		$received_date   = preg_replace('#^.*;\s*([^;]+)$#', '\1', $received_value);
 		$info['received'] = self::cleanDate(is_string($received_date) ? $received_date : $received_value);
@@ -756,7 +752,7 @@ class Mailbox
 	 * @param boolean $top_level  If we are parsing the top level
 	 * @return array<array-key, mixed>  The parsed representation of the response text
 	 */
-	static private function parseResponse(string $text, bool $top_level=FALSE): array
+	private static function parseResponse(string $text, bool $top_level = false): array
 	{
 		$regex = '[\\\\\w.\[\]]+|"([^"\\\\]+|\\\\"|\\\\\\\\)*"|\((?:(?1)[ \t]*)*\)';
 
@@ -782,8 +778,8 @@ class Mailbox
 			$new_output = array();
 			$total_size = count($output);
 			for ($i = 0; $i < $total_size; $i = $i + 2) {
-				$name  = $output[$i] ?? NULL;
-				$value = $output[$i + 1] ?? NULL;
+				$name  = $output[$i] ?? null;
+				$value = $output[$i + 1] ?? null;
 				if (is_string($name)) {
 					$new_output[strtolower($name)] = $value;
 				}
@@ -803,9 +799,9 @@ class Mailbox
 	 * @param array<string, mixed>|string|null $headers  The parsed headers for the message - if not present they will be extracted from the `$data`
 	 * @return MailboxStructure  The multi-dimensional, associative array containing the message structure
 	 */
-	static private function parseStructure(string $data, array|string|null $headers=NULL): array
+	private static function parseStructure(string $data, array|string|null $headers = null): array
 	{
-		if ($headers === NULL) {
+		if ($headers === null) {
 			$split = preg_split("#^\r\n|\r\n\r\n#", $data, 2);
 			if (!is_array($split) || sizeof($split) != 2) {
 				throw new ProgrammerException('An invalid email message was passed to parseStructure(), the header and body could not be split');
@@ -817,12 +813,12 @@ class Mailbox
 			$headers = self::parseHeaders($headers);
 		}
 
-		$content_type_info = $headers['content-type'] ?? NULL;
+		$content_type_info = $headers['content-type'] ?? null;
 		if (!is_array($content_type_info)) {
 			$content_type_info = array('value' => 'text/plain', 'fields' => array());
 		}
-		$content_type_value  = is_string($content_type_info['value'] ?? NULL) ? $content_type_info['value'] : 'text/plain';
-		$content_type_fields = is_array($content_type_info['fields'] ?? NULL) ? $content_type_info['fields'] : array();
+		$content_type_value  = is_string($content_type_info['value'] ?? null) ? $content_type_info['value'] : 'text/plain';
+		$content_type_fields = is_array($content_type_info['fields'] ?? null) ? $content_type_info['fields'] : array();
 		list ($type, $subtype) = array_pad(explode('/', strtolower($content_type_value), 2), 2, '');
 
 		$disposition_fields = array();
@@ -839,13 +835,13 @@ class Mailbox
 				'subtype'            => $subtype,
 				'encoding'           => '8bit',
 				'data'               => '',
-				'content_id'         => NULL,
-				'disposition'        => NULL,
+				'content_id'         => null,
+				'disposition'        => null,
 				'disposition_fields' => $disposition_fields,
 				'type_fields'        => $type_fields,
 				'parts'              => array()
 			);
-			$boundary     = $content_type_fields['boundary'] ?? NULL;
+			$boundary     = $content_type_fields['boundary'] ?? null;
 			$boundary     = is_string($boundary) ? $boundary : '';
 			$start_pos    = strpos($data, '--' . $boundary) + strlen($boundary) + 4;
 			$end_pos      = strrpos($data, '--' . $boundary . '--') - 2;
@@ -857,15 +853,14 @@ class Mailbox
 			foreach ($sub_contents as $sub_content) {
 				$structure['parts'][] = self::parseStructure($sub_content);
 			}
-
 		} else {
-			$encoding_header = $headers['content-transfer-encoding'] ?? NULL;
+			$encoding_header = $headers['content-transfer-encoding'] ?? null;
 			$encoding        = is_string($encoding_header) ? strtolower($encoding_header) : '8bit';
-			$disposition_info = $headers['content-disposition'] ?? NULL;
+			$disposition_info = $headers['content-disposition'] ?? null;
 			if (is_array($disposition_info)) {
-				$disposition_value  = is_string($disposition_info['value'] ?? NULL) ? $disposition_info['value'] : '';
+				$disposition_value  = is_string($disposition_info['value'] ?? null) ? $disposition_info['value'] : '';
 				$disposition        = strtolower($disposition_value);
-				if (is_array($disposition_info['fields'] ?? NULL)) {
+				if (is_array($disposition_info['fields'] ?? null)) {
 					foreach ($disposition_info['fields'] as $d_field => $d_value) {
 						if (is_string($d_field) && is_string($d_value)) {
 							$disposition_fields[$d_field] = $d_value;
@@ -873,9 +868,9 @@ class Mailbox
 					}
 				}
 			} else {
-				$disposition        = NULL;
+				$disposition        = null;
 			}
-			$content_id = isset($headers['content-id']) && is_string($headers['content-id']) ? $headers['content-id'] : NULL;
+			$content_id = isset($headers['content-id']) && is_string($headers['content-id']) ? $headers['content-id'] : null;
 			$structure  = array(
 				'type'               => $type,
 				'type_fields'        => $type_fields,
@@ -885,7 +880,7 @@ class Mailbox
 				'disposition'        => $disposition,
 				'disposition_fields' => $disposition_fields,
 				'data'               => $data,
-				'parts'              => NULL
+				'parts'              => null
 			);
 		}
 
@@ -900,7 +895,7 @@ class Mailbox
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$smime_pairs = array();
 	}
@@ -994,9 +989,9 @@ class Mailbox
 	 * @param  integer $timeout   The timeout to use when connecting
 	 * @return Mailbox
 	 */
-	public function __construct(mixed $type, mixed $host, mixed $username, mixed $password, mixed $port=NULL, mixed $secure=FALSE, mixed $timeout=NULL)
+	public function __construct(mixed $type, mixed $host, mixed $username, mixed $password, mixed $port = null, mixed $secure = false, mixed $timeout = null)
 	{
-		if ($timeout === NULL) {
+		if ($timeout === null) {
 			$timeout = ini_get('default_socket_timeout');
 		}
 
@@ -1009,7 +1004,7 @@ class Mailbox
 			);
 		}
 
-		if ($port === NULL) {
+		if ($port === null) {
 			if ($type == 'imap') {
 				$port = !$secure ? 143 : 993;
 			} else {
@@ -1062,7 +1057,7 @@ class Mailbox
 			$this->write('QUIT', 1);
 		}
 
-		$this->connection = NULL;
+		$this->connection = null;
 	}
 
 
@@ -1108,17 +1103,17 @@ class Mailbox
 						if (isset($res)) {
 							usleep(100000);
 						}
-						$res = stream_socket_enable_crypto($connection, TRUE, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+						$res = stream_socket_enable_crypto($connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
 					} while ($res === 0);
 				}
 			}
 
 			$response = $this->write('LOGIN ' . $this->username . ' ' . $this->password);
-			$login_ok = FALSE;
+			$login_ok = false;
 			if ($response) {
 				$last_line = end($response);
 				if (preg_match('#^[^ ]+\s+OK#', $last_line)) {
-					$login_ok = TRUE;
+					$login_ok = true;
 				}
 			}
 			if (!$login_ok) {
@@ -1130,7 +1125,6 @@ class Mailbox
 				);
 			}
 			$this->write('SELECT "INBOX"');
-
 		} elseif ($this->type == 'pop3') {
 			$response = $this->read(1);
 			if (isset($response[0])) {
@@ -1151,19 +1145,19 @@ class Mailbox
 						if (isset($res)) {
 							usleep(100000);
 						}
-						$res = stream_socket_enable_crypto($connection, TRUE, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+						$res = stream_socket_enable_crypto($connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
 					} while ($res === 0);
-					if ($res === FALSE) {
+					if ($res === false) {
 						throw new ConnectivityException('Error establishing secure connection');
 					}
 				}
 			}
 
-			$authenticated = FALSE;
+			$authenticated = false;
 			if (isset($match[0])) {
 				$response = $this->write('APOP ' . $this->username . ' ' . md5($match[0] . $this->password), 1);
 				if (isset($response[0]) && $response[0][0] == '+') {
-					$authenticated = TRUE;
+					$authenticated = true;
 				}
 			}
 
@@ -1172,7 +1166,7 @@ class Mailbox
 				if (isset($response[0]) && $response[0][0] == '+') {
 					$response = $this->write('PASS ' . $this->password, 1);
 					if (isset($response[0][0]) && $response[0][0] == '+') {
-						$authenticated = TRUE;
+						$authenticated = true;
 					}
 				}
 			}
@@ -1215,7 +1209,6 @@ class Mailbox
 			}
 			$this->write('UID STORE ' . join(',', $uids) . ' +FLAGS (\\Deleted)');
 			$this->write('EXPUNGE');
-
 		} elseif ($this->type == 'pop3') {
 			foreach ($uid as $id) {
 				if (is_int($id) || is_string($id)) {
@@ -1273,7 +1266,7 @@ class Mailbox
 	 * @param  boolean $convert_newlines  If `\r\n` should be converted to `\n` in the `text` and `html` parts the message
 	 * @return array<string, mixed>  The parsed email message - see method description for details
 	 */
-	public function fetchMessage(int $uid, bool $convert_newlines=FALSE): array
+	public function fetchMessage(int $uid, bool $convert_newlines = false): array
 	{
 		$this->connect();
 
@@ -1310,7 +1303,9 @@ class Mailbox
 
 			$message = '';
 			foreach ($response as $i => $line) {
-				if (!$i) { continue; }
+				if (!$i) {
+                    continue;
+                }
 				if (strlen($message) + strlen($line) + 2 > $byte_count) {
 					$message .= substr($line . "\r\n", 0, $byte_count - strlen($message));
 				} else {
@@ -1320,7 +1315,6 @@ class Mailbox
 
 			// Removes the extra trailing \r\n added above to the last line
 			return substr($message, 0, -2);
-
 		} elseif ($this->type == 'pop3') {
 			$response = $this->write('RETR ' . $uid);
 			array_shift($response);
@@ -1360,7 +1354,7 @@ class Mailbox
 	 * @param  integer $page   The page of messages to retrieve
 	 * @return array<int, array<string, mixed>>  A list of messages on the server - see method description for details
 	 */
-	public function listMessages(?int $limit=NULL, ?int $page=NULL): array
+	public function listMessages(?int $limit = null, ?int $page = null): array
 	{
 		$this->connect();
 
@@ -1374,7 +1368,7 @@ class Mailbox
 				if (!$page) {
 					$page = 1;
 				}
-				$start = ($limit * ($page-1)) + 1;
+				$start = ($limit * ($page - 1)) + 1;
 				$end   = $start + $limit - 1;
 			}
 
@@ -1382,8 +1376,8 @@ class Mailbox
 			$response = $this->write('STATUS "INBOX" (MESSAGES)');
 			foreach ($response as $line) {
 				if (preg_match('#^\s*\*\s+STATUS\s+"?INBOX"?\s+\((.*)\)\s*$#', $line, $match)) {
-					$details = self::parseResponse($match[1], TRUE);
-					$total_messages_value = $details['messages'] ?? NULL;
+					$details = self::parseResponse($match[1], true);
+					$total_messages_value = $details['messages'] ?? null;
 					$total_messages = is_numeric($total_messages_value) ? (int) $total_messages_value : 0;
 				}
 			}
@@ -1400,17 +1394,17 @@ class Mailbox
 			$response = $this->write('FETCH ' . $start . ':' . $end . ' (UID INTERNALDATE RFC822.SIZE ENVELOPE)');
 			foreach ($response as $line) {
 				if (preg_match('#^\s*\*\s+(\d+)\s+FETCH\s+\((.*)\)\s*$#', $line, $match)) {
-					$details = self::parseResponse($match[2], TRUE);
+					$details = self::parseResponse($match[2], true);
 					$info    = array();
 
-					$uid_value  = $details['uid'] ?? NULL;
-					$date_value = $details['internaldate'] ?? NULL;
-					$size_value = $details['rfc822.size'] ?? NULL;
+					$uid_value  = $details['uid'] ?? null;
+					$date_value = $details['internaldate'] ?? null;
+					$size_value = $details['rfc822.size'] ?? null;
 					$info['uid']      = is_numeric($uid_value) ? (int) $uid_value : 0;
 					$info['received'] = self::cleanDate(is_string($date_value) ? $date_value : '');
 					$info['size']     = is_numeric($size_value) ? (int) $size_value : 0;
 
-					$envelope = $details['envelope'] ?? NULL;
+					$envelope = $details['envelope'] ?? null;
 					if (!is_array($envelope)) {
 						continue;
 					}
@@ -1442,16 +1436,15 @@ class Mailbox
 					$output[$info['uid']] = $info;
 				}
 			}
-
 		} elseif ($this->type == 'pop3') {
 			if (!$limit) {
 				$start = 1;
-				$end   = NULL;
+				$end   = null;
 			} else {
 				if (!$page) {
 					$page = 1;
 				}
-				$start = ($limit * ($page-1)) + 1;
+				$start = ($limit * ($page - 1)) + 1;
 				$end   = $start + $limit - 1;
 			}
 
@@ -1465,7 +1458,7 @@ class Mailbox
 				return array();
 			}
 
-			if ($end === NULL || $end > $total_messages) {
+			if ($end === null || $end > $total_messages) {
 				$end = $total_messages;
 			}
 
@@ -1491,7 +1484,7 @@ class Mailbox
 				$response = trim(join("\r\n", $response));
 				$headers  = self::parseHeaders($response);
 
-				$received_header = $headers['received'] ?? NULL;
+				$received_header = $headers['received'] ?? null;
 				if (is_array($received_header)) {
 					$received_value = isset($received_header[0]) && is_string($received_header[0]) ? $received_header[0] : '';
 				} else {
@@ -1499,7 +1492,7 @@ class Mailbox
 				}
 				$received_date = preg_replace('#^.*;\s*([^;]+)$#', '\1', $received_value);
 
-				$from_header = $headers['from'] ?? NULL;
+				$from_header = $headers['from'] ?? null;
 				$output[$i] = array(
 					'uid'      => $i,
 					'received' => self::cleanDate(is_string($received_date) ? $received_date : $received_value),
@@ -1530,7 +1523,7 @@ class Mailbox
 	 * @param  integer|string $expect  The expected number of lines of response or a regex of the last line
 	 * @return array<int, string>  The lines of response from the server
 	 */
-	private function read(mixed $expect=NULL): array
+	private function read(mixed $expect = null): array
 	{
 		$connection = $this->connection;
 		if (!is_resource($connection)) {
@@ -1538,8 +1531,8 @@ class Mailbox
 		}
 
 		$read     = array($connection);
-		$write    = NULL;
-		$except   = NULL;
+		$write    = null;
+		$except   = null;
 		$response = array();
 
 		// Fixes an issue with stream_select throwing a warning on Windows
@@ -1552,7 +1545,7 @@ class Mailbox
 		if ($select) {
 			while (!feof($connection)) {
 				$line = fgets($connection);
-				if ($line === FALSE) {
+				if ($line === false) {
 					break;
 				}
 				$line = substr($line, 0, -2);
@@ -1564,7 +1557,7 @@ class Mailbox
 					break;
 				}
 
-				if ($expect !== NULL) {
+				if ($expect !== null) {
 					$matched_number = is_int($expect) && sizeof($response) == $expect;
 					$matched_regex  = is_string($expect) && preg_match($expect, $line);
 					if ($matched_number || $matched_regex) {
@@ -1573,8 +1566,8 @@ class Mailbox
 				}
 			}
 		}
-		if (Core::getDebug($this->debug === TRUE)) {
-			Core::debug("Received:\n" . join("\r\n", $response), $this->debug === TRUE);
+		if (Core::getDebug($this->debug === true)) {
+			Core::debug("Received:\n" . join("\r\n", $response), $this->debug === true);
 		}
 
 		if ($this->type == 'pop3') {
@@ -1602,7 +1595,7 @@ class Mailbox
 	 * @param  integer $expected  The number of lines or regex expected for a POP3 command
 	 * @return array<int, string>  The response from the server
 	 */
-	private function write(string $command, ?int $expected=NULL): array
+	private function write(string $command, ?int $expected = null): array
 	{
 		$connection = $this->connection;
 		if (!is_resource($connection)) {
@@ -1619,13 +1612,13 @@ class Mailbox
 			$command .= "\r\n";
 		}
 
-		if (Core::getDebug($this->debug === TRUE)) {
-			Core::debug("Sending:\n" . trim($command), $this->debug === TRUE);
+		if (Core::getDebug($this->debug === true)) {
+			Core::debug("Sending:\n" . trim($command), $this->debug === true);
 		}
 
 		$res = fwrite($connection, $command);
 
-		if ($res === FALSE || $res === 0) {
+		if ($res === false || $res === 0) {
 			throw new ConnectivityException(
 				'Unable to write data to %1$s server %2$s on port %3$s',
 				strtoupper($this->type),

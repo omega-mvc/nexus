@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * A simple interface to cache data using different backends
  *
@@ -130,7 +132,7 @@ class Cache
 	 * @param  array<string, mixed>  $config      Configuration options - see method description for details
 	 * @return Cache
 	 */
-	public function __construct(mixed $type, mixed $data_store=NULL, mixed $config=array())
+	public function __construct(mixed $type, mixed $data_store = null, mixed $config = array())
 	{
 		switch ($type) {
 			case 'database':
@@ -181,7 +183,7 @@ class Cache
 					);
 				}
 				$real_path = realpath($data_store);
-				if ($real_path === FALSE) {
+				if ($real_path === false) {
 					throw new EnvironmentException(
 						'The directory specified, %s, does not exist',
 						$data_store
@@ -212,7 +214,7 @@ class Cache
 				$this->config['path'] = $data_store;
 				if ($exists) {
 					$contents = file_get_contents($data_store);
-					if ($contents === FALSE) {
+					if ($contents === false) {
 						throw new EnvironmentException(
 							'The file specified, %s, could not be read',
 							$data_store
@@ -230,8 +232,8 @@ class Cache
 						if (!is_string($cache_key) || !is_array($entry)) {
 							continue;
 						}
-						$entry_value  = $entry['value'] ?? NULL;
-						$entry_expire = $entry['expire'] ?? NULL;
+						$entry_value  = $entry['value'] ?? null;
+						$entry_expire = $entry['expire'] ?? null;
 						if (!is_string($entry_value) || !is_int($entry_expire)) {
 							continue;
 						}
@@ -319,7 +321,7 @@ class Cache
 	 * @param  integer $ttl    The number of seconds to keep the cache valid for, 0 for no limit
 	 * @return boolean  If the key/value pair were added successfully
 	 */
-	public function add(string $key, mixed $value, int $ttl=0): bool
+	public function add(string $key, mixed $value, int $ttl = 0): bool
 	{
 		$value = $this->serialize($value);
 
@@ -330,7 +332,7 @@ class Cache
 			case 'file':
 				$store = $this->getFileStore();
 				if (isset($store[$key]) && (($store[$key]['expire'] && $store[$key]['expire'] >= time()) || !$store[$key]['expire'])) {
-					return FALSE;
+					return false;
 				}
 				$store[$key] = array(
 					'value'  => $value,
@@ -338,7 +340,7 @@ class Cache
 				);
 				$this->data_store = $store;
 				$this->config['state'] = 'dirty';
-				return TRUE;
+				return true;
 
 			case 'database':
 				$res = $this->queryDatabase(
@@ -349,7 +351,7 @@ class Cache
 					$key
 				);
 				if ($res->countReturnedRows()) {
-					return FALSE;
+					return false;
 				}
 				try {
 					$value_placeholder = $this->config['value_data_type'] == 'blob' ? '%l' : '%s';
@@ -363,22 +365,22 @@ class Cache
 						$value,
 						(!$ttl) ? 0 : time() + $ttl
 					);
-					return TRUE;
+					return true;
 				} catch (SQLException $e) {
-					return FALSE;
+					return false;
 				}
 
 			case 'directory':
 				$path = $this->getPath();
 				if (file_exists($path . $key)) {
-					return FALSE;
+					return false;
 				}
 				$expiration_date = (!$ttl) ? 0 : time() + $ttl;
 				file_put_contents(
 					$path . $key,
 					$expiration_date . "\n" . $value
 				);
-				return TRUE;
+				return true;
 
 			case 'memcache':
 				$memcache = $this->getMemcache();
@@ -396,17 +398,17 @@ class Cache
 					return (bool) $redis->setnx($key, $value);
 				}
 				if ($redis->exists($key)) {
-					return FALSE;
+					return false;
 				}
 				$redis->setex($key, $ttl, $value);
-				return TRUE;
+				return true;
 
 			case 'xcache':
 				if (xcache_isset($key)) {
-					return FALSE;
+					return false;
 				}
 				xcache_set($key, $value, $ttl);
-				return TRUE;
+				return true;
 		}
 
 		throw new ProgrammerException(
@@ -438,7 +440,7 @@ class Cache
 				$path = $this->getPath();
 				$clear_before = time();
 				$files = scandir($path);
-				if ($files === FALSE) {
+				if ($files === false) {
 					throw new EnvironmentException(
 						'The directory specified, %s, could not be scanned',
 						$path
@@ -450,12 +452,12 @@ class Cache
 						continue;
 					}
 					$handle = fopen($path . $file, 'r');
-					if ($handle === FALSE) {
+					if ($handle === false) {
 						continue;
 					}
 					$expiration_date = fgets($handle);
 					fclose($handle);
-					if ($expiration_date === FALSE) {
+					if ($expiration_date === false) {
 						continue;
 					}
 					if (trim($expiration_date) && (int) trim($expiration_date) < $clear_before) {
@@ -497,19 +499,19 @@ class Cache
 					"DELETE FROM %r",
 					$this->config['table']
 				);
-				return TRUE;
+				return true;
 
 			case 'directory':
 				$path = $this->getPath();
 				$files = scandir($path);
-				if ($files === FALSE) {
+				if ($files === false) {
 					throw new EnvironmentException(
 						'The directory specified, %s, could not be scanned',
 						$path
 					);
 				}
 				$files = array_diff($files, array('.', '..'));
-				$success = TRUE;
+				$success = true;
 				foreach ($files as $file) {
 					$success = unlink($path . $file) && $success;
 				}
@@ -518,7 +520,7 @@ class Cache
 			case 'file':
 				$this->data_store = array();
 				$this->config['state'] = 'dirty';
-				return TRUE;
+				return true;
 
 			case 'memcache':
 				return $this->getMemcache()->flush();
@@ -530,13 +532,13 @@ class Cache
 				if (defined('XC_TYPE_VAR')) {
 					$xc_type = constant('XC_TYPE_VAR');
 					if (!is_int($xc_type)) {
-						return FALSE;
+						return false;
 					}
 					Core::startErrorCapture();
 					xcache_clear_cache($xc_type, 0);
 					return (bool) Core::stopErrorCapture();
 				}
-				return FALSE;
+				return false;
 		}
 
 		throw new ProgrammerException(
@@ -576,7 +578,7 @@ class Cache
 					$this->data_store = $store;
 					$this->config['state'] = 'dirty';
 				}
-				return TRUE;
+				return true;
 
 			case 'memcache':
 				return $this->getMemcache()->delete($key, 0);
@@ -603,12 +605,14 @@ class Cache
 	 * @param  T      $default  The value to return if the key did not exist
 	 * @return T      The cached value or the default value if no cached value was found
 	 */
-	public function get(string $key, mixed $default=NULL): mixed
+	public function get(string $key, mixed $default = null): mixed
 	{
 		switch ($this->type) {
 			case 'apc':
 				$value = apc_fetch($key);
-				if ($value === FALSE) { return $default; }
+				if ($value === false) {
+                    return $default;
+                }
 				break;
 
 			case 'database':
@@ -622,7 +626,9 @@ class Cache
 					$this->config['ttl_column'],
 					time()
 				);
-				if (!$res->countReturnedRows()) { return $default; }
+				if (!$res->countReturnedRows()) {
+                    return $default;
+                }
 				$value = $res->fetchScalar();
 				break;
 
@@ -632,11 +638,11 @@ class Cache
 					return $default;
 				}
 				$handle = fopen($path, 'r');
-				if ($handle === FALSE) {
+				if ($handle === false) {
 					return $default;
 				}
 				$expiration_date = fgets($handle);
-				if ($expiration_date === FALSE) {
+				if ($expiration_date === false) {
 					fclose($handle);
 					return $default;
 				}
@@ -647,7 +653,7 @@ class Cache
 				$value = '';
 				while (!feof($handle)) {
 					$chunk = fread($handle, 524288);
-					if ($chunk === FALSE) {
+					if ($chunk === false) {
 						break;
 					}
 					$value .= $chunk;
@@ -674,17 +680,23 @@ class Cache
 
 			case 'memcache':
 				$value = $this->getMemcache()->get($key);
-				if ($value === FALSE) { return $default; }
+				if ($value === false) {
+                    return $default;
+                }
 				break;
 
 			case 'redis':
 				$value = $this->getRedis()->get($key);
-				if ($value === FALSE) { return $default; }
+				if ($value === false) {
+                    return $default;
+                }
 				break;
 
 			case 'xcache':
 				$value = xcache_get($key);
-				if ($value === FALSE) { return $default; }
+				if ($value === false) {
+                    return $default;
+                }
 				break;
 		}
 
@@ -722,7 +734,7 @@ class Cache
 	protected function serialize(mixed $value): string
 	{
 		if ($this->config['serializer'] == 'string') {
-			if (is_scalar($value) || $value === NULL) {
+			if (is_scalar($value) || $value === null) {
 				return (string) $value;
 			}
 			if (is_object($value) && method_exists($value, '__toString')) {
@@ -733,7 +745,7 @@ class Cache
 			);
 		}
 
-		$serializer = $this->config['serializer'] ?? NULL;
+		$serializer = $this->config['serializer'] ?? null;
 		if (!is_callable($serializer)) {
 			throw new ProgrammerException(
 				'The serializer for the cache is not callable'
@@ -757,7 +769,7 @@ class Cache
 	 * @param  integer $ttl    The number of seconds to keep the cache valid for, 0 for no limit
 	 * @return boolean  If the value was successfully saved
 	 */
-	public function set(string $key, mixed $value, int $ttl=0): bool
+	public function set(string $key, mixed $value, int $ttl = 0): bool
 	{
 		$value = $this->serialize($value);
 
@@ -802,9 +814,9 @@ class Cache
 						);
 					}
 				} catch (SQLException $e) {
-					return FALSE;
+					return false;
 				}
-				return TRUE;
+				return true;
 
 			case 'directory':
 				$path = $this->getPath();
@@ -822,7 +834,7 @@ class Cache
 				);
 				$this->data_store = $store;
 				$this->config['state'] = 'dirty';
-				return TRUE;
+				return true;
 
 			case 'memcache':
 				$memcache = $this->getMemcache();
@@ -868,7 +880,7 @@ class Cache
 			return $value;
 		}
 
-		$unserializer = $this->config['unserializer'] ?? NULL;
+		$unserializer = $this->config['unserializer'] ?? null;
 		if (!is_callable($unserializer)) {
 			throw new ProgrammerException(
 				'The unserializer for the cache is not callable'
@@ -949,7 +961,7 @@ class Cache
 	 */
 	private function getPath(): string
 	{
-		$path = $this->config['path'] ?? NULL;
+		$path = $this->config['path'] ?? null;
 		if (!is_string($path)) {
 			throw new ProgrammerException(
 				'The path for the %s cache is not configured',

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides miscellaneous functionality for [http://en.wikipedia.org/wiki/Create,_read,_update_and_delete CRUD-like] pages
  *
@@ -24,35 +26,35 @@ class CRUD
 	 *
 	 * @var array<string, mixed>
 	 */
-	static private array $loaded_values = array();
+	private static array $loaded_values = array();
 
 	/**
 	 * The current row number for alternating rows
 	 *
 	 * @var integer
 	 */
-	static private int $row_number = 1;
+	private static int $row_number = 1;
 
 	/**
 	 * The values for a search form
 	 *
 	 * @var array<string, mixed>
 	 */
-	static private array $search_values = array();
+	private static array $search_values = array();
 
 	/**
 	 * The column to sort by
 	 *
 	 * @var string|null
 	 */
-	static private ?string $sort_column = NULL;
+	private static ?string $sort_column = null;
 
 	/**
 	 * The direction to sort
 	 *
 	 * @var string|null
 	 */
-	static private ?string $sort_direction = NULL;
+	private static ?string $sort_direction = null;
 
 
 	/**
@@ -64,7 +66,7 @@ class CRUD
 	 * @param  string $column  The column to check
 	 * @return string  The CSS class for the column, either `''` or `'sorted'`
 	 */
-	static public function getColumnClass(string $column): string
+	public static function getColumnClass(string $column): string
 	{
 		if (self::$sort_column == $column) {
 			return 'sorted';
@@ -79,9 +81,9 @@ class CRUD
 	 * @param  string $column  The column to get the value for
 	 * @return mixed  The previous value
 	 */
-	static private function getPreviousSearchValue(string $column): mixed
+	private static function getPreviousSearchValue(string $column): mixed
 	{
-		return Session::get(__CLASS__ . '::' . URL::get() . '::previous_search::' . $column, NULL);
+		return Session::get(__CLASS__ . '::' . URL::get() . '::previous_search::' . $column, null);
 	}
 
 
@@ -90,10 +92,10 @@ class CRUD
 	 *
 	 * @return string|null  The previous sort column, or `NULL` if none was saved
 	 */
-	static private function getPreviousSortColumn(): ?string
+	private static function getPreviousSortColumn(): ?string
 	{
-		$previous_sort_column = Session::get(__CLASS__ . '::' . URL::get() . '::previous_sort_column', NULL);
-		return is_string($previous_sort_column) ? $previous_sort_column : NULL;
+		$previous_sort_column = Session::get(__CLASS__ . '::' . URL::get() . '::previous_sort_column', null);
+		return is_string($previous_sort_column) ? $previous_sort_column : null;
 	}
 
 
@@ -102,10 +104,10 @@ class CRUD
 	 *
 	 * @return string|null  The previous sort direction, or `NULL` if none was saved
 	 */
-	static private function getPreviousSortDirection(): ?string
+	private static function getPreviousSortDirection(): ?string
 	{
-		$previous_sort_direction = Session::get(__CLASS__ . '::' . URL::get() . '::previous_sort_direction', NULL);
-		return is_string($previous_sort_direction) ? $previous_sort_direction : NULL;
+		$previous_sort_direction = Session::get(__CLASS__ . '::' . URL::get() . '::previous_sort_direction', null);
+		return is_string($previous_sort_direction) ? $previous_sort_direction : null;
 	}
 
 
@@ -120,9 +122,9 @@ class CRUD
 	 * @param  mixed $affected_value  The value that was just added or updated
 	 * @return string  The css class
 	 */
-	static public function getRowClass(mixed $row_value=NULL, mixed $affected_value=NULL): string
+	public static function getRowClass(mixed $row_value = null, mixed $affected_value = null): string
 	{
-		if ($row_value !== NULL && $row_value == $affected_value) {
+		if ($row_value !== null && $row_value == $affected_value) {
 			 self::$row_number++;
 			 $class = 'highlighted';
 		} else {
@@ -148,11 +150,11 @@ class CRUD
 	 * @param  string $default  The default value
 	 * @return mixed  The current value
 	 */
-	static public function getSearchValue(string $column, ?string $cast_to=NULL, ?string $default=NULL): mixed
+	public static function getSearchValue(string $column, ?string $cast_to = null, ?string $default = null): mixed
 	{
 		// Reset values if requested
 		if (self::wasResetRequested()) {
-			self::setPreviousSearchValue($column, NULL);
+			self::setPreviousSearchValue($column, null);
 			return null;
 		}
 
@@ -173,12 +175,12 @@ class CRUD
 	 * @param  string $possible_column  The columns that can be sorted by, defaults to first
 	 * @return string|null  The column to sort by, or `NULL` if no value was set
 	 */
-	static public function getSortColumn(string $possible_column): ?string
+	public static function getSortColumn(string $possible_column): ?string
 	{
 		// Reset value if requested
 		if (self::wasResetRequested()) {
-			self::setPreviousSortColumn(NULL);
-			return NULL;
+			self::setPreviousSortColumn(null);
+			return null;
 		}
 
 		$possible_columns = func_get_args();
@@ -193,7 +195,7 @@ class CRUD
 			self::$loaded_values['sort'] = $previous_sort_column;
 		} else {
 			$valid_sort_column = Request::getValid('sort', $possible_columns);
-			self::$sort_column = is_string($valid_sort_column) ? $valid_sort_column : NULL;
+			self::$sort_column = is_string($valid_sort_column) ? $valid_sort_column : null;
 			self::setPreviousSortColumn(self::$sort_column);
 		}
 		return self::$sort_column;
@@ -206,12 +208,12 @@ class CRUD
 	 * @param  string $default_direction  The default direction, `'asc'` or `'desc'`
 	 * @return string|null  The direction, `'asc'` or `'desc'`, or `NULL` if no value was set
 	 */
-	static public function getSortDirection(string $default_direction): ?string
+	public static function getSortDirection(string $default_direction): ?string
 	{
 		// Reset value if requested
 		if (self::wasResetRequested()) {
-			self::setPreviousSortDirection(NULL);
-			return NULL;
+			self::setPreviousSortDirection(null);
+			return null;
 		}
 
 		$previous_sort_direction = self::getPreviousSortDirection();
@@ -220,7 +222,7 @@ class CRUD
 			self::$loaded_values['dir']     = $previous_sort_direction;
 		} else {
 			$valid_sort_direction = Request::getValid('dir', array($default_direction, ($default_direction == 'asc') ? 'desc' : 'asc'));
-			self::$sort_direction = is_string($valid_sort_direction) ? $valid_sort_direction : NULL;
+			self::$sort_direction = is_string($valid_sort_direction) ? $valid_sort_direction : null;
 			self::setPreviousSortDirection(self::$sort_direction);
 		}
 		return self::$sort_direction;
@@ -253,9 +255,9 @@ class CRUD
 	 * @param  string $column_name  This will override the humanized version of the column
 	 * @return void
 	 */
-	static public function printSortableColumn(string $column, ?string $column_name=NULL): void
+	public static function printSortableColumn(string $column, ?string $column_name = null): void
 	{
-		if ($column_name === NULL) {
+		if ($column_name === null) {
 			$column_name = Grammar::humanize($column);
 		}
 
@@ -283,7 +285,7 @@ class CRUD
 	 *
 	 * @return void
 	 */
-	static public function redirectWithLoadedValues(): void
+	public static function redirectWithLoadedValues(): void
 	{
 		// If values were reset, redirect to the plain URL
 		if (self::wasResetRequested()) {
@@ -306,15 +308,15 @@ class CRUD
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		Session::clear(__CLASS__ . '::');
 
 		self::$loaded_values  = array();
 		self::$row_number     = 1;
 		self::$search_values  = array();
-		self::$sort_column    = NULL;
-		self::$sort_direction = NULL;
+		self::$sort_column    = null;
+		self::$sort_direction = null;
 	}
 
 
@@ -325,7 +327,7 @@ class CRUD
 	 * @param  mixed  $value   The value to save
 	 * @return void
 	 */
-	static private function setPreviousSearchValue(string $column, mixed $value): void
+	private static function setPreviousSearchValue(string $column, mixed $value): void
 	{
 		Session::set(__CLASS__ . '::' . URL::get() . '::previous_search::' . $column, $value);
 	}
@@ -337,7 +339,7 @@ class CRUD
 	 * @param  string|null $sort_column  The sort column to save, or `NULL` to reset it
 	 * @return void
 	 */
-	static private function setPreviousSortColumn(?string $sort_column): void
+	private static function setPreviousSortColumn(?string $sort_column): void
 	{
 		Session::set(__CLASS__ . '::' . URL::get() . '::previous_sort_column', $sort_column);
 	}
@@ -349,7 +351,7 @@ class CRUD
 	 * @param  string|null $sort_direction  The sort direction to save, or `NULL` to reset it
 	 * @return void
 	 */
-	static private function setPreviousSortDirection(?string $sort_direction): void
+	private static function setPreviousSortDirection(?string $sort_direction): void
 	{
 		Session::set(__CLASS__ . '::' . URL::get() . '::previous_sort_direction', $sort_direction);
 	}
@@ -360,7 +362,7 @@ class CRUD
 	 *
 	 * @return boolean  If a reset was requested
 	 */
-	static private function wasResetRequested(): bool
+	private static function wasResetRequested(): bool
 	{
 		$tail = substr(URL::getWithQueryString(), -6);
 		return $tail == '?reset' || $tail == '&reset';
@@ -372,7 +374,9 @@ class CRUD
 	 *
 	 * @return CRUD
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

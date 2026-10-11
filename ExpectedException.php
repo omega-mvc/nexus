@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * An exception that should be handled by the display code
  *

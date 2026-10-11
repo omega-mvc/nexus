@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * An exception when no rows are returned from a SQL query
  *

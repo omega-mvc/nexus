@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Dynamically handles many centralized object-relational mapping tasks
  *
@@ -83,21 +85,21 @@ class ORM
 	 *
 	 * @var array<string, array<string, callable(mixed ...): mixed>>
 	 */
-	static private array $active_record_method_callbacks = array();
+	private static array $active_record_method_callbacks = array();
 
 	/**
 	 * An array of `{static_method} => {callback}` mappings for ActiveRecord
 	 *
 	 * @var array<string, array<string, callable(mixed ...): mixed>>
 	 */
-	static private array $active_record_static_method_callbacks = array();
+	private static array $active_record_static_method_callbacks = array();
 
 	/**
 	 * Cache for repetitive computation
 	 *
 	 * @var array{parseMethod: array<string, array{0: string, 1: string}>, getActiveRecordMethod: array<string, callable(mixed ...): mixed|false>, getActiveRecordStaticMethod: array<string, callable(mixed ...): mixed|false>, objectify: array<string, bool>}
 	 */
-	static private array $cache = array(
+	private static array $cache = array(
 		'parseMethod'                   => array(),
 		'getActiveRecordMethod'         => array(),
 		'getActiveRecordStaticMethod'   => array(),
@@ -109,7 +111,7 @@ class ORM
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $class_database_map = array(
+	private static array $class_database_map = array(
 		'ActiveRecord' => 'default'
 	);
 
@@ -118,42 +120,42 @@ class ORM
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $class_table_map = array();
+	private static array $class_table_map = array();
 
 	/**
 	 * Custom column names for columns in ActiveRecord classes
 	 *
 	 * @var array<string, array<string, string>>
 	 */
-	static private array $column_names = array();
+	private static array $column_names = array();
 
 	/**
 	 * Tracks callbacks registered for various ActiveRecord hooks
 	 *
 	 * @var array<string, array<string, list<callable(mixed ...): mixed>>>
 	 */
-	static private array $hook_callbacks = array();
+	private static array $hook_callbacks = array();
 
 	/**
 	 * Callbacks for ::callInspectCallbacks()
 	 *
 	 * @var array<string, array<string, list<callable(mixed ...): mixed>>>
 	 */
-	static private array $inspect_callbacks = array();
+	private static array $inspect_callbacks = array();
 
 	/**
 	 * Callbacks for ::objectify()
 	 *
 	 * @var array<string, array<string, callable(mixed ...): mixed>>
 	 */
-	static private array $objectify_callbacks = array();
+	private static array $objectify_callbacks = array();
 
 	/**
 	 * Custom record names for ActiveRecord classes
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $record_names = array(
+	private static array $record_names = array(
 		'ActiveRecord' => 'Active Record'
 	);
 
@@ -162,35 +164,35 @@ class ORM
 	 *
 	 * @var array<string, callable(mixed ...): mixed>
 	 */
-	static private array $record_set_method_callbacks = array();
+	private static array $record_set_method_callbacks = array();
 
 	/**
 	 * Callbacks for ::callReflectCallbacks()
 	 *
 	 * @var array<string, list<callable(mixed ...): mixed>>
 	 */
-	static private array $reflect_callbacks = array();
+	private static array $reflect_callbacks = array();
 
 	/**
 	 * A cache for resolving related class names for ActiveRecord classes in a PHP 5.3 namespace
 	 *
 	 * @var array<string, array<string, string>>
 	 */
-	static private array $related_class_names = array();
+	private static array $related_class_names = array();
 
 	/**
 	 * Callbacks for ::replicate()
 	 *
 	 * @var array<string, array<string, callable(mixed ...): mixed>>
 	 */
-	static private array $replicate_callbacks = array();
+	private static array $replicate_callbacks = array();
 
 	/**
 	 * Callbacks for ::scalarize()
 	 *
 	 * @var array<string, array<string, callable(mixed ...): mixed>>
 	 */
-	static private array $scalarize_callbacks = array();
+	private static array $scalarize_callbacks = array();
 
 
 	/**
@@ -207,7 +209,7 @@ class ORM
 	 * @param  mixed         &$parameter        The parameter to send the callback
 	 * @return void
 	 */
-	static public function callHookCallbacks(ActiveRecord $object, string $hook, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$parameter=NULL): void
+	public static function callHookCallbacks(ActiveRecord $object, string $hook, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$parameter = null): void
 	{
 		$class = get_class($object);
 
@@ -253,7 +255,7 @@ class ORM
 	 * @param  array<array-key, mixed>  &$metadata  The associative array of data about the column
 	 * @return void
 	 */
-	static public function callInspectCallbacks(string $class, string $column, mixed &$metadata): void
+	public static function callInspectCallbacks(string $class, string $column, mixed &$metadata): void
 	{
 		if (!isset(self::$inspect_callbacks[$class][$column])) {
 			return;
@@ -281,7 +283,7 @@ class ORM
 	 * @param  boolean $include_doc_comments  If the doc comments should be included in the signature
 	 * @return void
 	 */
-	static public function callReflectCallbacks(string $class, mixed &$signatures, bool $include_doc_comments): void
+	public static function callReflectCallbacks(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
 		if (!isset(self::$reflect_callbacks[$class]) && !isset(self::$reflect_callbacks['*'])) {
 			return;
@@ -323,25 +325,25 @@ class ORM
 	 * @param  ?array<array-key, mixed>  $callback  The specific callback to check for
 	 * @return boolean  If the specified callback exists
 	 */
-	static public function checkHookCallback(string $class, string $hook, ?array $callback=NULL): bool
+	public static function checkHookCallback(string $class, string $hook, ?array $callback = null): bool
 	{
 		if (empty(self::$hook_callbacks[$class][$hook]) && empty(self::$hook_callbacks['*'][$hook])) {
-			return FALSE;
+			return false;
 		}
 
 		if (!$callback) {
-			return TRUE;
+			return true;
 		}
 
 		if (!empty(self::$hook_callbacks[$class][$hook]) && in_array($callback, self::$hook_callbacks[$class][$hook])) {
-			return TRUE;
+			return true;
 		}
 
 		if (!empty(self::$hook_callbacks['*'][$hook]) && in_array($callback, self::$hook_callbacks['*'][$hook])) {
-			return TRUE;
+			return true;
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -351,16 +353,16 @@ class ORM
 	 * @param  string $table  The table name
 	 * @return string  The class name
 	 */
-	static public function classize(string $table): string
+	public static function classize(string $table): string
 	{
 		$class = array_search($table, self::$class_table_map);
 
 		if (!is_string($class)) {
 			$singular = Grammar::singularize($table);
-			if ($singular === FALSE) {
+			if ($singular === false) {
 				throw new ProgrammerException('The table, %s, could not be singularized', $table);
 			}
-			$class = Grammar::camelize($singular, TRUE);
+			$class = Grammar::camelize($singular, true);
 			self::$class_table_map[$class] = $table;
 		}
 
@@ -379,9 +381,9 @@ class ORM
 	 * @param  string $class  The name of the class to create
 	 * @return void
 	 */
-	static public function defineActiveRecordClass(string $class): void
+	public static function defineActiveRecordClass(string $class): void
 	{
-		if (class_exists($class, FALSE)) {
+		if (class_exists($class, false)) {
 			return;
 		}
 		$schema = ORMSchema::retrieve();
@@ -415,9 +417,9 @@ class ORM
 	 * @param  string $key_token      This is a token that is used in cache keys to prevent conflicts for server-wide caches - when non-NULL the document root is used
 	 * @return void
 	 */
-	static public function enableSchemaCaching(Cache $cache, string $database_name='default', ?string $key_token=NULL): void
+	public static function enableSchemaCaching(Cache $cache, string $database_name = 'default', ?string $key_token = null): void
 	{
-		if ($key_token === NULL) {
+		if ($key_token === null) {
 			$document_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
 			$key_token = is_string($document_root) ? $document_root : '';
 		}
@@ -451,23 +453,21 @@ class ORM
 	 * @param  string $method  The method to get the callback for
 	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method description for details
 	 */
-	static public function getActiveRecordMethod(string $class, string $method): mixed
+	public static function getActiveRecordMethod(string $class, string $method): mixed
 	{
 		// This caches method lookups, providing a significant performance
 		// boost to pages with lots of method calls that get passed to
 		// ActiveRecord::__call()
 		if (isset(self::$cache['getActiveRecordMethod'][$class . '::' . $method])) {
-			return (!$method = self::$cache['getActiveRecordMethod'][$class . '::' . $method]) ? NULL : $method;
+			return (!$method = self::$cache['getActiveRecordMethod'][$class . '::' . $method]) ? null : $method;
 		}
 
-		$callback = NULL;
+		$callback = null;
 
 		if (isset(self::$active_record_method_callbacks[$class][$method])) {
 			$callback = self::$active_record_method_callbacks[$class][$method];
-
 		} elseif (isset(self::$active_record_method_callbacks['*'][$method])) {
 			$callback = self::$active_record_method_callbacks['*'][$method];
-
 		} elseif (preg_match('#[A-Z0-9]#', $method)) {
 			list($action, $subject) = self::parseMethod($method);
 			if (isset(self::$active_record_method_callbacks[$class][$action . '*'])) {
@@ -477,7 +477,7 @@ class ORM
 			}
 		}
 
-		self::$cache['getActiveRecordMethod'][$class . '::' . $method] = ($callback === NULL) ? FALSE : $callback;
+		self::$cache['getActiveRecordMethod'][$class . '::' . $method] = ($callback === null) ? false : $callback;
 		return $callback;
 	}
 
@@ -496,23 +496,21 @@ class ORM
 	 * @param  string $method  The method to get the callback for
 	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method description for details
 	 */
-	static public function getActiveRecordStaticMethod(string $class, string $method): mixed
+	public static function getActiveRecordStaticMethod(string $class, string $method): mixed
 	{
 		// This caches method lookups, providing a significant performance
 		// boost to pages with lots of method calls that get passed to
 		// ActiveRecord::__callStatic()
 		if (isset(self::$cache['getActiveRecordStaticMethod'][$class . '::' . $method])) {
-			return (!$method = self::$cache['getActiveRecordStaticMethod'][$class . '::' . $method]) ? NULL : $method;
+			return (!$method = self::$cache['getActiveRecordStaticMethod'][$class . '::' . $method]) ? null : $method;
 		}
 
-		$callback = NULL;
+		$callback = null;
 
 		if (isset(self::$active_record_static_method_callbacks[$class][$method])) {
 			$callback = self::$active_record_static_method_callbacks[$class][$method];
-
 		} elseif (isset(self::$active_record_static_method_callbacks['*'][$method])) {
 			$callback = self::$active_record_static_method_callbacks['*'][$method];
-
 		} elseif (preg_match('#[A-Z0-9]#', $method)) {
 			list($action, $subject) = self::parseMethod($method);
 			if (isset(self::$active_record_static_method_callbacks[$class][$action . '*'])) {
@@ -522,7 +520,7 @@ class ORM
 			}
 		}
 
-		self::$cache['getActiveRecordStaticMethod'][$class . '::' . $method] = ($callback === NULL) ? FALSE : $callback;
+		self::$cache['getActiveRecordStaticMethod'][$class . '::' . $method] = ($callback === null) ? false : $callback;
 		return $callback;
 	}
 
@@ -535,10 +533,14 @@ class ORM
 	 * @param  mixed $class  The object to get the name of, or possibly a string already containing the class
 	 * @return string  The class name
 	 */
-	static public function getClass(mixed $class): string
+	public static function getClass(mixed $class): string
 	{
-		if (is_object($class)) { return get_class($class); }
-		if (is_string($class)) { return $class; }
+		if (is_object($class)) {
+            return get_class($class);
+        }
+		if (is_string($class)) {
+            return $class;
+        }
 		throw new ProgrammerException('The class specified is not a valid class name or object');
 	}
 
@@ -555,7 +557,7 @@ class ORM
 	 * @param  string $column  The database column
 	 * @return string  The column name for the column specified
 	 */
-	static public function getColumnName(string $class, string $column): string
+	public static function getColumnName(string $class, string $column): string
 	{
 		if (!isset(self::$column_names[$class])) {
 			self::$column_names[$class] = array();
@@ -566,7 +568,7 @@ class ORM
 		}
 
 		// If Text is loaded, use it
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func(
 				array('Text', 'compose'),
 				str_replace('%', '%%', self::$column_names[$class][$column])
@@ -585,7 +587,7 @@ class ORM
 	 * @param  string $class   The class name to get the database name for
 	 * @return string  The name of the database to use
 	 */
-	static public function getDatabaseName(string $class): string
+	public static function getDatabaseName(string $class): string
 	{
 		if (!isset(self::$class_database_map[$class])) {
 			$class = 'ActiveRecord';
@@ -606,7 +608,7 @@ class ORM
 	 * @param  string $class  The class name to get the record name of
 	 * @return string  The record name for the class specified
 	 */
-	static public function getRecordName(string $class): string
+	public static function getRecordName(string $class): string
 	{
 		if (!isset(self::$record_names[$class])) {
 			self::$record_names[$class] = Grammar::humanize(
@@ -620,7 +622,7 @@ class ORM
 		}
 
 		// If Text is loaded, use it
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func(
 				array('Text', 'compose'),
 				str_replace('%', '%%', self::$record_names[$class])
@@ -645,7 +647,7 @@ class ORM
 	 * @param  string $method  The method to get the callback for
 	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method description for details
 	 */
-	static public function getRecordSetMethod(string $method): mixed
+	public static function getRecordSetMethod(string $method): mixed
 	{
 		if (isset(self::$record_set_method_callbacks[$method])) {
 			return self::$record_set_method_callbacks[$method];
@@ -658,7 +660,7 @@ class ORM
 			}
 		}
 
-		return NULL;
+		return null;
 	}
 
 
@@ -671,14 +673,14 @@ class ORM
 	 * @param  string $related_class  The related class name
 	 * @return string  The related class name, with the appropriate namespace prefix
 	 */
-	static public function getRelatedClass(string $class, string $related_class): string
+	public static function getRelatedClass(string $class, string $related_class): string
 	{
 		if (isset(self::$related_class_names[$class][$related_class])) {
 			return self::$related_class_names[$class][$related_class];
 		}
 
 		$original_related_class = $related_class;
-		if (strpos($class, '\\') !== FALSE && strpos($related_class, '\\') === FALSE) {
+		if (strpos($class, '\\') !== false && strpos($related_class, '\\') === false) {
 			if (!class_exists($class)) {
 				throw new ProgrammerException('The class, %s, could not be found', $class);
 			}
@@ -699,7 +701,7 @@ class ORM
 	 * @param  mixed  $class  The name of the class
 	 * @return boolean  If the class has been mapped to a table
 	 */
-	static public function isClassMappedToTable(mixed $class): bool
+	public static function isClassMappedToTable(mixed $class): bool
 	{
 		$class = self::getClass($class);
 
@@ -717,7 +719,7 @@ class ORM
 	 * @param  string $database_name  The name given to the database when passed to ::attach()
 	 * @return void
 	 */
-	static public function mapClassToDatabase(mixed $class, string $database_name): void
+	public static function mapClassToDatabase(mixed $class, string $database_name): void
 	{
 		$class = ORM::getClass($class);
 
@@ -737,7 +739,7 @@ class ORM
 	 * @param  string $table  The name of the database table
 	 * @return void
 	 */
-	static public function mapClassToTable(mixed $class, string $table): void
+	public static function mapClassToTable(mixed $class, string $table): void
 	{
 		$class = self::getClass($class);
 
@@ -755,7 +757,7 @@ class ORM
 	 * @param  mixed  $value   The value to possibly objectify
 	 * @return mixed  The scalar or object version of the value, depending on the column type and column options
 	 */
-	static public function objectify(string $class, string $column, mixed $value): mixed
+	public static function objectify(string $class, string $column, mixed $value): mixed
 	{
 		// This short-circuits computation for already checked columns, providing
 		// a nice little performance boost to pages with lots of records
@@ -774,8 +776,7 @@ class ORM
 		$column_type = $schema->getColumnInfo($table, $column, 'type');
 
 		if (in_array($column_type, array('date', 'time', 'timestamp'))) {
-
-			if ($value === NULL) {
+			if ($value === null) {
 				return $value;
 			}
 
@@ -784,20 +785,23 @@ class ORM
 			}
 
 			try {
-
 				// Explicit calls to the constructors are used for dependency detection
 				switch ($column_type) {
-					case 'date':      $value = new Date($value);      break;
-					case 'time':      $value = new Time($value);      break;
-					case 'timestamp': $value = new Timestamp($value); break;
+					case 'date':
+                        $value = new Date($value);
+                        break;
+					case 'time':
+                        $value = new Time($value);
+                        break;
+					case 'timestamp':
+                        $value = new Timestamp($value);
+                        break;
 				}
-
 			} catch (ValidationException $e) {
 				// Validation exception results in the raw value being saved
 			}
-
 		} else {
-			self::$cache['objectify'][$class . '::' . $column] = TRUE;
+			self::$cache['objectify'][$class . '::' . $column] = true;
 		}
 
 		return $value;
@@ -815,7 +819,7 @@ class ORM
 	 * @param  string $column_name  The name for the column
 	 * @return void
 	 */
-	static public function overrideColumnName(mixed $class, string $column, string $column_name): void
+	public static function overrideColumnName(mixed $class, string $column, string $column_name): void
 	{
 		$class = self::getClass($class);
 
@@ -837,7 +841,7 @@ class ORM
 	 * @param  string $record_name  The human version of the record
 	 * @return void
 	 */
-	static public function overrideRecordName(mixed $class, string $record_name): void
+	public static function overrideRecordName(mixed $class, string $record_name): void
 	{
 		$class = self::getClass($class);
 		self::$record_names[$class] = $record_name;
@@ -852,7 +856,7 @@ class ORM
 	 * @param  string $method  The method name to parse
 	 * @return array{0: string, 1: string}  An array of `0 => {action}, 1 => {subject}`
 	 */
-	static public function parseMethod(string $method): array
+	public static function parseMethod(string $method): array
 	{
 		if (isset(self::$cache['parseMethod'][$method])) {
 			return self::$cache['parseMethod'][$method];
@@ -887,7 +891,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method description for parameter list
 	 * @return void
 	 */
-	static public function registerActiveRecordMethod(mixed $class, string $method, callable|array|string $callback): void
+	public static function registerActiveRecordMethod(mixed $class, string $method, callable|array|string $callback): void
 	{
 		$class = self::getClass($class);
 
@@ -895,7 +899,7 @@ class ORM
 			self::$active_record_method_callbacks[$class] = array();
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -926,7 +930,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method description for parameter list
 	 * @return void
 	 */
-	static public function registerActiveRecordStaticMethod(mixed $class, string $method, callable|array|string $callback): void
+	public static function registerActiveRecordStaticMethod(mixed $class, string $method, callable|array|string $callback): void
 	{
 
 		$class = self::getClass($class);
@@ -935,7 +939,7 @@ class ORM
 			self::$active_record_static_method_callbacks[$class] = array();
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -999,7 +1003,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register - see the method description for details about the method signature
 	 * @return void
 	 */
-	static public function registerHookCallback(mixed $class, string $hook, callable|array|string $callback): void
+	public static function registerHookCallback(mixed $class, string $hook, callable|array|string $callback): void
 	{
 		$class = self::getClass($class);
 
@@ -1019,7 +1023,7 @@ class ORM
 			self::$hook_callbacks[$class][$hook] = array();
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1038,7 +1042,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter by reference, an associative array of the various metadata about a column.
 	 * @return void
 	 */
-	static public function registerInspectCallback(mixed $class, string $column, callable|array|string $callback): void
+	public static function registerInspectCallback(mixed $class, string $column, callable|array|string $callback): void
 	{
 		$class = self::getClass($class);
 
@@ -1049,7 +1053,7 @@ class ORM
 			self::$inspect_callbacks[$class][$column] = array();
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1068,7 +1072,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter, the value to objectify and should return the objectified value.
 	 * @return void
 	 */
-	static public function registerObjectifyCallback(mixed $class, string $column, callable|array|string $callback): void
+	public static function registerObjectifyCallback(mixed $class, string $column, callable|array|string $callback): void
 	{
 		$class = self::getClass($class);
 
@@ -1076,7 +1080,7 @@ class ORM
 			self::$objectify_callbacks[$class] = array();
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1104,9 +1108,9 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method description for parameter list
 	 * @return void
 	 */
-	static public function registerRecordSetMethod(string $method, callable|array|string $callback): void
+	public static function registerRecordSetMethod(string $method, callable|array|string $callback): void
 	{
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1133,7 +1137,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a three parameters - see method description for details.
 	 * @return void
 	 */
-	static public function registerReflectCallback(mixed $class, callable|array|string $callback): void
+	public static function registerReflectCallback(mixed $class, callable|array|string $callback): void
 	{
 		$class = self::getClass($class);
 
@@ -1143,7 +1147,7 @@ class ORM
 			return;
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1162,7 +1166,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter, the value to replicate and should return the replicated value.
 	 * @return void
 	 */
-	static public function registerReplicateCallback(mixed $class, string $column, callable|array|string $callback): void
+	public static function registerReplicateCallback(mixed $class, string $column, callable|array|string $callback): void
 	{
 		$class = self::getClass($class);
 
@@ -1170,7 +1174,7 @@ class ORM
 			self::$replicate_callbacks[$class] = array();
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1189,7 +1193,7 @@ class ORM
 	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter, the value to scalarize and should return the scalarized value.
 	 * @return void
 	 */
-	static public function registerScalarizeCallback(mixed $class, string $column, callable|array|string $callback): void
+	public static function registerScalarizeCallback(mixed $class, string $column, callable|array|string $callback): void
 	{
 		$class = self::getClass($class);
 
@@ -1197,7 +1201,7 @@ class ORM
 			self::$scalarize_callbacks[$class] = array();
 		}
 
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
@@ -1220,7 +1224,7 @@ class ORM
 	 * @param  mixed  $value   The value to copy/clone
 	 * @return mixed  The copied/cloned value
 	 */
-	static public function replicate(string $class, string $column, mixed $value): mixed
+	public static function replicate(string $class, string $column, mixed $value): mixed
 	{
 		if (!empty(self::$replicate_callbacks[$class][$column])) {
 			return call_user_func(self::$replicate_callbacks[$class][$column], $class, $column, $value);
@@ -1241,7 +1245,7 @@ class ORM
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$active_record_method_callbacks = array();
 		self::$cache                          = array(
@@ -1279,7 +1283,7 @@ class ORM
 	 * @param  mixed  $value   The value to get the scalar value of
 	 * @return mixed  The scalar value of the value
 	 */
-	static public function scalarize(mixed $class, string $column, mixed $value): mixed
+	public static function scalarize(mixed $class, string $column, mixed $value): mixed
 	{
 		$class = self::getClass($class);
 
@@ -1303,7 +1307,7 @@ class ORM
 	 * @param  string $class  The class name
 	 * @return string  The table name
 	 */
-	static public function tablize(string $class): string
+	public static function tablize(string $class): string
 	{
 		if (!isset(self::$class_table_map[$class])) {
 			$table = Grammar::pluralize(
@@ -1314,7 +1318,7 @@ class ORM
 					$class
 				) ?? $class
 			);
-			if ($table === FALSE) {
+			if ($table === false) {
 				throw new ProgrammerException('The class, %s, could not be pluralized', $class);
 			}
 			self::$class_table_map[$class] = Grammar::underscorize($table);
@@ -1328,7 +1332,9 @@ class ORM
 	 *
 	 * @return ORM
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

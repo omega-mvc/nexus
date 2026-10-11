@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides request-related methods
  *
@@ -52,35 +54,35 @@ class Request
 	 *
 	 * @var array<mixed>
 	 */
-	static private array $backup_files = array();
+	private static array $backup_files = array();
 
 	/**
 	 * A backup copy of `$_GET` for ::unfilter()
 	 *
 	 * @var array<mixed>
 	 */
-	static private array $backup_get = array();
+	private static array $backup_get = array();
 
 	/**
 	 * A backup copy of `$_POST` for unfilter()
 	 *
 	 * @var array<mixed>
 	 */
-	static private array $backup_post = array();
+	private static array $backup_post = array();
 
 	/**
 	 * A backup copy of the local `PUT`/`DELETE` post data for ::unfilter()
 	 *
 	 * @var list<array<mixed>|null>
 	 */
-	static private array $backup_put_delete = array();
+	private static array $backup_put_delete = array();
 
 	/**
 	 * The key/value pairs from the post data of a `PUT`/`DELETE` request
 	 *
 	 * @var array<mixed>|null
 	 */
-	static private mixed $put_delete = null;
+	private static mixed $put_delete = null;
 
 
 	/**
@@ -89,12 +91,12 @@ class Request
 	 * @param mixed $value  The value to coerce
 	 * @return string  The string version of `$value`
 	 */
-	static private function coerceToString(mixed $value): string
+	private static function coerceToString(mixed $value): string
 	{
 		if (is_string($value)) {
 			return $value;
 		}
-		if ($value === NULL || is_scalar($value)) {
+		if ($value === null || is_scalar($value)) {
 			return (string) $value;
 		}
 		if ($value instanceof Stringable) {
@@ -115,7 +117,7 @@ class Request
 	 * @param integer      $level    The nesting level of the call
 	 * @return mixed  The casted `$value`
 	 */
-	static private function cast(mixed $value, ?string $cast_to, int $level = 0): mixed
+	private static function cast(mixed $value, ?string $cast_to, int $level = 0): mixed
 	{
 		$level++;
 
@@ -127,9 +129,9 @@ class Request
 		$array_type   = $cast_to == 'array' || $strict_array;
 
 		if ($level == 1 && $array_type) {
-			if (is_string($value) && strpos($value, ',') !== FALSE) {
+			if (is_string($value) && strpos($value, ',') !== false) {
 				$value = explode(',', $value);
-			} elseif ($value === NULL || $value === '') {
+			} elseif ($value === null || $value === '') {
 				$value = array();
 			} else {
 				settype($value, 'array');
@@ -168,11 +170,10 @@ class Request
 		}
 
 		// This normalizes an empty element to NULL
-		if ($cast_to === NULL && $value === '') {
-			$value = NULL;
-
+		if ($cast_to === null && $value === '') {
+			$value = null;
 		} elseif ($cast_to == 'date') {
-			if (!is_int($value) && !is_string($value) && $value !== NULL) {
+			if (!is_int($value) && !is_string($value) && $value !== null) {
 				throw new ProgrammerException(
 					'The value of type %s can not be cast to the %s data type',
 					get_debug_type($value),
@@ -184,9 +185,8 @@ class Request
 			} catch (ValidationException $e) {
 				$value = new Date();
 			}
-
 		} elseif ($cast_to == 'time') {
-			if (!is_int($value) && !is_string($value) && $value !== NULL) {
+			if (!is_int($value) && !is_string($value) && $value !== null) {
 				throw new ProgrammerException(
 					'The value of type %s can not be cast to the %s data type',
 					get_debug_type($value),
@@ -198,9 +198,8 @@ class Request
 			} catch (ValidationException $e) {
 				$value = new Time();
 			}
-
 		} elseif ($cast_to == 'timestamp') {
-			if (!is_int($value) && !is_string($value) && $value !== NULL) {
+			if (!is_int($value) && !is_string($value) && $value !== null) {
 				throw new ProgrammerException(
 					'The value of type %s can not be cast to the %s data type',
 					get_debug_type($value),
@@ -212,7 +211,6 @@ class Request
 			} catch (ValidationException $e) {
 				$value = new Timestamp();
 			}
-
 		} elseif ($cast_to == 'bool' || $cast_to == 'boolean') {
 			if (is_string($value)) {
 				$lower = strtolower($value);
@@ -224,21 +222,19 @@ class Request
 			} else {
 				$value = (bool)$value;
 			}
-
 		} elseif (($cast_to == 'int' || $cast_to == 'integer') && is_string($value) && preg_match('#^-?\d+$#D', $value)) {
 			// Only explicitly cast integers than can be represented by a real
 			// PHP integer to prevent truncation due to 32 bit integer limits
 			if (strval(intval($value)) == $value) {
 				$value = (int) $value;
 			}
-
-		} elseif ($cast_to != 'binary' && $cast_to !== NULL) {
+		} elseif ($cast_to != 'binary' && $cast_to !== null) {
 			$cast_to = str_replace('integer!', 'integer', $cast_to);
 			settype($value, $cast_to);
 		}
 
 		// Clean values coming in to ensure we don't have invalid UTF-8
-		if (($cast_to === NULL || $cast_to == 'string' || $cast_to == 'array') && $value !== NULL) {
+		if (($cast_to === null || $cast_to == 'string' || $cast_to == 'array') && $value !== null) {
 			$value = self::stripLowOrderBytes($value);
 			$value = UTF8::clean($value);
 		}
@@ -253,11 +249,11 @@ class Request
 	 * @param  string $key  The key to check - array elements can be checked via `[sub-key]` syntax
 	 * @return boolean  If the parameter is set
 	 */
-	static public function check(string $key): bool
+	public static function check(string $key): bool
 	{
 		self::initPutDelete();
 
-		$array_dereference = NULL;
+		$array_dereference = null;
 		$bracket_pos       = strpos($key, '[');
 		if ($bracket_pos) {
 			$array_dereference = substr($key, $bracket_pos);
@@ -265,7 +261,7 @@ class Request
 		}
 
 		if (!isset($_GET[$key]) && !isset($_POST[$key]) && !isset(self::$put_delete[$key])) {
-			return FALSE;
+			return false;
 		}
 
 		$values = array($_GET, $_POST, self::$put_delete);
@@ -277,7 +273,7 @@ class Request
 			foreach (array_slice($array_keys, 0, -1) as $array_key) {
 				foreach ($values as &$value) {
 					if (!is_array($value) || !isset($value[$array_key])) {
-						$value = NULL;
+						$value = null;
 					} else {
 						$value = $value[$array_key];
 					}
@@ -298,7 +294,7 @@ class Request
 	 * @param  mixed       $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead
 	 * @return string  The encoded value
 	 */
-	static public function encode(string $key, ?string $cast_to = null, mixed $default_value = null): string
+	public static function encode(string $key, ?string $cast_to = null, mixed $default_value = null): string
 	{
 		$value = self::coerceToString(self::get($key, $cast_to, $default_value));
 		return HTML::encode($value);
@@ -314,7 +310,7 @@ class Request
 	 * @param  mixed  $key     If the field is an array, get the value corresponding to this key
 	 * @return void
 	 */
-	static public function filter(string $prefix, mixed $key=NULL): void
+	public static function filter(string $prefix, mixed $key = null): void
 	{
 		self::initPutDelete();
 
@@ -331,14 +327,14 @@ class Request
 		foreach ($files_backup as $field => $value) {
 			$field_string   = (string) $field;
 			$prefix_matches = ($prefix === '' || strpos($field_string, $prefix) === 0);
-			if ($prefix_matches && is_array($value) && is_array($value['name'] ?? NULL) && (is_int($key) || is_string($key)) && isset($value['name'][$key])) {
+			if ($prefix_matches && is_array($value) && is_array($value['name'] ?? null) && (is_int($key) || is_string($key)) && isset($value['name'][$key])) {
 				$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
 				$_FILES[$new_field]             = array();
 				$_FILES[$new_field]['name']     = $value['name'][$key];
-				$_FILES[$new_field]['type']     = is_array($value['type'] ?? NULL) ? ($value['type'][$key] ?? NULL) : NULL;
-				$_FILES[$new_field]['tmp_name'] = is_array($value['tmp_name'] ?? NULL) ? ($value['tmp_name'][$key] ?? NULL) : NULL;
-				$_FILES[$new_field]['error']    = is_array($value['error'] ?? NULL) ? ($value['error'][$key] ?? NULL) : NULL;
-				$_FILES[$new_field]['size']     = is_array($value['size'] ?? NULL) ? ($value['size'][$key] ?? NULL) : NULL;
+				$_FILES[$new_field]['type']     = is_array($value['type'] ?? null) ? ($value['type'][$key] ?? null) : null;
+				$_FILES[$new_field]['tmp_name'] = is_array($value['tmp_name'] ?? null) ? ($value['tmp_name'][$key] ?? null) : null;
+				$_FILES[$new_field]['error']    = is_array($value['error'] ?? null) ? ($value['error'][$key] ?? null) : null;
+				$_FILES[$new_field]['size']     = is_array($value['size'] ?? null) ? ($value['size'][$key] ?? null) : null;
 			}
 		}
 
@@ -360,7 +356,7 @@ class Request
 					if ($prefix_matches && (is_int($key) || is_string($key)) && is_array($value) && isset($value[$key])) {
 						$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
 						$refs['array'][$new_field] = $value[$key];
-					} elseif ($prefix_matches && $key === NULL) {
+					} elseif ($prefix_matches && $key === null) {
 						$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
 						$refs['array'][$new_field] = $value;
 					}
@@ -388,9 +384,9 @@ class Request
 	 * @param  string $url  The URL to generate a token for, default to the current page
 	 * @return string  The token to be submitted with the form
 	 */
-	static public function generateCSRFToken(?string $url=NULL): string
+	public static function generateCSRFToken(?string $url = null): string
 	{
-		if ($url === NULL) {
+		if ($url === null) {
 			$url = URL::get();
 		}
 
@@ -451,13 +447,13 @@ class Request
 	 * @param  boolean $use_default_for_blank  If the request value is a blank string and `$default_value` is specified, this flag will cause the `$default_value` to be returned
 	 * @return mixed  The value
 	 */
-	static public function get(string $key, ?string $cast_to=NULL, mixed $default_value=NULL, bool $use_default_for_blank=FALSE): mixed
+	public static function get(string $key, ?string $cast_to = null, mixed $default_value = null, bool $use_default_for_blank = false): mixed
 	{
 		self::initPutDelete();
 
 		$value = $default_value;
 
-		$array_dereference = NULL;
+		$array_dereference = null;
 		$bracket_pos       = strpos($key, '[');
 		if ($bracket_pos) {
 			$array_dereference = substr($key, $bracket_pos);
@@ -472,7 +468,7 @@ class Request
 			$value = $_GET[$key];
 		}
 
-		if ($value === '' && $use_default_for_blank && $default_value !== NULL) {
+		if ($value === '' && $use_default_for_blank && $default_value !== null) {
 			$value = $default_value;
 		}
 
@@ -489,9 +485,9 @@ class Request
 		}
 
 		// This allows for data_type? casts to allow NULL through
-		if ($cast_to !== NULL && substr($cast_to, -1) == '?') {
-			if ($value === NULL || $value === '') {
-				return NULL;
+		if ($cast_to !== null && substr($cast_to, -1) == '?') {
+			if ($value === null || $value === '') {
+				return null;
 			}
 			$cast_to = substr($cast_to, 0, -1);
 		}
@@ -505,7 +501,7 @@ class Request
 	 *
 	 * @return array<string, float>  An associative array of `{language} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
 	 */
-	static public function getAcceptLanguages(): array
+	public static function getAcceptLanguages(): array
 	{
 		return self::processAcceptHeader('HTTP_ACCEPT_LANGUAGE');
 	}
@@ -516,7 +512,7 @@ class Request
 	 *
 	 * @return array<string, float>  An associative array of `{type} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
 	 */
-	static public function getAcceptTypes(): array
+	public static function getAcceptTypes(): array
 	{
 		return self::processAcceptHeader('HTTP_ACCEPT');
 	}
@@ -534,7 +530,7 @@ class Request
 	 *
 	 * @return string|NULL|FALSE  The best language listed in the `Accept-Language` header - see method description for edge cases
 	 */
-	static public function getBestAcceptLanguage(mixed $filter=array()): mixed
+	public static function getBestAcceptLanguage(mixed $filter = array()): mixed
 	{
 		if (!is_array($filter)) {
 			$filter = func_get_args();
@@ -555,7 +551,7 @@ class Request
 	 *
 	 * @return string|NULL|FALSE  The best type listed in the `Accept` header - see method description for edge cases
 	 */
-	static public function getBestAcceptType(mixed $filter=array()): mixed
+	public static function getBestAcceptType(mixed $filter = array()): mixed
 	{
 		if (!is_array($filter)) {
 			$filter = func_get_args();
@@ -571,7 +567,7 @@ class Request
 	 * @param  array<int|string, mixed>  $valid_values  The array of values that are permissible, if one is not selected, picks first
 	 * @return mixed  The value
 	 */
-	static public function getValid(string $key, array $valid_values): mixed
+	public static function getValid(string $key, array $valid_values): mixed
 	{
 		settype($valid_values, 'array');
 		$valid_values = array_merge(array_unique($valid_values, SORT_REGULAR));
@@ -588,7 +584,7 @@ class Request
 	 *
 	 * @return void
 	 */
-	static private function initPutDelete(): void
+	private static function initPutDelete(): void
 	{
 		if (is_array(self::$put_delete)) {
 			return;
@@ -596,7 +592,7 @@ class Request
 
 		if (self::isPut() || self::isDelete()) {
 			$input = file_get_contents('php://input');
-			if ($input === FALSE) {
+			if ($input === false) {
 				$input = '';
 			}
 			self::$put_delete = array();
@@ -612,9 +608,9 @@ class Request
 	 *
 	 * @return boolean  If the URL was accessed via an XMLHttpRequest
 	 */
-	static public function isAjax(): bool
+	public static function isAjax(): bool
 	{
-		$requested_with = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? NULL;
+		$requested_with = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? null;
 		return is_string($requested_with) && strtolower($requested_with) == 'xmlhttprequest';
 	}
 
@@ -624,7 +620,7 @@ class Request
 	 *
 	 * @return boolean  If the URL was accessed via the `DELETE` HTTP method
 	 */
-	static public function isDelete(): bool
+	public static function isDelete(): bool
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? '';
 		return is_string($method) && strtolower($method) == 'delete';
@@ -636,7 +632,7 @@ class Request
 	 *
 	 * @return boolean  If the URL was accessed via the `GET` HTTP method
 	 */
-	static public function isGet(): bool
+	public static function isGet(): bool
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? '';
 		return is_string($method) && strtolower($method) == 'get';
@@ -648,7 +644,7 @@ class Request
 	 *
 	 * @return boolean  If the URL was accessed via the `HEAD` HTTP method
 	 */
-	static public function isHead(): bool
+	public static function isHead(): bool
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? '';
 		return is_string($method) && strtolower($method) == 'head';
@@ -660,7 +656,7 @@ class Request
 	 *
 	 * @return boolean  If the URL was accessed via the `POST` HTTP method
 	 */
-	static public function isPost(): bool
+	public static function isPost(): bool
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? '';
 		return is_string($method) && strtolower($method) == 'post';
@@ -672,7 +668,7 @@ class Request
 	 *
 	 * @return boolean  If the URL was accessed via the `PUT` HTTP method
 	 */
-	static public function isPut(): bool
+	public static function isPut(): bool
 	{
 		$method = $_SERVER['REQUEST_METHOD'] ?? '';
 		return is_string($method) && strtolower($method) == 'put';
@@ -688,11 +684,11 @@ class Request
 	 * @param  string $redirect  The url to redirect to if the action is overriden. `%action%` will be replaced with the overridden action.
 	 * @return void
 	 */
-	static public function overrideAction(?string $redirect=NULL): void
+	public static function overrideAction(?string $redirect = null): void
 	{
 		self::initPutDelete();
 
-		$found = FALSE;
+		$found = false;
 
 		$globals = array(&$_GET, &$_POST, &self::$put_delete);
 
@@ -721,7 +717,7 @@ class Request
 	 * @param  array<int, mixed> $options      A list of supported options to pick the best from
 	 * @return string|null  The best accept item, `FALSE` if an options array is specified and none are valid, `NULL` if anything is accepted
 	 */
-	static private function pickBestAcceptItem(string $header_name, array $options): ?string
+	private static function pickBestAcceptItem(string $header_name, array $options): ?string
 	{
 		if (!isset($_SERVER[$header_name]) || !is_string($_SERVER[$header_name]) || $_SERVER[$header_name] === '') {
 			if (empty($options)) {
@@ -736,7 +732,7 @@ class Request
 
 		if (!$options) {
 			$result = key($items);
-			if ($result === NULL) {
+			if ($result === null) {
 				return null;
 			}
 			if ($result == '*/*' || $result == '*') {
@@ -746,10 +742,10 @@ class Request
 		}
 
 		$top_q    = 0;
-		$top_item = FALSE;
+		$top_item = false;
 
 		foreach ($options as $option) {
-			if (!is_string($option) && !is_int($option) && !is_float($option) && !is_bool($option) && $option !== NULL) {
+			if (!is_string($option) && !is_int($option) && !is_float($option) && !is_bool($option) && $option !== null) {
 				continue;
 			}
 			$optionStr = (string) $option;
@@ -796,7 +792,7 @@ class Request
 	 * @param  mixed  $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead
 	 * @return string  The prepared value
 	 */
-	static public function prepare(string $key, ?string $cast_to=NULL, mixed $default_value=NULL): string
+	public static function prepare(string $key, ?string $cast_to = null, mixed $default_value = null): string
 	{
 		$value = self::coerceToString(self::get($key, $cast_to, $default_value));
 		return HTML::prepare($value);
@@ -809,7 +805,7 @@ class Request
 	 * @param  string $header_name  The key in `$_SERVER` to get the header value from
 	 * @return array<string, float>  An associative array of `{value} => {quality}` sorted (in a stable-fashion) from highest to lowest `q` - an empty array is returned if the header is empty
 	 */
-	static private function processAcceptHeader(string $header_name): array
+	private static function processAcceptHeader(string $header_name): array
 	{
 		if (!isset($_SERVER[$header_name]) || !is_string($_SERVER[$header_name]) || $_SERVER[$header_name] === '') {
 			return array();
@@ -851,7 +847,7 @@ class Request
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		Session::clear(__CLASS__ . '::');
 
@@ -870,7 +866,7 @@ class Request
 	 * @param  mixed  $value  The value to set
 	 * @return void
 	 */
-	static public function set(string $key, mixed $value): void
+	public static function set(string $key, mixed $value): void
 	{
 		if (self::isPost()) {
 			$tip =& $_POST;
@@ -896,7 +892,6 @@ class Request
 				$tip =& $tip[$array_key];
 			}
 			$tip[end($array_keys)] = $value;
-
 		} else {
 			$tip[$key] = $value;
 		}
@@ -909,7 +904,7 @@ class Request
 	 * @param mixed $value  The value to strip
 	 * @return mixed  The `$value` with low-order bytes stripped
 	 */
-	static private function stripLowOrderBytes(mixed $value): mixed
+	private static function stripLowOrderBytes(mixed $value): mixed
 	{
 		if (is_array($value)) {
 			foreach ($value as $key => $sub_value) {
@@ -931,7 +926,7 @@ class Request
 	 *
 	 * @return void
 	 */
-	static public function unfilter(): void
+	public static function unfilter(): void
 	{
 		if (self::$backup_get === array()) {
 			throw new ProgrammerException(
@@ -960,9 +955,9 @@ class Request
 	 * @param  string $url    The URL to validate the token for, default to the current page
 	 * @return void
 	 */
-	static public function validateCSRFToken(string $token, ?string $url=NULL): void
+	public static function validateCSRFToken(string $token, ?string $url = null): void
 	{
-		if ($url === NULL) {
+		if ($url === null) {
 			$url = URL::get();
 		}
 
@@ -995,7 +990,9 @@ class Request
 	 *
 	 * @return Request
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

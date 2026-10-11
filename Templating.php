@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Allows for quick and flexible HTML templating
  *
@@ -45,7 +47,7 @@ class Templating
 	 *
 	 * @var array<string, Templating>
 	 */
-	static public array $instances = array();
+	public static array $instances = array();
 
 
 	/**
@@ -55,7 +57,7 @@ class Templating
 	 * @param  string      $name        The name for this templating instance
 	 * @return void
 	 */
-	static public function attach(Templating $templating, string $name='default'): void
+	public static function attach(Templating $templating, string $name = 'default'): void
 	{
 		self::$instances[$name] = $templating;
 	}
@@ -68,7 +70,7 @@ class Templating
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$instances = array();
 	}
@@ -80,7 +82,7 @@ class Templating
 	 * @param  string $name  The name of the template to retrieve
 	 * @return Templating  The specified Templating instance
 	 */
-	static public function retrieve(string $name='default'): Templating
+	public static function retrieve(string $name = 'default'): Templating
 	{
 		if (!isset(self::$instances[$name])) {
 			throw new ProgrammerException(
@@ -104,7 +106,7 @@ class Templating
 	 *
 	 * @var int
 	 */
-	static private int $buffered_id_sequence = 1;
+	private static int $buffered_id_sequence = 1;
 
 	/**
 	 * A data store for templating
@@ -163,9 +165,9 @@ class Templating
 	 * @param  string $main_element  The value for the `__main__` element - this is used when calling ::place() without an element, or when placing Templating objects as children
 	 * @return Templating
 	 */
-	public function __construct(?string $root=NULL, mixed $main_element=NULL)
+	public function __construct(?string $root = null, mixed $main_element = null)
 	{
-		if ($root === NULL) {
+		if ($root === null) {
 			$document_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
 			$root = is_string($document_root) ? $document_root : '';
 		}
@@ -188,11 +190,11 @@ class Templating
 			$root .= DIRECTORY_SEPARATOR;
 		}
 
-		$this->buffered_id    = NULL;
+		$this->buffered_id    = null;
 		$this->elements       = array();
 		$this->root           = $root;
 
-		if ($main_element !== NULL) {
+		if ($main_element !== null) {
 			$this->set('__main__', $main_element);
 		}
 	}
@@ -238,7 +240,7 @@ class Templating
 	 * @param  boolean $beginning  If the value should be added to the beginning of the element
 	 * @return Templating  The template object, to allow for method chaining
 	 */
-	public function add(string $element, mixed $value, bool $beginning=FALSE): Templating
+	public function add(string $element, mixed $value, bool $beginning = false): Templating
 	{
 		$tip =& $this->elements;
 
@@ -322,7 +324,7 @@ class Templating
 	 * @param  mixed  $default_value  The value to return if the `$element` is not set
 	 * @return mixed  The value of the `$element` that was deleted - an associative array of deleted elements will be returned if an array of `$elements` was specified
 	 */
-	public function delete(string|array $element, mixed $default_value=NULL): mixed
+	public function delete(string|array $element, mixed $default_value = null): mixed
 	{
 		if (is_array($element)) {
 			$elements = array();
@@ -331,7 +333,7 @@ class Templating
 					if (!is_string($value)) {
 						throw new ProgrammerException('The elements to delete must be a list of strings or an array of string keys');
 					}
-					$elements[$value] = NULL;
+					$elements[$value] = null;
 				} else {
 					$elements[$key] = $value;
 				}
@@ -393,7 +395,7 @@ class Templating
 			);
 		}
 
-		$this->buffered_id = NULL;
+		$this->buffered_id = null;
 
 		Buffer::erase();
 		Buffer::stop();
@@ -422,7 +424,7 @@ class Templating
 	 * @param  Directory|string  $path_prefix      The directory to prepend to all CSS and JS paths to load the files from the filesystem - this defaults to `$_SERVER['DOCUMENT_ROOT']`
 	 * @return void
 	 */
-	public function enableMinification(string $mode, Directory|string $cache_directory, Directory|string|null $path_prefix=NULL): void
+	public function enableMinification(string $mode, Directory|string $cache_directory, Directory|string|null $path_prefix = null): void
 	{
 		$valid_modes = array('development', 'production');
 		if (!in_array($mode, $valid_modes)) {
@@ -434,7 +436,7 @@ class Templating
 		}
 
 		$cache_directory = $cache_directory instanceof Directory ? $cache_directory->getPath() : realpath($cache_directory);
-		if ($cache_directory === FALSE || !is_writable($cache_directory)) {
+		if ($cache_directory === false || !is_writable($cache_directory)) {
 			throw new EnvironmentException(
 				'The cache directory specified, %s, is not writable',
 				$cache_directory
@@ -442,7 +444,7 @@ class Templating
 		}
 
 		$path_prefix = $path_prefix instanceof Directory ? $path_prefix->getPath() : $path_prefix;
-		if ($path_prefix === NULL) {
+		if ($path_prefix === null) {
 			$document_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
 			$path_prefix   = is_string($document_root) ? $document_root : '';
 		}
@@ -504,7 +506,7 @@ class Templating
 	 * @param  mixed  $default_value  The value to return if the element has not been set
 	 * @return mixed  The value of the element specified run through HTML::encode(), or the default value if it has not been set
 	 */
-	public function encode(string $element, mixed $default_value=NULL): mixed
+	public function encode(string $element, mixed $default_value = null): mixed
 	{
 		$value = $this->get($element, $default_value);
 		if (!is_array($value) && !is_string($value)) {
@@ -593,7 +595,7 @@ class Templating
 			}
 
 			$real_value = realpath($value);
-			if ($real_value === FALSE) {
+			if ($real_value === false) {
 				throw new ProgrammerException('The file, %s, could not be found', $value);
 			}
 			$cache_path = $this->short_tag_directory . sha1($real_value) . '.php';
@@ -604,12 +606,12 @@ class Templating
 			}
 
 			$code = file_get_contents($real_value);
-			if ($code === FALSE) {
+			if ($code === false) {
 				throw new ProgrammerException('The file, %s, could not be read', $real_value);
 			}
 			$output = '';
 
-			$in_php = FALSE;
+			$in_php = false;
 
 			$token_regex = '';
 			do {
@@ -621,26 +623,25 @@ class Templating
 				if (!preg_match('#' . $token_regex . '#i', $code, $match)) {
 					$part  = $code;
 					$code  = '';
-					$token = NULL;
-
+					$token = null;
 				} else {
 					$token = $match[0];
 					$pos   = strpos($code, $token);
-					if ($pos === FALSE) {
+					if ($pos === false) {
 						break;
 					}
 					$part  = substr($code, 0, $pos);
 					$code  = substr($code, $pos);
 				}
 
-				$regex = NULL;
+				$regex = null;
 				if ($token == "<?") {
 					$output .= $part;
-					$in_php = TRUE;
+					$in_php = true;
 					continue;
 				} elseif ($token == "?>") {
-					$regex = NULL;
-					$in_php = FALSE;
+					$regex = null;
+					$in_php = false;
 				} elseif ($token == "//") {
 					$regex = '#^//.*(\n|$)#D';
 				} elseif ($token == "#") {
@@ -670,7 +671,6 @@ class Templating
 					$output .= $match[0];
 					$code = substr($code, strlen($match[0]));
 				}
-
 			} while (strlen($code));
 
 			file_put_contents($cache_path, $output);
@@ -687,7 +687,7 @@ class Templating
 	 * @param  mixed  $default_value  The value to return if the element has not been set
 	 * @return mixed  The value of the element(s) specified, or the default value(s) if it has not been set
 	 */
-	public function get(string|array $element, mixed $default_value=NULL): mixed
+	public function get(string|array $element, mixed $default_value = null): mixed
 	{
 		if (is_array($element)) {
 			$elements = array();
@@ -696,7 +696,7 @@ class Templating
 					if (!is_string($value)) {
 						throw new ProgrammerException('The elements to get must be a list of strings or an array of string keys');
 					}
-					$elements[$value] = NULL;
+					$elements[$value] = null;
 				} else {
 					$elements[$key] = $value;
 				}
@@ -709,7 +709,7 @@ class Templating
 			return $output;
 		}
 
-		$array_dereference = NULL;
+		$array_dereference = null;
 		if ($bracket_pos = strpos($element, '[')) {
 			$array_dereference = substr($element, $bracket_pos);
 			$element           = substr($element, 0, $bracket_pos);
@@ -758,7 +758,7 @@ class Templating
 	protected function handleMinified(string $type, string $element, array $values): void
 	{
 		$paths = array();
-		$media = NULL;
+		$media = null;
 		foreach ($values as $value) {
 			if (is_array($value)) {
 				if (!isset($value['path']) || !is_string($value['path'])) {
@@ -766,7 +766,7 @@ class Templating
 				}
 				$paths[] = $this->minification_prefix . $value['path'];
 				if ($type == 'css') {
-					$media = !empty($value['media']) ? $value['media'] : NULL;
+					$media = !empty($value['media']) ? $value['media'] : null;
 				}
 			} else {
 				if (!is_string($value)) {
@@ -779,13 +779,13 @@ class Templating
 		$hash       = sha1(join('|', $paths));
 		$cache_file = $this->minification_directory . $hash . '.' . $type;
 
-		$regenerate    = FALSE;
-		$checked_paths = FALSE;
+		$regenerate    = false;
+		$checked_paths = false;
 		if (!file_exists($cache_file)) {
-			$regenerate = TRUE;
+			$regenerate = true;
 		} elseif ($this->minification_mode == 'development') {
 			$cache_mtime   = filemtime($cache_file);
-			$checked_paths = TRUE;
+			$checked_paths = true;
 
 			foreach ($paths as $path) {
 				if (!file_exists($path)) {
@@ -795,11 +795,10 @@ class Templating
 					);
 				}
 				if (filemtime($path) > $cache_mtime) {
-					$regenerate = TRUE;
+					$regenerate = true;
 					break;
 				}
 			}
-
 		}
 
 		if ($regenerate) {
@@ -818,12 +817,12 @@ class Templating
 				// Checks if this path has been cached
 				if (file_exists($path_cache_file) && filemtime($path_cache_file) >= filemtime($path)) {
 					$minified_path = file_get_contents($path_cache_file);
-					if ($minified_path === FALSE) {
+					if ($minified_path === false) {
 						throw new ProgrammerException('The cached file, %s, could not be read', $path_cache_file);
 					}
 				} else {
 					$contents = file_get_contents($path);
-					if ($contents === FALSE) {
+					if ($contents === false) {
 						throw new ProgrammerException('The file, %s, could not be read', $path);
 					}
 					$minified_path = trim($this->minify($contents, $type));
@@ -837,7 +836,7 @@ class Templating
 		}
 
 		$version = filemtime($cache_file);
-		if ($version === FALSE) {
+		if ($version === false) {
 			throw new ProgrammerException('The cached file, %s, could not be read', $cache_file);
 		}
 		$compiled_value = Filesystem::translateToWebPath($cache_file) . '?v=' . $version;
@@ -862,7 +861,7 @@ class Templating
 	 * @param  string $file_type  Will force the file to be placed as this type of file instead of auto-detecting the file type. Valid types include: `'css'`, `'js'`, `'php'` and `'rss'`.
 	 * @return void
 	 */
-	public function inject(string $file_path, ?string $file_type=NULL): void
+	public function inject(string $file_path, ?string $file_type = null): void
 	{
 		$prefix = '__injected_';
 		$num    = 1;
@@ -908,19 +907,18 @@ class Templating
 			if (!preg_match($token_regex, $code, $match)) {
 				$part  = $code;
 				$code  = '';
-				$token = NULL;
-
+				$token = null;
 			} else {
 				$token = $match[0];
 				$pos   = strpos($code, $token);
-				if ($pos === FALSE) {
+				if ($pos === false) {
 					break;
 				}
 				$part  = substr($code, 0, $pos);
 				$code  = substr($code, $pos);
 			}
 
-			$regex = NULL;
+			$regex = null;
 			if ($token == '/') {
 				if (!preg_match('#([(,=:[!&|?{};\n]|\breturn)\s*$#D', $part)) {
 					$part .= $token;
@@ -952,7 +950,6 @@ class Templating
 			} elseif (!$token) {
 				$output .= $buffer;
 			}
-
 		} while (strlen($code));
 
 		return $output;
@@ -968,16 +965,15 @@ class Templating
 	 * @param string $type     The type of code, `'css'` or `'js'`
 	 * @return void
 	 */
-	protected function minifyCode(string &$part, string &$buffer, array &$stack, string $type='js'): void
+	protected function minifyCode(string &$part, string &$buffer, array &$stack, string $type = 'js'): void
 	{
 		// This pulls in the end of the last match for useful context
 		$end_buffer = substr($buffer, -1);
 		$lookbehind = in_array($end_buffer, array(' ', "\n")) ? substr($buffer, -2) : $end_buffer;
-		$buffer     = substr($buffer, 0, 0-strlen($lookbehind));
+		$buffer     = substr($buffer, 0, 0 - strlen($lookbehind));
 		$part       = $lookbehind . $part;
 
 		if ($type == 'js') {
-
 			// All whitespace and control characters are collapsed
 			$part = preg_replace('#[\x00-\x09\x0B\x0C\x0E-\x20]+#', ' ', $part) ?? $part;
 			$part = preg_replace('#[\n\r]+#', "\n", $part) ?? $part;
@@ -990,7 +986,6 @@ class Templating
 			$part = preg_replace('#(?<=[+-])[ ]+(?![+\-])#i', '', $part) ?? $part;
 			$part = preg_replace('#(?<![+-])[ ]+(?=[+\-])#i', '', $part) ?? $part;
 		} elseif ($type == 'css') {
-
 			// All whitespace is collapsed
 			$part = preg_replace('#\s+#', ' ', $part) ?? $part;
 			// Whitespace is removed where not needed
@@ -1002,19 +997,18 @@ class Templating
 				if (!preg_match('#@media|\{|\}#', $part, $match)) {
 					$chunk = $part;
 					$part  = '';
-					$token = NULL;
+					$token = null;
 				} else {
 					$token = $match[0];
 					$pos = strpos($part, $token);
-					if ($pos === FALSE) {
+					if ($pos === false) {
 						break;
 					}
-					$chunk = substr($part, 0, $pos+strlen($token));
-					$part  = substr($part, $pos+strlen($token));
+					$chunk = substr($part, 0, $pos + strlen($token));
+					$part  = substr($part, $pos + strlen($token));
 				}
 
 				if (end($stack) == 'rule_block') {
-
 					// Colons don't need space inside of a block
 					$chunk = preg_replace('#\s*:\s*#', ':', $chunk) ?? $chunk;
 					// Useless semi-colons are removed
@@ -1031,10 +1025,7 @@ class Templating
 					// Hex color codes are reduced if possible
 					$chunk = preg_replace('@#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3(?!\d)@iD', '#\1\2\3', $chunk) ?? $chunk;
 					$chunk = str_ireplace('! important', '!important', $chunk);
-
-
 				} else {
-
 					// This handles an IE6 edge-case
 					$chunk = preg_replace('#(:first-l(etter|ine))\{#', '\1 {', $chunk) ?? $chunk;
 				}
@@ -1050,7 +1041,6 @@ class Templating
 				} elseif ($token) {
 					array_pop($stack);
 				}
-
 			} while (strlen($part));
 
 			$part = $new_part;
@@ -1111,7 +1101,7 @@ class Templating
 	 * @param  string $file_type  Will force the element to be placed as this type of file instead of auto-detecting the file type. Valid types include: `'css'`, `'js'`, `'php'` and `'rss'`.
 	 * @return void
 	 */
-	public function place(string $element='__main__', ?string $file_type=NULL): void
+	public function place(string $element = '__main__', ?string $file_type = null): void
 	{
 		// Put in a buffered placeholder
 		if ($this->buffered_id) {
@@ -1143,7 +1133,7 @@ class Templating
 			$info['media'] = 'all';
 		}
 
-		$path  = $info['path'] ?? NULL;
+		$path  = $info['path'] ?? null;
 		$media = $info['media'];
 		if (!is_string($path)) {
 			throw new ProgrammerException('The path for the CSS file must be a string');
@@ -1163,7 +1153,7 @@ class Templating
 	 * @param  string|null $file_type  The file type to treat all values as
 	 * @return void
 	 */
-	protected function placeElement(string $element, ?string $file_type=NULL): void
+	protected function placeElement(string $element, ?string $file_type = null): void
 	{
 		$values = $this->elements[$element];
 		if (!is_object($values)) {
@@ -1176,20 +1166,20 @@ class Templating
 		/** @var list<array{type: string, location: string, values: list<mixed>}> $value_groups */
 		$value_groups = array();
 
-		$current_group = NULL;
+		$current_group = null;
 
-		$last_type     = NULL;
-		$last_location = NULL;
-		$last_media    = NULL;
+		$last_type     = null;
+		$last_location = null;
+		$last_media    = null;
 		foreach ($values as $value) {
 			$type = $this->verifyValue($element, $value, $file_type);
 
-			$media    = is_array($value) && isset($value['media']) ? $value['media'] : NULL;
+			$media    = is_array($value) && isset($value['media']) ? $value['media'] : null;
 			$path     = is_array($value) ? $value['path'] : $value;
 			$location = is_string($path) && preg_match('#^https?://#', $path) ? 'http' : 'local';
 
-			if ($current_group === NULL || $type != $last_type || $location != $last_location || $media != $last_media) {
-				if ($current_group !== NULL) {
+			if ($current_group === null || $type != $last_type || $location != $last_location || $media != $last_media) {
+				if ($current_group !== null) {
 					$value_groups[] = $current_group;
 				}
 				$current_group = array(
@@ -1204,7 +1194,7 @@ class Templating
 			$last_location = $location;
 			$last_media    = $media;
 		}
-		if ($current_group !== NULL) {
+		if ($current_group !== null) {
 			$value_groups[] = $current_group;
 		}
 
@@ -1237,12 +1227,12 @@ class Templating
 							);
 						}
 						// This causes children to inherit settings if they aren't already set
-						if ($value->minification_directory === NULL) {
+						if ($value->minification_directory === null) {
 							$value->minification_directory = $this->minification_directory;
 							$value->minification_mode      = $this->minification_mode;
 							$value->minification_prefix    = $this->minification_prefix;
 						}
-						if ($value->short_tag_directory === NULL) {
+						if ($value->short_tag_directory === null) {
 							$value->short_tag_directory = $this->short_tag_directory;
 							$value->short_tag_mode      = $this->short_tag_mode;
 						}
@@ -1288,7 +1278,7 @@ class Templating
 			$info = array('path'  => $info);
 		}
 
-		$path = $info['path'] ?? NULL;
+		$path = $info['path'] ?? null;
 		if (!is_string($path)) {
 			throw new ProgrammerException('The path for the javascript file must be a string');
 		}
@@ -1358,7 +1348,7 @@ class Templating
 			);
 		}
 
-		$path  = $info['path'] ?? NULL;
+		$path  = $info['path'] ?? null;
 		$title = $info['title'];
 		if (!is_string($path)) {
 			throw new ProgrammerException('The path for the RSS file must be a string');
@@ -1389,7 +1379,7 @@ class Templating
 		$regex       = '/%%Templating::' . $this->buffered_id . '::(.*?)::(.*?)%%/';
 
 		// Remove the buffered id, thus making any nested place() calls be executed immediately
-		$this->buffered_id = NULL;
+		$this->buffered_id = null;
 
 		echo preg_replace_callback($regex, array($this, 'placeBufferedCallback'), $contents);
 	}
@@ -1416,7 +1406,7 @@ class Templating
 	 * @param  mixed  $default_value  The value to return if the element has not been set
 	 * @return mixed  The value of the element specified run through HTML::prepare(), or the default value if it has not been set
 	 */
-	public function prepare(string $element, mixed $default_value=NULL): mixed
+	public function prepare(string $element, mixed $default_value = null): mixed
 	{
 		$value = $this->get($element, $default_value);
 		if (!is_array($value) && !is_string($value)) {
@@ -1433,7 +1423,7 @@ class Templating
 	 * @param  boolean $beginning  If the value should be removed from the beginning of the element
 	 * @return mixed  The value that was removed
 	 */
-	public function remove(string $element, bool $beginning=FALSE): mixed
+	public function remove(string $element, bool $beginning = false): mixed
 	{
 		$tip =& $this->elements;
 
@@ -1448,7 +1438,7 @@ class Templating
 
 			foreach (array_slice($array_keys, 0, -1) as $array_key) {
 				if (!isset($tip[$array_key])) {
-					return NULL;
+					return null;
 				} elseif (!is_array($tip[$array_key])) {
 					throw new ProgrammerException(
 						'%1$s was called for an element, %2$s, which is not an array',
@@ -1463,7 +1453,7 @@ class Templating
 
 
 		if (!isset($tip[$element])) {
-			return NULL;
+			return null;
 		} elseif (!is_array($tip[$element])) {
 			throw new ProgrammerException(
 				'%1$s was called for an element, %2$s, which is not an array',
@@ -1487,10 +1477,10 @@ class Templating
 	 * @param  mixed  $value      The value for the element
 	 * @return Templating  The template object, to allow for method chaining
 	 */
-	public function set(string|array $element, mixed $value=NULL): Templating
+	public function set(string|array $element, mixed $value = null): Templating
 	{
 		if (is_array($element)) {
-			if ($value !== NULL) {
+			if ($value !== null) {
 				throw new ProgrammerException('The value must be NULL when setting an array of elements');
 			}
 			foreach ($element as $key => $value) {
@@ -1532,7 +1522,7 @@ class Templating
 	 * @param  string $file_type  The file type that this element will be displayed as - skips checking file extension
 	 * @return string  The file type of the value being placed
 	 */
-	protected function verifyValue(string $element, mixed $value, ?string $file_type=NULL): string
+	protected function verifyValue(string $element, mixed $value, ?string $file_type = null): string
 	{
 		if (!$value && !is_numeric($value)) {
 			throw new ProgrammerException(

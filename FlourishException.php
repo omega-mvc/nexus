@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * An exception that allows for easy l10n, printing, tracing and hooking
  *
@@ -42,7 +44,7 @@ abstract class FlourishException extends Exception
 	 * @param mixed ...$components
 	 * @return string
 	 */
-	static protected function compose(string $message, mixed ...$components): string
+	protected static function compose(string $message, mixed ...$components): string
 	{
 		// Handles components passed as an array
 		if (count($components) === 1 && is_array($components[0])) {
@@ -53,7 +55,6 @@ abstract class FlourishException extends Exception
 		// If Text is loaded, use it
 		if (class_exists('Text', false)) {
 			return call_user_func_array(array('Text', 'compose'), array($message, $components));
-
 		} else {
 			$args = array();
 			foreach ($components as $k => $v) {
@@ -85,19 +86,15 @@ abstract class FlourishException extends Exception
 	 * @param  mixed $data  The value to dump
 	 * @return string  The string representation of the value
 	 */
-	static protected function dump(mixed $data): string
+	protected static function dump(mixed $data): string
 	{
 		if (is_bool($data)) {
 			return ($data) ? '{true}' : '{false}';
-
 		} elseif (is_null($data)) {
 			return '{null}';
-
 		} elseif ($data === '') {
 			return '{empty_string}';
-
 		} elseif (is_array($data) || is_object($data)) {
-
 			ob_start();
 			var_dump($data);
 			$output = ob_get_contents();
@@ -108,24 +105,42 @@ abstract class FlourishException extends Exception
 
 			// Make the var dump more like a print_r
 			$replaced = preg_replace('#=>\n(  )+(?=[a-zA-Z]|&)#m', ' => ', $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$output = str_replace('string(0) ""', '{empty_string}', $output);
 			$replaced = preg_replace('#=> (&)?NULL#', '=> \1{null}', $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('#=> (&)?bool\((false|true)\)#', '=> \1{\2}', $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('#string\(\d+\) "#', '', $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('#"(\n(  )*)(?=\[|\})#', '\1', $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('#(?:float|int)\((-?\d+(?:.\d+)?)\)#', '\1', $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('#((?:  )+)\["(.*?)"\]#', '\1[\2]', $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('#(?:&)?array\(\d+\) \{\n((?:  )*)((?:  )(?=\[)|(?=\}))#', "Array\n\\1(\n\\1\\2", $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('/object\((\w+)\)#\d+ \(\d+\) {\n((?:  )*)((?:  )(?=\[)|(?=\}))/', "\\1 Object\n\\2(\n\\2\\3", $output);
-			if (is_string($replaced)) { $output = $replaced; }
+			if (is_string($replaced)) {
+                $output = $replaced;
+            }
 			$replaced = preg_replace('#^((?:  )+)}(?=\n|$)#m', "\\1)\n", $output);
 			if ($replaced !== null) {
 				$output = $replaced;
@@ -142,18 +157,17 @@ abstract class FlourishException extends Exception
 					if ($spaces && $match[2] == '(') {
 						$stack += 1;
 					}
-					$new_output[] = str_pad('', ($spaces)+(4*$stack)) . $line;
+					$new_output[] = str_pad('', ($spaces) + (4 * $stack)) . $line;
 					if ($spaces && $match[2] == ')') {
 						$stack -= 1;
 					}
 				} else {
 					$spaces = 0;
-					$new_output[] = str_pad('', ($spaces)+(4*$stack)) . $line;
+					$new_output[] = str_pad('', ($spaces) + (4 * $stack)) . $line;
 				}
 			}
 
 			return join("\n", $new_output);
-
 		} else {
 			return is_scalar($data) ? (string) $data : '';
 		}
@@ -174,7 +188,7 @@ abstract class FlourishException extends Exception
 	/**
 	 * @param callable(mixed...):mixed|array<string|object>|string $callback
 	 */
-	static public function registerCallback(callable|array|string $callback, ?string $exception_type = null): void
+	public static function registerCallback(callable|array|string $callback, ?string $exception_type = null): void
 	{
 		if ($exception_type === null) {
 			$exception_type = 'FlourishException';
@@ -206,7 +220,7 @@ abstract class FlourishException extends Exception
 	 * @param  string $b  The second string to compare
 	 * @return integer  `-1` if `$a` is longer than `$b`, `0` if they are equal length, `1` if `$a` is shorter than `$b`
 	 */
-	static private function sortMatchingArray(string $a, string $b): int
+	private static function sortMatchingArray(string $a, string $b): int
 	{
 		return -1 * strnatcmp((string)strlen($a), (string)strlen($b));
 	}
@@ -601,7 +615,7 @@ abstract class FlourishException extends Exception
 		$matching_arrays = array_merge([$list_item_matches], $rest);
 
 		if (!preg_match('#^(.*<(?:ul|ol)[^>]*?>)(.*?)(</(?:ul|ol)>.*)$#isD', $this->message, $matches)) {
-			return array_merge(array($this->message), array_fill(0, sizeof($matching_arrays)-1, ''));
+			return array_merge(array($this->message), array_fill(0, sizeof($matching_arrays) - 1, ''));
 		}
 
 		$beginning_html  = $matches[1];
@@ -613,19 +627,18 @@ abstract class FlourishException extends Exception
 		$output = array();
 
 		foreach ($matching_arrays as $matching_array) {
-
 			// This ensures that we match on the longest string first
 			uasort($matching_array, array(self::class, 'sortMatchingArray'));
 
 			// We may match more than one list item per matching string, so we need a multi-dimensional array to hold them
 			$matched_list_items = array_fill(0, sizeof($matching_array), array());
-			$found              = FALSE;
+			$found              = false;
 
 			foreach ($list_items as $list_item) {
 				foreach ($matching_array as $match_num => $matching_string) {
-					if (strpos($list_item[1], $matching_string) !== FALSE) {
+					if (strpos($list_item[1], $matching_string) !== false) {
 						$matched_list_items[$match_num][] = $list_item[0];
-						$found = TRUE;
+						$found = true;
 						continue 2;
 					}
 				}

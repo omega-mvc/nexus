@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * An exception caused by a data not matching a rule or set of rules
  *
@@ -27,7 +29,7 @@ class ValidationException extends ExpectedException
 	 *
 	 * @var string
 	 */
-	static protected string $field_format = '%s: ';
+	protected static string $field_format = '%s: ';
 
 
 	/**
@@ -36,7 +38,7 @@ class ValidationException extends ExpectedException
 	 * @param string $field  The name of the field to format
 	 * @return string  The formatted field name
 	 */
-	static public function formatField(string $field): string
+	public static function formatField(string $field): string
 	{
 		return sprintf(self::$field_format, $field);
 	}
@@ -48,7 +50,7 @@ class ValidationException extends ExpectedException
 	 * @param  string $message  The message to remove the field name from
 	 * @return string  The message without the field name
 	 */
-	static public function removeFieldName(string $message): string
+	public static function removeFieldName(string $message): string
 	{
 		$token_field   = self::formatField('__TOKEN__');
 		$replace_regex = '#^' . str_replace('__TOKEN__', '(.*?)', preg_quote($token_field, '#')) . '#';
@@ -67,7 +69,7 @@ class ValidationException extends ExpectedException
 	 * @param  Messages $messages  The messages to remove the field names from
 	 * @return Messages  The messages without field names
 	 */
-	static public function removeFieldNames(array $messages): array
+	public static function removeFieldNames(array $messages): array
 	{
 		foreach ($messages as $column => $message) {
 			if (is_array($message)) {
@@ -98,9 +100,9 @@ class ValidationException extends ExpectedException
 	* @param string $format  A string to format the field name with - `%s` will be replaced with the field name
 	* @return void
 	*/
-	static public function setFieldFormat(string $format): void
+	public static function setFieldFormat(string $format): void
 	{
-		if (substr_count(str_replace('%%', '', $format), '%') != 1 || strpos($format, '%s') === FALSE) {
+		if (substr_count(str_replace('%%', '', $format), '%') != 1 || strpos($format, '%s') === false) {
 			throw new ProgrammerException(
 				'The format, %s, has more or less than exactly one %%s sprintf() conversion specification',
 				$format
@@ -149,10 +151,9 @@ class ValidationException extends ExpectedException
 	 * @param  string $message       The beginning message for the exception. This will be placed in a `<p>` tag.
 	 * @return FlourishException
 	 */
-	public function __construct(string $message='', mixed ...$args)
+	public function __construct(string $message = '', mixed ...$args)
 	{
 		if ((count($args) == 1 || count($args) == 2) && is_array($args[0])) {
-
 			$message = sprintf(
 				"<p>%1\$s</p>\n<ul>\n<li>%2\$s</li>\n</ul>",
 				self::compose($message),

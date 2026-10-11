@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Represents a monetary value - USD are supported by default and others can be added via ::defineCurrency()
  *
@@ -24,7 +26,7 @@ class Money
 	 *
 	 * @var array<string, MoneyCurrency>
 	 */
-	static private array $currencies = array(
+	private static array $currencies = array(
 		'USD' => array(
 			'name'      => 'United States Dollar',
 			'symbol'    => '$',
@@ -38,21 +40,21 @@ class Money
 	 *
 	 * @var string
 	 */
-	static private ?string $default_currency = NULL;
+	private static ?string $default_currency = null;
 
 	/**
 	 * A callback to process all money values through
 	 *
 	 * @var callable(mixed ...): mixed|null
 	 */
-	static private mixed $format_callback = NULL;
+	private static mixed $format_callback = null;
 
 	/**
 	 * A callback to remove money formatting and return a decimal number
 	 *
 	 * @var callable(mixed ...): mixed|null
 	 */
-	static private mixed $unformat_callback = NULL;
+	private static mixed $unformat_callback = null;
 
 
 	/**
@@ -65,7 +67,7 @@ class Money
 	 * @param string  $value      The value of the currency relative to some common standard between all currencies
 	 * @return void
 	 */
-	static public function defineCurrency(string $iso_code, string $name, string $symbol, int $precision, string $value): void
+	public static function defineCurrency(string $iso_code, string $name, string $symbol, int $precision, string $value): void
 	{
 		self::$currencies[$iso_code] = array(
 			'name'      => $name,
@@ -81,7 +83,7 @@ class Money
 	 *
 	 * @return array<int, string>  The 3 letter ISO codes for all of the defined currencies
 	 */
-	static public function getCurrencies(): array
+	public static function getCurrencies(): array
 	{
 		return array_keys(self::$currencies);
 	}
@@ -94,7 +96,7 @@ class Money
 	 * @param string  $element   The element to retrieve: `'name'`, `'symbol'`, `'precision'`, `'value'`
 	 * @return ($element is null ? MoneyCurrency : ($element is 'precision' ? int : string))  An associative array of the currency info, or the element specified
 	 */
-	static public function getCurrencyInfo(string $iso_code, ?string $element=NULL): mixed
+	public static function getCurrencyInfo(string $iso_code, ?string $element = null): mixed
 	{
 		if (!isset(self::$currencies[$iso_code])) {
 			throw new ProgrammerException(
@@ -104,7 +106,7 @@ class Money
 			);
 		}
 
-		if ($element === NULL) {
+		if ($element === null) {
 			return self::$currencies[$iso_code];
 		}
 
@@ -133,7 +135,7 @@ class Money
 	 *
 	 * @return string|null  The ISO code of the default currency
 	 */
-	static public function getDefaultCurrency(): ?string
+	public static function getDefaultCurrency(): ?string
 	{
 		return self::$default_currency;
 	}
@@ -145,9 +147,9 @@ class Money
 	 * @param  callable(mixed...):mixed $callback  The callback to pass all Number objects to. Should accept an Number object, a string currency abbreviation and a boolean indicating if a zero-fraction should be removed - it should return a formatted string.
 	 * @return void
 	 */
-	static public function registerFormatCallback(callable $callback): void
+	public static function registerFormatCallback(callable $callback): void
 	{
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = Closure::fromCallable($callback);
 		}
 		self::$format_callback = $callback;
@@ -160,9 +162,9 @@ class Money
 	 * @param  callable(mixed...):mixed $callback  The callback to pass formatted strings to. Should accept a formatted string and a currency code and return a string suitable to passing to the Number constructor.
 	 * @return void
 	 */
-	static public function registerUnformatCallback(callable $callback): void
+	public static function registerUnformatCallback(callable $callback): void
 	{
-		if (is_string($callback) && strpos($callback, '::') !== FALSE) {
+		if (is_string($callback) && strpos($callback, '::') !== false) {
 			$callback = Closure::fromCallable($callback);
 		}
 		self::$unformat_callback = $callback;
@@ -176,7 +178,7 @@ class Money
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$currencies = array(
 			'USD' => array(
@@ -186,9 +188,9 @@ class Money
 				'value'     => '1.00000000'
 			)
 		);
-		self::$default_currency  = NULL;
-		self::$format_callback   = NULL;
-		self::$unformat_callback = NULL;
+		self::$default_currency  = null;
+		self::$format_callback   = null;
+		self::$unformat_callback = null;
 	}
 
 
@@ -198,7 +200,7 @@ class Money
 	 * @param string  $iso_code  The ISO code (three letters, e.g. `'USD'`) for the new default currency
 	 * @return void
 	 */
-	static public function setDefaultCurrency(string $iso_code): void
+	public static function setDefaultCurrency(string $iso_code): void
 	{
 		if (!isset(self::$currencies[$iso_code])) {
 			throw new ProgrammerException(
@@ -236,9 +238,9 @@ class Money
 	 * @param  string|null    $currency  The currency ISO code (three letters, e.g. `'USD'`) for this value
 	 * @return Money
 	 */
-	public function __construct(mixed $amount, mixed $currency=NULL)
+	public function __construct(mixed $amount, mixed $currency = null)
 	{
-		if ($currency !== NULL && !isset(self::$currencies[$currency])) {
+		if ($currency !== null && !isset(self::$currencies[$currency])) {
 			throw new ProgrammerException(
 				'The currency specified, %1$s, is not a valid currency. Must be one of: %2$s.',
 				$currency,
@@ -246,18 +248,18 @@ class Money
 			);
 		}
 
-		if ($currency === NULL && self::$default_currency === NULL) {
+		if ($currency === null && self::$default_currency === null) {
 			throw new ProgrammerException(
 				'No currency was specified and no default currency has been set'
 			);
 		}
 
-		$this->currency = ($currency !== NULL) ? $currency : self::$default_currency;
+		$this->currency = ($currency !== null) ? $currency : self::$default_currency;
 
 		$precision = self::getCurrencyInfo($this->currency, 'precision');
 
 		// Unformat any money value
-		if (self::$unformat_callback !== NULL) {
+		if (self::$unformat_callback !== null) {
 			$amount = call_user_func(self::$unformat_callback, $amount, $this->currency);
 		} else {
 			$amount = str_replace(
@@ -319,7 +321,7 @@ class Money
 		$addend           = $this->makeMoney($addend);
 		$converted_addend = $addend->convert($this->currency)->amount;
 		$precision        = self::getCurrencyInfo($this->currency, 'precision');
-		$new_amount       = $this->amount->add($converted_addend, $precision+1)->round($precision);
+		$new_amount       = $this->amount->add($converted_addend, $precision + 1)->round($precision);
 		return new Money($new_amount, $this->currency);
 	}
 
@@ -365,7 +367,7 @@ class Money
 		if ($precision == 0) {
 			$smallest_amount = new Number('1');
 		} else {
-			$smallest_amount = new Number('0.' . str_pad('', $precision-1, '0') . '1');
+			$smallest_amount = new Number('0.' . str_pad('', $precision - 1, '0') . '1');
 		}
 		$smallest_money = new Money($smallest_amount, $this->currency);
 
@@ -374,7 +376,7 @@ class Money
 
 		foreach ($ratios as $ratio) {
 			$new_amount = $this->amount->mul($ratio)->trunc($precision);
-			$sum        = $sum->add($new_amount, $precision+1)->round($precision);
+			$sum        = $sum->add($new_amount, $precision + 1)->round($precision);
 			$monies[] = new Money($new_amount, $this->currency);
 		}
 
@@ -384,7 +386,7 @@ class Money
 					break 2;
 				}
 				$money = $money->add($smallest_money);
-				$sum   = $sum->add($smallest_amount, $precision+1)->round($precision);
+				$sum   = $sum->add($smallest_amount, $precision + 1)->round($precision);
 			}
 		}
 
@@ -416,7 +418,7 @@ class Money
 		$new_currency_value = self::getCurrencyInfo($new_currency, 'value');
 		$new_precision      = self::getCurrencyInfo($new_currency, 'precision');
 
-		$new_amount = $this->amount->mul($currency_value, 8)->div($new_currency_value, $new_precision+1)->round($new_precision);
+		$new_amount = $this->amount->mul($currency_value, 8)->div($new_currency_value, $new_precision + 1)->round($new_precision);
 
 		return new Money($new_amount, $new_currency);
 	}
@@ -443,9 +445,9 @@ class Money
 	 * @param  boolean $remove_zero_fraction  If `TRUE` and all digits after the decimal place are `0`, the decimal place and all zeros are removed
 	 * @return string  The formatted (and possibly converted) value
 	 */
-	public function format(bool $remove_zero_fraction=FALSE): string
+	public function format(bool $remove_zero_fraction = false): string
 	{
-		if (self::$format_callback !== NULL) {
+		if (self::$format_callback !== null) {
 			return self::stringify(call_user_func(self::$format_callback, $this->amount, $this->currency, $remove_zero_fraction));
 		}
 
@@ -464,10 +466,10 @@ class Money
 		}
 
 		$int_sections = array();
-		for ($i = strlen($integer)-3; $i > 0; $i -= 3) {
+		for ($i = strlen($integer) - 3; $i > 0; $i -= 3) {
 			array_unshift($int_sections, substr($integer, $i, 3));
 		}
-		array_unshift($int_sections, substr($integer, 0, $i+3));
+		array_unshift($int_sections, substr($integer, 0, $i + 3));
 
 		$symbol   = self::getCurrencyInfo($this->currency, 'symbol');
 		$integer  = join(',', $int_sections);
@@ -617,7 +619,7 @@ class Money
 	public function mul(mixed $multiplicand): Money
 	{
 		$precision  = self::getCurrencyInfo($this->currency, 'precision');
-		$new_amount = $this->amount->mul(self::normalizeNumberInput($multiplicand), $precision+1)->round($precision);
+		$new_amount = $this->amount->mul(self::normalizeNumberInput($multiplicand), $precision + 1)->round($precision);
 		return new Money($new_amount, $this->currency);
 	}
 
@@ -635,7 +637,7 @@ class Money
 		$subtrahend           = $this->makeMoney($subtrahend);
 		$converted_subtrahend = $subtrahend->convert($this->currency)->amount;
 		$precision            = self::getCurrencyInfo($this->currency, 'precision');
-		$new_amount           = $this->amount->sub($converted_subtrahend, $precision+1)->round($precision);
+		$new_amount           = $this->amount->sub($converted_subtrahend, $precision + 1)->round($precision);
 		return new Money($new_amount, $this->currency);
 	}
 
@@ -646,7 +648,7 @@ class Money
 	 * @param mixed $value  The value to normalize
 	 * @return \Number|string  The normalized number value
 	 */
-	static private function normalizeNumberInput(mixed $value): \Number|string
+	private static function normalizeNumberInput(mixed $value): \Number|string
 	{
 		if ($value instanceof Number || is_string($value)) {
 			return $value;
@@ -669,13 +671,13 @@ class Money
 	 * @param mixed $value  The value to convert
 	 * @return string  The string version of the value
 	 */
-	static private function stringify(mixed $value): string
+	private static function stringify(mixed $value): string
 	{
 		if (is_string($value)) {
 			return $value;
 		}
 
-		if ($value instanceof Stringable || is_scalar($value) || $value === NULL) {
+		if ($value instanceof Stringable || is_scalar($value) || $value === null) {
 			return (string) $value;
 		}
 

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Representation of a prepared statement for use with the Database class
  *
@@ -54,7 +56,7 @@ class Statement
 	 *
 	 * @var mixed
 	 */
-	private mixed $statement = NULL;
+	private mixed $statement = null;
 
 	/**
 	 * The SQL the statement was created from
@@ -68,14 +70,14 @@ class Statement
 	 *
 	 * @var string|null
 	 */
-	private ?string $untranslated_sql = NULL;
+	private ?string $untranslated_sql = null;
 
 	/**
 	 * If the statement has been used yet
 	 *
 	 * @var boolean
 	 */
-	private bool $used = FALSE;
+	private bool $used = false;
 
 
 	/**
@@ -145,7 +147,7 @@ class Statement
 		}
 
 		$connection = $this->database->getConnection();
-		$statement  = NULL;
+		$statement  = null;
 
 		Core::startErrorCapture(E_WARNING);
 
@@ -198,12 +200,12 @@ class Statement
 					for ($i = 0; $i < sizeof($placeholders); $i++) {
 						if ($placeholders[$i] == '%s') {
 							$this->bound_params[$i] = array(
-								NULL,
+								null,
 								SQLSRV_PARAM_IN,
 								SQLSRV_PHPTYPE_STRING('UTF-8')
 							);
 						} else {
-							$this->bound_params[$i] = array(NULL);
+							$this->bound_params[$i] = array(null);
 						}
 						$params[$i] =& $this->bound_params[$i];
 					}
@@ -364,7 +366,7 @@ class Statement
 		if ($different && $this->used) {
 			$this->regenerateStatement();
 		}
-		$this->used = TRUE;
+		$this->used = true;
 
 		$extension = $this->database->getExtension();
 		if ($extension == 'pdo' && $this->database->getType() == 'mssql') {
@@ -376,7 +378,7 @@ class Statement
 
 		$params = $this->prepareParams($params);
 
-		$result = FALSE;
+		$result = false;
 
 		switch ($extension) {
 			case 'ibm_db2':
@@ -426,9 +428,9 @@ class Statement
 						if ($result instanceof PDOStatement) {
 							$extra = $result;
 							$result->closeCursor();
-							$result = TRUE;
+							$result = true;
 						} else {
-							$result = FALSE;
+							$result = false;
 						}
 					} else {
 						$result = $connection->exec($sql);
@@ -461,7 +463,7 @@ class Statement
 		if ($different && $this->used) {
 			$this->regenerateStatement();
 		}
-		$this->used = TRUE;
+		$this->used = true;
 
 		$extension = $this->database->getExtension();
 		if ($extension == 'pdo' && $this->database->getType() == 'mssql') {
@@ -487,7 +489,7 @@ class Statement
 					$result->setResult($rows);
 					unset($rows);
 				} else {
-					$result->setResult(FALSE);
+					$result->setResult(false);
 				}
 				break;
 
@@ -504,7 +506,7 @@ class Statement
 						$row           = array();
 						$row_references = array();
 						while ($field = $meta->fetch_field()) {
-							$row[$field->name] = NULL;
+							$row[$field->name] = null;
 							$row_references[] = &$row[$field->name];
 						}
 
@@ -512,8 +514,7 @@ class Statement
 
 						while ($statement->fetch()) {
 							$copied_row = array();
-							foreach($row as $key => $val)
-							{
+							foreach ($row as $key => $val) {
 								$copied_row[$key] = $val;
 							}
 							$rows[] = $copied_row;
@@ -524,7 +525,7 @@ class Statement
 					$result->setResult($rows);
 					$statement->free_result();
 				} else {
-					$result->setResult(FALSE);
+					$result->setResult(false);
 				}
 				break;
 
@@ -544,7 +545,7 @@ class Statement
 					$result->setResult($rows);
 					unset($rows);
 				} else {
-					$result->setResult(FALSE);
+					$result->setResult(false);
 				}
 				break;
 
@@ -567,7 +568,7 @@ class Statement
 					$result->setResult($rows);
 					unset($rows);
 				} else {
-					$result->setResult(FALSE);
+					$result->setResult(false);
 				}
 				break;
 
@@ -581,12 +582,12 @@ class Statement
 					$returned_rows = array();
 				} else {
 					if (!$extra->execute()) {
-						$returned_rows = FALSE;
+						$returned_rows = false;
 					} else {
 						// This fixes a segfault issue with blobs and fetchAll() for pdo_ibm
 						if ($this->database->getType() == 'db2') {
 							$returned_rows = array();
-							$scanned_for_blobs = FALSE;
+							$scanned_for_blobs = false;
 							$blob_columns = array();
 							while (is_array($row = $extra->fetch(PDO::FETCH_ASSOC))) {
 								if (!$scanned_for_blobs) {
@@ -595,10 +596,10 @@ class Statement
 											$blob_columns[] = $key;
 										}
 									}
-									$scanned_for_blobs = TRUE;
+									$scanned_for_blobs = true;
 								}
 								foreach ($blob_columns as $blob_column) {
-									$blob = $row[$blob_column] ?? NULL;
+									$blob = $row[$blob_column] ?? null;
 									if (is_resource($blob)) {
 										$row[$blob_column] = stream_get_contents($blob);
 									}
@@ -652,7 +653,7 @@ class Statement
 		if ($different && $this->used) {
 			$this->regenerateStatement();
 		}
-		$this->used = TRUE;
+		$this->used = true;
 
 		$extension = $this->database->getExtension();
 		if ($extension == 'pdo' && $this->database->getType() == 'mssql') {
@@ -667,8 +668,8 @@ class Statement
 		// For the extensions that require the statement be passed to the result
 		// object, we store it in a stdClass object so the result object knows
 		// not to free it when done
-		$statement_holder = new stdClass;
-		$statement_holder->statement = NULL;
+		$statement_holder = new stdClass();
+		$statement_holder->statement = null;
 
 		switch ($extension) {
 			case 'ibm_db2':
@@ -679,7 +680,7 @@ class Statement
 				if (db2_execute($statement, $params)) {
 					$statement_holder->statement = $statement;
 				} else {
-					$result->setResult(FALSE);
+					$result->setResult(false);
 				}
 				break;
 
@@ -691,7 +692,7 @@ class Statement
 				if ($statement->execute()) {
 					$statement_holder->statement = $statement;
 				} else {
-					$result->setResult(FALSE);
+					$result->setResult(false);
 				}
 				break;
 
@@ -795,7 +796,7 @@ class Statement
 			if (is_array($param)) {
 				throw new ProgrammerException(
 					'The value passed for placeholder #%s is an array, however multiple values are not supported with prepared statements',
-					$i+1
+					$i + 1
 				);
 			}
 
@@ -811,12 +812,10 @@ class Statement
 			// We want to normally escape all values except strings
 			// since that actually changed the string
 			if (!in_array($placeholder, array('%l', '%s'))) {
-
 				$params[$i] = $this->database->escape($placeholder, $params[$i]);
 
 				if ($params[$i] === 'NULL') {
-					$params[$i] = NULL;
-
+					$params[$i] = null;
 				} else {
 					// Dates, times, timestamps and some booleans need to be unquoted
 					$date_time_types = in_array($placeholder, array('%d', '%t', '%p'));
@@ -847,7 +846,6 @@ class Statement
 			// For the database extensions that require is, here we bind params
 			// to the actual statements using the appropriate data types
 			switch ($extension) {
-
 				case 'mysqli':
 					if (!$statement instanceof mysqli_stmt) {
 						break;
@@ -893,18 +891,18 @@ class Statement
 					}
 					switch ($placeholder) {
 						case '%l':
-							oci_bind_by_name($statement, ':p' . ($i+1), $params[$i], -1, SQLT_BLOB);
+							oci_bind_by_name($statement, ':p' . ($i + 1), $params[$i], -1, SQLT_BLOB);
 							break;
 						case '%b':
 						case '%i':
-							oci_bind_by_name($statement, ':p' . ($i+1), $params[$i], -1, SQLT_INT);
+							oci_bind_by_name($statement, ':p' . ($i + 1), $params[$i], -1, SQLT_INT);
 							break;
 						case '%d':
 						case '%f': // There is no constant for floats, so we treat them as strings
 						case '%s':
 						case '%t':
 						case '%p':
-							oci_bind_by_name($statement, ':p' . ($i+1), $params[$i], -1, SQLT_CHR);
+							oci_bind_by_name($statement, ':p' . ($i + 1), $params[$i], -1, SQLT_CHR);
 							break;
 					}
 					break;
@@ -915,20 +913,20 @@ class Statement
 					}
 					switch ($placeholder) {
 						case '%l':
-							$statement->bindParam($i+1, $params[$i], $params[$i] === NULL ? PDO::PARAM_NULL : PDO::PARAM_LOB);
+							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL : PDO::PARAM_LOB);
 							break;
 						case '%b':
-							$statement->bindParam($i+1, $params[$i], $params[$i] === NULL ? PDO::PARAM_NULL : PDO::PARAM_BOOL);
+							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL : PDO::PARAM_BOOL);
 							break;
 						case '%i':
-							$statement->bindParam($i+1, $params[$i], $params[$i] === NULL && $type != 'db2' ? PDO::PARAM_NULL : PDO::PARAM_INT);
+							$statement->bindParam($i + 1, $params[$i], $params[$i] === null && $type != 'db2' ? PDO::PARAM_NULL : PDO::PARAM_INT);
 							break;
 						case '%d':
 						case '%f': // For some reason float are supposed to be bound as strings
 						case '%s':
 						case '%t':
 						case '%p':
-							$statement->bindParam($i+1, $params[$i], $params[$i] === NULL ? PDO::PARAM_NULL : PDO::PARAM_STR);
+							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
 							break;
 					}
 					break;

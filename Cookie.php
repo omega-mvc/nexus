@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides a consistent cookie API, HTTPOnly compatibility with older PHP versions and default parameters
  *
@@ -24,35 +26,35 @@ class Cookie
 	 *
 	 * @var string|null
 	 */
-	static private ?string $default_domain = null;
+	private static ?string $default_domain = null;
 
 	/**
 	 * The default expiration date to set for cookies
 	 *
 	 * @var string|integer|null
 	 */
-	static private int|string|null $default_expires = null;
+	private static int|string|null $default_expires = null;
 
 	/**
 	 * If cookies should default to being http-only
 	 *
 	 * @var boolean
 	 */
-	static private bool $default_httponly = false;
+	private static bool $default_httponly = false;
 
 	/**
 	 * The default path to set for cookies
 	 *
 	 * @var string|null
 	 */
-	static private ?string $default_path = null;
+	private static ?string $default_path = null;
 
 	/**
 	 * If cookies should default to being secure-only
 	 *
 	 * @var boolean
 	 */
-	static private bool $default_secure = false;
+	private static bool $default_secure = false;
 
 
 	/**
@@ -64,7 +66,7 @@ class Cookie
 	 * @param  boolean|null $secure  If the cookie is a secure-only cookie
 	 * @return void
 	 */
-	static public function delete(string $name, ?string $path = null, ?string $domain = null, ?bool $secure = null): void
+	public static function delete(string $name, ?string $path = null, ?string $domain = null, ?bool $secure = null): void
 	{
 		self::set($name, '', time() - 86400, $path, $domain, $secure);
 	}
@@ -77,7 +79,7 @@ class Cookie
 	 * @param  mixed  $default_value  If there is no cookie with the name provided, return this value instead
 	 * @return mixed  The value
 	 */
-	static public function get(string $name, mixed $default_value = null): mixed
+	public static function get(string $name, mixed $default_value = null): mixed
 	{
 		if (isset($_COOKIE[$name])) {
 			$cookie_val = $_COOKIE[$name];
@@ -103,7 +105,7 @@ class Cookie
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$default_domain   = null;
 		self::$default_expires  = null;
@@ -133,7 +135,7 @@ class Cookie
 	 * @param  boolean|null          $httponly  If the cookie should only be readable by HTTP connection, not javascript
 	 * @return void
 	 */
-	static public function set(string $name, mixed $value, int|string|null $expires = null, ?string $path = null, ?string $domain = null, ?bool $secure = null, ?bool $httponly = null): void
+	public static function set(string $name, mixed $value, int|string|null $expires = null, ?string $path = null, ?string $domain = null, ?bool $secure = null, ?bool $httponly = null): void
 	{
 		if ($expires === null && self::$default_expires !== null) {
 			$expires = self::$default_expires;
@@ -193,7 +195,7 @@ class Cookie
 	 * @param  string|null $domain  The default domain to use for cookies
 	 * @return void
 	 */
-	static public function setDefaultDomain(?string $domain): void
+	public static function setDefaultDomain(?string $domain): void
 	{
 		self::$default_domain = $domain;
 	}
@@ -208,7 +210,7 @@ class Cookie
 	 * @param  string|integer|null $expires  The default expiration date to use for cookies
 	 * @return void
 	 */
-	static public function setDefaultExpires(int|string|null $expires): void
+	public static function setDefaultExpires(int|string|null $expires): void
 	{
 		self::$default_expires = $expires;
 	}
@@ -223,7 +225,7 @@ class Cookie
 	 * @param  boolean $httponly  The default httponly flag to use for cookies
 	 * @return void
 	 */
-	static public function setDefaultHTTPOnly(bool $httponly): void
+	public static function setDefaultHTTPOnly(bool $httponly): void
 	{
 		self::$default_httponly = $httponly;
 	}
@@ -238,7 +240,7 @@ class Cookie
 	 * @param  string|null $path  The default path to use for cookies
 	 * @return void
 	 */
-	static public function setDefaultPath(?string $path): void
+	public static function setDefaultPath(?string $path): void
 	{
 		self::$default_path = $path;
 	}
@@ -253,7 +255,7 @@ class Cookie
 	 * @param  boolean $secure  The default secure flag to use for cookies
 	 * @return void
 	 */
-	static public function setDefaultSecure(bool $secure): void
+	public static function setDefaultSecure(bool $secure): void
 	{
 		self::$default_secure = $secure;
 	}
@@ -264,7 +266,9 @@ class Cookie
 	 *
 	 * @return Cookie
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

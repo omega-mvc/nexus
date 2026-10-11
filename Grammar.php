@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides english word inflection, notation conversion, grammar helpers and internationlization support
  *
@@ -40,7 +42,7 @@ class Grammar
 	 *     underscorize: array<string, string>
 	 * }
 	 */
-	static private array $cache = array(
+	private static array $cache = array(
 		'camelize'     => array(0 => array(), 1 => array()),
 		'humanize'     => array(),
 		'pluralize'    => array(),
@@ -53,35 +55,35 @@ class Grammar
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $camelize_rules = array();
+	private static array $camelize_rules = array();
 
 	/**
 	 * Custom rules for humanizing a string
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $humanize_rules = array();
+	private static array $humanize_rules = array();
 
 	/**
 	 * The callback to replace ::joinArray()
 	 *
 	 * @var callable(mixed ...): mixed|null
 	 */
-	static private mixed $join_array_callback = NULL;
+	private static mixed $join_array_callback = null;
 
 	/**
 	 * Cached word forms for the numbers 0 to 9 for ::inflectOnQuantity()
 	 *
 	 * @var array<int, string>|null
 	 */
-	static private ?array $quantity_words = NULL;
+	private static ?array $quantity_words = null;
 
 	/**
 	 * Rules for plural to singular inflection of nouns
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $plural_to_singular_rules = array(
+	private static array $plural_to_singular_rules = array(
 		'([ml])ice$'                   => '\1ouse',
 		'(media|info(rmation)?|news)$' => '\1',
 		'(q)uizzes$'                   => '\1uiz',
@@ -107,7 +109,7 @@ class Grammar
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $singular_to_plural_rules = array(
+	private static array $singular_to_plural_rules = array(
 		'([ml])ouse$'                  => '\1ice',
 		'(media|info(rmation)?|news)$' => '\1',
 		'(phot|log|vide)o$'            => '\1os',
@@ -134,7 +136,7 @@ class Grammar
 	 *
 	 * @var array<string, string>
 	 */
-	static private array $underscorize_rules = array();
+	private static array $underscorize_rules = array();
 
 
 	/**
@@ -144,7 +146,7 @@ class Grammar
 	 * @param  string $humanized_string      The humanized string
 	 * @return void
 	 */
-	static public function addHumanizeRule(string $non_humanized_string, string $humanized_string): void
+	public static function addHumanizeRule(string $non_humanized_string, string $humanized_string): void
 	{
 		self::$humanize_rules[$non_humanized_string] = $humanized_string;
 
@@ -159,7 +161,7 @@ class Grammar
 	 * @param  string $underscore_notation  The `underscore_notation` version of the string
 	 * @return void
 	 */
-	static public function addCamelUnderscoreRule(string $camel_case, string $underscore_notation): void
+	public static function addCamelUnderscoreRule(string $camel_case, string $underscore_notation): void
 	{
 		$camel_case = strtolower($camel_case[0]) . substr($camel_case, 1);
 		self::$underscorize_rules[$camel_case] = $underscore_notation;
@@ -177,7 +179,7 @@ class Grammar
 	 * @param  string $plural    The plural version of the noun
 	 * @return void
 	 */
-	static public function addSingularPluralRule(string $singular, string $plural): void
+	public static function addSingularPluralRule(string $singular, string $plural): void
 	{
 		self::$singular_to_plural_rules = array_merge(
 			array(
@@ -206,7 +208,7 @@ class Grammar
 	 * @param  boolean $upper   If the camel case should be `UpperCamelCase`
 	 * @return string  The converted string
 	 */
-	static public function camelize(string $string, bool $upper): string
+	public static function camelize(string $string, bool $upper): string
 	{
 		if (!strlen($string)) {
 			throw new ProgrammerException(
@@ -228,15 +230,14 @@ class Grammar
 			if ($upper) {
 				$string = ucfirst($string);
 			}
-
 		} else {
 			// Make a humanized string like underscore notation
-			if (strpos($string, ' ') !== FALSE) {
+			if (strpos($string, ' ') !== false) {
 				$string = strtolower(preg_replace('#\s+#', '_', $string) ?? $string);
 			}
 
 			// Check to make sure this is not already camel case
-			if (strpos($string, '_') === FALSE) {
+			if (strpos($string, '_') === false) {
 				if ($upper) {
 					$string = ucfirst($string);
 				}
@@ -262,7 +263,7 @@ class Grammar
 	 * @param array<int, string> $match  The regular expression match
 	 * @return string  The value to replace the string with
 	 */
-	static private function camelizeCallback(array $match): string
+	private static function camelizeCallback(array $match): string
 	{
 		return strtoupper($match[1]);
 	}
@@ -274,13 +275,13 @@ class Grammar
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message): string
+	protected static function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
 
 		$args = array_map(
 			static function (mixed $arg): bool|float|int|string|null {
-				if ($arg === NULL || is_scalar($arg)) {
+				if ($arg === null || is_scalar($arg)) {
 					return $arg;
 				}
 
@@ -289,7 +290,7 @@ class Grammar
 			$args
 		);
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $args)
@@ -306,7 +307,7 @@ class Grammar
 	 * @param  string $string  The string to humanize
 	 * @return string  The converted string
 	 */
-	static public function humanize(string $string): string
+	public static function humanize(string $string): string
 	{
 		if (!strlen($string)) {
 			throw new ProgrammerException(
@@ -325,10 +326,9 @@ class Grammar
 			$string = self::$humanize_rules[$string];
 
 		// If there is no space, it isn't already humanized
-		} elseif (strpos($string, ' ') === FALSE) {
-
+		} elseif (strpos($string, ' ') === false) {
 			// If we don't have an underscore we probably have camelCase
-			if (strpos($string, '_') === FALSE) {
+			if (strpos($string, '_') === false) {
 				$string = self::underscorize($string);
 			}
 
@@ -355,11 +355,11 @@ class Grammar
 	 * @param  boolean $use_words_for_single_digits  If the numbers 0 to 9 should be written out as words
 	 * @return string
 	 */
-	static public function inflectOnQuantity(mixed $quantity, string $singular_form, ?string $plural_form=NULL, bool $use_words_for_single_digits=FALSE): string
+	public static function inflectOnQuantity(mixed $quantity, string $singular_form, ?string $plural_form = null, bool $use_words_for_single_digits = false): string
 	{
-		if ($plural_form === NULL) {
+		if ($plural_form === null) {
 			$plural_form = self::pluralize($singular_form);
-			if ($plural_form === FALSE) {
+			if ($plural_form === false) {
 				throw new ProgrammerException(
 					'The noun specified, %s, could not be pluralized',
 					$singular_form
@@ -381,15 +381,13 @@ class Grammar
 
 		if ($quantity == 1) {
 			return $singular_form;
-
 		} else {
 			$output = $plural_form;
 
 			// Handle placement of the quantity into the output
-			if (strpos($output, '%d') !== FALSE) {
-
+			if (strpos($output, '%d') !== false) {
 				if ($use_words_for_single_digits && $quantity < 10) {
-					if (self::$quantity_words === NULL) {
+					if (self::$quantity_words === null) {
 						self::$quantity_words = array(
 							0 => self::compose('zero'),
 							1 => self::compose('one'),
@@ -421,7 +419,7 @@ class Grammar
 	 * @param  string $type     The type of join to perform, `'and'` or `'or'`
 	 * @return string  The terms joined together
 	 */
-	static public function joinArray(array $strings, string $type): string
+	public static function joinArray(array $strings, string $type): string
 	{
 		$valid_types = array('and', 'or');
 		if (!in_array($type, $valid_types)) {
@@ -469,7 +467,7 @@ class Grammar
 	 * @param  boolean $return_error   If this is `TRUE` and the noun can't be pluralized, `FALSE` will be returned instead
 	 * @return string|false  The pluralized noun, or `FALSE` when `$return_error` is `TRUE` and no rule matched
 	 */
-	static public function pluralize(string $singular_noun, bool $return_error=FALSE): string|false
+	public static function pluralize(string $singular_noun, bool $return_error = false): string|false
 	{
 		if (!strlen($singular_noun)) {
 			throw new ProgrammerException(
@@ -483,7 +481,7 @@ class Grammar
 		}
 
 		$original    = $singular_noun;
-		$plural_noun = NULL;
+		$plural_noun = null;
 
 		list ($beginning, $singular_noun) = self::splitLastWord($singular_noun);
 		foreach (self::$singular_to_plural_rules as $from => $to) {
@@ -495,8 +493,8 @@ class Grammar
 
 		if (!$plural_noun) {
 			if ($return_error) {
-				self::$cache['pluralize'][$singular_noun] = FALSE;
-				return FALSE;
+				self::$cache['pluralize'][$singular_noun] = false;
+				return false;
 			}
 			throw new ProgrammerException('The noun specified could not be pluralized');
 		}
@@ -516,7 +514,7 @@ class Grammar
 	 * @param  callable(mixed...):mixed $callback  The function to replace ::joinArray() with - should accept the same parameters and return the same type
 	 * @return void
 	 */
-	static public function registerJoinArrayCallback(callable $callback): void
+	public static function registerJoinArrayCallback(callable $callback): void
 	{
 		self::$join_array_callback = Closure::fromCallable($callback);
 	}
@@ -529,7 +527,7 @@ class Grammar
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$cache                    = array(
 			'camelize'     => array(0 => array(), 1 => array()),
@@ -540,7 +538,7 @@ class Grammar
 		);
 		self::$camelize_rules           = array();
 		self::$humanize_rules           = array();
-		self::$join_array_callback      = NULL;
+		self::$join_array_callback      = null;
 		self::$plural_to_singular_rules = array(
 			'([ml])ice$'                   => '\1ouse',
 			'(media|info(rmation)?|news)$' => '\1',
@@ -592,7 +590,7 @@ class Grammar
 	 * @param  boolean $return_error  If this is `TRUE` and the noun can't be pluralized, `FALSE` will be returned instead
 	 * @return string|false  The singularized noun, or `FALSE` when `$return_error` is `TRUE` and no rule matched
 	 */
-	static public function singularize(string $plural_noun, bool $return_error=FALSE): string|false
+	public static function singularize(string $plural_noun, bool $return_error = false): string|false
 	{
 		if (!strlen($plural_noun)) {
 			throw new ProgrammerException(
@@ -606,7 +604,7 @@ class Grammar
 		}
 
 		$original      = $plural_noun;
-		$singular_noun = NULL;
+		$singular_noun = null;
 
 		list ($beginning, $plural_noun) = self::splitLastWord($plural_noun);
 		foreach (self::$plural_to_singular_rules as $from => $to) {
@@ -618,8 +616,8 @@ class Grammar
 
 		if (!$singular_noun) {
 			if ($return_error) {
-				self::$cache['singularize'][$plural_noun] = FALSE;
-				return FALSE;
+				self::$cache['singularize'][$plural_noun] = false;
+				return false;
 			}
 			throw new ProgrammerException('The noun specified could not be singularized');
 		}
@@ -636,17 +634,19 @@ class Grammar
 	 * @param  string $string  The string to split the word from
 	 * @return array{0: string, 1: string}  The first element is the beginning part of the string, the second element is the last word
 	 */
-	static private function splitLastWord(string $string): array
+	private static function splitLastWord(string $string): array
 	{
 		// Handle strings with spaces in them
-		if (strpos($string, ' ') !== FALSE) {
-			return array(substr($string, 0, strrpos($string, ' ')+1), substr($string, strrpos($string, ' ')+1));
+		if (strpos($string, ' ') !== false) {
+			return array(substr($string, 0, strrpos($string, ' ') + 1), substr($string, strrpos($string, ' ') + 1));
 		}
 
 		// Handle underscore notation
 		if ($string == self::underscorize($string)) {
-			if (strpos($string, '_') === FALSE) { return array('', $string); }
-			return array(substr($string, 0, strrpos($string, '_')+1), substr($string, strrpos($string, '_')+1));
+			if (strpos($string, '_') === false) {
+                return array('', $string);
+            }
+			return array(substr($string, 0, strrpos($string, '_') + 1), substr($string, strrpos($string, '_') + 1));
 		}
 
 		// Handle camel case
@@ -667,7 +667,7 @@ class Grammar
 	 * @param string $word  The word to get the stem of
 	 * @return string  The stem of the word
 	 */
-	static public function stem(string $word): string
+	public static function stem(string $word): string
 	{
 		$s_v  = '^([^aeiou][^aeiouy]*)?[aeiouy]';
 		$mgr0 = $s_v . '[aeiou]*[^aeiou][^aeiouy]*';
@@ -696,7 +696,6 @@ class Grammar
 			if (preg_match($mgr0_regex, $match[1])) {
 				$word = substr($word, 0, -1);
 			}
-
 		} elseif (preg_match('#^(.+?)(ed|ing)$#', $word, $match)) {
 			if (preg_match($s_v_regex, $match[1])) {
 				$word = $match[1];
@@ -782,7 +781,7 @@ class Grammar
 	 * @param  string $string  The string to convert
 	 * @return string  The converted string
 	 */
-	static public function underscorize(string $string): string
+	public static function underscorize(string $string): string
 	{
 		if (!strlen($string)) {
 			throw new ProgrammerException(
@@ -803,12 +802,10 @@ class Grammar
 			$string = self::$underscorize_rules[$string];
 
 		// If the string is already underscore notation then leave it
-		} elseif (strpos($string, '_') !== FALSE && strtolower($string) == $string) {
-
+		} elseif (strpos($string, '_') !== false && strtolower($string) == $string) {
 		// Allow humanized string to be passed in
-		} elseif (strpos($string, ' ') !== FALSE) {
+		} elseif (strpos($string, ' ') !== false) {
 			$string = strtolower(preg_replace('#\s+#', '_', $string) ?? $string);
-
 		} else {
 			do {
 				$old_string = $string;
@@ -830,7 +827,9 @@ class Grammar
 	 *
 	 * @return Grammar
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides session-based messaging for page-to-page communication
  *
@@ -29,7 +31,7 @@ class Messaging
 	 *
 	 * @var string
 	 */
-	static protected string $class = '';
+	protected static string $class = '';
 
 
 	/**
@@ -39,9 +41,9 @@ class Messaging
 	 * @param  string $recipient  The intended recipient
 	 * @return boolean  If a message of the name and recipient specified exists
 	 */
-	static public function check(string $name, ?string $recipient=NULL): bool
+	public static function check(string $name, ?string $recipient = null): bool
 	{
-		if ($recipient === NULL) {
+		if ($recipient === null) {
 			$recipient = '{default}';
 		}
 
@@ -55,13 +57,13 @@ class Messaging
 					continue;
 				}
 				if (strpos($key, $prefix) === 0) {
-					return TRUE;
+					return true;
 				}
 			}
-			return FALSE;
+			return false;
 		}
 
-		return Session::get(__CLASS__ . '::' . $recipient . '::' . $name, NULL) !== NULL;
+		return Session::get(__CLASS__ . '::' . $recipient . '::' . $name, null) !== null;
 	}
 
 
@@ -75,10 +77,10 @@ class Messaging
 	 * @param  string  $message
 	 * @return void
 	 */
-	static public function create(string $name, string $recipient, ?string $message=NULL): void
+	public static function create(string $name, string $recipient, ?string $message = null): void
 	{
 		// This allows for the $recipient parameter to be optional
-		if ($message === NULL) {
+		if ($message === null) {
 			$message   = $recipient;
 			$recipient = '{default}';
 		}
@@ -94,7 +96,7 @@ class Messaging
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		Session::clear(__CLASS__ . '::');
 	}
@@ -107,14 +109,14 @@ class Messaging
 	 * @param  string $recipient  The intended recipient
 	 * @return string  The message contents
 	 */
-	static public function retrieve(string $name, ?string $recipient=NULL): string
+	public static function retrieve(string $name, ?string $recipient = null): string
 	{
-		if ($recipient === NULL) {
+		if ($recipient === null) {
 			$recipient = '{default}';
 		}
 
 		$key     = __CLASS__ . '::' . $recipient . '::' . $name;
-		$message = Session::get($key, NULL);
+		$message = Session::get($key, null);
 		Session::delete($key);
 		return is_string($message) ? $message : '';
 	}
@@ -126,7 +128,7 @@ class Messaging
 	 * @param  string $class  A class for all messages
 	 * @return void
 	 */
-	static public function setClass(string $class): void
+	public static function setClass(string $class): void
 	{
 		self::$class = $class;
 	}
@@ -143,9 +145,9 @@ class Messaging
 	 * @param  string $css_class  Overrides using the `$name` as the CSS class when displaying the message - only used if a single `$name` is specified
 	 * @return boolean  If one or more messages was shown
 	 */
-	static public function show(mixed $name, ?string $recipient=NULL, ?string $css_class=NULL): bool
+	public static function show(mixed $name, ?string $recipient = null, ?string $css_class = null): bool
 	{
-		if ($recipient === NULL) {
+		if ($recipient === null) {
 			$recipient = '{default}';
 		}
 
@@ -167,7 +169,7 @@ class Messaging
 
 		// Handle showing multiple messages
 		if (is_array($name)) {
-			$shown = FALSE;
+			$shown = false;
 			$names = $name;
 
 			foreach ($names as $name) {
@@ -175,13 +177,13 @@ class Messaging
 					continue;
 				}
 				$class = trim(self::$class . ' ' . $name);
-				$class = ($css_class === NULL) ? $class : $css_class;
+				$class = ($css_class === null) ? $class : $css_class;
 
 				$content = self::retrieve($name, $recipient);
 				if ($content !== '' && !HTML::containsBlockLevelHTML($content)) {
 					$content = '<p>' . $content . '</p>';
 				}
-				$shown = HTML::show($content, $class, TRUE) || $shown;
+				$shown = HTML::show($content, $class, true) || $shown;
 			}
 			return $shown;
 		}
@@ -189,17 +191,17 @@ class Messaging
 		// Handle a single message
 		if (!is_string($name)) {
 			if (!is_scalar($name)) {
-				return FALSE;
+				return false;
 			}
 			$name = (string) $name;
 		}
 		$class = self::$class . ' ' . $name;
-		$class = ($css_class === NULL) ? $class : $css_class;
+		$class = ($css_class === null) ? $class : $css_class;
 		$content = self::retrieve($name, $recipient);
-		if ($content !== '' &&!HTML::containsBlockLevelHTML($content)) {
+		if ($content !== '' && !HTML::containsBlockLevelHTML($content)) {
 			$content = '<p>' . $content . '</p>';
 		}
-		return HTML::show($content, $class, TRUE);
+		return HTML::show($content, $class, true);
 	}
 
 
@@ -208,7 +210,9 @@ class Messaging
 	 *
 	 * @return Messaging
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

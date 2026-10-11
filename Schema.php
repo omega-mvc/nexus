@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Gets schema information for the selected database
  *
@@ -77,7 +79,7 @@ class Schema
 	 *
 	 * @var Cache
 	 */
-	private ?Cache $cache = NULL;
+	private ?Cache $cache = null;
 
 	/**
 	 * The cache prefix to use for cache entries
@@ -115,7 +117,7 @@ class Schema
 	 *
 	 * @var list<string>|null
 	 */
-	private mixed $databases = NULL;
+	private mixed $databases = null;
 
 	/**
 	 * The cached key info
@@ -159,7 +161,7 @@ class Schema
 	 *
 	 * @var list<string>|null
 	 */
-	private mixed $tables = NULL;
+	private mixed $tables = null;
 
 
 	/**
@@ -199,13 +201,13 @@ class Schema
 	{
 		foreach ($this->merged_keys[$table]['unique'] as $key) {
 			if (array($column) == $key) {
-				return TRUE;
+				return true;
 			}
 		}
 		if (array($column) == $this->merged_keys[$table]['primary']) {
-			return TRUE;
+			return true;
 		}
-		return FALSE;
+		return false;
 	}
 
 
@@ -219,12 +221,12 @@ class Schema
 	public function clearCache(): void
 	{
 		$this->column_info        = array();
-		$this->databases          = NULL;
+		$this->databases          = null;
 		$this->keys               = array();
 		$this->merged_column_info = array();
 		$this->merged_keys        = array();
 		$this->relationships      = array();
-		$this->tables             = NULL;
+		$this->tables             = null;
 		if ($this->cache) {
 			$prefix = $this->makeCachePrefix();
 			$this->cache->delete($prefix . 'column_info');
@@ -244,7 +246,7 @@ class Schema
 	 * @param string  $filter_table  The only return this table and tables that rely on it
 	 * @return list<string>  An array of table names
 	 */
-	private function determineTableCreationOrder(?string $filter_table=NULL): array
+	private function determineTableCreationOrder(?string $filter_table = null): array
 	{
 		$found          = array();
 		$ignored_found  = array();
@@ -257,7 +259,7 @@ class Schema
 			foreach ($current_tables as $table) {
 				$foreign_keys = $this->getKeys($table, 'foreign');
 				if (!$foreign_keys) {
-					if ($filter_table !== NULL) {
+					if ($filter_table !== null) {
 						if ($table == $filter_table) {
 							$found[] = $table;
 						} else {
@@ -266,20 +268,19 @@ class Schema
 					} else {
 						$found[] = $table;
 					}
-
 				} else {
-					$all_dependencies_met = TRUE;
+					$all_dependencies_met = true;
 					$found_dependencies   = 0;
 					foreach ($foreign_keys as $foreign_key) {
 						if ($table != $foreign_key['foreign_table'] && !in_array($foreign_key['foreign_table'], $found) && !in_array($foreign_key['foreign_table'], $ignored_found)) {
-							$all_dependencies_met = FALSE;
+							$all_dependencies_met = false;
 							break;
 						} elseif (in_array($foreign_key['foreign_table'], $found)) {
 							$found_dependencies++;
 						}
 					}
 					if ($all_dependencies_met) {
-						if ($filter_table !== NULL) {
+						if ($filter_table !== null) {
 							if ($found_dependencies || $table == $filter_table) {
 								$found[] = $table;
 							} else {
@@ -288,7 +289,6 @@ class Schema
 						} else {
 							$found[] = $table;
 						}
-
 					} else {
 						$remaining_tables[] = $table;
 					}
@@ -309,26 +309,26 @@ class Schema
 	 * @param  string $key_token  Internal use only! (this will be used in the cache key to uniquely identify the cache for this Schema object)
 	 * @return void
 	 */
-	public function enableCaching(Cache $cache, ?string $key_token=NULL): void
+	public function enableCaching(Cache $cache, ?string $key_token = null): void
 	{
 		$this->cache = $cache;
 
-		if ($key_token !== NULL) {
+		if ($key_token !== null) {
 			$this->cache_prefix = 'Schema::' . $this->database->getType() . '::' . $key_token . '::';
 		}
 		$prefix = $this->makeCachePrefix();
 
-		$this->column_info        = $this->cache->get($prefix . 'column_info',          array());
-		$this->databases          = $this->cache->get($prefix . 'databases',            NULL);
-		$this->keys               = $this->cache->get($prefix . 'keys',                 array());
+		$this->column_info        = $this->cache->get($prefix . 'column_info', array());
+		$this->databases          = $this->cache->get($prefix . 'databases', null);
+		$this->keys               = $this->cache->get($prefix . 'keys', array());
 
 		if (!$this->column_info_override && !$this->keys_override) {
-			$this->merged_column_info = $this->cache->get($prefix . 'merged_column_info',   array());
-			$this->merged_keys        = $this->cache->get($prefix . 'merged_keys',          array());
-			$this->relationships      = $this->cache->get($prefix . 'relationships',        array());
+			$this->merged_column_info = $this->cache->get($prefix . 'merged_column_info', array());
+			$this->merged_keys        = $this->cache->get($prefix . 'merged_keys', array());
+			$this->relationships      = $this->cache->get($prefix . 'relationships', array());
 		}
 
-		$this->tables             = $this->cache->get($prefix . 'tables',               NULL);
+		$this->tables             = $this->cache->get($prefix . 'tables', null);
 	}
 
 
@@ -393,7 +393,7 @@ class Schema
 		$column_info = array();
 
 		$schema = strtolower($this->database->getUsername());
-		if (strpos($table, '.') !== FALSE) {
+		if (strpos($table, '.') !== false) {
 			list ($schema, $table) = explode('.', $table);
 		}
 
@@ -500,7 +500,7 @@ class Schema
 			if ($info['type'] == 'char' && isset($info['max_length']) && $info['max_length'] == 1 && !empty($constraint)) {
 				if (preg_match('/^\s*"?' . preg_quote($row['column'], '/') . '"?\s+in\s+\(\s*(\'0\',\s*\'1\'|\'1\',\s*\'0\')\s*\)\s*$/i', $constraint)) {
 					$info['type'] = 'boolean';
-					$info['max_length'] = NULL;
+					$info['max_length'] = null;
 				}
 			}
 
@@ -515,16 +515,16 @@ class Schema
 
 			// Handle auto increment
 			if ($row['auto_increment']) {
-				$info['auto_increment'] = TRUE;
+				$info['auto_increment'] = true;
 			}
 
 			// Handle default values
-			if ($row['default'] !== NULL) {
+			if ($row['default'] !== null) {
 				if ($row['default'] == 'NULL') {
-					$info['default'] = NULL;
+					$info['default'] = null;
 				} elseif (in_array($info['type'], array('timestamp', 'date', 'time')) && $row['default'][0] != "'") {
 					$info['default'] = str_replace(' ', '_', $row['default']);
-				} elseif (in_array($info['type'], array('char', 'varchar', 'text', 'timestamp', 'date', 'time')) ) {
+				} elseif (in_array($info['type'], array('char', 'varchar', 'text', 'timestamp', 'date', 'time'))) {
 					$info['default'] = substr($row['default'], 1, -1);
 				} elseif ($info['type'] == 'boolean') {
 					$info['default'] = (bool) substr($row['default'], 1, -1);
@@ -534,7 +534,7 @@ class Schema
 			}
 
 			// Handle not null
-			$info['not_null'] = ($row['nullable'] == 'N') ? TRUE : FALSE;
+			$info['not_null'] = ($row['nullable'] == 'N') ? true : false;
 
 			$info['comment'] = $row['comment'];
 
@@ -590,7 +590,7 @@ class Schema
 
 		$conditions = array();
 		foreach ($tables as $table) {
-			if (strpos($table, '.') === FALSE) {
+			if (strpos($table, '.') === false) {
 				$table = $default_schema . '.' . $table;
 			}
 			list ($schema, $table) = explode('.', strtolower($table));
@@ -623,7 +623,7 @@ class Schema
 
 		$conditions = array();
 		foreach ($tables as $table) {
-			if (strpos($table, '.') === FALSE) {
+			if (strpos($table, '.') === false) {
 				$table = $default_schema . '.' . $table;
 			}
 			list ($schema, $table) = explode('.', strtolower($table));
@@ -642,20 +642,19 @@ class Schema
 		$last_name  = '';
 		$last_table = '';
 		$last_type  = '';
-		$temp    = NULL;
+		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
 			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null, on_update: string|null} $row */
 
 			if ($row['constraint_name'] != $last_name) {
-
 				if ($last_name) {
 					if (!isset($keys[$last_table])) {
 						$keys[$last_table] = array('primary' => array(), 'unique' => array(), 'foreign' => array());
 					}
 					$info = $keys[$last_table];
 					if ($last_type == 'foreign') {
-						if ($temp !== NULL) {
+						if ($temp !== null) {
 							$info['foreign'][] = $temp;
 						}
 					} elseif ($last_type == 'unique') {
@@ -668,10 +667,9 @@ class Schema
 					$keys[$last_table] = $info;
 				}
 
-				$temp    = NULL;
+				$temp    = null;
 				$columns = array();
 				if ($row['type'] == 'foreign') {
-
 					$foreign_table = (string) $row['foreign_table'];
 					if ($row['foreign_schema'] != $default_schema) {
 						$foreign_table = $row['foreign_schema'] . '.' . $foreign_table;
@@ -691,7 +689,6 @@ class Schema
 					if (!empty($row['on_update'])) {
 						$temp['on_update'] = $row['on_update'];
 					}
-
 				} else {
 					$columns[] = $row['column'];
 				}
@@ -702,7 +699,6 @@ class Schema
 				}
 				$last_name  = $row['constraint_name'];
 				$last_type  = $row['type'];
-
 			} else {
 				$columns[] = $row['column'];
 			}
@@ -714,7 +710,7 @@ class Schema
 			}
 			$info = $keys[$last_table];
 			if ($last_type == 'foreign') {
-				if ($temp !== NULL) {
+				if ($temp !== null) {
 					$info['foreign'][] = $temp;
 				}
 			} elseif ($last_type == 'unique') {
@@ -787,7 +783,7 @@ class Schema
 		$column_info = array();
 
 		$schema = 'dbo';
-		if (strpos($table, '.') !== FALSE) {
+		if (strpos($table, '.') !== false) {
 			list ($schema, $table) = explode('.', $table);
 		}
 
@@ -933,18 +929,18 @@ class Schema
 
 			// Handle auto increment
 			if ($row['auto_increment']) {
-				$info['auto_increment'] = TRUE;
+				$info['auto_increment'] = true;
 			}
 
 			// Handle default values
-			if ($row['default'] !== NULL) {
+			if ($row['default'] !== null) {
 				if ($row['default'] == '(getdate())') {
 					$info['default'] = 'CURRENT_TIMESTAMP';
-				} elseif (in_array($info['type'], array('char', 'varchar', 'text', 'timestamp')) ) {
+				} elseif (in_array($info['type'], array('char', 'varchar', 'text', 'timestamp'))) {
 					$info['default'] = substr($row['default'], 2, -2);
 				} elseif ($info['type'] == 'boolean') {
 					$info['default'] = (bool) substr($row['default'], 2, -2);
-				} elseif (in_array($info['type'], array('integer', 'float')) ) {
+				} elseif (in_array($info['type'], array('integer', 'float'))) {
 					$info['default'] = str_replace(array('(', ')'), '', $row['default']);
 				} else {
 					$info['default'] = pack('H*', substr($row['default'], 3, -1));
@@ -952,7 +948,7 @@ class Schema
 			}
 
 			// Handle not null
-			$info['not_null'] = ($row['nullable'] == 'NO') ? TRUE : FALSE;
+			$info['not_null'] = ($row['nullable'] == 'NO') ? true : false;
 
 			$info['comment'] = $row['comment'];
 
@@ -1018,20 +1014,19 @@ class Schema
 		$last_name  = '';
 		$last_table = '';
 		$last_type  = '';
-		$temp    = NULL;
+		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
 			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null, on_update: string|null} $row */
 
 			if ($row['constraint_name'] != $last_name) {
-
 				if ($last_name) {
 					if (!isset($keys[$last_table])) {
 						$keys[$last_table] = array('primary' => array(), 'unique' => array(), 'foreign' => array());
 					}
 					$info = $keys[$last_table];
 					if ($last_type == 'foreign') {
-						if ($temp !== NULL) {
+						if ($temp !== null) {
 							$info['foreign'][] = $temp;
 						}
 					} elseif ($last_type == 'unique') {
@@ -1044,10 +1039,9 @@ class Schema
 					$keys[$last_table] = $info;
 				}
 
-				$temp    = NULL;
+				$temp    = null;
 				$columns = array();
 				if ($row['type'] == 'foreign') {
-
 					$foreign_table = (string) $row['foreign_table'];
 					if ($row['foreign_schema'] != 'dbo') {
 						$foreign_table = $row['foreign_schema'] . '.' . $foreign_table;
@@ -1067,7 +1061,6 @@ class Schema
 					if (!empty($row['on_update'])) {
 						$temp['on_update'] = $row['on_update'];
 					}
-
 				} else {
 					$columns[] = $row['column'];
 				}
@@ -1078,7 +1071,6 @@ class Schema
 				}
 				$last_name  = $row['constraint_name'];
 				$last_type  = $row['type'];
-
 			} else {
 				$columns[] = $row['column'];
 			}
@@ -1090,7 +1082,7 @@ class Schema
 			}
 			$info = $keys[$last_table];
 			if ($last_type == 'foreign') {
-				if ($temp !== NULL) {
+				if ($temp !== null) {
 					$info['foreign'][] = $temp;
 				}
 			} elseif ($last_type == 'unique') {
@@ -1177,14 +1169,12 @@ class Schema
 		preg_match_all('#(?<=,|\()\s+(?:"|\`)(\w+)(?:"|\`)\s+(?:([a-z]+)(?:\(([^)]+)\))?( unsigned)?(?: zerofill)?)(?: character set [^ ]+)?(?: collate [^ ]+)?(?: NULL)?( NOT NULL)?(?: DEFAULT ((?:[^, \'\n]*|\'(?:\'\'|[^\']+)*\')))?( auto_increment)?( COMMENT \'(?:\'\'|[^\']+)*\')?( ON UPDATE CURRENT_TIMESTAMP)?\s*(?:,|\s*(?=\)))#mi', $create_sql, $matches, PREG_SET_ORDER);
 
 		foreach ($matches as $match) {
-
 			$info = array();
 
 			foreach ($data_type_mapping as $data_type => $mapped_data_type) {
 				if (stripos($match[2], $data_type) === 0) {
-					if ($match[2] == 'tinyint' && ($match[3] ?? NULL) == 1) {
+					if ($match[2] == 'tinyint' && ($match[3] ?? null) == 1) {
 						$mapped_data_type = 'boolean';
-
 					} elseif (preg_match('#((?:unsigned )?(?:tiny|small|medium|big)?int)#', (isset($match[4]) ? $match[4] . ' ' : '') . $data_type, $int_match)) {
 						if (isset($max_min_values[$int_match[1]])) {
 							$info['min_value'] = $max_min_values[$int_match[1]]['min'];
@@ -1241,7 +1231,7 @@ class Schema
 
 			// Type specific information
 			if (in_array($info['type'], array('char', 'varchar'))) {
-				$info['max_length'] = $match[3] ?? NULL;
+				$info['max_length'] = $match[3] ?? null;
 			}
 
 			// Grab the number of decimal places
@@ -1257,7 +1247,7 @@ class Schema
 			}
 
 			// Not null
-			$info['not_null'] = (!empty($match[5])) ? TRUE : FALSE;
+			$info['not_null'] = (!empty($match[5])) ? true : false;
 
 			// Default values
 			if (!empty($match[6]) && $match[6] != 'NULL') {
@@ -1270,7 +1260,7 @@ class Schema
 
 			// Auto increment fields
 			if (!empty($match[7])) {
-				$info['auto_increment'] = TRUE;
+				$info['auto_increment'] = true;
 			}
 
 			// Column comments
@@ -1297,7 +1287,6 @@ class Schema
 		$keys = array();
 
 		foreach ($tables as $table) {
-
 			$info = array('primary' => array(), 'unique' => array(), 'foreign' => array());
 
 			$result = $this->database->query('SHOW CREATE TABLE %r', $table);
@@ -1354,7 +1343,7 @@ class Schema
 		$table = strtolower($table);
 
 		$schema = strtolower($this->database->getUsername());
-		if (strpos($table, '.') !== FALSE) {
+		if (strpos($table, '.') !== false) {
 			list ($schema, $table) = explode('.', $table);
 		}
 
@@ -1458,11 +1447,11 @@ class Schema
 			// not possible to check or modify the constraints in SQL which
 			// ends up causing multiple rows with duplicate data except for
 			// the check constraint
-			$duplicate = FALSE;
+			$duplicate = false;
 
 			if (isset($column_info[$column])) {
 				$info = $column_info[$column];
-				$duplicate = TRUE;
+				$duplicate = true;
 			} else {
 				$info = array();
 			}
@@ -1519,26 +1508,22 @@ class Schema
 
 			if (!$duplicate) {
 				// Handle default values
-				if ($row['data_default'] !== NULL && trim($row['data_default']) != 'NULL') {
+				if ($row['data_default'] !== null && trim($row['data_default']) != 'NULL') {
 					if (in_array($info['type'], array('date', 'time', 'timestamp')) && $row['data_default'][0] != "'") {
 						$info['default'] = trim(preg_replace('#^SYS#', 'CURRENT_', $row['data_default']) ?? $row['data_default']);
-
 					} elseif (in_array($info['type'], array('char', 'varchar', 'text', 'date', 'time', 'timestamp'))) {
 						$info['default'] = str_replace("''", "'", substr(trim($row['data_default']), 1, -1));
-
 					} elseif ($info['type'] == 'boolean') {
 						$info['default'] = (bool) trim($row['data_default']);
-
 					} elseif (in_array($info['type'], array('integer', 'float'))) {
 						$info['default'] = trim($row['data_default']);
-
 					} else {
 						$info['default'] = $row['data_default'];
 					}
 				}
 
 				// Not null values
-				$info['not_null'] = ($row['nullable'] == 'N') ? TRUE : FALSE;
+				$info['not_null'] = ($row['nullable'] == 'N') ? true : false;
 
 				$info['comment'] = $row['comments'];
 			}
@@ -1561,7 +1546,7 @@ class Schema
 			/** @var array{trigger_body: string|null} $row */
 			if (preg_match('#SELECT\s+(["\w.]+).nextval\s+INTO\s+:new\.(\w+)\s+FROM\s+dual#i', (string) $row['trigger_body'], $matches)) {
 				$column = strtolower($matches[2]);
-				$column_info[$column]['auto_increment'] = TRUE;
+				$column_info[$column]['auto_increment'] = true;
 			}
 		}
 
@@ -1612,7 +1597,7 @@ class Schema
 
 		$conditions = array();
 		foreach ($tables as $table) {
-			if (strpos($table, '.') === FALSE) {
+			if (strpos($table, '.') === false) {
 				$table = $default_schema . '.' . $table;
 			}
 			list ($schema, $table) = explode('.', strtolower($table));
@@ -1634,20 +1619,19 @@ class Schema
 		$last_name  = '';
 		$last_table = '';
 		$last_type  = '';
-		$temp    = NULL;
+		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
 			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null} $row */
 
 			if ($row['constraint_name'] != $last_name) {
-
 				if ($last_name) {
 					if (!isset($keys[$last_table])) {
 						$keys[$last_table] = array('primary' => array(), 'unique' => array(), 'foreign' => array());
 					}
 					$info = $keys[$last_table];
 					if ($last_type == 'foreign') {
-						if ($temp !== NULL) {
+						if ($temp !== null) {
 							$info['foreign'][] = $temp;
 						}
 					} elseif ($last_type == 'unique') {
@@ -1660,10 +1644,9 @@ class Schema
 					$keys[$last_table] = $info;
 				}
 
-				$temp    = NULL;
+				$temp    = null;
 				$columns = array();
 				if ($row['type'] == 'foreign') {
-
 					$foreign_table = (string) $row['foreign_table'];
 					if ($row['foreign_schema'] != $default_schema) {
 						$foreign_table = $row['foreign_schema'] . '.' . $foreign_table;
@@ -1679,7 +1662,6 @@ class Schema
 					if (!empty($row['on_delete'])) {
 						$temp['on_delete'] = $row['on_delete'];
 					}
-
 				} else {
 					$columns[] = $row['column'];
 				}
@@ -1690,7 +1672,6 @@ class Schema
 				}
 				$last_name  = $row['constraint_name'];
 				$last_type  = $row['type'];
-
 			} else {
 				$columns[] = $row['column'];
 			}
@@ -1702,7 +1683,7 @@ class Schema
 			}
 			$info = $keys[$last_table];
 			if ($last_type == 'foreign') {
-				if ($temp !== NULL) {
+				if ($temp !== null) {
 					$info['foreign'][] = $temp;
 				}
 			} elseif ($last_type == 'unique') {
@@ -1730,7 +1711,7 @@ class Schema
 		$column_info = array();
 
 		$schema = 'public';
-		if (strpos($table, '.') !== FALSE) {
+		if (strpos($table, '.') !== false) {
 			list ($schema, $table) = explode('.', $table);
 		}
 
@@ -1819,7 +1800,7 @@ class Schema
 			}
 
 			if (!isset($info['type'])) {
-				$info['type'] = $column_data_type[1] ?? NULL;
+				$info['type'] = $column_data_type[1] ?? null;
 			}
 
 			if ($info['type'] == 'blob' || $info['type'] == 'text') {
@@ -1860,12 +1841,11 @@ class Schema
 			}
 
 			// Handle default values and serial data types
-			if ($info['type'] == 'integer' && stripos((string) $row['default'], 'nextval(') !== FALSE) {
-				$info['auto_increment'] = TRUE;
-
-			} elseif ($row['default'] !== NULL) {
+			if ($info['type'] == 'integer' && stripos((string) $row['default'], 'nextval(') !== false) {
+				$info['auto_increment'] = true;
+			} elseif ($row['default'] !== null) {
 				if (preg_match('#^NULL::[\w\s]+$#', $row['default'])) {
-					$info['default'] = NULL;
+					$info['default'] = null;
 				} elseif ($row['default'] == 'now()') {
 					$info['default'] = 'CURRENT_TIMESTAMP';
 				} elseif ($row['default'] == "('now'::text)::date") {
@@ -1875,13 +1855,13 @@ class Schema
 				} else {
 					$info['default'] = str_replace("''", "'", preg_replace("/^'(.*)'::[a-z ]+\$/iD", '\1', $row['default']) ?? $row['default']);
 					if ($info['type'] == 'boolean') {
-						$info['default'] = ($info['default'] == 'false' || !$info['default']) ? FALSE : TRUE;
+						$info['default'] = ($info['default'] == 'false' || !$info['default']) ? false : true;
 					}
 				}
 			}
 
 			// Not null values
-			$info['not_null'] = ($row['not_null'] == 't') ? TRUE : FALSE;
+			$info['not_null'] = ($row['not_null'] == 't') ? true : false;
 
 			$info['comment'] = $row['comment'];
 
@@ -1998,20 +1978,19 @@ class Schema
 		$last_name  = '';
 		$last_table = '';
 		$last_type  = '';
-		$temp    = NULL;
+		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
 			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null, on_update: string|null} $row */
 
 			if ($row['constraint_name'] != $last_name) {
-
 				if ($last_name) {
 					if (!isset($keys[$last_table])) {
 						$keys[$last_table] = array('primary' => array(), 'unique' => array(), 'foreign' => array());
 					}
 					$info = $keys[$last_table];
 					if ($last_type == 'foreign') {
-						if ($temp !== NULL) {
+						if ($temp !== null) {
 							$info['foreign'][] = $temp;
 						}
 					} elseif ($last_type == 'unique') {
@@ -2024,10 +2003,9 @@ class Schema
 					$keys[$last_table] = $info;
 				}
 
-				$temp    = NULL;
+				$temp    = null;
 				$columns = array();
 				if ($row['type'] == 'foreign') {
-
 					$foreign_table = (string) $row['foreign_table'];
 					if ($row['foreign_schema'] != 'public') {
 						$foreign_table = $row['foreign_schema'] . '.' . $foreign_table;
@@ -2047,7 +2025,6 @@ class Schema
 					if (!empty($row['on_update'])) {
 						$temp['on_update'] = $row['on_update'];
 					}
-
 				} else {
 					$columns[] = $row['column'];
 				}
@@ -2058,7 +2035,6 @@ class Schema
 				}
 				$last_name  = $row['constraint_name'];
 				$last_type  = $row['type'];
-
 			} else {
 				$columns[] = $row['column'];
 			}
@@ -2070,7 +2046,7 @@ class Schema
 			}
 			$info = $keys[$last_table];
 			if ($last_type == 'foreign') {
-				if ($temp !== NULL) {
+				if ($temp !== null) {
 					$info['foreign'][] = $temp;
 				}
 			} elseif ($last_type == 'unique') {
@@ -2165,27 +2141,27 @@ class Schema
 			}
 
 			// Not null
-			$info['not_null'] = (!empty($match[5]) || !empty($match[8])) ? TRUE : FALSE;
+			$info['not_null'] = (!empty($match[5]) || !empty($match[8])) ? true : false;
 
 			// Default values
 			if (isset($match[6]) && $match[6] != '' && $match[6] != 'NULL') {
 				$info['default'] = preg_replace("/^'|'\$/D", '', $match[6]);
 			}
 			if (isset($info['type']) && $info['type'] == 'boolean' && isset($info['default'])) {
-				$info['default'] = ($info['default'] == 'f' || $info['default'] == 0 || $info['default'] == 'false') ? FALSE : TRUE;
+				$info['default'] = ($info['default'] == 'f' || $info['default'] == 0 || $info['default'] == 'false') ? false : true;
 			}
 
 			// Check constraints
 			if (isset($match[9]) && preg_match('/CHECK\s*\(\s*"?' . $match[1] . '"?\s+IN\s+\(\s*((?:(?:[^, \']*|\'(?:\'\'|[^\']+)*\')\s*,\s*)*(?:[^, \']*|\'(?:\'\'|[^\']+)*\'))\s*\)/i', $match[9], $check_match)) {
 				$check_values = preg_split("#\s*,\s*#", $check_match[1]);
-				if ($check_values !== FALSE) {
+				if ($check_values !== false) {
 					$info['valid_values'] = str_replace("''", "'", preg_replace("/^'|'\$/D", '', $check_values));
 				}
 			}
 
 			// Auto increment fields
-			if (!empty($match[8]) && (stripos($match[8], 'autoincrement') !== FALSE || (isset($info['type']) && $info['type'] == 'integer'))) {
-				$info['auto_increment'] = TRUE;
+			if (!empty($match[8]) && (stripos($match[8], 'autoincrement') !== false || (isset($info['type']) && $info['type'] == 'integer'))) {
+				$info['auto_increment'] = true;
 			}
 
 			// Column comments
@@ -2273,7 +2249,7 @@ class Schema
 
 			foreach ($matches as $match) {
 				$columns = preg_split('#\s*,\s*#', strtolower($match[1]));
-				if ($columns !== FALSE) {
+				if ($columns !== false) {
 					foreach ($columns as $column) {
 						$keys[$table]['primary'][] = str_replace(array('[', '"', '`', ']'), '', $column);
 					}
@@ -2284,7 +2260,9 @@ class Schema
 			preg_match_all('#(?<=,|\()\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?FOREIGN\s+KEY\s*(?:["`\[]?(\w+)["`\]]?|\(\s*["`\[]?(\w+)["`\]]?\s*\))\s+REFERENCES\s+["`\[]?(\w+)["`\]]?\s*\(\s*["`\[]?(\w+)["`\]]?\s*\)\s*(?:\s+(?:ON\s+DELETE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))|\s+(?:ON\s+UPDATE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT)))*(?:\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?\s*(?:,|\s*(?=\)))#mis', $create_sql, $matches, PREG_SET_ORDER);
 
 			foreach ($matches as $match) {
-				if (empty($match[1])) { $match[1] = $match[2]; }
+				if (empty($match[1])) {
+                    $match[1] = $match[2];
+                }
 				$temp = array(
 					'column'         => strtolower($match[1]),
 					'foreign_table'  => strtolower($match[3]),
@@ -2306,7 +2284,7 @@ class Schema
 
 			foreach ($matches as $match) {
 				$columns = preg_split('#\s*,\s*#', strtolower($match[1]));
-				if ($columns !== FALSE) {
+				if ($columns !== false) {
 					$key = array();
 					foreach ($columns as $column) {
 						$key[] = str_replace(array('[', '"', '`', ']'), '', $column);
@@ -2324,7 +2302,7 @@ class Schema
 					continue;
 				}
 				$columns = preg_split('#\s*,\s*#', strtolower($match[1]));
-				if ($columns !== FALSE) {
+				if ($columns !== false) {
 					$key = array();
 					foreach ($columns as $column) {
 						$key[] = str_replace(array('[', '"', '`', ']'), '', $column);
@@ -2559,10 +2537,10 @@ class Schema
 	 * @param  string $element  The element to return: `'type'`, `'placeholder'`, `'not_null'`, `'default'`, `'valid_values'`, `'max_length'`, `'min_value'`, `'max_value'`, `'decimal_places'`, `'auto_increment'`, `'comment'`
 	 * @return mixed  The column info for the table/column/element specified - see method description for format
 	 */
-	public function getColumnInfo(string $table, ?string $column=NULL, ?string $element=NULL): mixed
+	public function getColumnInfo(string $table, ?string $column = null, ?string $element = null): mixed
 	{
 		$table = strtolower($table);
-		if ($column !== NULL) {
+		if ($column !== null) {
 			$column = strtolower($column);
 		}
 
@@ -2571,7 +2549,7 @@ class Schema
 			return $this->merged_column_info[$table];
 		}
 		if ($column && isset($this->merged_column_info[$table][$column])) {
-			if ($element !== NULL) {
+			if ($element !== null) {
 				if (!isset($this->merged_column_info[$table][$column][$element]) && !array_key_exists($element, $this->merged_column_info[$table][$column])) {
 					throw new ProgrammerException(
 						'The element specified, %1$s, is invalid. Must be one of: %2$s.',
@@ -2621,7 +2599,7 @@ class Schema
 	 */
 	public function getDatabases(): array
 	{
-		if ($this->databases !== NULL) {
+		if ($this->databases !== null) {
 			return $this->databases;
 		}
 
@@ -2640,6 +2618,7 @@ class Schema
 
 			case 'oracle':
 				$sql = 'SELECT ora_database_name FROM dual';
+				// no break
 
 			case 'postgresql':
 				$sql = "SELECT
@@ -2706,11 +2685,11 @@ class Schema
 	 * @param  string $key_type  The type of key to return: `'primary'`, `'foreign'`, `'unique'`
 	 * @return ($key_type is 'primary' ? list<string> : ($key_type is 'unique' ? list<list<string>> : ($key_type is 'foreign' ? list<ForeignKey> : (list<string>|list<list<string>>|list<ForeignKey>|KeyInfoRow))))  An array of all keys, or just the type specified - see method description for format
 	 */
-	public function getKeys(string $table, ?string $key_type=NULL): array
+	public function getKeys(string $table, ?string $key_type = null): array
 	{
 		$table           = strtolower($table);
 		$valid_key_types = array('primary', 'foreign', 'unique');
-		if ($key_type !== NULL && !in_array($key_type, $valid_key_types)) {
+		if ($key_type !== null && !in_array($key_type, $valid_key_types)) {
 			throw new ProgrammerException(
 				'The key type specified, %1$s, is invalid. Must be one of: %2$s.',
 				$key_type,
@@ -2804,12 +2783,12 @@ class Schema
 	 * @param  string $relationship_type  The type of relationship to return: `'one-to-one'`, `'many-to-one'`, `'one-to-many'`, `'many-to-many'`
 	 * @return ($relationship_type is 'one-to-one'|'many-to-one'|'one-to-many'|'many-to-many' ? list<array<string, mixed>> : array<string, list<array<string, mixed>>>)  An array of all relationships, or just the type specified - see method description for format
 	 */
-	public function getRelationships(string $table, ?string $relationship_type=NULL): array
+	public function getRelationships(string $table, ?string $relationship_type = null): array
 	{
 		$table = strtolower($table);
 
 		$valid_relationship_types = array('one-to-one', 'many-to-one', 'one-to-many', 'many-to-many');
-		if ($relationship_type !== NULL && !in_array($relationship_type, $valid_relationship_types)) {
+		if ($relationship_type !== null && !in_array($relationship_type, $valid_relationship_types)) {
 			throw new ProgrammerException(
 				'The relationship type specified, %1$s, is invalid. Must be one of: %2$s.',
 				$relationship_type,
@@ -2850,13 +2829,13 @@ class Schema
 	 * @param  boolean|string  $creation_order  `TRUE` to return in a valid table creation order, or a table name to return that table and any tables that depend on it, in table creation order
 	 * @return list<string>  The tables in the current database, all converted to lowercase
 	 */
-	public function getTables(mixed $creation_order=NULL): array
+	public function getTables(mixed $creation_order = null): array
 	{
 		if ($creation_order) {
-			return $this->determineTableCreationOrder(is_bool($creation_order) ? NULL : $creation_order);
+			return $this->determineTableCreationOrder(is_bool($creation_order) ? null : $creation_order);
 		}
 
-		if ($this->tables !== NULL) {
+		if ($this->tables !== null) {
 			return $this->tables;
 		}
 
@@ -2969,7 +2948,6 @@ class Schema
 		// For databases with schemas we only include the schema
 		// name if there are conflicting table names
 		if (!in_array($this->database->getType(), array('mysql', 'sqlite'))) {
-
 			$default_schema_map = array(
 				'db2'        => strtolower($this->database->getUsername()),
 				'mssql'      => 'dbo',
@@ -3018,14 +2996,14 @@ class Schema
 		$primary_key_columns = $this->merged_keys[$table]['primary'];
 
 		if (sizeof($primary_key_columns) != 2) {
-			return FALSE;
+			return false;
 		}
 
 		if (empty($this->merged_column_info[$table])) {
 			$this->getColumnInfo($table);
 		}
 		if (sizeof($this->merged_column_info[$table]) != 2) {
-			return FALSE;
+			return false;
 		}
 
 		$foreign_key_columns = array();
@@ -3075,7 +3053,7 @@ class Schema
 		foreach ($this->column_info_override as $table => $columns) {
 			/** @var array<string, ColumnInfoRow|null>|null $columns */
 			// Remove a table if the columns are set to NULL
-			if ($columns === NULL) {
+			if ($columns === null) {
 				unset($this->merged_column_info[$table]);
 				continue;
 			}
@@ -3087,7 +3065,7 @@ class Schema
 			foreach ($columns as $column => $info) {
 				/** @var ColumnInfoRow|null $info */
 				// Remove a column if it is set to NULL
-				if ($info === NULL) {
+				if ($info === null) {
 					unset($this->merged_column_info[$table][$column]);
 					continue;
 				}
@@ -3139,7 +3117,7 @@ class Schema
 
 				foreach ($optional_elements as $element) {
 					if (!isset($this->merged_column_info[$table][$column][$element])) {
-						$this->merged_column_info[$table][$column][$element] = ($element == 'auto_increment') ? FALSE : NULL;
+						$this->merged_column_info[$table][$column][$element] = ($element == 'auto_increment') ? false : null;
 					}
 				}
 			}
@@ -3229,10 +3207,10 @@ class Schema
 	 * @param  string $column       The column to override
 	 * @return void
 	 */
-	public function setColumnInfoOverride(array $column_info, string $table, ?string $column=NULL): void
+	public function setColumnInfoOverride(array $column_info, string $table, ?string $column = null): void
 	{
 		$table = strtolower($table);
-		if ($column !== NULL) {
+		if ($column !== null) {
 			$column = strtolower($column);
 		}
 
@@ -3259,7 +3237,7 @@ class Schema
 	 * @param  string $key_type  The key type to override: `'primary'`, `'foreign'`, `'unique'`
 	 * @return void
 	 */
-	public function setKeysOverride(array $keys, string $table, ?string $key_type=NULL): void
+	public function setKeysOverride(array $keys, string $table, ?string $key_type = null): void
 	{
 		$table = strtolower($table);
 

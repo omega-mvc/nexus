@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Wraps the session control functions and the `$_SESSION` superglobal for a more consistent and safer API
  *
@@ -47,49 +49,49 @@ class Session
 	 *
 	 * @var Cache
 	 */
-	static private ?Cache $backend = NULL;
+	private static ?Cache $backend = null;
 
 	/**
 	 * The key prefix to use when saving the session to an Cache
 	 *
 	 * @var string
 	 */
-	static private string $key_prefix = '';
+	private static string $key_prefix = '';
 
 	/**
 	 * The length for a normal session
 	 *
 	 * @var int|null|string
 	 */
-	static private int|null|string $normal_timespan = NULL;
+	private static int|null|string $normal_timespan = null;
 
 	/**
 	 * The name of the old session module to revent to when Session is closed
 	 *
 	 * @var false|null|string
 	 */
-	static private false|null|string $old_session_module_name = NULL;
+	private static false|null|string $old_session_module_name = null;
 
 	/**
 	 * If the session is open
 	 *
 	 * @var boolean
 	 */
-	static private bool $open = FALSE;
+	private static bool $open = false;
 
 	/**
 	 * The length for a persistent session cookie - one that survives browser restarts
 	 *
 	 * @var int|null|string
 	 */
-	static private int|null|string $persistent_timespan = NULL;
+	private static int|null|string $persistent_timespan = null;
 
 	/**
 	 * If the session ID was regenerated during this script
 	 *
 	 * @var boolean
 	 */
-	static private bool $regenerated = FALSE;
+	private static bool $regenerated = false;
 
 
 	/**
@@ -100,7 +102,7 @@ class Session
 	 * @param  boolean $beginning  If the value should be added to the beginning
 	 * @return void
 	 */
-	static public function add(string $key, mixed $value, bool $beginning=FALSE): void
+	public static function add(string $key, mixed $value, bool $beginning = false): void
 	{
 		self::open();
 		$tip =& $_SESSION;
@@ -157,7 +159,7 @@ class Session
 	 * @param  string $prefix  The prefix to clear all session values for
 	 * @return void
 	 */
-	static public function clear(?string $prefix=NULL): void
+	public static function clear(?string $prefix = null): void
 	{
 		self::open();
 
@@ -184,13 +186,15 @@ class Session
 	 *
 	 * @return void
 	 */
-	static public function close(): void
+	public static function close(): void
 	{
-		if (!self::$open) { return; }
+		if (!self::$open) {
+            return;
+        }
 
 		session_write_close();
 		unset($_SESSION);
-		self::$open = FALSE;
+		self::$open = false;
 		if (self::$old_session_module_name) {
 			session_module_name(self::$old_session_module_name);
 		}
@@ -204,9 +208,9 @@ class Session
 	 *
 	 * @return boolean  If the operation succeeded
 	 */
-	static public function closeCache(): bool
+	public static function closeCache(): bool
 	{
-		return TRUE;
+		return true;
 	}
 
 
@@ -217,7 +221,7 @@ class Session
 	 * @param  mixed  $default_value  The value to return if the `$key` is not set
 	 * @return mixed  The value of the `$key` that was deleted
 	 */
-	static public function delete(string $key, mixed $default_value=NULL): mixed
+	public static function delete(string $key, mixed $default_value = null): mixed
 	{
 		self::open();
 
@@ -251,7 +255,7 @@ class Session
 			}
 
 			$key = end($array_keys);
-			if ($key === FALSE) {
+			if ($key === false) {
 				return $value;
 			}
 		}
@@ -270,15 +274,15 @@ class Session
 	 *
 	 * @return void
 	 */
-	static public function destroy(): void
+	public static function destroy(): void
 	{
 		self::open();
 		$_SESSION = array();
 		unset($_SESSION);
 		$session_name = session_name();
-		if ($session_name !== FALSE && isset($_COOKIE[$session_name])) {
+		if ($session_name !== false && isset($_COOKIE[$session_name])) {
 			$params = session_get_cookie_params();
-			setcookie($session_name, '', time()-43200, $params['path'], $params['domain'], $params['secure']);
+			setcookie($session_name, '', time() - 43200, $params['path'], $params['domain'], $params['secure']);
 		}
 		session_destroy();
 	}
@@ -292,9 +296,11 @@ class Session
 	 * @param  string $id  The session to destroy
 	 * @return boolean  If the operation succeeded
 	 */
-	static public function destroyCache(string $id): bool
+	public static function destroyCache(string $id): bool
 	{
-		if (self::$backend === NULL) { return FALSE; }
+		if (self::$backend === null) {
+            return false;
+        }
 		return self::$backend->delete(self::$key_prefix . $id);
 	}
 
@@ -314,9 +320,9 @@ class Session
 	 *
 	 * @return void
 	 */
-	static public function enablePersistence(): void
+	public static function enablePersistence(): void
 	{
-		if (self::$persistent_timespan === NULL) {
+		if (self::$persistent_timespan === null) {
 			throw new ProgrammerException(
 				'The method %1$s must be called with the %2$s parameter before calling %3$s',
 				__CLASS__ . '::setLength()',
@@ -341,7 +347,7 @@ class Session
 		$_SESSION['Session::type'] = 'persistent';
 
 		session_regenerate_id();
-		self::$regenerated = TRUE;
+		self::$regenerated = true;
 	}
 
 
@@ -352,11 +358,13 @@ class Session
 	 *
 	 * @return boolean  If the operation succeeded
 	 */
-	static public function gcCache(): bool
+	public static function gcCache(): bool
 	{
-		if (self::$backend === NULL) { return FALSE; }
+		if (self::$backend === null) {
+            return false;
+        }
 		self::$backend->clean();
-		return TRUE;
+		return true;
 	}
 
 
@@ -367,11 +375,11 @@ class Session
 	 * @param  mixed  $default_value  The default value to use if the requested key is not set
 	 * @return mixed  The data element requested
 	 */
-	static public function get(string $key, mixed $default_value=NULL): mixed
+	public static function get(string $key, mixed $default_value = null): mixed
 	{
 		self::open();
 
-		$array_dereference = NULL;
+		$array_dereference = null;
 		if ($bracket_pos = strpos($key, '[')) {
 			$array_dereference = substr($key, $bracket_pos);
 			$key               = substr($key, 0, $bracket_pos);
@@ -406,7 +414,7 @@ class Session
 	 *
 	 * @return void
 	 */
-	static public function ignoreSubdomain(): void
+	public static function ignoreSubdomain(): void
 	{
 		if (self::$open || isset($_SESSION)) {
 			throw new ProgrammerException(
@@ -463,15 +471,17 @@ class Session
 	 * @param  boolean $cookie_only_session_id  If the session id should only be allowed via cookie - this is a security issue and should only be set to `FALSE` when absolutely necessary
 	 * @return void
 	 */
-	static public function open(bool $cookie_only_session_id=TRUE): void
+	public static function open(bool $cookie_only_session_id = true): void
 	{
-		if (self::$open) { return; }
+		if (self::$open) {
+            return;
+        }
 
-		self::$open = TRUE;
+		self::$open = true;
 
-		if (self::$normal_timespan === NULL) {
+		if (self::$normal_timespan === null) {
 			$gc_maxlifetime = ini_get('session.gc_maxlifetime');
-			self::$normal_timespan = ($gc_maxlifetime === FALSE) ? NULL : $gc_maxlifetime;
+			self::$normal_timespan = ($gc_maxlifetime === false) ? null : $gc_maxlifetime;
 		}
 
 		if (self::$backend && isset($_SESSION) && session_module_name() != 'user') {
@@ -519,7 +529,6 @@ class Session
 		// We store the expiration time for a session to allow for both normal and persistent sessions
 		if ($_SESSION['Session::type'] == 'persistent' && self::$persistent_timespan) {
 			$_SESSION['Session::expires'] = $request_time + (int) self::$persistent_timespan;
-
 		} else {
 			$_SESSION['Session::expires'] = $request_time + (int) self::$normal_timespan;
 		}
@@ -533,9 +542,9 @@ class Session
 	 *
 	 * @return boolean  If the operation succeeded
 	 */
-	static public function openCache(): bool
+	public static function openCache(): bool
 	{
-		return TRUE;
+		return true;
 	}
 
 
@@ -547,9 +556,11 @@ class Session
 	 * @param  string $id  The session to read
 	 * @return string  The session's serialized data
 	 */
-	static public function readCache(string $id): string
+	public static function readCache(string $id): string
 	{
-		if (self::$backend === NULL) { return ''; }
+		if (self::$backend === null) {
+            return '';
+        }
 		return self::$backend->get(self::$key_prefix . $id, '');
 	}
 
@@ -561,14 +572,14 @@ class Session
 	 *
 	 * @return void
 	 */
-	static public function regenerateID(): void
+	public static function regenerateID(): void
 	{
-		if (!self::$regenerated){
+		if (!self::$regenerated) {
 			self::open();
-			if (!session_regenerate_id(TRUE)) {
+			if (!session_regenerate_id(true)) {
 				throw new UnexpectedException('There was an error regenerating the session id');
 			}
-			self::$regenerated = TRUE;
+			self::$regenerated = true;
 		}
 	}
 
@@ -580,7 +591,7 @@ class Session
 	 * @param  boolean $beginning  If the value should be removed to the beginning
 	 * @return mixed  The value that was removed
 	 */
-	static public function remove(string $key, bool $beginning=FALSE): mixed
+	public static function remove(string $key, bool $beginning = false): mixed
 	{
 		self::open();
 		$tip =& $_SESSION;
@@ -596,7 +607,7 @@ class Session
 
 			foreach (array_slice($array_keys, 0, -1) as $array_key) {
 				if (!isset($tip[$array_key])) {
-					return NULL;
+					return null;
 				} elseif (!is_array($tip[$array_key])) {
 					throw new ProgrammerException(
 						'%1$s was called for the key, %2$s, which is not an array',
@@ -611,7 +622,7 @@ class Session
 
 
 		if (!isset($tip[$key])) {
-			return NULL;
+			return null;
 		} elseif (!is_array($tip[$key])) {
 			throw new ProgrammerException(
 				'%1$s was called for the key, %2$s, which is not an array',
@@ -635,14 +646,14 @@ class Session
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
-		self::$normal_timespan     = NULL;
-		self::$persistent_timespan = NULL;
-		self::$regenerated         = FALSE;
+		self::$normal_timespan     = null;
+		self::$persistent_timespan = null;
+		self::$regenerated         = false;
 		self::destroy();
 		self::close();
-		self::$backend             = NULL;
+		self::$backend             = null;
 		self::$key_prefix          = '';
 	}
 
@@ -654,7 +665,7 @@ class Session
 	 * @param  mixed  $value   The value to store
 	 * @return void
 	 */
-	static public function set(string $key, mixed $value): void
+	public static function set(string $key, mixed $value): void
 	{
 		self::open();
 		$tip =& $_SESSION;
@@ -674,7 +685,6 @@ class Session
 				$tip =& $tip[$array_key];
 			}
 			$tip[end($array_keys)] = $value;
-
 		} else {
 			$tip[$key] = $value;
 		}
@@ -711,7 +721,7 @@ class Session
 	 * @param  string $key_prefix  A prefix to add to all session IDs before storing them in the cache
 	 * @return void
 	 */
-	static public function setBackend(Cache $backend, string $key_prefix=''): void
+	public static function setBackend(Cache $backend, string $key_prefix = ''): void
 	{
 		if (self::$open || isset($_SESSION)) {
 			throw new ProgrammerException(
@@ -761,7 +771,7 @@ class Session
 	 * @param  string|integer $persistent_timespan  The persistent, timed-based cookie, length for the session - this is enabled by calling ::enabledPersistence() during login
 	 * @return void
 	 */
-	static public function setLength(mixed $normal_timespan, mixed $persistent_timespan=NULL): void
+	public static function setLength(mixed $normal_timespan, mixed $persistent_timespan = null): void
 	{
 		if (self::$open || isset($_SESSION)) {
 			throw new ProgrammerException(
@@ -801,7 +811,7 @@ class Session
 	 * @param  string|Directory $directory  The directory to store session files in
 	 * @return void
 	 */
-	static public function setPath(mixed $directory): void
+	public static function setPath(mixed $directory): void
 	{
 		if (self::$open || isset($_SESSION)) {
 			throw new ProgrammerException(
@@ -841,9 +851,11 @@ class Session
 	 * @param  string $values  The serialized values
 	 * @return boolean  If the operation succeeded
 	 */
-	static public function writeCache(string $id, string $values): bool
+	public static function writeCache(string $id, string $values): bool
 	{
-		if (self::$backend === NULL) { return FALSE; }
+		if (self::$backend === null) {
+            return false;
+        }
 		return self::$backend->set(self::$key_prefix . $id, $values);
 	}
 
@@ -853,7 +865,9 @@ class Session
 	 *
 	 * @return Session
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

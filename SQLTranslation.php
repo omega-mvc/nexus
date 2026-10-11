@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Takes a subset of SQL from IBM DB2, MySQL, PostgreSQL, Oracle, SQLite and MSSQL and translates into the various dialects allowing for cross-database code
  *
@@ -40,11 +42,11 @@ class SQLTranslation
 	 * @param  string  $message    The message to compose
 	 * @return string  The composed and possible translated message
 	 */
-	static protected function compose(string $message, mixed ...$args): string
+	protected static function compose(string $message, mixed ...$args): string
 	{
 		$replacements = array();
 		foreach ($args as $arg) {
-			if (!is_scalar($arg) && $arg !== NULL) {
+			if (!is_scalar($arg) && $arg !== null) {
 				throw new ProgrammerException(
 					'%1$s was called with an argument that is not a scalar value',
 					'compose()'
@@ -53,7 +55,7 @@ class SQLTranslation
 			$replacements[] = $arg;
 		}
 
-		if (class_exists('Text', FALSE)) {
+		if (class_exists('Text', false)) {
 			return call_user_func_array(
 				array('Text', 'compose'),
 				array($message, $replacements)
@@ -69,7 +71,7 @@ class SQLTranslation
 	 *
 	 * @return array<string, string>  The tables in the `FROM` clause, in the format `{table_alias} => {table_name}`
 	 */
-	static private function parseTableAliases(string $sql): array
+	private static function parseTableAliases(string $sql): array
 	{
 		$aliases = array();
 
@@ -79,7 +81,7 @@ class SQLTranslation
 		}
 
 		$tables = preg_split('#\s+((?:(?:CROSS|INNER|OUTER|LEFT|RIGHT)?\s+)*?JOIN)\s+#i', $sql);
-		if ($tables === FALSE) {
+		if ($tables === false) {
 			throw new ProgrammerException(
 				'The SQL statement, %s, could not be parsed into tables',
 				$sql
@@ -111,9 +113,9 @@ class SQLTranslation
 	 * @param  int|float $x  The number to calculate the cotangent of
 	 * @return numeric  The contangent of `$x`
 	 */
-	static public function sqliteCotangent(int|float $x): mixed
+	public static function sqliteCotangent(int|float $x): mixed
 	{
-		return 1/tan($x);
+		return 1 / tan($x);
 	}
 
 
@@ -126,7 +128,7 @@ class SQLTranslation
 	 * @param  int|float $num   The number to calculate the logarithm of
 	 * @return numeric  The logarithm of `$num` to `$base`
 	 */
-	static public function sqliteLogBaseFirst(int $base, int|float $num): mixed
+	public static function sqliteLogBaseFirst(int $base, int|float $num): mixed
 	{
 		return log($num, $base);
 	}
@@ -140,7 +142,7 @@ class SQLTranslation
 	 * @param  int|float $x  The number to change the sign of
 	 * @return numeric  `-1` if a negative sign, `0` if zero, `1` if positive sign
 	 */
-	static public function sqliteSign(mixed $x): mixed
+	public static function sqliteSign(mixed $x): mixed
 	{
 		if ($x == 0) {
 			return 0;
@@ -297,11 +299,11 @@ class SQLTranslation
 	 * @param  Cache  $cache  The cache to cache to
 	 * @return void
 	 */
-	public function enableCaching(Cache $cache, mixed $key_token=NULL): void
+	public function enableCaching(Cache $cache, mixed $key_token = null): void
 	{
 		$this->cache = $cache;
 
-		if ($key_token !== NULL) {
+		if ($key_token !== null) {
 			if (!is_scalar($key_token)) {
 				throw new ProgrammerException(
 					'%1$s was called with a key token that is not a scalar value',
@@ -369,10 +371,10 @@ class SQLTranslation
 					);
 				}
 
-				$table  = $row['table'] ?? NULL;
-				$schema = $row['schema'] ?? NULL;
-				$column = $row['column'] ?? NULL;
-				$type   = $row['type'] ?? NULL;
+				$table  = $row['table'] ?? null;
+				$schema = $row['schema'] ?? null;
+				$column = $row['column'] ?? null;
+				$type   = $row['type'] ?? null;
 
 				if (!is_string($table) || !is_string($schema) || !is_string($column) || !is_string($type)) {
 					throw new ProgrammerException(
@@ -399,7 +401,6 @@ class SQLTranslation
 			if ($this->cache) {
 				$this->cache->set($this->makeCachePrefix() . 'schema_info', $this->schema_info);
 			}
-
 		} else {
 			$national_columns = $this->schema_info['national_columns'];
 			$national_types   = $this->schema_info['national_types'];
@@ -441,7 +442,6 @@ class SQLTranslation
 						$to_fix[$table] = array();
 					}
 					$to_fix[$table] = array_merge($to_fix[$table], $national_columns[$table]);
-
 				} elseif (preg_match('#\*#', $selection, $match)) {
 					foreach ($table_aliases as $alias => $table) {
 						if (empty($national_columns[$table])) {
@@ -452,7 +452,6 @@ class SQLTranslation
 						}
 						$to_fix[$table] = array_merge($to_fix[$table], $national_columns[$table]);
 					}
-
 				} elseif (preg_match('#^(?:((?:"?\w+"?\.)?"?\w+"?)\.("?\w+"?)|((?:min|max|trim|rtrim|ltrim|substring|replace)\(((?:"?\w+"?\.)"?\w+"?)\.("?\w+"?).*?\)))(?:\s+as\s+("?\w+"?))?$#iD', $selection, $match)) {
 					$table = ($match[1] ?? '') . ((isset($match[4])) ? $match[4] : '');
 
@@ -462,9 +461,9 @@ class SQLTranslation
 					$table  = str_replace('"', '', $table);
 					$column = str_replace('"', '', $column);
 
-					$table = $table_aliases[$table] ?? NULL;
+					$table = $table_aliases[$table] ?? null;
 
-					if ($table === NULL || empty($national_columns[$table]) || !in_array($column, $national_columns[$table])) {
+					if ($table === null || empty($national_columns[$table]) || !in_array($column, $national_columns[$table])) {
 						continue;
 					}
 
@@ -528,8 +527,8 @@ class SQLTranslation
 			$reverse_table_aliases = array_flip($table_aliases);
 			foreach ($to_fix as $table => $columns) {
 				$columns = array_unique($columns, SORT_REGULAR);
-				$alias   = $reverse_table_aliases[$table] ?? NULL;
-				if ($alias === NULL) {
+				$alias   = $reverse_table_aliases[$table] ?? null;
+				if ($alias === null) {
 					continue;
 				}
 				foreach ($columns as $column) {
@@ -598,10 +597,10 @@ class SQLTranslation
 			$sql        = $set_match[1] . ':set_clause ' . $set_match[5];
 			$set_clause = $set_match[2];
 		} else {
-			$set_clause = FALSE;
+			$set_clause = false;
 		}
 
-		$sql = preg_replace('#(?<=[\sa-z"])=\s*\'\'(?=[^\']|$)#',       'IS NULL',     $sql) ?? $sql;
+		$sql = preg_replace('#(?<=[\sa-z"])=\s*\'\'(?=[^\']|$)#', 'IS NULL', $sql) ?? $sql;
 		$sql = preg_replace('#(?<=[\sa-z"])(!=|<>)\s*\'\'(?=[^\']|$)#', 'IS NOT NULL', $sql) ?? $sql;
 
 		if ($set_clause) {
@@ -647,12 +646,11 @@ class SQLTranslation
 	 * @param  array<int, string>|null &$rollback_statements  SQL statements to rollback the returned SQL statements if something goes wrong - only applicable for MySQL `ALTER TABLE` statements
 	 * @return array<int|string, string>  The translated SQL statements all ready for execution. Statements that have been translated will have string key of the number, `:` and the original SQL, all other will have a numeric key.
 	 */
-	public function translate(array $statements, mixed &$rollback_statements=NULL): array
+	public function translate(array $statements, mixed &$rollback_statements = null): array
 	{
 		$output = array();
 
 		foreach ($statements as $number => $sql) {
-
 			$new_sql = $this->translateBasicSyntax($sql);
 			$new_sql = $this->translateCastClauses($new_sql);
 
@@ -689,7 +687,7 @@ class SQLTranslation
 						"Original SQL:%s",
 						"\n" . $sql
 					),
-					$this->debug ?? FALSE
+					$this->debug ?? false
 				);
 				$translated_sql = $new_sql;
 				if ($extra_statements) {
@@ -700,7 +698,7 @@ class SQLTranslation
 						"Translated SQL:%s",
 						"\n" . $translated_sql
 					),
-					$this->debug ?? FALSE
+					$this->debug ?? false
 				);
 			}
 
@@ -735,8 +733,6 @@ class SQLTranslation
 				'#(?<!["\w.])((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+(NOT\s+)?LIKE\s+((?>[^()\s]+|\(((?:[^()]+|\((?4)\))*)\))+)(?:\b|$)#i'    => 'LOWER(\1) \3LIKE LOWER(\4)',
 				'#\blog\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*\)#i'                            => '(LN(\2)/LN(\1))'
 			);
-
-
 		} elseif ($this->database->getType() == 'mssql') {
 			$regex = array(
 				'#\bbegin\s*(?!tran)#i' => 'BEGIN TRANSACTION ',
@@ -753,16 +749,12 @@ class SQLTranslation
 				'#\bround\(\s*((?>[^(),]+|\((?1)\)|\(\))+)\s*\)#i' => 'round(\1, 0)',
 				'#\blog\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*\)#i' => '(LOG(\2)/LOG(\1))'
 			);
-
-
 		} elseif ($this->database->getType() == 'mysql') {
 			$regex = array(
 				'#\brandom\(#i' => 'rand(',
 				'#\bpi\(\)#i'   => '(pi()+0.0000000000000)',
 				'#\blength\(#i' => 'CHAR_LENGTH(',
 			);
-
-
 		} elseif ($this->database->getType() == 'oracle') {
 			$regex = array(
 				'#\btrue\b#i'     => '1',
@@ -776,8 +768,6 @@ class SQLTranslation
 				'#(?:\b|^)((?>[^()%\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*%(?!\d+\$[lbdfristp]\b)\s*((?>[^()\s]+|\(((?:[^()]+|\((?4)\))*)\))+)(?:\b|$)#i' => 'MOD(\1, \3)',
 				'#(?<!["\w.])((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+(NOT\s+)?LIKE\s+((?>[^()\s]+|\(((?:[^()]+|\((?4)\))*)\))+)(?:\b|$)#i'    => 'LOWER(\1) \3LIKE LOWER(\4)'
 			);
-
-
 		} elseif ($this->database->getType() == 'postgresql') {
 			$regex = array(
 				'#(?<!["\w.])(["\w.]+)\s+(not\s+)?like\b#i'                           => 'CAST(\1 AS VARCHAR) \2ILIKE',
@@ -785,10 +775,7 @@ class SQLTranslation
 				'#\blike\b#i'                                                         => 'ILIKE',
 				'#\b(INSERT\s+INTO\s+(?:\w+|"[^"]+")\s+)\(\s*\)\s+VALUES\s+\(\s*\)#i' => '\1DEFAULT VALUES'
 			);
-
-
 		} elseif ($this->database->getType() == 'sqlite') {
-
 			if (version_compare($this->database->getVersion(), '3', '>=')) {
 				$regex = array(
 					'#\bcurrent_timestamp\b#i' => "datetime(CURRENT_TIMESTAMP, 'localtime')",
@@ -925,10 +912,8 @@ class SQLTranslation
 			$offset = (int) ($match[8] ?? 0);
 
 			if ($this->database->getType() == 'mssql') {
-
 				// This means we have an offset clause
 				if ($offset > 0) {
-
 					if ($match[5] === '') {
 						$match[5] = "ORDER BY rand(1) ASC";
 					}
@@ -947,22 +932,17 @@ class SQLTranslation
 
 			// While Oracle has the row_number() construct, the rownum pseudo-column is better
 			} elseif ($this->database->getType() == 'oracle') {
-
 				 // This means we have an offset clause
 				if ($offset > 0) {
-
 					$replacement = 'SELECT * FROM (SELECT flourish__sq.*, rownum flourish__row__num FROM (SELECT' . $match[1] . $match[3] . $match[5] . ') flourish__sq WHERE rownum <= ' . ($limit + $offset) . ') WHERE flourish__row__num > ' . $offset;
 
 				// Otherwise we just have a limit
 				} else {
 					$replacement = 'SELECT * FROM (SELECT' . $match[1] . $match[3] . $match[5] . ') WHERE rownum <= ' . $limit;
 				}
-
 			} elseif ($this->database->getType() == 'db2') {
-
 				// This means we have an offset clause
 				if ($offset > 0) {
-
 					if ($match[5] === '') {
 						$match[5] = "ORDER BY rand(1) ASC";
 					}
@@ -978,7 +958,6 @@ class SQLTranslation
 				} else {
 					$replacement = 'SELECT ' . trim($match[1] . $match[3] . $match[5]) . ' FETCH FIRST ' . $limit . ' ROWS ONLY';
 				}
-
 			} else {
 				$replacement = $match[0];
 			}

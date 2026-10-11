@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Represents a file on the filesystem, also provides static file-related methods
  *
@@ -70,7 +72,7 @@ class File implements Iterator, Countable
 	 * @param  string $contents   The contents to write to the file, must be a non-NULL value to be written
 	 * @return File
 	 */
-	static public function create(string $file_path, string $contents): File
+	public static function create(string $file_path, string $contents): File
 	{
 		if (empty($file_path)) {
 			throw new ValidationException(
@@ -117,10 +119,10 @@ class File implements Iterator, Countable
 	 * @param  string $contents  The first 4096 bytes of the file content - the `$file` parameter only need be a filename if this is provided
 	 * @return string  The mime type of the file
 	 */
-	static public function determineMimeType(string $file, ?string $contents=NULL): string
+	public static function determineMimeType(string $file, ?string $contents = null): string
 	{
 		// If no contents are provided, we must get them
-		if ($contents === NULL) {
+		if ($contents === null) {
 			if (!file_exists($file)) {
 				throw new ValidationException(
 					'The file specified, %s, does not exist',
@@ -130,7 +132,7 @@ class File implements Iterator, Countable
 
 			// The first 4k should be enough for content checking
 			$handle   = fopen($file, 'r');
-			if ($handle === FALSE) {
+			if ($handle === false) {
 				throw new ProgrammerException(
 					'The file specified, %s, could not be opened for reading',
 					$file
@@ -138,7 +140,7 @@ class File implements Iterator, Countable
 			}
 			$contents = fread($handle, 4096);
 			fclose($handle);
-			if ($contents === FALSE) {
+			if ($contents === false) {
 				throw new ProgrammerException(
 					'The file specified, %s, could not be read',
 					$file
@@ -164,7 +166,7 @@ class File implements Iterator, Countable
 	 * @param  string $extension  The extension of the filetype, only used for difficult files such as Microsoft office documents
 	 * @return string  The mime type of the file
 	 */
-	static private function determineMimeTypeByContents(string $content, string $extension): string
+	private static function determineMimeTypeByContents(string $content, string $extension): string
 	{
 		$length = strlen($content);
 		$_0_8   = substr($content, 0, 8);
@@ -216,7 +218,6 @@ class File implements Iterator, Countable
 		}
 
 		if ($length > 8 && substr($content, 4, 4) == 'ftyp') {
-
 			$_8_3 = substr($content, 8, 3);
 			$_8_2 = substr($content, 8, 2);
 
@@ -353,30 +354,30 @@ class File implements Iterator, Countable
 		}
 
 		// Better detection for text files based on the first line or so.
-		if (strpos($content, '<?php') !== FALSE || strpos($content, '<?=') !== FALSE) {
+		if (strpos($content, '<?php') !== false || strpos($content, '<?=') !== false) {
 			return 'application/x-httpd-php';
 		}
 
 		preg_match('/(\S.*?)\s*\n/m', $content, $lines);
 		$first_line = count($lines) > 1 ? $lines[1] : '';
 
-		if (strpos($first_line, '<?xml') !== FALSE) {
-			if (stripos($content, '<!DOCTYPE') !== FALSE) {
+		if (strpos($first_line, '<?xml') !== false) {
+			if (stripos($content, '<!DOCTYPE') !== false) {
 				return 'application/xhtml+xml';
 			}
-			if (strpos($content, '<svg') !== FALSE) {
+			if (strpos($content, '<svg') !== false) {
 				return 'image/svg+xml';
 			}
-			if (strpos($content, '<rss') !== FALSE) {
+			if (strpos($content, '<rss') !== false) {
 				return 'application/rss+xml';
 			}
 			return 'application/xml';
 		}
 
-		if (stripos($first_line, '<html') !== FALSE) {
+		if (stripos($first_line, '<html') !== false) {
 			return 'text/html';
 		}
-		if (stripos($first_line, '<!DOCTYPE') !== FALSE) {
+		if (stripos($first_line, '<!DOCTYPE') !== false) {
 			return 'text/html';
 		}
 
@@ -405,7 +406,7 @@ class File implements Iterator, Countable
 	 * @param  string $extension  The file extension
 	 * @return string  The mime type of the file
 	 */
-	static private function determineMimeTypeByExtension(string $extension): string
+	private static function determineMimeTypeByExtension(string $extension): string
 	{
 		switch ($extension) {
 			case 'css':
@@ -468,10 +469,10 @@ class File implements Iterator, Countable
 	 * @param  string $destination  The file to apply the permissions to
 	 * @return void
 	 */
-	static private function copyPermissions(string $source, string $destination): void
+	private static function copyPermissions(string $source, string $destination): void
 	{
 		$permissions = fileperms($source);
-		if ($permissions === FALSE) {
+		if ($permissions === false) {
 			throw new ProgrammerException(
 				'The permissions of the file specified, %s, could not be determined',
 				$source
@@ -487,12 +488,12 @@ class File implements Iterator, Countable
 	 * @param  mixed $value  The value to convert
 	 * @return string  The string value
 	 */
-	static private function stringify(mixed $value): string
+	private static function stringify(mixed $value): string
 	{
 		if (is_string($value)) {
 			return $value;
 		}
-		if ($value === NULL || is_scalar($value) || $value instanceof Stringable) {
+		if ($value === null || is_scalar($value) || $value instanceof Stringable) {
 			return (string) $value;
 		}
 		throw new ProgrammerException(
@@ -507,7 +508,7 @@ class File implements Iterator, Countable
 	 *
 	 * @var false|string
 	 */
-	private false|string $current_line = FALSE;
+	private false|string $current_line = false;
 
 	/**
 	 * The current line number of the file
@@ -521,7 +522,7 @@ class File implements Iterator, Countable
 	 *
 	 * @var list<TraceEntry>|null
 	 */
-	protected mixed $deleted = NULL;
+	protected mixed $deleted = null;
 
 	/**
 	 * The full path to the file
@@ -535,7 +536,7 @@ class File implements Iterator, Countable
 	 *
 	 * @var resource|null
 	 */
-	private mixed $file_handle = NULL;
+	private mixed $file_handle = null;
 
 
 	/**
@@ -585,7 +586,7 @@ class File implements Iterator, Countable
 	 * @param  boolean $skip_checks  If file checks should be skipped, which improves performance, but may cause undefined behavior - only skip these if they are duplicated elsewhere
 	 * @return File
 	 */
-	public function __construct(mixed $file, mixed $skip_checks=FALSE)
+	public function __construct(mixed $file, mixed $skip_checks = false)
 	{
 		if (!$skip_checks) {
 			if (empty($file)) {
@@ -610,7 +611,7 @@ class File implements Iterator, Countable
 
 		// Store the file as an absolute path
 		$real_file = realpath($file);
-		if ($real_file === FALSE) {
+		if ($real_file === false) {
 			throw new ProgrammerException(
 				'The file specified, %s, could not be resolved to an absolute path',
 				$file
@@ -623,8 +624,8 @@ class File implements Iterator, Countable
 
 		// If the file is listed as deleted and were not inside a transaction,
 		// but we've gotten to here, then the file exists, so we can wipe the backtrace
-		if ($this->deleted !== NULL && !Filesystem::isInsideTransaction()) {
-			Filesystem::updateDeletedMap($file, NULL);
+		if ($this->deleted !== null && !Filesystem::isInsideTransaction()) {
+			Filesystem::updateDeletedMap($file, null);
 		}
 	}
 
@@ -686,7 +687,7 @@ class File implements Iterator, Countable
 		$this->file    =& Filesystem::hookFilenameMap($file);
 		$this->deleted =& Filesystem::hookDeletedMap($file);
 
-		if ($deleted !== NULL) {
+		if ($deleted !== null) {
 			Filesystem::updateDeletedMap($file, $deleted);
 		}
 	}
@@ -734,7 +735,7 @@ class File implements Iterator, Countable
 		$this->tossIfDeleted();
 
 		$file_handle = fopen($this->file, 'r');
-		if ($file_handle === FALSE) {
+		if ($file_handle === false) {
 			throw new ProgrammerException(
 				'The file specified, %s, could not be opened for reading',
 				$this->file
@@ -742,19 +743,19 @@ class File implements Iterator, Countable
 		}
 
 		$lines        = 0;
-		$has_contents = FALSE;
+		$has_contents = false;
 
 		// Read 512KB at a time to make this more efficient without using too much ram
 		while (!feof($file_handle)) {
 			$text   = fread($file_handle, 524288);
-			if ($text === FALSE) {
+			if ($text === false) {
 				break;
 			}
 			$text   = str_replace("\r\n", "\n", $text);
 			$text   = str_replace("\r", "\n", $text);
 			$lines += substr_count($text, "\n");
 			if ($text !== "") {
-				$has_contents = TRUE;
+				$has_contents = true;
 			}
 		}
 		fclose($file_handle);
@@ -780,9 +781,8 @@ class File implements Iterator, Countable
 		$this->tossIfDeleted();
 
 		// Primes the result set
-		if ($this->file_handle === NULL) {
+		if ($this->file_handle === null) {
 			$this->next();
-
 		} elseif (!$this->valid()) {
 			throw new NoRemainingException('There are no remaining lines');
 		}
@@ -823,7 +823,7 @@ class File implements Iterator, Countable
 		unlink($this->file);
 
 		Filesystem::updateDeletedMap($this->file, debug_backtrace());
-		Filesystem::updateFilenameMap($this->file, '*DELETED at ' . time() . ' with token ' . uniqid('', TRUE) . '* ' . $this->file);
+		Filesystem::updateFilenameMap($this->file, '*DELETED at ' . time() . ' with token ' . uniqid('', true) . '* ' . $this->file);
 	}
 
 
@@ -842,11 +842,11 @@ class File implements Iterator, Countable
 	 * @param  boolean           $overwrite      If a new directory is specified, this indicates if a file with the same name should be overwritten.
 	 * @return File  The new File object
 	 */
-	public function duplicate(mixed $new_directory=NULL, ?bool $overwrite=NULL): File
+	public function duplicate(mixed $new_directory = null, ?bool $overwrite = null): File
 	{
 		$this->tossIfDeleted();
 
-		if ($new_directory === NULL) {
+		if ($new_directory === null) {
 			$new_directory = $this->getParent();
 		}
 
@@ -856,13 +856,12 @@ class File implements Iterator, Countable
 
 		$new_filename = $new_directory->getPath() . $this->getName();
 
-		$check_dir_permissions = FALSE;
+		$check_dir_permissions = false;
 
 		if (file_exists($new_filename)) {
 			if (!$overwrite) {
 				$new_filename = Filesystem::makeUniqueName($new_filename);
-				$check_dir_permissions = TRUE;
-
+				$check_dir_permissions = true;
 			} elseif (!is_writable($new_filename)) {
 				throw new EnvironmentException(
 					'The new directory specified, %1$s, already contains a file with the name %2$s, but it is not writable',
@@ -870,9 +869,8 @@ class File implements Iterator, Countable
 					$this->getName()
 				);
 			}
-
 		} else {
-			$check_dir_permissions = TRUE;
+			$check_dir_permissions = true;
 		}
 
 		if ($check_dir_permissions) {
@@ -1009,7 +1007,7 @@ class File implements Iterator, Countable
 		$this->tossIfDeleted();
 
 		$mtime = filemtime($this->file);
-		if ($mtime === FALSE) {
+		if ($mtime === false) {
 			throw new ProgrammerException(
 				'The modification time of the file specified, %s, could not be determined',
 				$this->file
@@ -1026,7 +1024,7 @@ class File implements Iterator, Countable
 	 * @param  boolean $remove_extension  If the extension should be removed from the filename
 	 * @return string  The filename of the file
 	 */
-	public function getName(bool $remove_extension=FALSE): string
+	public function getName(bool $remove_extension = false): string
 	{
 		// For some reason PHP calls the filename the basename, where filename is the filename minus the extension
 		return Filesystem::getPathInfo($this->file, $remove_extension ? 'filename' : 'basename');
@@ -1053,7 +1051,7 @@ class File implements Iterator, Countable
 	 * @param  boolean $translate_to_web_path  If the path should be the web path
 	 * @return string  The path (directory and filename) for the file
 	 */
-	public function getPath(bool $translate_to_web_path=FALSE): string
+	public function getPath(bool $translate_to_web_path = false): string
 	{
 		if ($translate_to_web_path) {
 			return Filesystem::translateToWebPath($this->file);
@@ -1071,7 +1069,7 @@ class File implements Iterator, Countable
 	 * @param  integer $decimal_places  The number of decimal places to format to (if enabled)
 	 * @return integer|string  If formatted a string with filesize in b/kb/mb/gb/tb, otherwise an integer
 	 */
-	public function getSize(bool $format=FALSE, int $decimal_places=1): mixed
+	public function getSize(bool $format = false, int $decimal_places = 1): mixed
 	{
 		$this->tossIfDeleted();
 
@@ -1111,9 +1109,8 @@ class File implements Iterator, Countable
 	{
 		$this->tossIfDeleted();
 
-		if ($this->file_handle === NULL) {
+		if ($this->file_handle === null) {
 			$this->next();
-
 		} elseif (!$this->valid()) {
 			throw new NoRemainingException('There are no remaining lines');
 		}
@@ -1163,9 +1160,9 @@ class File implements Iterator, Countable
 	{
 		$this->tossIfDeleted();
 
-		if ($this->file_handle === NULL) {
+		if ($this->file_handle === null) {
 			$handle = fopen($this->file, 'r');
-			if ($handle === FALSE) {
+			if ($handle === false) {
 				throw new ProgrammerException(
 					'The file specified, %s, could not be opened for reading',
 					$this->file
@@ -1174,7 +1171,6 @@ class File implements Iterator, Countable
 			$this->file_handle         = $handle;
 			$this->current_line        = '';
 			$this->current_line_number = 0;
-
 		} elseif (!$this->valid()) {
 			throw new NoRemainingException('There are no remaining lines');
 		}
@@ -1197,7 +1193,7 @@ class File implements Iterator, Countable
 	 * @param  mixed   $filename  Present the file as an attachment instead of just outputting type headers - if a string is passed, that will be used for the filename, if `TRUE` is passed, the current filename will be used
 	 * @return File  The file object, to allow for method chaining
 	 */
-	public function output(bool $headers, mixed $filename=NULL): File
+	public function output(bool $headers, mixed $filename = null): File
 	{
 		$this->tossIfDeleted();
 
@@ -1206,8 +1202,10 @@ class File implements Iterator, Countable
 		}
 
 		if ($headers) {
-			if ($filename !== NULL) {
-				if ($filename === TRUE) { $filename = $this->getName();	}
+			if ($filename !== null) {
+				if ($filename === true) {
+                    $filename = $this->getName();
+                }
 				if (!is_string($filename)) {
 					if (!is_scalar($filename)) {
 						throw new ProgrammerException(
@@ -1248,7 +1246,7 @@ class File implements Iterator, Countable
 		$this->tossIfDeleted();
 
 		$contents = file_get_contents($this->file);
-		if ($contents === FALSE) {
+		if ($contents === false) {
 			throw new ProgrammerException(
 				'The file specified, %s, could not be read',
 				$this->file
@@ -1299,7 +1297,7 @@ class File implements Iterator, Countable
 
 		// Make the filename absolute
 		$resolved_dirname = realpath($info['dirname']);
-		if ($resolved_dirname === FALSE) {
+		if ($resolved_dirname === false) {
 			throw new ProgrammerException(
 				'The directory specified, %s, could not be resolved to an absolute path',
 				$info['dirname']
@@ -1328,7 +1326,6 @@ class File implements Iterator, Countable
 			}
 			// Windows requires that the existing file be deleted before being replaced
 			unlink($new_filename);
-
 		} else {
 			$new_dir = new Directory($info['dirname']);
 			if (!$new_dir->isWritable()) {
@@ -1396,11 +1393,11 @@ class File implements Iterator, Countable
 	{
 		$this->tossIfDeleted();
 
-		if ($this->file_handle === NULL) {
-			return TRUE;
+		if ($this->file_handle === null) {
+			return true;
 		}
 
-		return $this->current_line !== FALSE;
+		return $this->current_line !== false;
 	}
 
 

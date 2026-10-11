@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides internationlization support for strings
  *
@@ -22,7 +24,7 @@ class Text
 	 * @var array
 	 */
 	/** @var array{'pre':list<callable(mixed):mixed|array<int|string,mixed>>,'post':list<callable(mixed):mixed|array<int|string,mixed>>} */
-	static private array $compose_callbacks = array(
+	private static array $compose_callbacks = array(
 		'pre'  => array(),
 		'post' => array()
 	);
@@ -35,7 +37,7 @@ class Text
 	 * @param  mixed   ...$components  A string or number to insert into the message
 	 * @return string  The composed message
 	 */
-	static public function compose(string $message, mixed ...$components): string
+	public static function compose(string $message, mixed ...$components): string
 	{
 		if (!empty(self::$compose_callbacks['pre'])) {
 			foreach (self::$compose_callbacks['pre'] as $callback) {
@@ -117,7 +119,7 @@ class Text
 	 * @param callable(mixed):mixed|array<mixed>|string|null $callback
 	 * @param string|callable(mixed):mixed|array<mixed>|null $timing
 	 */
-	static public function registerComposeCallback(mixed $callback = null, mixed $timing = 'pre'): void
+	public static function registerComposeCallback(mixed $callback = null, mixed $timing = 'pre'): void
 	{
 		if ($callback === null && func_num_args() === 2) {
 			$callback = $timing;
@@ -159,7 +161,7 @@ class Text
 	 *
 	 * @return void
 	 */
-	static public function reset(): void
+	public static function reset(): void
 	{
 		self::$compose_callbacks = array(
 			'pre'  => array(),
@@ -173,7 +175,9 @@ class Text
 	 *
 	 * @return Text
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 

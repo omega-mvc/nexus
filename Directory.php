@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Represents a directory on the filesystem, also provides static directory-related methods
  *
@@ -44,7 +46,7 @@ class Directory
 	 * @param  numeric $mode       The mode (permissions) to use when creating the directory. This should be an octal number (requires a leading zero). This has no effect on the Windows platform.
 	 * @return Directory
 	 */
-	static public function create(string $directory, mixed $mode=0777): Directory
+	public static function create(string $directory, mixed $mode = 0777): Directory
 	{
 		if (empty($directory)) {
 			throw new ValidationException('No directory name was specified');
@@ -85,7 +87,7 @@ class Directory
 	 * @param  string $directory  The directory to check
 	 * @return string  The directory name in canonical form
 	 */
-	static public function makeCanonical(string $directory): string
+	public static function makeCanonical(string $directory): string
 	{
 		if (substr($directory, -1) != '/' && substr($directory, -1) != '\\') {
 			$directory .= DIRECTORY_SEPARATOR;
@@ -99,7 +101,7 @@ class Directory
 	 *
 	 * @var list<TraceEntry>|null
 	 */
-	protected mixed $deleted = NULL;
+	protected mixed $deleted = null;
 
 	/**
 	 * The full path to the directory
@@ -122,7 +124,7 @@ class Directory
 	 * @param  boolean $skip_checks  If file checks should be skipped, which improves performance, but may cause undefined behavior - only skip these if they are duplicated elsewhere
 	 * @return Directory
 	 */
-	public function __construct(mixed $directory, mixed $skip_checks=FALSE)
+	public function __construct(mixed $directory, mixed $skip_checks = false)
 	{
 		if (!$skip_checks) {
 			if (empty($directory)) {
@@ -144,7 +146,7 @@ class Directory
 		}
 
 		$real_directory = realpath($directory);
-		if ($real_directory === FALSE) {
+		if ($real_directory === false) {
 			$real_directory = $directory;
 		}
 		$directory = self::makeCanonical($real_directory);
@@ -154,8 +156,8 @@ class Directory
 
 		// If the directory is listed as deleted and we are not inside a transaction,
 		// but we've gotten to here, then the directory exists, so we can wipe the backtrace
-		if ($this->deleted !== NULL && !Filesystem::isInsideTransaction()) {
-			Filesystem::updateDeletedMap($directory, NULL);
+		if ($this->deleted !== null && !Filesystem::isInsideTransaction()) {
+			Filesystem::updateDeletedMap($directory, null);
 		}
 	}
 
@@ -240,7 +242,7 @@ class Directory
 		rmdir($this->directory);
 
 		Filesystem::updateDeletedMap($this->directory, debug_backtrace());
-		Filesystem::updateFilenameMapForDirectory($this->directory, '*DELETED at ' . time() . ' with token ' . uniqid('', TRUE) . '* ' . $this->directory);
+		Filesystem::updateFilenameMapForDirectory($this->directory, '*DELETED at ' . time() . ' with token ' . uniqid('', true) . '* ' . $this->directory);
 	}
 
 
@@ -285,7 +287,7 @@ class Directory
 	 * @param  boolean $translate_to_web_path  If the path should be the web path
 	 * @return string  The path for the directory
 	 */
-	public function getPath(bool $translate_to_web_path=FALSE): string
+	public function getPath(bool $translate_to_web_path = false): string
 	{
 		$this->tossIfDeleted();
 
@@ -306,7 +308,7 @@ class Directory
 	 * @param  integer $decimal_places  The number of decimal places to format to (if enabled)
 	 * @return integer|string  If formatted, a string with filesize in b/kb/mb/gb/tb, otherwise an integer
 	 */
-	public function getSize(bool $format=FALSE, int $decimal_places=1): mixed
+	public function getSize(bool $format = false, int $decimal_places = 1): mixed
 	{
 		$this->tossIfDeleted();
 
@@ -452,7 +454,7 @@ class Directory
 
 		// Make the dirname absolute
 		$real_new_dirname = realpath($new_dirname);
-		if ($real_new_dirname === FALSE) {
+		if ($real_new_dirname === false) {
 			$real_new_dirname = $new_dirname;
 		}
 		$new_dirname = Directory::makeCanonical($real_new_dirname);
@@ -484,12 +486,12 @@ class Directory
 	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - directories can be detected by checking for a trailing / (even on Windows)
 	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories in this directory
 	 */
-	public function scan(?string $filter=NULL): array
+	public function scan(?string $filter = null): array
 	{
 		$this->tossIfDeleted();
 
 		$raw_files = scandir($this->directory);
-		if ($raw_files === FALSE) {
+		if ($raw_files === false) {
 			$raw_files = array();
 		}
 		$files = array_diff($raw_files, array('.', '..'));
@@ -528,15 +530,15 @@ class Directory
 	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - see ::scan() for details
 	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories (listed recursively) in this directory
 	 */
-	public function scanRecursive(?string $filter=NULL): array
+	public function scanRecursive(?string $filter = null): array
 	{
 		$this->tossIfDeleted();
 
 		$objects = $this->scan();
 
-		for ($i=0; $i < sizeof($objects); $i++) {
+		for ($i = 0; $i < sizeof($objects); $i++) {
 			if ($objects[$i] instanceof Directory) {
-				array_splice($objects, $i+1, 0, $objects[$i]->scan());
+				array_splice($objects, $i + 1, 0, $objects[$i]->scan());
 			}
 		}
 

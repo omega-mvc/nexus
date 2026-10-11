@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * Provides HTML-related methods
  *
@@ -43,7 +45,7 @@ class HTML
 	 * @param  string $content  The HTML content to check
 	 * @return boolean  If the content contains a block level tag
 	 */
-	static public function containsBlockLevelHTML(string $content): bool
+	public static function containsBlockLevelHTML(string $content): bool
 	{
 		return strip_tags($content, self::INLINE_TAGS) != $content;
 	}
@@ -55,7 +57,7 @@ class HTML
 	 * @param  string $content  The content to display
 	 * @return string
 	 */
-	static public function convertNewlines(string $content): string
+	public static function convertNewlines(string $content): string
 	{
 		return (strip_tags($content, self::INLINE_TAGS_NO_BR) != $content) ? $content : nl2br($content);
 	}
@@ -67,7 +69,7 @@ class HTML
 	 * @param  string $content  The content to decode
 	 * @return string  The decoded content
 	 */
-	static public function decode(string $content): string
+	public static function decode(string $content): string
 	{
 		return html_entity_decode($content, ENT_QUOTES, 'UTF-8');
 	}
@@ -80,7 +82,7 @@ class HTML
 	 * @return array<array-key, mixed>|string  The encoded content
 	 * @phpstan-return ($content is array ? array<array-key, mixed> : string)
 	 */
-	static public function encode(array|string $content): array|string
+	public static function encode(array|string $content): array|string
 	{
 		if (is_array($content)) {
 			return array_map(
@@ -113,7 +115,7 @@ class HTML
 	 * @param  integer $link_text_length  If non-zero, all link text will be truncated to this many characters
 	 * @return string  The content with all URLs converted to HTML link
 	 */
-	static public function makeLinks(string $content, int $link_text_length=0): string
+	public static function makeLinks(string $content, int $link_text_length = 0): string
 	{
 		// Find all a tags with contents, individual HTML tags and HTML comments
 		$reg_exp = "/<\s*a(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*>.*?<\s*\/\s*a\s*>|<\s*\/?\s*[\w:]+(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*\/?\s*>|<\!--.*?-->/s";
@@ -121,13 +123,13 @@ class HTML
 
 		// Find all text
 		$text_matches = preg_split($reg_exp, $content);
-		if ($text_matches === FALSE) {
+		if ($text_matches === false) {
 			// Backtracking limit hit – return the content unchanged rather than emitting a warning
 			return $content;
 		}
 
 		// For each chunk of text and create the links
-		foreach($text_matches as $key => $text) {
+		foreach ($text_matches as $key => $text) {
 			preg_match_all(
 				'~
 				  \b([a-z]{3,}://[a-z0-9%\$\-_.+!*;/?:@=&\'\#,]+[a-z0-9\$\-_+!*;/?:@=&\'\#,])\b                           | # Fully URLs
@@ -146,7 +148,7 @@ class HTML
 			$last_pos = 0;
 			foreach ($matches as $match) {
 				$match_pos = strpos($text, $match[0], $last_pos);
-				if ($match_pos === FALSE) {
+				if ($match_pos === false) {
 					continue;
 				}
 				$length    = strlen($match[0]);
@@ -191,7 +193,7 @@ class HTML
 	 * @return array<array-key, mixed>|string  The prepared content
 	 * @phpstan-return ($content is array ? array<array-key, mixed> : string)
 	 */
-	static public function prepare(array|string $content): array|string
+	public static function prepare(array|string $content): array|string
 	{
 		if (is_array($content)) {
 			return array_map(
@@ -220,13 +222,13 @@ class HTML
 
 		// Find all text
 		$text_matches = preg_split($reg_exp, $content);
-		if ($text_matches === FALSE) {
+		if ($text_matches === false) {
 			// Backtracking limit hit – return the content unchanged rather than emitting a warning
 			return $content;
 		}
 
 		// For each chunk of text, make sure it is converted to entities
-		foreach($text_matches as $key => $value) {
+		foreach ($text_matches as $key => $value) {
 			$text_matches[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 		}
 
@@ -247,11 +249,11 @@ class HTML
 	 * @param  string|array<array-key, string>|null $selected_value  If the value is the same as this, the option will be marked as selected
 	 * @return void
 	 */
-	static public function printOption(string $text, string $value, string|array|null $selected_value=NULL): void
+	public static function printOption(string $text, string $value, string|array|null $selected_value = null): void
 	{
-		$selected = FALSE;
+		$selected = false;
 		if ($value == $selected_value || (is_array($selected_value) && in_array($value, $selected_value))) {
-			$selected = TRUE;
+			$selected = true;
 		}
 
 		echo '<option value="' . HTML::encode($value) . '"';
@@ -267,7 +269,7 @@ class HTML
 	 *
 	 * @return void
 	 */
-	static public function sendHeader(): void
+	public static function sendHeader(): void
 	{
 		header('Content-Type: text/html; charset=utf-8');
 	}
@@ -281,10 +283,10 @@ class HTML
 	 * @param  boolean $force_div  Force a div for showing html
 	 * @return boolean  If the content was shown
 	 */
-	static public function show(string $content, string $css_class='', bool $force_div=FALSE): bool
+	public static function show(string $content, string $css_class = '', bool $force_div = false): bool
 	{
 		if (!strlen(trim($content))) {
-			return FALSE;
+			return false;
 		}
 
 		$class = ($css_class) ? ' class="' . $css_class . '"' : '';
@@ -294,7 +296,7 @@ class HTML
 			echo '<p' . $class . '>' . self::prepare($content) . '</p>';
 		}
 
-		return TRUE;
+		return true;
 	}
 
 
@@ -310,24 +312,24 @@ class HTML
 	 * @param  mixed  $checked_value  The value (or array of values) that has been checked
 	 * @return boolean  If the checked attribute was printed
 	 */
-	static public function showChecked(mixed $value, mixed $checked_value): bool
+	public static function showChecked(mixed $value, mixed $checked_value): bool
 	{
-		$checked  = FALSE;
+		$checked  = false;
 
-		$one_null = $value === NULL || $checked_value === NULL;
+		$one_null = $value === null || $checked_value === null;
 		$equal    = ($one_null) ? $value === $checked_value : $value == $checked_value;
 		$in_array = is_array($checked_value) && in_array($value, $checked_value, $one_null);
 
 		if ($equal || $in_array) {
-			$checked = TRUE;
+			$checked = true;
 		}
 
 		if ($checked) {
 			echo ' checked="checked"';
-			return TRUE;
+			return true;
 		}
 
-		return FALSE;
+		return false;
 	}
 
 
@@ -336,7 +338,9 @@ class HTML
 	 *
 	 * @return HTML
 	 */
-	private function __construct() { }
+	private function __construct()
+    {
+    }
 }
 
 
