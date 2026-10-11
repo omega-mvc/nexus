@@ -661,3 +661,15 @@
 - **Verifica**: `php -l URL.php` pulito; `vendor/bin/phpstan analyse URL.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 136 errori totali (da 161, −25, nessun nuovo errore); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot Time 25, Date 25, Authorization 24, Directory 17, Session 15.
+
+### [2026-10-11 10:55] - Fase PHPStan: Time.php a 0 errori (36 file a zero)
+
+- **File**: `Time.php`
+- **Intervallo righe**: `1-402`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: `compose()` normalizza gli args con `array_map` + arrow function (pattern Timestamp) perché `vsprintf()` dichiara `array<bool|float|int|string|null>`; proprietà `$time` portata da `false|int` a `int` (il costruttore ora garantisce l'int tramite guardia `ProgrammerException` su `strtotime(date('1970-01-01 H:i:s', ...))`); costruttore: `preg_match` riceve `(string) $time` (cast lecito su `int|float|numeric-string`), ramo `else` ristrutturato col pattern `makeMoney` (`__toString` callable → string, `is_numeric` → `(string)`, guardia finale `!is_string` → `ProgrammerException` per oggetti non stringabili, `callUnformatCallback` su string garantita); `__get` con `@return array{0: $this, 1: string}` (pattern Email) al posto di `callable(mixed...):mixed`; `getFuzzyDifference()`: docblock di `$other_time` allargato a `boolean|Time|object|string|integer` (il ramo backward-compat `is_bool($other_time)` ridiventa vivente; rimosso il `@param boolean $simple` duplicato), cache `static $break_points` tipizzata con docblock `array<int, array{0: int, 1: string, 2: string}>` (pattern `Result::fixDblibMSSQLDriver`), guardia `if (!isset($unit_diff) || !isset($units))` + `ProgrammerException` per il fallthrough impossibile del loop.
+- **Motivazione**: chiudere l'hotspot `Time` (25) senza tecniche di silenziamento; gli accessi `date()`/`strtotime()` a livello 10 richiedono `int`; il cast `(string)` su `mixed`/oggetti non-Stringable non è lecito; PHPStan non inferisce il tipo di una variabile `static` locale assegnata dentro un `if` interno senza dichiarazione `@var`.
+- **Impatto**: `basso`. Comportamento invariato su PHP 8.4: un oggetto senza `__toString` lanciava un `Error` da cast implicito (ora `ProgrammerException`); il fallthrough oltre il break point da 5 giorni è impossibile per `Time` (il diff massimo tra due orari è 86399s < 432000s); `$time` non è mai `false` dopo il costruttore (la guardia lo esplicita).
+- **Verifica**: `php -l Time.php` pulito; `vendor/bin/phpstan analyse Time.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 110 errori totali (da 136, nessun nuovo errore; con estrazione robusta `grep -cE '^/[^:]*\.php:[0-9]+:'` e conteggio per-file pulito); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: coda hotspot Date 26, Authorization 25, Directory 17, Session 15, CRUD 14.
