@@ -26,7 +26,7 @@ abstract class FlourishException extends Exception
 	/**
 	 * Callbacks for when exceptions are created
 	 *
-	 * @var array<string, list<callable(mixed): void>>
+	 * @var array<string, list<callable(mixed ...): mixed>>
 	 */
 	protected static array $callbacks = array();
 
@@ -335,9 +335,7 @@ abstract class FlourishException extends Exception
 		$backtrace = explode("\n", $this->getTraceAsString());
 		array_unshift($backtrace, $this->file . '(' . $this->line . ')');
 		$replaced = preg_replace('/^#\d+\s+/', '', $backtrace);
-		if ($replaced !== null) {
-			$backtrace = $replaced;
-		}
+		$backtrace = $replaced;
 		if ($doc_root !== '') {
 			$backtrace = str_replace($doc_root, '{doc_root}' . DIRECTORY_SEPARATOR, $backtrace);
 		}
@@ -362,12 +360,8 @@ abstract class FlourishException extends Exception
 
 		do {
 			$old_string = $string;
-			$string = preg_replace('/([a-zA-Z])([0-9])/', '\1_\2', $string);
-			$string2 = preg_replace('/([a-z0-9A-Z])([A-Z])/', '\1_\2', $string);
-			$string = is_string($string2) ? $string2 : $string;
-			if ($string === null) {
-				break;
-			}
+			$string = preg_replace('/([a-zA-Z])([0-9])/', '\1_\2', $string) ?? $old_string;
+			$string = preg_replace('/([a-z0-9A-Z])([A-Z])/', '\1_\2', $string) ?? $old_string;
 		} while ($old_string != $string);
 
 		return strtolower((string)$string);
@@ -381,13 +375,16 @@ abstract class FlourishException extends Exception
 	 */
 	protected function prepare(mixed $content): string
 	{
-		$content = (string)$content;
+		if (!is_string($content)) {
+			$content = (is_scalar($content) || $content instanceof Stringable) ? (string) $content : '';
+		}
 		// See if the message has newline characters but not br tags, extracted from HTML to reduce dependencies
+		/** @var string */
 		static $inline_tags_minus_br = '<a><abbr><acronym><b><big><button><cite><code><del><dfn><em><font><i><img><input><ins><kbd><label><q><s><samp><select><small><span><strike><strong><sub><sup><textarea><tt><u><var>';
-		$content_with_newlines = (strip_tags($content, (string)$inline_tags_minus_br) !== '') ? $content : nl2br($content);
+		$content_with_newlines = (strip_tags($content, $inline_tags_minus_br) !== '') ? $content : nl2br($content);
 
 		// Check to see if we have any block-level html, extracted from HTML to reduce dependencies
-		$inline_tags = (string)$inline_tags_minus_br . '<br>';
+		$inline_tags = $inline_tags_minus_br . '<br>';
 		$no_block_html = strip_tags($content, $inline_tags) === $content;
 
 		// This code ensures the output is properly encoded for display in (X)HTML, extracted from HTML to reduce dependencies
@@ -406,7 +403,7 @@ abstract class FlourishException extends Exception
 		}
 		$text_matches = $text_matches_fixed;
 
-		$html_matches_count = isset($html_matches[0]) && is_array($html_matches) ? count($html_matches) : 0;
+		$html_matches_count = isset($html_matches[0]) ? count($html_matches) : 0;
 		for ($i = 0; $i < $html_matches_count; $i++) {
 			if (isset($text_matches[$i]) && isset($html_matches[$i][0])) {
 				$text_matches[$i] .= (string)$html_matches[$i][0];
