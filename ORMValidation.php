@@ -509,13 +509,16 @@ class ORMValidation
 		$min_value = $info['min_value'] ?? NULL;
 		$max_value = $info['max_value'] ?? NULL;
 		$range_value = $values[$column];
-		if (self::stringlike($range_value) && in_array($info['type'], array('integer', 'float')) && $min_value instanceof Number && $max_value instanceof Number && (is_int($range_value) || is_float($range_value) || is_string($range_value)) && ($min_value->gt($range_value) || $max_value->lt($range_value))) {
-			return self::compose(
-				'%1$sPlease enter a number between %2$s and %3$s',
-				ValidationException::formatField(ORM::getColumnName($class, $column)),
-				$min_value->__toString(),
-				$max_value->__toString()
-			);
+		if (self::stringlike($range_value) && in_array($info['type'], array('integer', 'float')) && $min_value instanceof Number && $max_value instanceof Number) {
+			$range_string = (is_int($range_value) || is_float($range_value) || is_string($range_value)) ? (string) $range_value : NULL;
+			if ($range_string !== NULL && ($min_value->gt($range_string) || $max_value->lt($range_string))) {
+				return self::compose(
+					'%1$sPlease enter a number between %2$s and %3$s',
+					ValidationException::formatField(ORM::getColumnName($class, $column)),
+					$min_value->__toString(),
+					$max_value->__toString()
+				);
+			}
 		}
 
 		$message = self::checkForeignKeyConstraints($schema, $class, $column, $values);
