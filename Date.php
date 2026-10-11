@@ -33,7 +33,11 @@ class Date
 	 */
 	static protected function compose(string $message): string
 	{
-		$args = array_slice(func_get_args(), 1);
+		$args = array_map(
+			static fn(mixed $arg): bool|float|int|string|null =>
+				($arg === NULL || is_scalar($arg)) ? $arg : get_debug_type($arg),
+			array_slice(func_get_args(), 1)
+		);
 
 		if (class_exists('Text', FALSE)) {
 			return call_user_func_array(
@@ -49,9 +53,9 @@ class Date
 	/**
 	 * A timestamp of the date
 	 *
-	 * @var false|int
+	 * @var int
 	 */
-	protected false|int $date;
+	protected int $date;
 
 
 	/**
@@ -71,15 +75,18 @@ class Date
 		} elseif (is_string($date) && in_array(strtoupper($date), array('CURRENT_TIMESTAMP', 'CURRENT_DATE'))) {
 			$timestamp = time();
 		} else {
-			if (is_object($date) && method_exists($date, '__toString')) {
+			if (is_object($date) && is_callable(array($date, '__toString'))) {
 				$date = $date->__toString();
-			} elseif (is_numeric($date) || is_object($date)) {
+			} elseif (is_numeric($date)) {
 				$date = (string) $date;
 			}
+			if (!is_string($date)) {
+				throw new ProgrammerException('The date specified, %s, can not be converted to a string', get_debug_type($date));
+			}
 
-			$date = Timestamp::callUnformatCallback((string)$date);
+			$date = Timestamp::callUnformatCallback($date);
 
-			$timestamp = strtotime(Timestamp::fixISOWeek((string)$date));
+			$timestamp = strtotime(Timestamp::fixISOWeek($date));
 		}
 
 		$is_valid = ($timestamp !== false);
@@ -91,10 +98,8 @@ class Date
 			);
 		}
 
-		$this->date = strtotime(date('Y-m-d 00:00:00', $timestamp !== false ? $timestamp : time()));
-		if ($this->date === false) {
-			$this->date = time();
-		}
+		$normalized_date = strtotime(date('Y-m-d 00:00:00', $timestamp));
+		$this->date = ($normalized_date === FALSE) ? time() : $normalized_date;
 	}
 
 
@@ -104,7 +109,7 @@ class Date
 	 * @internal
 	 *
 	 * @param  string $method  The method to create a callback for
-	 * @return callable(mixed...):mixed  The callback for the method requested
+	 * @return array{0: $this, 1: string}  The callback for the method requested
 	 */
 	public function __get(mixed $method)
 	{
@@ -214,9 +219,8 @@ class Date
 	 *  - `6 days` would be represented as `1 week`, however `5 days` would not
 	 *  - `29 days` would be represented as `1 month`, but `21 days` would be shown as `3 weeks`
 	 *
-	 * @param  Date|object|string|integer $other_date  The date to create the difference with, `NULL` is interpreted as today
+	 * @param  boolean|Date|object|string|integer $other_date  The date to create the difference with, `NULL` is interpreted as today
 	 * @param  boolean                     $simple      When `TRUE`, the returned value will only include the difference in the two dates, but not `from now`, `ago`, `after` or `before`
-	 * @param  boolean                      $simple
 	 * @return string  The fuzzy difference in time between the this date and the one provided
 	 */
 	public function getFuzzyDifference(mixed $other_date=NULL, bool $simple=FALSE): string
@@ -241,6 +245,7 @@ class Date
 			return self::compose('same day');
 		}
 
+		/** @var array<int, array{0: int, 1: string, 2: string}> $break_points  Cached unit break points */
 		static $break_points = array();
 		if (!$break_points) {
 			$break_points = array(
@@ -261,6 +266,13 @@ class Date
 			$unit_diff = round(abs($diff)/$unit_info[0]);
 			$units     = Grammar::inflectOnQuantity($unit_diff, $unit_info[1], $unit_info[2]);
 			break;
+		}
+
+		// The largest break point is 2147483647 seconds (~68 years), so any
+		// difference larger than that gets expressed in years
+		if (!isset($unit_diff) || !isset($units)) {
+			$unit_diff = round(abs($diff)/31536000);
+			$units     = Grammar::inflectOnQuantity($unit_diff, self::compose('year'), self::compose('years'));
 		}
 
 		if ($simple) {
