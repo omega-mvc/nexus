@@ -730,3 +730,58 @@
 - **Verifica**: `php -l CRUD.php` pulito; `vendor/bin/phpstan analyse CRUD.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 13 errori totali (da 27, −14, nessun nuovo errore; estrazione robusta `grep -cE '^/[^:]*\.php:[0-9]+:'`); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: coda hotspot FlourishException 7, RecordSet 2, ORMValidation 2, ORMOrdering 1, ActiveRecord 1.
+### [2026-10-11 14:39] - Fase PHPStan: FlourishException.php a 0 errori (42 file a zero)
+
+- **File**: `FlourishException.php`
+- **Intervallo righe**: `1-674`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: proprietà `$callbacks` tipizzata `@var array<string, list<callable(mixed ...): mixed>>` (da `list<callable(mixed): void>`); il registro continua a memorizzare il callable direttamente (come il registro di `ORM::registerActiveRecordMethod()`), perché con type coverage 100% un tipo callable/`Closure` deve portare la firma completa (i tentativi `list<callable>`, `list<Closure>`, `Closure::fromCallable` + `list<Closure>` falliscono con `missingType.callable`); `formatTrace()`: rimosso il confronto `!== FALSE` sempre-vero sul risultato di `preg_replace()` (subject non-empty-list → non-null); `getCSSClass()`: sostituito il blocco con `$string2`/`is_string`/`break` con il pattern `preg_replace(...) ?? $old_string`; `prepare(mixed $content)`: rimpiazzato `(string)$content` con normalizzazione `is_scalar`/`Stringable` → stringa vuota, e static local `$inline_tags_minus_br` documentata `/** @var string */` (PHP non ammette static local tipizzate: `static string $x = ...` è un parse error) con rimozione dei cast `(string)` ora superflui; `prepare()`: rimosso `is_array($html_matches)` sempre-vero nella condizione di conteggio.
+- **Motivazione**: chiudere l'hotspot `FlourishException` (7) senza tecniche di silenziamento. Il docblock del callable non combaciava con il tipo ristretto da `registerCallback()` (unione `callable|array|string`), il `preg_replace` su liste non vuote è tipizzato non-null, e la static local non tipizzata trattava il valore come `mixed`.
+- **Impatto**: `basso`. Nessuna modifica al comportamento pubblico; la stringificazione di `prepare()` degrada a `''` per input non convertibili (prima `Error` da cast implicito) e i callable continuano a essere invocati con `call_user_func_array` solo quando `is_callable` è verificato a monte.
+- **Verifica**: `php -l FlourishException.php` pulito; `vendor/bin/phpstan analyse FlourishException.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: RecordSet 2, ORMValidation 2, ORMOrdering 1, ActiveRecord 1.
+### [2026-10-11 14:40] - Fase PHPStan: RecordSet.php a 0 errori (43 file a zero)
+
+- **File**: `RecordSet.php`
+- **Intervallo righe**: `1-2230`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: in `__call()`, `if ($callback && is_callable($callback))` → `if ($callback)` (`ORM::getRecordSetMethod()` ritorna già `callable(mixed ...): mixed|null`, quindi `is_callable` era sempre-vero); `Grammar::singularize(is_string($subject) ? $subject : '')` → `Grammar::singularize($subject)` (`$subject` da `ORM::parseMethod(): array` è già `string`).
+- **Motivazione**: chiudere l'hotspot `RecordSet` (2) senza silenziamenti: le due guardie erano ridondanti dato il tipo già ristretto dalle firme di `ORM`.
+- **Impatto**: `nullo`. Stesse condizioni, valutate a monte dal tipo.
+- **Verifica**: `php -l RecordSet.php` pulito; `vendor/bin/phpstan analyse RecordSet.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 1 errore totale (solo ActiveRecord, tipo coverage); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: ORMValidation 2, ORMOrdering 1, ActiveRecord 1.
+### [2026-10-11 14:41] - Fase PHPStan: ORMValidation.php a 0 errori (44 file a zero)
+
+- **File**: `ORMValidation.php`
+- **Intervallo righe**: `1-1727`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: la condizione monolitica del controllo di intervallo numerico è stata ristrutturata: hoist di `$range_string = (is_int($range_value) || is_float($range_value) || is_string($range_value)) ? (string) $range_value : NULL;` e poi `if ($range_string !== NULL && ($min_value->gt($range_string) || $max_value->lt($range_string)))`, così da passare a `Number::gt()`/`lt()` (docblock `@param \Number|string`) solo una stringa.
+- **Motivazione**: chiudere l'hotspot `ORMValidation` (2) senza silenziamenti: la firma notа di `Number::gt/lt` è `Number|string`, mentre `$range_value` (dopo `stringlike()` + controllo scalare) era `float|int|string`.
+- **Impatto**: `nullo`. Sui valori `int`/`float` viene applicata la stessa normalizzazione a stringa numerica che `Number` avrebbe ricevuto implicitamente; il comportamento per stringhe/oggetti è invariato.
+- **Verifica**: `php -l ORMValidation.php` pulito; `vendor/bin/phpstan analyse ORMValidation.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 1 errore totale (solo ActiveRecord, tipo coverage); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: ORMOrdering 1, ActiveRecord 1.
+### [2026-10-11 14:42] - Fase PHPStan: ORMOrdering.php a 0 errori (45 file a zero)
+
+- **File**: `ORMOrdering.php`
+- **Intervallo righe**: `1-834`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: in `configureOrderingColumn()`, `$min_value->eq(0)` → `$min_value->eq('0')`.
+- **Motivazione**: chiudere l'hotspot `ORMOrdering` (1) senza silenziamenti: `Number::eq()` ha docblock `@param \Number|string`, e `0` (int) non era accettato.
+- **Impatto**: `nullo`. `Number('0')` compara lo stesso valore di `0`; il ramo scatta solo per colonne `integer` che non ammettono negativi (`min_value == 0`).
+- **Verifica**: `php -l ORMOrdering.php` pulito; `vendor/bin/phpstan analyse ORMOrdering.php --no-progress --error-format=raw` → 0 errori; `vendor/bin/phpstan analyse` → 1 errore totale (solo ActiveRecord, tipo coverage); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: ActiveRecord 1.
+### [2026-10-11 14:43] - Fase PHPStan: ActiveRecord.php a 0 errori (46 file a zero)
+
+- **File**: `ActiveRecord.php`
+- **Intervallo righe**: `1-3449`
+- **Tipo**: `tipizzazione`
+- **Descrizione**: nella closure di normalizzazione dei messaggi di validazione (`array_map`), il parametro è stato tipizzato: `static function ($message)` → `static function (mixed $message)`.
+- **Motivazione**: chiudere l'unico errore residuo (`typeCoverage.paramTypeCoverage`, visibile solo nella tornata full-project perché il denominatore dei param type copre l'intero progetto): 2153 param possibili, 2152 tipizzati.
+- **Impatto**: `nullo`. Aggiunta puramente dichiarativa; il corpo della closure già gestiva `string`/`array`/altro.
+- **Verifica**: `php -l ActiveRecord.php` pulito; `vendor/bin/phpstan analyse ActiveRecord.php --no-progress --error-format=raw` → 0 errori; **`vendor/bin/phpstan analyse` → 0 errori totali** (progetto interamente a 0 al livello 10, type coverage 100%); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: fase PHPStan completata (46 file a zero). Prossima fase: `phpcs` unico finale (errori con `phpcbf`, warning = righe > 120 caratteri).
