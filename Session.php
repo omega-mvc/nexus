@@ -166,7 +166,7 @@ class Session
 
 		if ($prefix) {
 			foreach ($_SESSION as $key => $value) {
-				if (strpos($key, $prefix) === 0) {
+				if (is_string($key) && strpos($key, $prefix) === 0) {
 					unset($_SESSION[$key]);
 				}
 			}
@@ -223,19 +223,19 @@ class Session
 
 		$value = $default_value;
 
+		$tip =& $_SESSION;
+
 		if ($bracket_pos = strpos($key, '[')) {
 			$original_key      = $key;
 			$array_dereference = substr($key, $bracket_pos);
 			$key               = substr($key, 0, $bracket_pos);
 
-			if (!isset($_SESSION[$key])) {
+			if (!isset($tip[$key])) {
 				return $value;
 			}
 
 			preg_match_all('#(?<=\[)[^\[\]]+(?=\])#', $array_dereference, $array_keys, PREG_SET_ORDER);
 			$array_keys = array_map('current', $array_keys);
-
-			$tip =& $_SESSION[$key];
 
 			foreach (array_slice($array_keys, 0, -1) as $array_key) {
 				if (!isset($tip[$array_key])) {
@@ -251,9 +251,9 @@ class Session
 			}
 
 			$key = end($array_keys);
-
-		} else {
-			$tip =& $_SESSION;
+			if ($key === FALSE) {
+				return $value;
+			}
 		}
 
 		if (isset($tip[$key])) {
@@ -275,9 +275,10 @@ class Session
 		self::open();
 		$_SESSION = array();
 		unset($_SESSION);
-		if (isset($_COOKIE[session_name()])) {
+		$session_name = session_name();
+		if ($session_name !== FALSE && isset($_COOKIE[$session_name])) {
 			$params = session_get_cookie_params();
-			setcookie(session_name(), '', time()-43200, $params['path'], $params['domain'], $params['secure']);
+			setcookie($session_name, '', time()-43200, $params['path'], $params['domain'], $params['secure']);
 		}
 		session_destroy();
 	}
@@ -293,6 +294,7 @@ class Session
 	 */
 	static public function destroyCache(string $id): bool
 	{
+		if (self::$backend === NULL) { return FALSE; }
 		return self::$backend->delete(self::$key_prefix . $id);
 	}
 
@@ -352,6 +354,7 @@ class Session
 	 */
 	static public function gcCache(): bool
 	{
+		if (self::$backend === NULL) { return FALSE; }
 		self::$backend->clean();
 		return TRUE;
 	}
@@ -434,6 +437,10 @@ class Session
 			);
 		}
 
+		if (!is_string($domain)) {
+			$domain = (is_scalar($domain) || $domain instanceof Stringable) ? (string) $domain : '';
+		}
+
 		$params = array(
 			$current_params['lifetime'],
 			$current_params['path'],
@@ -463,7 +470,8 @@ class Session
 		self::$open = TRUE;
 
 		if (self::$normal_timespan === NULL) {
-			self::$normal_timespan = ini_get('session.gc_maxlifetime');
+			$gc_maxlifetime = ini_get('session.gc_maxlifetime');
+			self::$normal_timespan = ($gc_maxlifetime === FALSE) ? NULL : $gc_maxlifetime;
 		}
 
 		if (self::$backend && isset($_SESSION) && session_module_name() != 'user') {
@@ -503,12 +511,17 @@ class Session
 			$_SESSION['Session::type'] = 'normal';
 		}
 
+		$request_time = $_SERVER['REQUEST_TIME'];
+		if (!is_int($request_time)) {
+			$request_time = is_scalar($request_time) ? (int) $request_time : 0;
+		}
+
 		// We store the expiration time for a session to allow for both normal and persistent sessions
 		if ($_SESSION['Session::type'] == 'persistent' && self::$persistent_timespan) {
-			$_SESSION['Session::expires'] = $_SERVER['REQUEST_TIME'] + self::$persistent_timespan;
+			$_SESSION['Session::expires'] = $request_time + (int) self::$persistent_timespan;
 
 		} else {
-			$_SESSION['Session::expires'] = $_SERVER['REQUEST_TIME'] + self::$normal_timespan;
+			$_SESSION['Session::expires'] = $request_time + (int) self::$normal_timespan;
 		}
 	}
 
@@ -536,6 +549,7 @@ class Session
 	 */
 	static public function readCache(string $id): string
 	{
+		if (self::$backend === NULL) { return ''; }
 		return self::$backend->get(self::$key_prefix . $id, '');
 	}
 
@@ -825,10 +839,11 @@ class Session
 	 *
 	 * @param  string $id      The session to write
 	 * @param  string $values  The serialized values
-	 * @return string  The session's serialized data
+	 * @return boolean  If the operation succeeded
 	 */
-	static public function writeCache(string $id, string $values): string
+	static public function writeCache(string $id, string $values): bool
 	{
+		if (self::$backend === NULL) { return FALSE; }
 		return self::$backend->set(self::$key_prefix . $id, $values);
 	}
 
