@@ -785,3 +785,15 @@
 - **Verifica**: `php -l ActiveRecord.php` pulito; `vendor/bin/phpstan analyse ActiveRecord.php --no-progress --error-format=raw` → 0 errori; **`vendor/bin/phpstan analyse` → 0 errori totali** (progetto interamente a 0 al livello 10, type coverage 100%); `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
 - **Prossimo**: fase PHPStan completata (46 file a zero). Prossima fase: `phpcs` unico finale (errori con `phpcbf`, warning = righe > 120 caratteri).
+
+### [2026-10-11 15:15] - Fase 5: phpcs/phpcbf (0 errori, 1694 warning)
+
+- **File**: intero progetto (66 file `.php`) + `phpcs.xml`
+- **Intervallo righe**: n/d (riformattazione globale)
+- **Tipo**: `stile` (PSR12)
+- **Descrizione**: eseguito `vendor/bin/phpcbf` che ha corretto automaticamente **5749 errori** in 66 file (indentazione, spazi, parentesi, ordering). Risolti a mano gli 8 errori residui non auto-fixabili: `public` aggiunto a `ORMColumn::configurePasswordColumn()` e `ORMColumn::resetPasswordColumn()` (`Squiz.Scope.MethodScope.Missing`), commenti `// no break` nei fall-through intenzionali di `ORMDatabase.php:346` e `Schema.php:2619` (`PSR2.ControlStructures.SwitchDeclaration.TerminatingComment`), newline tra `}` e il docblock successivo in `SQLSchemaTranslation.php:1629` (`PSR12.Classes.ClosingBrace.StatementAfter`). Aggiunte a `phpcs.xml` due esclusioni PSR12 per scelte progettuali deliberate: `PSR1.Classes.ClassDeclaration.MissingNamespace` (il progetto non usa namespace) e `Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase` (costanti-callback minuscole stile `Upload::check`).
+- **Motivazione**: chiudere la Fase 5 come da istruzioni: gli errori si correggono con `phpcbf`, i warning sono le righe > 120 caratteri.
+- **Impatto**: `nullo` sul comportamento (riformattazione + commenti `// no break` + keyword di visibilità, che riproducono la visibilità `public` di default di PHP). `phpstan` resta a 0 errori.
+- **Verifica**: `php -l` pulito sui file modificati a mano; `vendor/bin/phpcs --report=summary` → **0 errori, 1694 warning in 55 file** (1684 `LineLength.TooLong`, 6 `ConstantVisibility.NotFound`, 4 `PropertyDeclaration.Underscore`); `vendor/bin/phpstan analyse` → **0 errori**; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota. I 1694 warning residui sono righe > 120 caratteri e naming storico, non bloccanti.
+- **Prossimo**: nessuna fase residua richiesta; progetto a 0 errori PHPStan livello 10 e 0 errori phpcs.
