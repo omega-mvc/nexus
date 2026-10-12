@@ -842,3 +842,14 @@
 - **Impatto**: `documentato` sulle API. Chi usava `type: 'apc'`, `'memcache'` o `'xcache'` deve passare a `'apcu'`/`'memcached'`; i vecchi valori ora lanciano `ProgrammerException`. Nessun uso esterno nel progetto e nessun test su `Cache`. I driver `database`, `directory`, `file` e `redis` sono invariati.
 - **Verifica**: `php -l src/Nexus/Cache/Cache.php` pulito; grep residui `xcache|apc_|Memcache` = 0 (restano solo le righe storiche `@changes` 1.0.0b2/b3); `vendor/bin/phpstan analyse src/Nexus/Cache/Cache.php` -> 0 errori; `composer validate` -> valido; `composer update --lock --no-install` -> nessuna modifica al lock; `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
 - **Issue/Rischio**: cambio di API documentato sui nomi dei driver. Nessuna regressione per i driver mantenuti.
+
+### [2026-10-13 01:43] - PHPUnit: rimossa suite Integration inesistente + declare mancante in NoRemainingException
+
+- **File**: `phpunit.xml.dist`, `NoRemainingException.php`
+- **Intervallo righe**: `phpunit.xml.dist` 8-15; `NoRemainingException.php` 1-3
+- **Tipo**: `config` | `fix`
+- **Descrizione**: rimosso da `phpunit.xml.dist` il blocco `<testsuite name="Integration">` (puntava a `tests/Integration`, directory mai esistita): così `vendor/bin/phpunit` senza `--testsuite` e lo script `composer test` non falliscono più con `Test directory ".../tests/Integration" not found`. Aggiunto `declare(strict_types=1);` a `NoRemainingException.php`, l'unico dei 66 file `.php` analizzati da PHPStan a esserne privo.
+- **Motivazione**: rendere funzionanti `composer test`/`composer check` (la suite Integration non aveva e non ha test); chiudere la lacuna di strict typing ereditata dall'upstream Flourish (il file non aveva mai avuto il declare).
+- **Impatto**: `nullo` sul comportamento — nessun test di integrazione esiste, e `NoRemainingException` è una classe vuota (`extends ExpectedException {}`).
+- **Verifica**: `php -l NoRemainingException.php` pulito; `vendor/bin/phpunit` (senza `--testsuite`) -> OK (48 test, 74 assertion); `composer test` -> OK (48 test, 74 assertion); `vendor/bin/phpstan analyse` -> 0 errori.
+- **Issue/Rischio**: nessuna regressione nota. Se in futuro verranno aggiunti test di integrazione, la suite va reintrodotta in `phpunit.xml.dist`.
