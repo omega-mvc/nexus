@@ -831,3 +831,14 @@
 - **Impatto**: `nessuno` sul comportamento. L'autoload resta una `classmap`; nessun cambio di API per i consumatori, la classe continua a risolversi come `Cache`.
 - **Verifica**: `composer validate` valido; `composer dump-autoload` -> `Cache` risolta da `src/Nexus/Cache/Cache.php`; `vendor/bin/phpstan analyse` -> 0 errori; `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
 - **Issue/Rischio**: il worktree secondario `/home/morpheus/flourish-classes` e' stato rimosso e il repo locale consolidato in `/home/morpheus/flourish-classes-php84` (il ramo `master` resta come ref locale su `b1fde49`). Nessuna regressione nota.
+
+### [2026-10-13 01:33] - Cache: rimozione driver xcache/memcache e modernizzazione a apcu/memcached
+
+- **File**: `src/Nexus/Cache/Cache.php`, `composer.json`
+- **Intervallo righe**: `Cache.php` 1-1048 (intero); `composer.json` 29-38
+- **Tipo**: `refactor` | `config`
+- **Descrizione**: rimossi i driver `xcache` e `memcache` (estensioni non più esistenti): eliminati i rispettivi `case` in `__construct`, `add()`, `get()`, `set()`, `delete()`, `clear()` e tutte le menzioni nei docblock (incluso il ramo `XC_TYPE_VAR`/`Core::startErrorCapture()` di `clear()`). Il driver `apc` è stato rinominato `apcu` usando le funzioni correnti `apcu_add`/`apcu_store`/`apcu_fetch`/`apcu_delete`/`apcu_clear_cache()` e il check `extension_loaded('apcu')`. Il driver `memcache` è stato rinominato `memcached` accettando esclusivamente oggetti `Memcached`; l'helper `getMemcache(): Memcache|Memcached` è diventato `getMemcached(): Memcached` e tutti i confronti `instanceof Memcache` sono stati rimossi. I tipi validi ora sono `apcu`, `database`, `directory`, `file`, `memcached`, `redis`. Aggiunta a `composer.json` la sezione `suggest` (`ext-apcu`, `ext-memcached`, `ext-redis`).
+- **Motivazione**: le estensioni `apc`, `memcache` e `xcache` non esistono più; i driver erano rotti (chiamate a funzioni/classi inesistenti). Allineamento ai nomi correnti (`apcu_*`, classe `Memcached`) e dichiarazione delle estensioni opzionali in `suggest`.
+- **Impatto**: `documentato` sulle API. Chi usava `type: 'apc'`, `'memcache'` o `'xcache'` deve passare a `'apcu'`/`'memcached'`; i vecchi valori ora lanciano `ProgrammerException`. Nessun uso esterno nel progetto e nessun test su `Cache`. I driver `database`, `directory`, `file` e `redis` sono invariati.
+- **Verifica**: `php -l src/Nexus/Cache/Cache.php` pulito; grep residui `xcache|apc_|Memcache` = 0 (restano solo le righe storiche `@changes` 1.0.0b2/b3); `vendor/bin/phpstan analyse src/Nexus/Cache/Cache.php` -> 0 errori; `composer validate` -> valido; `composer update --lock --no-install` -> nessuna modifica al lock; `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
+- **Issue/Rischio**: cambio di API documentato sui nomi dei driver. Nessuna regressione per i driver mantenuti.
