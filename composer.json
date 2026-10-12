@@ -32,6 +32,11 @@
         "tomasvotruba/type-coverage": "^2.0",
         "phpunit/phpunit": "^11.5"
     },
+    "suggest": {
+        "ext-apcu": "Required to use the 'apcu' cache backend of the Cache class",
+        "ext-memcached": "Required to use the 'memcached' cache backend of the Cache class",
+        "ext-redis": "Required to use the 'redis' cache backend of the Cache class"
+    },
     "scripts": {
         "cs": "phpcs --standard=phpcs.xml",
         "cs-fix": "phpcbf --standard=phpcs.xml",

@@ -62,13 +62,13 @@ class Cache
 	 *
 	 * Either the:
 	 *  - array structure for file cache
-	 *  - Memcache or Memcached object for memcache
+	 *  - Memcached object for memcached
 	 *  - Database object for database
 	 *  - Redis object for redis
 	 *
-	 * Not used for apc, directory or xcache
+	 * Not used for apcu or directory
 	 *
-	 * @var FileCacheStore|Database|Memcache|Memcached|Redis|null
+	 * @var FileCacheStore|Database|Memcached|Redis|null
 	 */
 	protected mixed $data_store = null;
 
@@ -76,13 +76,12 @@ class Cache
 	 * The type of cache
 	 *
 	 * The valid values are:
-	 *  - `'apc'`
+	 *  - `'apcu'`
 	 *  - `'database'`
 	 *  - `'directory'`
 	 *  - `'file'`
-	 *  - `'memcache'`
+	 *  - `'memcached'`
 	 *  - `'redis'`
-	 *  - `'xcache'`
 	 *
 	 * @var string
 	 */
@@ -94,9 +93,8 @@ class Cache
 	 * A `file` cache uses a single file to store values in an associative
 	 * array and is probably not suitable for a large number of keys.
 	 *
-	 * Using an `apc` or `xcache` cache will have far better performance
-	 * than a file or directory, however please remember that keys are shared
-	 * server-wide.
+	 * Using an `apcu` cache will have far better performance than a file or
+	 * directory, however please remember that keys are shared server-wide.
 	 *
 	 * `$config` is an associative array of configuration options for the various
 	 * backends. Some backend require additional configuration, while others
@@ -127,8 +125,8 @@ class Cache
 	 * all values to a string when storing, instead of serializing them. If a
 	 * `__toString()` method is provided for objects, it will be called.
 	 *
-	 * @param  string $type        The type of caching to use: `'apc'`, `'database'`, `'directory'`, `'file'`, `'memcache'`, `'redis'`, `'xcache'`
-	 * @param  mixed  $data_store  The path for a `file` or `directory` cache, an `Memcache` or `Memcached` object for a `memcache` cache, an Database object for a `database` cache or a `Redis` object for a `redis` cache - not used for `apc` or `xcache`
+	 * @param  string $type        The type of caching to use: `'apcu'`, `'database'`, `'directory'`, `'file'`, `'memcached'`, `'redis'`
+	 * @param  mixed  $data_store  The path for a `file` or `directory` cache, a `Memcached` object for a `memcached` cache, an Database object for a `database` cache or a `Redis` object for a `redis` cache - not used for `apcu`
 	 * @param  array<string, mixed>  $config      Configuration options - see method description for details
 	 * @return Cache
 	 */
@@ -249,11 +247,10 @@ class Cache
 				$this->config['state'] = 'clean';
 				break;
 
-			case 'memcache':
-				if (!$data_store instanceof Memcache && !$data_store instanceof Memcached) {
+			case 'memcached':
+				if (!$data_store instanceof Memcached) {
 					throw new ProgrammerException(
-						'The data store provided is not a valid %s or %s object',
-						'Memcache',
+						'The data store provided is not a valid %s object',
 						'Memcached'
 					);
 				}
@@ -270,8 +267,7 @@ class Cache
 				$this->data_store = $data_store;
 				break;
 
-			case 'apc':
-			case 'xcache':
+			case 'apcu':
 				if (!extension_loaded($type)) {
 					throw new EnvironmentException(
 						'The %s extension does not appear to be installed',
@@ -284,7 +280,7 @@ class Cache
 				throw new ProgrammerException(
 					'The type specified, %s, is not a valid cache type. Must be one of: %s.',
 					$type,
-					join(', ', array('apc', 'database', 'directory', 'file', 'memcache', 'redis', 'xcache'))
+					join(', ', array('apcu', 'database', 'directory', 'file', 'memcached', 'redis'))
 				);
 		}
 
@@ -334,8 +330,8 @@ class Cache
 		$value = $this->serialize($value);
 
 		switch ($this->type) {
-			case 'apc':
-				return apc_add($key, $value, $ttl);
+			case 'apcu':
+				return apcu_add($key, $value, $ttl);
 
 			case 'file':
 				$store = $this->getFileStore();
@@ -390,15 +386,12 @@ class Cache
 				);
 				return true;
 
-			case 'memcache':
-				$memcache = $this->getMemcache();
+			case 'memcached':
+				$memcached = $this->getMemcached();
 				if ($ttl > 2592000) {
 					$ttl = time() + 2592000;
 				}
-				if ($memcache instanceof Memcache) {
-					return $memcache->add($key, $value, 0, $ttl);
-				}
-				return $memcache->add($key, $value, $ttl);
+				return $memcached->add($key, $value, $ttl);
 
 			case 'redis':
 				$redis = $this->getRedis();
@@ -409,13 +402,6 @@ class Cache
 					return false;
 				}
 				$redis->setex($key, $ttl, $value);
-				return true;
-
-			case 'xcache':
-				if (xcache_isset($key)) {
-					return false;
-				}
-				xcache_set($key, $value, $ttl);
 				return true;
 		}
 
@@ -496,8 +482,6 @@ class Cache
 	/**
 	 * Clears the WHOLE cache of every key, use with caution!
 	 *
-	 * xcache may require a login or password depending on your ini settings.
-	 *
 	 * @return boolean  If the cache was successfully cleared
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
@@ -507,8 +491,8 @@ class Cache
 	public function clear(): bool
 	{
 		switch ($this->type) {
-			case 'apc':
-				return apc_clear_cache('user');
+			case 'apcu':
+				return apcu_clear_cache();
 
 			case 'database':
 				$this->queryDatabase(
@@ -538,23 +522,11 @@ class Cache
 				$this->config['state'] = 'dirty';
 				return true;
 
-			case 'memcache':
-				return $this->getMemcache()->flush();
+			case 'memcached':
+				return $this->getMemcached()->flush();
 
 			case 'redis':
 				return (bool) $this->getRedis()->flushDB();
-
-			case 'xcache':
-				if (defined('XC_TYPE_VAR')) {
-					$xc_type = constant('XC_TYPE_VAR');
-					if (!is_int($xc_type)) {
-						return false;
-					}
-					Core::startErrorCapture();
-					xcache_clear_cache($xc_type, 0);
-					return (bool) Core::stopErrorCapture();
-				}
-				return false;
 		}
 
 		throw new ProgrammerException(
@@ -577,8 +549,8 @@ class Cache
 	public function delete(string $key): bool
 	{
 		switch ($this->type) {
-			case 'apc':
-				return apc_delete($key);
+			case 'apcu':
+				return apcu_delete($key);
 
 			case 'database':
 				return (bool) $this->queryDatabase(
@@ -600,14 +572,11 @@ class Cache
 				}
 				return true;
 
-			case 'memcache':
-				return $this->getMemcache()->delete($key, 0);
+			case 'memcached':
+				return $this->getMemcached()->delete($key, 0);
 
 			case 'redis':
 				return (bool) $this->getRedis()->delete($key);
-
-			case 'xcache':
-				return xcache_unset($key);
 		}
 
 		throw new ProgrammerException(
@@ -632,8 +601,8 @@ class Cache
 	public function get(string $key, mixed $default = null): mixed
 	{
 		switch ($this->type) {
-			case 'apc':
-				$value = apc_fetch($key);
+			case 'apcu':
+				$value = apcu_fetch($key);
 				if ($value === false) {
                     return $default;
                 }
@@ -702,8 +671,8 @@ class Cache
 				}
 				break;
 
-			case 'memcache':
-				$value = $this->getMemcache()->get($key);
+			case 'memcached':
+				$value = $this->getMemcached()->get($key);
 				if ($value === false) {
                     return $default;
                 }
@@ -711,13 +680,6 @@ class Cache
 
 			case 'redis':
 				$value = $this->getRedis()->get($key);
-				if ($value === false) {
-                    return $default;
-                }
-				break;
-
-			case 'xcache':
-				$value = xcache_get($key);
 				if ($value === false) {
                     return $default;
                 }
@@ -802,8 +764,8 @@ class Cache
 		$value = $this->serialize($value);
 
 		switch ($this->type) {
-			case 'apc':
-				return apc_store($key, $value, $ttl);
+			case 'apcu':
+				return apcu_store($key, $value, $ttl);
 
 			case 'database':
 				$res = $this->queryDatabase(
@@ -864,19 +826,12 @@ class Cache
 				$this->config['state'] = 'dirty';
 				return true;
 
-			case 'memcache':
-				$memcache = $this->getMemcache();
+			case 'memcached':
+				$memcached = $this->getMemcached();
 				if ($ttl > 2592000) {
 					$ttl = time() + 2592000;
 				}
-				if ($memcache instanceof Memcache) {
-					$result = $memcache->replace($key, $value, 0, $ttl);
-					if (!$result) {
-						return $memcache->set($key, $value, 0, $ttl);
-					}
-					return $result;
-				}
-				return $memcache->set($key, $value, $ttl);
+				return $memcached->set($key, $value, $ttl);
 
 			case 'redis':
 				$redis = $this->getRedis();
@@ -884,9 +839,6 @@ class Cache
 					return (bool) $redis->setex($key, $ttl, $value);
 				}
 				return (bool) $redis->set($key, $value);
-
-			case 'xcache':
-				return xcache_set($key, $value, $ttl);
 		}
 
 		throw new ProgrammerException(
@@ -935,17 +887,17 @@ class Cache
 
 
 	/**
-	 * Returns the memcache data store, verifying it is a Memcache or Memcached object
+	 * Returns the memcached data store, verifying it is a Memcached object
 	 *
-	 * @return Memcache|Memcached  The memcache data store
+	 * @return Memcached  The memcached data store
 	 */
-	private function getMemcache(): Memcache|Memcached
+	private function getMemcached(): Memcached
 	{
-		if ($this->data_store instanceof Memcache || $this->data_store instanceof Memcached) {
+		if ($this->data_store instanceof Memcached) {
 			return $this->data_store;
 		}
 		throw new ProgrammerException(
-			'The data store for the memcache cache is not a Memcache or Memcached object'
+			'The data store for the memcached cache is not a Memcached object'
 		);
 	}
 
