@@ -820,3 +820,14 @@
 - **Verifica**: `php -l` pulito; `vendor/bin/phpstan analyse` → 0 errori totali; nessun duplicato `@throws`; `vendor/bin/phpunit --testsuite Unit` → OK.
 - **Issue/Rischio**: la guardia su `populate()` è l'unico punto con impatto potenziale su codice utente non conforme al contratto.
 - **Prossimo**: nessuna fase residua.
+
+### [2026-10-13 01:18] - Packaging (Fase 1): struttura src/ + autoload Composer/PHPUnit
+
+- **File**: `Cache.php` -> `src/Nexus/Cache/Cache.php`; `composer.json`; `composer.lock`; `phpunit.xml.dist`
+- **Intervallo righe**: n/d (spostamento file + configurazione)
+- **Tipo**: `refactor` | `config`
+- **Descrizione**: avviato il packaging del pacchetto `omega-mvc/nexus`. Creata la struttura `src/Nexus/Cache/` e spostata la classe `Cache` in `src/Nexus/Cache/Cache.php` con `git mv`. In `composer.json` l'autoload `classmap` diventa `[".", "src/"]`. In `phpunit.xml.dist` la sezione `<source><include>` include anche `<directory>src</directory>`.
+- **Motivazione**: preparare la libreria alla pubblicazione come pacchetto, mantenendo la classe `Cache` nel namespace globale (il progetto non usa namespace).
+- **Impatto**: `nessuno` sul comportamento. L'autoload resta una `classmap`; nessun cambio di API per i consumatori, la classe continua a risolversi come `Cache`.
+- **Verifica**: `composer validate` valido; `composer dump-autoload` -> `Cache` risolta da `src/Nexus/Cache/Cache.php`; `vendor/bin/phpstan analyse` -> 0 errori; `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
+- **Issue/Rischio**: il worktree secondario `/home/morpheus/flourish-classes` e' stato rimosso e il repo locale consolidato in `/home/morpheus/flourish-classes-php84` (il ramo `master` resta come ref locale su `b1fde49`). Nessuna regressione nota.
