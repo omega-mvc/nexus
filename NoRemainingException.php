@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * An exception caused when trying to get a value from an iterator and there is nothing left
  *
