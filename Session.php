@@ -101,6 +101,10 @@ class Session
 	 * @param  mixed   $value      The value to add to the array
 	 * @param  boolean $beginning  If the value should be added to the beginning
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function add(string $key, mixed $value, bool $beginning = false): void
 	{
@@ -158,6 +162,10 @@ class Session
 	 *
 	 * @param  string $prefix  The prefix to clear all session values for
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function clear(?string $prefix = null): void
 	{
@@ -220,6 +228,10 @@ class Session
 	 * @param  string $key            The key of the value to delete - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in key names
 	 * @param  mixed  $default_value  The value to return if the `$key` is not set
 	 * @return mixed  The value of the `$key` that was deleted
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function delete(string $key, mixed $default_value = null): mixed
 	{
@@ -273,6 +285,10 @@ class Session
 	 * Destroys the session, removing all values
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function destroy(): void
 	{
@@ -295,6 +311,10 @@ class Session
 	 *
 	 * @param  string $id  The session to destroy
 	 * @return boolean  If the operation succeeded
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public static function destroyCache(string $id): bool
 	{
@@ -319,6 +339,10 @@ class Session
 	 * they want to stay logged in for an extended period of time.
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function enablePersistence(): void
 	{
@@ -357,6 +381,10 @@ class Session
 	 * @internal
 	 *
 	 * @return boolean  If the operation succeeded
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public static function gcCache(): bool
 	{
@@ -374,6 +402,10 @@ class Session
 	 * @param  string $key            The name to get the value for - array elements can be accessed via `[sub-key]` syntax, and thus `[` and `]` can not be used in key names
 	 * @param  mixed  $default_value  The default value to use if the requested key is not set
 	 * @return mixed  The data element requested
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function get(string $key, mixed $default_value = null): mixed
 	{
@@ -470,6 +502,10 @@ class Session
 	 *
 	 * @param  boolean $cookie_only_session_id  If the session id should only be allowed via cookie - this is a security issue and should only be set to `FALSE` when absolutely necessary
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function open(bool $cookie_only_session_id = true): void
 	{
@@ -555,6 +591,10 @@ class Session
 	 *
 	 * @param  string $id  The session to read
 	 * @return string  The session's serialized data
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function readCache(string $id): string
 	{
@@ -571,6 +611,10 @@ class Session
 	 * @internal
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function regenerateID(): void
 	{
@@ -590,6 +634,10 @@ class Session
 	 * @param  string  $key        The name of the element to remove the value from - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in key names
 	 * @param  boolean $beginning  If the value should be removed to the beginning
 	 * @return mixed  The value that was removed
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function remove(string $key, bool $beginning = false): mixed
 	{
@@ -645,6 +693,10 @@ class Session
 	 * @internal
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function reset(): void
 	{
@@ -664,6 +716,10 @@ class Session
 	 * @param  string $key     The name to save the value under - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in key names
 	 * @param  mixed  $value   The value to store
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function set(string $key, mixed $value): void
 	{
@@ -720,6 +776,10 @@ class Session
 	 * @param  Cache $backend     An Cache object to store session values in
 	 * @param  string $key_prefix  A prefix to add to all session IDs before storing them in the cache
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function setBackend(Cache $backend, string $key_prefix = ''): void
 	{
@@ -810,6 +870,7 @@ class Session
 	 *
 	 * @param  string|Directory $directory  The directory to store session files in
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function setPath(mixed $directory): void
 	{
@@ -850,6 +911,10 @@ class Session
 	 * @param  string $id      The session to write
 	 * @param  string $values  The serialized values
 	 * @return boolean  If the operation succeeded
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public static function writeCache(string $id, string $values): bool
 	{

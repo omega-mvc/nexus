@@ -201,6 +201,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer $limit             The number of records to fetch
 	 * @param  integer $page              The page offset to use when limiting records
 	 * @return RecordSet  A set of ActiveRecord objects
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
 	 */
 	public static function build(string $class, array $where_conditions = array(), array $order_bys = array(), ?int $limit = null, ?int $page = null): RecordSet
 	{
@@ -293,6 +298,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer      $limit          The maximum number of records the array was limited to - this is informational only and does not affect the array
 	 * @param  integer      $page           The page of records the array is from - this is informational only and does not affect the array
 	 * @return RecordSet  A set of ActiveRecord objects
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function buildFromArray(mixed $class, array $records, ?int $total_records = null, ?int $limit = null, int $page = 1): RecordSet
 	{
@@ -394,6 +404,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer       $limit                  The number of records the SQL statement was limited to - this is information only and does not affect the SQL
 	 * @param  integer       $page                   The page of records the SQL statement returned - this is information only and does not affect the SQL
 	 * @return RecordSet  A set of ActiveRecord objects
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public static function buildFromSQL(string $class, mixed $sql, mixed $non_limited_count_sql = null, ?int $limit = null, int $page = 1): RecordSet
 	{
@@ -473,6 +488,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  Database                $db      The database to run the query on
 	 * @param  array<array-key, mixed> $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private static function runQuery(Database $db, array $params): Result
 	{
@@ -517,6 +536,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
      * @param  string  $class             The class of records to count
      * @param  mixed   $where_conditions  An array of where clause parameters in the same format as ::build()
      * @return integer  The number of records
+     * @throws NoRowsException
+     * @throws NoRemainingException
+     * @throws AuthorizationException
+     * @throws ValidationException
+     * @throws NotFoundException
      */
     public static function tally(string $class, mixed $where_conditions = array()): int
     {
@@ -630,6 +654,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $method_name  The name of the method called
 	 * @param  array<mixed> $parameters  The parameters passed
 	 * @return mixed  The result of the called method
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function __call(mixed $method_name, mixed $parameters)
 	{
@@ -700,6 +729,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer        $limit              The number of records the set was limited to
 	 * @param  integer        $page               The page of records that was built
 	 * @return RecordSet
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	protected function __construct(mixed $class, mixed $records = null, mixed $non_limited_count = null, mixed $limit = null, mixed $page = 1)
 	{
@@ -770,6 +804,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string    $related_class  The related class to add the order bys for
 	 * @param  string|null  $route       The route to this table from another table
 	 * @return array<array-key, mixed>  The params with the `ORDER BY` clause added
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function addOrderByParams(Database $db, Schema $schema, array $params, string $related_class, ?string $route = null): array
 	{
@@ -845,6 +884,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  array<array-key, mixed> $params  The parameters for the Database::query() call
 	 * @param  string   $route   The route to this table from another table
 	 * @return array<array-key, mixed>  The params with the `WHERE` clause added
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function addWhereParams(Database $db, Schema $schema, array $params, ?string $route = null): array
 	{
@@ -909,6 +953,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  string $method     The method to call
 	 * @return RecordSet  A set of records that resulted from calling the method
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function buildFromCall(string $method): RecordSet
 	{
@@ -947,6 +996,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  callable(mixed...):mixed $callback   The callback to pass the values to
 	 * @return RecordSet  A set of records that resulted from the mapping operation
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function buildFromMap(callable $callback): RecordSet
 	{
@@ -1014,6 +1068,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  integer $number  The number of ActiveRecord objects to place in each RecordSet
 	 * @return array<int, RecordSet>  An array of RecordSet objects
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function chunk(int $number): array
 	{
@@ -1031,6 +1090,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  ActiveRecord $record  The record to check, must exist in the database
 	 * @return boolean  If the record specified is in this record set
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function contains(ActiveRecord $record): bool
 	{
@@ -1093,6 +1157,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of records, or record to remove from the current record set, all instances will be removed
 	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records not present in the passed records
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function diff(mixed $records, bool $remember_original_count = false): RecordSet
 	{
@@ -1190,6 +1259,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  callable(mixed...):mixed|string|array<array-key, mixed> $procedure                The way in which to filter the records - see method description for possible forms
 	 * @param  boolean               $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  A new RecordSet with the filtered records
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function filter(mixed $procedure, bool $remember_original_count = false): RecordSet
 	{
@@ -1321,6 +1395,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  integer $index  The index of the record to return
 	 * @return ActiveRecord  The record requested
+	 * @throws NoRemainingException
 	 */
 	public function getRecord(int $index): ActiveRecord
 	{
@@ -1343,6 +1418,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * Returns the primary keys for all of the records in the set
 	 *
 	 * @return array<int, mixed>  The primary keys of all the records in the set
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public function getPrimaryKeys(): array
 	{
@@ -1380,6 +1460,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of records, or record to create an intersection of with the current record set
 	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records present in the current record set that are also present in the passed records
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function intersect(mixed $records, bool $remember_original_count = false): RecordSet
 	{
@@ -1507,6 +1592,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records  The record set, array of records, or record to merge with the current record set, duplicates will **not** be removed
 	 * @return RecordSet  The merged record sets
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function merge(mixed $records): RecordSet
 	{
@@ -1649,6 +1739,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $related_class  This should be the name of a related class
 	 * @param  string $route          This should be a column name or a join table name and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function prebuild(string $related_class, ?string $route = null): RecordSet
 	{
@@ -1777,6 +1872,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $related_class  This should be the name of a related class
 	 * @param  string $route          This should be a column name or a join table name and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws NotFoundException
 	 */
 	private function precount(string $related_class, ?string $route = null): RecordSet
 	{
@@ -1882,6 +1982,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $related_class  This should be the name of a related class
 	 * @param  string $route          This should be the column name of the foreign key and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
 	 */
 	private function precreate(string $related_class, ?string $route = null): RecordSet
 	{
@@ -1979,6 +2084,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  integer $length                   The number of records to return, negative values will stop that many records before the end, `NULL` will return all records to the end of the set - if there are not enough records, less than `$length` will be returned
 	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The new slice of records
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function slice(int $offset, ?int $length = null, bool $remember_original_count = false): RecordSet
 	{
@@ -2016,6 +2126,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @param  string $method     The method to call on each object to get the value to sort by
 	 * @param  string $direction  Either `'asc'` or `'desc'`
 	 * @return RecordSet  A new record set object, with the records sorted as requested
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function sort(string $method, string $direction): RecordSet
 	{
@@ -2075,6 +2190,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  callable(ActiveRecord, ActiveRecord): int $callback  The function/method to pass to `usort()`
 	 * @return RecordSet  A new record set object, with the records sorted as requested
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function sortByCallback(callable $callback): RecordSet
 	{
@@ -2099,6 +2219,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  integer $number  The number of RecordSet objects to create
 	 * @return array<int, RecordSet>  An array of RecordSet objects
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function split(int $number): array
 	{
@@ -2149,6 +2274,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The new record set with only unique records
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function unique(bool $remember_original_count = false): RecordSet
 	{

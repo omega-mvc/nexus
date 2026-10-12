@@ -301,6 +301,10 @@ class Cache
 	 * @internal
 	 *
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function __destruct()
 	{
@@ -320,6 +324,10 @@ class Cache
 	 * @param  mixed   $value  The value to store, this will be serialized
 	 * @param  integer $ttl    The number of seconds to keep the cache valid for, 0 for no limit
 	 * @return boolean  If the key/value pair were added successfully
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function add(string $key, mixed $value, int $ttl = 0): bool
 	{
@@ -422,6 +430,10 @@ class Cache
 	 * Removes all cache entries that have expired
 	 *
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function clean(): void
 	{
@@ -487,6 +499,10 @@ class Cache
 	 * xcache may require a login or password depending on your ini settings.
 	 *
 	 * @return boolean  If the cache was successfully cleared
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function clear(): bool
 	{
@@ -553,6 +569,10 @@ class Cache
 	 *
 	 * @param  string $key  The key to delete
 	 * @return boolean  If the delete succeeded
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function delete(string $key): bool
 	{
@@ -604,6 +624,10 @@ class Cache
 	 * @param  string $key      The key to return the value for
 	 * @param  T      $default  The value to return if the key did not exist
 	 * @return T      The cached value or the default value if no cached value was found
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function get(string $key, mixed $default = null): mixed
 	{
@@ -768,6 +792,10 @@ class Cache
 	 * @param  mixed   $value  The value to store, this will be serialized
 	 * @param  integer $ttl    The number of seconds to keep the cache valid for, 0 for no limit
 	 * @return boolean  If the value was successfully saved
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function set(string $key, mixed $value, int $ttl = 0): bool
 	{
@@ -978,6 +1006,10 @@ class Cache
 	 * @param  Statement|string $statement  The SQL statement
 	 * @param  mixed ...$params  The parameters for the statement
 	 * @return Result  The result of the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function queryDatabase(Statement|string $statement, mixed ...$params): Result
 	{

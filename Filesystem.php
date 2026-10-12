@@ -124,6 +124,7 @@ class Filesystem
 	 * Commits a filesystem transaction, should only be called when a transaction is in progress
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function commit(): void
 	{

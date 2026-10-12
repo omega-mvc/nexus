@@ -82,6 +82,10 @@ class ORMOrdering
 	 * @param  Database                 $db      The database to run the query on
 	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private static function runQuery(Database $db, array $params): Result
 	{
@@ -107,6 +111,11 @@ class ORMOrdering
 	 * @param  mixed  $class   The class name or instance of the class
 	 * @param  string $column  The column to set as an ordering column
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureOrderingColumn(mixed $class, string $column): void
 	{
@@ -180,6 +189,11 @@ class ORMOrdering
 	 * @param  array<array-key, mixed>  &$values        The record's current values
 	 * @param  array<array-key, mixed>  &$old_values    The record's old values
 	 * @return array<array-key, mixed>  The updated params for Database::query()
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function addOldOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values, mixed &$old_values): array
 	{
@@ -218,6 +232,11 @@ class ORMOrdering
 	 * @param  array<array-key, string>  $other_columns  The other columns in the multi-column unique constraint
 	 * @param  array<array-key, mixed>  &$values        The values to match with
 	 * @return array<array-key, mixed>  The updated params for Database::query()
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function addOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values): array
 	{
@@ -258,6 +277,11 @@ class ORMOrdering
 	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	public static function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -364,6 +388,11 @@ class ORMOrdering
 	 * @param  string        $method_name       The method that was called
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return mixed  The metadata array or element specified
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws ValidationException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function inspect(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{
@@ -495,6 +524,11 @@ class ORMOrdering
 	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	public static function reorder(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -745,6 +779,11 @@ class ORMOrdering
 	 * @param  array<array-key, mixed> &$cache                The cache array for the record
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	public static function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{

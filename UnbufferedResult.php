@@ -711,6 +711,7 @@ class UnbufferedResult implements Iterator
 	 *
 	 * @param  string $message  The message to use for the exception if there are no rows in this result set
 	 * @return UnbufferedResult  The result object, to allow for method chaining
+	 * @throws NoRemainingException
 	 */
 	public function tossIfNoRows(?string $message = null): UnbufferedResult
 	{

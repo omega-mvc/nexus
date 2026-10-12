@@ -208,6 +208,7 @@ class ORMFile
 	 * @internal
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function commit(): void
 	{
@@ -271,6 +272,11 @@ class ORMFile
 	 * @param  string            $column     The column to set as a file upload column
 	 * @param  Directory|string $directory  The directory to upload/move to
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureFileUploadColumn(mixed $class, string $column, mixed $directory): void
 	{
@@ -409,6 +415,11 @@ class ORMFile
 	 * @param  string            $column      The column to set as a file upload column
 	 * @param  Directory|string $directory   The directory to upload to
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureImageUploadColumn(mixed $class, string $column, mixed $directory): void
 	{
@@ -458,6 +469,7 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -491,6 +503,7 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function deleteOld(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -570,6 +583,7 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function moveFromTemp(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -637,6 +651,7 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function populate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -695,6 +710,7 @@ class ORMFile
 	 *
 	 * @param  Directory $folder  The folder to create a temporary directory inside of
 	 * @return Directory  The temporary directory for the folder specified
+	 * @throws ValidationException
 	 */
 	private static function prepareTempDir(Directory $folder): Directory
 	{
@@ -729,6 +745,7 @@ class ORMFile
 	 * @param  string        $method_name       The method that was called
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public static function process(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
@@ -754,6 +771,7 @@ class ORMFile
 	 * @param  string $column  The column the image is assigned to
 	 * @param  File  $image   The image object to manipulate
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function processImage(string $class, string $column, File $image): void
 	{
@@ -921,6 +939,7 @@ class ORMFile
 	 * @param  string $column  The column the value is in
 	 * @param  mixed  $value   The value
 	 * @return mixed  The cloned File object
+	 * @throws ValidationException
 	 */
 	public static function replicate(string $class, string $column, mixed $value): mixed
 	{
@@ -1004,6 +1023,7 @@ class ORMFile
 	 * @param  string        $method_name       The method that was called
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public static function set(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
 	{
@@ -1143,6 +1163,7 @@ class ORMFile
 	 * @param  string        $method_name       The method that was called
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return File|Directory|null  The uploaded file, or NULL if no new file was set
+	 * @throws ValidationException
 	 */
 	public static function upload(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
 	{

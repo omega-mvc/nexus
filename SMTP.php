@@ -212,6 +212,7 @@ class SMTP
 	 * Initiates the connection to the server
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function connect(): void
 	{

@@ -671,6 +671,7 @@ class XML implements ArrayAccess
 	 * @param  string  $path        The XPath path to query
 	 * @param  boolean $first_only  If only the first match should be returned
 	 * @return array<int|string, mixed>|string|XML|null  An array of matching elements, or a string or XML object if `$first_only` is `TRUE`
+	 * @throws ValidationException
 	 */
 	public function xpath(string $path, bool $first_only = false): mixed
 	{

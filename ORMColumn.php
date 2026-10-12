@@ -106,6 +106,11 @@ class ORMColumn
 	 * @param  mixed  $class   The class name or instance of the class to set the column format
 	 * @param  string $column  The column to format as an email address
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureEmailColumn(mixed $class, string $column): void
 	{
@@ -150,6 +155,11 @@ class ORMColumn
 	 * @param  mixed  $class   The class name or instance of the class to set the column format
 	 * @param  string $column  The column to format as a link
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureLinkColumn(mixed $class, string $column): void
 	{
@@ -195,6 +205,11 @@ class ORMColumn
 	 * @param  mixed  $class   The class name or instance of the class to set the column format
 	 * @param  string $column  The column to return as an Number object
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureNumberColumn(mixed $class, string $column): void
 	{
@@ -245,6 +260,11 @@ class ORMColumn
 	 * @param  string   $column          The column to set as a password column
 	 * @param  integer  $minimum_length  The minimum password a user can use
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configurePasswordColumn(mixed $class, string $column, int $minimum_length): void
 	{
@@ -303,6 +323,11 @@ class ORMColumn
 	 * @param  string  $type    The type of random string, must be one of: `'alphanumeric'`, `'alpha'`, `'numeric'`, `'hexadecimal'`
 	 * @param  integer $length  The length of the random string
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureRandomColumn(mixed $class, string $column, string $type, int $length): void
 	{
@@ -370,6 +395,11 @@ class ORMColumn
 	 * @param  string        $method_name      The method that was called
 	 * @param  array<array-key, mixed> $parameters       The parameters passed to the method
 	 * @return string  The encoded number
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function encodeNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
@@ -416,6 +446,11 @@ class ORMColumn
 	 * @param  string        $method_name       The method that was called
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The newly generated random value
+	 * @throws AuthorizationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function generate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
@@ -575,6 +610,11 @@ class ORMColumn
 	 * @param  string        $method_name       The method that was called
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The formatted link
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function prepareNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
 	{
@@ -621,6 +661,11 @@ class ORMColumn
 	 * @param  array<array-key, mixed>   &$signatures           The associative array of `{method name} => {signature}`
 	 * @param  boolean $include_doc_comments  If doc comments should be included with the signature
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
@@ -878,6 +923,11 @@ class ORMColumn
 	 * @param  array<array-key, mixed> &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed> &$cache            The cache array for the record
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function setRandomStrings(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -991,6 +1041,7 @@ class ORMColumn
 	 * @param  array<array-key, mixed> &$cache                The cache array for the record
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function validatePasswordColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
 	{

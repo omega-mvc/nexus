@@ -67,6 +67,11 @@ class ORMSchema
 	 * @param  ?string $route              The route to get info about, or NULL to auto-determine it
 	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-meny'`, `'many-to-one'`, `'many-to-many'`
 	 * @return array<string, mixed>  The relationship information for the route specified
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function getRoute(Schema $schema, string $table, string $related_table, ?string $route = null, ?string $relationship_type = null): array
 	{
@@ -121,6 +126,11 @@ class ORMSchema
 	 * @param  string  $route              The route that was preselected, will be verified if present
 	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
 	 * @return string  The only route from the main table to the related table
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function getRouteName(Schema $schema, string $table, string $related_table, ?string $route = null, ?string $relationship_type = null): string
 	{
@@ -231,6 +241,11 @@ class ORMSchema
 	 * @param  string  $related_table      The related table we are trying to find the routes for
 	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
 	 * @return array<string, array<string, mixed>>  All of the routes from the main table to the related table, keyed by the route name
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function getRoutes(Schema $schema, string $table, string $related_table, ?string $relationship_type = null): array
 	{
@@ -325,6 +340,11 @@ class ORMSchema
 	 * @param  string  $related_table  The related table we are trying to find the routes for
 	 * @param  string  $route          The route between the two tables
 	 * @return boolean  If the table is in a one-to-one relationship with the related table over the route specified
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function isOneToOne(Schema $schema, string $table, string $related_table, ?string $route = null): bool
 	{

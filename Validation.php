@@ -64,6 +64,7 @@ class Validation
 	 *
 	 * @param  string $key  The key to check for a value
 	 * @return boolean  If the key has a value
+	 * @throws ValidationException
 	 */
 	private static function hasValue(string $key): bool
 	{
@@ -615,6 +616,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkCallbackRules(array &$messages): void
 	{
@@ -637,6 +639,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkConditionalRules(array &$messages): void
 	{
@@ -674,6 +677,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkDateFields(array &$messages): void
 	{
@@ -699,6 +703,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkFileUploadRules(array &$messages): void
 	{
@@ -720,6 +725,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkOneOrMoreRules(array &$messages): void
 	{
@@ -746,6 +752,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkOnlyOneRules(array &$messages): void
 	{
@@ -778,6 +785,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkRegexRules(array &$messages): void
 	{
@@ -800,6 +808,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkRequiredFields(array &$messages): void
 	{
@@ -819,6 +828,7 @@ class Validation
 	 *
 	 * @param  array<string, string> &$messages  The messages to display to the user
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function checkValidValuesRules(array &$messages): void
 	{

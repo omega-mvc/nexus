@@ -224,6 +224,10 @@ class SQLSchemaTranslation
 	 * @param  string $table  The table to set the `CREATE TABLE` statement for
 	 * @param  string $sql    The SQL used to create the table
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function addSQLiteTable(string $table, string $sql): void
 	{
@@ -434,6 +438,10 @@ class SQLSchemaTranslation
 	 * @param  string $table   The table the column is in
 	 * @param  string $column  The column to get the check constraint for
 	 * @return array{name: string, definition: string}|NULL  An associative array with the keys: `name` and `definition` or `NULL`
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function getDB2CheckConstraint(string $schema, string $table, string $column): mixed
 	{
@@ -481,6 +489,10 @@ class SQLSchemaTranslation
 	 * @param  string $table   The table the column is in
 	 * @param  string $column  The column to get the foreign keys for and the foreign keys that point to
 	 * @return array<string, array{schema: string, table: string, table_without_schema?: string, constraint_name: string, column: string, foreign_schema: string, foreign_table: string, foreign_column: string, on_delete: string, on_update: string}>  An associative array of the key being the constraint name and the value being an associative array containing the keys: `schema`, `table`, `column`, `foreign_schema`, `foreign_table`, `foreign_column`, `on_delete` and `on_cascade`
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getDB2ForeignKeyConstraints(string $schema, string $table, ?string $column = null): array
 	{
@@ -566,6 +578,10 @@ class SQLSchemaTranslation
 	 * @param  string $schema  The schema the table is in
 	 * @param  string $table   The table to get the primary key for
 	 * @return array<int, string>  The columns in the primary key
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getDB2PrimaryKeyConstraint(string $schema, string $table): array
 	{
@@ -604,6 +620,10 @@ class SQLSchemaTranslation
 	 * @param  string $table   The table to get the unique keys for
 	 * @param  string $column  The column to filter the unique keys by
 	 * @return array<string, array<int, string>>  An associative array of the key being the constraint name and the value being the columns in the unique key
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getDB2UniqueConstraints(string $schema, string $table, string $column): array
 	{
@@ -662,6 +682,10 @@ class SQLSchemaTranslation
 	 * @param  string $table   The table the column is part of
 	 * @param  string $column  The column name
 	 * @return array{name: string, definition: string}|NULL  An associative array with the keys `name` and `definition`, or `NULL`
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function getMSSQLCheckConstraint(string $schema, string $table, string $column): ?array
 	{
@@ -707,6 +731,10 @@ class SQLSchemaTranslation
 	 * @param  string       $table   The table the column is part of
 	 * @param  string|array<int, string> $column  The column name(s)
 	 * @return array<int, array{table: string, schema: string, table_without_schema: string, column: string, name: string}>  An array of constraint names that reference the column(s)
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getMSSQLForeignKeyConstraints(string $schema, string $table, mixed $column): array
 	{
@@ -776,6 +804,10 @@ class SQLSchemaTranslation
 	 * @param  string $table   The table the column is part of
 	 * @param  string $column  The column name
 	 * @return array{name: string, definition: string}|NULL  An associative array with the keys `name` and `definition`, or `NULL`
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function getMSSQLDefaultConstraint(string $schema, string $table, string $column): ?array
 	{
@@ -816,6 +848,10 @@ class SQLSchemaTranslation
 	 * @param  string $schema  The schema the table is inside of
 	 * @param  string $table   The table to get the constraint for
 	 * @return array{name: string, columns: array<int, string>, autoincrement: bool}|NULL  An associative array with the keys `name`, `columns` and `autoincrement` or `NULL`
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getMSSQLPrimaryKeyConstraint(string $schema, string $table): mixed
 	{
@@ -875,6 +911,10 @@ class SQLSchemaTranslation
 	 * @param  string $table   The table the column is part of
 	 * @param  string $column  The column name
 	 * @return array<string, array<int, string>>  An associative array of constraint_name => columns
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getMSSQLUniqueConstraints(string $schema, string $table, string $column): array
 	{
@@ -934,6 +974,10 @@ class SQLSchemaTranslation
 	 * @param  string       $table    The table
 	 * @param  string|array<int, string> $columns  The column, or an array of valid column names
 	 * @return array<int, array{constraint_name: string, table: string, column: string, foreign_table: string, foreign_column: string, on_delete: string, on_update: string}>  An array of associative arrays containing the keys `constraint_name`, `table`, `column`, `foreign_table` and `foreign_column`
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function getMySQLForeignKeys(string $table, mixed $columns): mixed
 	{
@@ -991,6 +1035,10 @@ class SQLSchemaTranslation
 	 * Returns a list of all tables in the database
 	 *
 	 * @return array<int, string>  An array of table names
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function getMySQLTables(): array
 	{
@@ -1023,6 +1071,10 @@ class SQLSchemaTranslation
 	 *
 	 * @param  string $table  The table to retrieve the column names for
 	 * @return array<int, string>  The column names for the table
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getSQLiteColumns(string $table): array
 	{
@@ -1040,6 +1092,10 @@ class SQLSchemaTranslation
 	 *
 	 * @param  string $table  The table to retrieve the `CREATE TABLE` statement for
 	 * @return string|NULL  The `CREATE TABLE` SQL statement, or `NULL` if it could not be found
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getSQLiteCreateTable(string $table): ?string
 	{
@@ -1061,6 +1117,10 @@ class SQLSchemaTranslation
 	 * @param  string  $table   All foreign keys returned will point to this table
 	 * @param  string  $column  Only foreign keys pointing to this column will be returned
 	 * @return array<int, array{table: string, column: string, foreign_table: string, foreign_column: string, on_delete: string, on_update: string}>  An array of arrays containing they keys: `table`, `column`, `foreign_table`, `foreign_column`, `on_delete` and `on_update`
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getSQLiteForeignKeys(string $table, ?string $column = null): array
 	{
@@ -1109,6 +1169,10 @@ class SQLSchemaTranslation
 	 * Returns the indexes in the current SQLite database
 	 *
 	 * @return array<string, array{table: string, sql: string}>  An associative array with the key being the index name and the value an associative arrays, each containing the keys: `table`, `sql`
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getSQLiteIndexes(mixed $table = null): array
 	{
@@ -1147,6 +1211,10 @@ class SQLSchemaTranslation
 	 * Returns the tables in the current SQLite database
 	 *
 	 * @return array<int, string>
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getSQLiteTables(): array
 	{
@@ -1172,6 +1240,10 @@ class SQLSchemaTranslation
 	 * Returns the triggers in the current SQLite database
 	 *
 	 * @return array<string, array{table: string, sql: string}>  An associative array with the key being the trigger name and the value an associative arrays, each containing the keys: `table`, `sql`
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function getSQLiteTriggers(mixed $exclude_table = null): array
 	{
@@ -1327,6 +1399,11 @@ class SQLSchemaTranslation
 	 * @param  string $sql       The SQL query to run
 	 * @param  mixed  ...$values The values to substitute into the query
 	 * @return Result
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws SQLException
 	 */
 	private function query(string $sql, mixed ...$values): Result
 	{
@@ -1342,6 +1419,8 @@ class SQLSchemaTranslation
 	 * Fetches a single row from a `Result` object as an associative array
 	 *
 	 * @return array<int|string, mixed>
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function fetchRowArray(Result $result): array
 	{
@@ -1463,6 +1542,10 @@ class SQLSchemaTranslation
 	 * @param  array<int, string>  &$extra_statements     Any extra SQL statements that need to be added
 	 * @param  array<int, string>  &$rollback_statements  SQL statements to rollback `$sql` and `$extra_statements` if something goes wrong
 	 * @return string  The translated SQL
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateAlterTableStatements(string $sql, array &$extra_statements, array &$rollback_statements): string
 	{
@@ -1634,6 +1717,10 @@ class SQLSchemaTranslation
 	 * @param  string $sql                The SQL to translate
 	 * @param  array<int, string>  &$extra_statements  Any extra SQL statements that need to be added
 	 * @return string  The translated SQL
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateCreateTableStatements(string $sql, array &$extra_statements): string
 	{
@@ -1883,6 +1970,10 @@ class SQLSchemaTranslation
 	 * @param array<int, string>  &$extra_statements  Any extra SQL statements required for DB2
 	 * @param AlterTableData $data               Data parsed from the `ALTER TABLE` statement
 	 * @return string  The modified SQL statement
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateDB2AlterTableStatements(string $sql, array &$extra_statements, array $data): string
 	{
@@ -2385,6 +2476,10 @@ class SQLSchemaTranslation
 	 * @param array<int, string>  &$extra_statements  Any extra SQL statements required for MSSQL
 	 * @param AlterTableData $data               Data parsed from the `ALTER TABLE` statement
 	 * @return string  The modified SQL statement
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateMSSQLAlterTableStatements(string $sql, array &$extra_statements, array $data): string
 	{
@@ -3086,6 +3181,10 @@ class SQLSchemaTranslation
 	 * @param array<int, string>  &$rollback_statements  SQL statements to rollback `$sql` and `$extra_statements` if something goes wrong
 	 * @param AlterTableData $data                  Data parsed from the `ALTER TABLE` statement
 	 * @return string  The modified SQL statement
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateMySQLAlterTableStatements(string $sql, array &$extra_statements, array &$rollback_statements, array $data): string
 	{
@@ -3514,6 +3613,10 @@ class SQLSchemaTranslation
 	 * @param array<int, string>  &$extra_statements  Any extra SQL statements required for Oracle
 	 * @param AlterTableData $data               Data parsed from the `ALTER TABLE` statement
 	 * @return string  The modified SQL statement
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateOracleAlterTableStatements(string $sql, array &$extra_statements, array $data): string
 	{
@@ -4122,6 +4225,10 @@ class SQLSchemaTranslation
 	 * @param array<int, string>  &$extra_statements  Any extra SQL statements required for PostgreSQL
 	 * @param AlterTableData $data               Data parsed from the `ALTER TABLE` statement
 	 * @return string  The modified SQL statement
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translatePostgreSQLAlterTableStatements(string $sql, array &$extra_statements, array $data): string
 	{
@@ -4463,6 +4570,10 @@ class SQLSchemaTranslation
 	 * @param array<int, string>  &$extra_statements  Any extra SQL statements required for SQLite
 	 * @param AlterTableData $data               Data parsed from the `ALTER TABLE` statement
 	 * @return string  The modified SQL statement
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateSQLiteAlterTableStatements(string $sql, array &$extra_statements, array $data): string
 	{
@@ -5098,6 +5209,10 @@ class SQLSchemaTranslation
 	 * @param  string $sql                The SQL to translate
 	 * @param  array<int, string>  &$extra_statements  Any extra SQL statements that need to be added
 	 * @return string  The translated SQL
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function translateSQLiteDropTableStatements(string $sql, array &$extra_statements): string
 	{
@@ -5141,6 +5256,10 @@ class SQLSchemaTranslation
 	 * @param array<int, string>  &$extra_statements  Any extra SQL statements required for SQLite
 	 * @param AlterTableRenameTableData $data               Data parsed from the `ALTER TABLE` statement
 	 * @return string  The modified SQL statement
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateSQLiteRenameTableStatements(string $sql, array &$extra_statements, array $data): string
 	{

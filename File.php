@@ -118,6 +118,7 @@ class File implements Iterator, Countable
 	 * @param  string $file      The file to check the mime type for - must be a valid filesystem path if no `$contents` are provided, otherwise just a filename
 	 * @param  string $contents  The first 4096 bytes of the file content - the `$file` parameter only need be a filename if this is provided
 	 * @return string  The mime type of the file
+	 * @throws ValidationException
 	 */
 	public static function determineMimeType(string $file, ?string $contents = null): string
 	{
@@ -545,6 +546,7 @@ class File implements Iterator, Countable
 	 * @internal
 	 *
 	 * @return File  The new File object
+	 * @throws ValidationException
 	 */
 	public function __clone()
 	{
@@ -800,6 +802,7 @@ class File implements Iterator, Countable
 	 * point.
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public function delete(): void
 	{
@@ -841,6 +844,7 @@ class File implements Iterator, Countable
 	 * @param  string|Directory $new_directory  The directory to duplicate the file into if different than the current directory
 	 * @param  boolean           $overwrite      If a new directory is specified, this indicates if a file with the same name should be overwritten.
 	 * @return File  The new File object
+	 * @throws ValidationException
 	 */
 	public function duplicate(mixed $new_directory = null, ?bool $overwrite = null): File
 	{
@@ -988,6 +992,7 @@ class File implements Iterator, Countable
 	 *  - `video/x-ms-wmv` Windows media video
 	 *
 	 * @return string  The mime type of the file
+	 * @throws ValidationException
 	 */
 	public function getMimeType(): string
 	{
@@ -1001,6 +1006,7 @@ class File implements Iterator, Countable
 	 * Returns the last modification time of the file
 	 *
 	 * @return Timestamp  The timestamp of when the file was last modified
+	 * @throws ValidationException
 	 */
 	public function getMTime(): Timestamp
 	{
@@ -1035,6 +1041,7 @@ class File implements Iterator, Countable
 	 * Gets the directory the file is located in
 	 *
 	 * @return Directory  The directory containing the file
+	 * @throws ValidationException
 	 */
 	public function getParent(): Directory
 	{
@@ -1192,6 +1199,7 @@ class File implements Iterator, Countable
 	 * @param  boolean $headers   If HTTP headers for the file should be included
 	 * @param  mixed   $filename  Present the file as an attachment instead of just outputting type headers - if a string is passed, that will be used for the filename, if `TRUE` is passed, the current filename will be used
 	 * @return File  The file object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function output(bool $headers, mixed $filename = null): File
 	{
@@ -1269,6 +1277,7 @@ class File implements Iterator, Countable
 	 * @param  string  $new_filename  The new full path to the file or a new filename in the current directory
 	 * @param  boolean $overwrite     If the new filename already exists, `TRUE` will cause the file to be overwritten, `FALSE` will cause the new filename to change
 	 * @return File  The file object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function rename(string $new_filename, bool $overwrite): File
 	{

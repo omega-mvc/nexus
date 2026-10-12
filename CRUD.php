@@ -80,6 +80,10 @@ class CRUD
 	 *
 	 * @param  string $column  The column to get the value for
 	 * @return mixed  The previous value
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function getPreviousSearchValue(string $column): mixed
 	{
@@ -91,6 +95,10 @@ class CRUD
 	 * Return the previous sort column, if one exists
 	 *
 	 * @return string|null  The previous sort column, or `NULL` if none was saved
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function getPreviousSortColumn(): ?string
 	{
@@ -103,6 +111,10 @@ class CRUD
 	 * Return the previous sort direction, if one exists
 	 *
 	 * @return string|null  The previous sort direction, or `NULL` if none was saved
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function getPreviousSortDirection(): ?string
 	{
@@ -149,6 +161,11 @@ class CRUD
 	 * @param  string $cast_to  The data type to cast to
 	 * @param  string $default  The default value
 	 * @return mixed  The current value
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function getSearchValue(string $column, ?string $cast_to = null, ?string $default = null): mixed
 	{
@@ -174,6 +191,11 @@ class CRUD
 	 *
 	 * @param  string $possible_column  The columns that can be sorted by, defaults to first
 	 * @return string|null  The column to sort by, or `NULL` if no value was set
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function getSortColumn(string $possible_column): ?string
 	{
@@ -207,6 +229,11 @@ class CRUD
 	 *
 	 * @param  string $default_direction  The default direction, `'asc'` or `'desc'`
 	 * @return string|null  The direction, `'asc'` or `'desc'`, or `NULL` if no value was set
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function getSortDirection(string $default_direction): ?string
 	{
@@ -307,6 +334,10 @@ class CRUD
 	 * @internal
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function reset(): void
 	{
@@ -326,6 +357,10 @@ class CRUD
 	 * @param  string $column  The column to save the value for
 	 * @param  mixed  $value   The value to save
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function setPreviousSearchValue(string $column, mixed $value): void
 	{
@@ -338,6 +373,10 @@ class CRUD
 	 *
 	 * @param  string|null $sort_column  The sort column to save, or `NULL` to reset it
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function setPreviousSortColumn(?string $sort_column): void
 	{
@@ -350,6 +389,10 @@ class CRUD
 	 *
 	 * @param  string|null $sort_direction  The sort direction to save, or `NULL` to reset it
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function setPreviousSortDirection(?string $sort_direction): void
 	{

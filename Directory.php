@@ -191,6 +191,7 @@ class Directory
 	 * Removes all files and directories inside of the directory
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public function clear(): void
 	{
@@ -213,6 +214,7 @@ class Directory
 	 * existing until that point.
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public function delete(): void
 	{
@@ -261,6 +263,7 @@ class Directory
 	 * Gets the parent directory
 	 *
 	 * @return Directory  The object representing the parent directory
+	 * @throws ValidationException
 	 */
 	public function getParent(): Directory
 	{
@@ -307,6 +310,7 @@ class Directory
 	 * @param  boolean $format          If the filesize should be formatted for human readability
 	 * @param  integer $decimal_places  The number of decimal places to format to (if enabled)
 	 * @return integer|string  If formatted, a string with filesize in b/kb/mb/gb/tb, otherwise an integer
+	 * @throws ValidationException
 	 */
 	public function getSize(bool $format = false, int $decimal_places = 1): mixed
 	{
@@ -327,6 +331,7 @@ class Directory
 	 * and folders contained within
 	 *
 	 * @return int  The disk usage in bytes
+	 * @throws ValidationException
 	 */
 	private function calculateSize(): int
 	{
@@ -404,6 +409,7 @@ class Directory
 	 * @param  string  $new_dirname  The new full path to the directory or a new name in the current parent directory
 	 * @param  boolean $overwrite    If the new dirname already exists, TRUE will cause the file to be overwritten, FALSE will cause the new filename to change
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public function rename(string $new_dirname, bool $overwrite): void
 	{
@@ -485,6 +491,7 @@ class Directory
 	 *
 	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - directories can be detected by checking for a trailing / (even on Windows)
 	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories in this directory
+	 * @throws ValidationException
 	 */
 	public function scan(?string $filter = null): array
 	{
@@ -529,6 +536,7 @@ class Directory
 	 *
 	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - see ::scan() for details
 	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories (listed recursively) in this directory
+	 * @throws ValidationException
 	 */
 	public function scanRecursive(?string $filter = null): array
 	{

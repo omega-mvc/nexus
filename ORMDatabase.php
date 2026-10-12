@@ -169,6 +169,11 @@ class ORMDatabase
 	/**
 	 * @param array<array-key, mixed> $params
 	 * @return array<array-key, mixed>
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function addColumnCondition(Database $db, Schema $schema, array $params, string $table, string $column, string $operator, mixed $values, ?string $escaped_column = null, ?string $placeholder = null): array
 	{
@@ -494,6 +499,11 @@ class ORMDatabase
 	 * @param array<array-key, mixed> $params
 	 * @param array<array-key, mixed> $conditions
 	 * @return array<array-key, mixed>
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function addHavingClause(Database $db, Schema $schema, array $params, string $table, array $conditions): array
 	{
@@ -567,6 +577,11 @@ class ORMDatabase
 	 * @param array<array-key, mixed> $params
 	 * @param array<array-key, mixed> $order_bys
 	 * @return array<array-key, mixed>
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function addOrderByClause(Database $db, Schema $schema, array $params, string $table, array $order_bys): array
 	{
@@ -651,6 +666,11 @@ class ORMDatabase
 	 * @param array<array-key, mixed> $values
 	 * @param array<array-key, mixed> $old_values
 	 * @return array<array-key, mixed>
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function addPrimaryKeyWhereParams(Schema $schema, array $params, string $table, string $table_alias, mixed &$values, mixed &$old_values): array
 	{
@@ -701,6 +721,11 @@ class ORMDatabase
 	 * @param array<array-key, mixed> $params
 	 * @param array<array-key, mixed> $conditions
 	 * @return array<array-key, mixed>
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function addWhereClause(Database $db, Schema $schema, array $params, string $table, array $conditions): array
 	{
@@ -941,6 +966,11 @@ class ORMDatabase
 	 * @param Schema $schema  The schema object for the database being inspected
 	 * @param string  $table   The table name to be made cleaned
 	 * @return string  The cleaned table name
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private static function cleanTableName(Schema $schema, string $table): string
 	{
@@ -1006,6 +1036,11 @@ class ORMDatabase
 	 * @param  array<array-key, array{join_type: string, table_name: string, table_alias: string, on_clause_fields?: array<array-key, string>}>  &$joins  The names of the joins that have been created
 	 * @param  array<int, string>  &$used_aliases  The aliases that have been used
 	 * @return string  The name of the significant join created
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private static function createJoin(Schema $schema, string $table, string $table_alias, string $related_table, string $route, array &$joins, array &$used_aliases): string
 	{
@@ -1132,6 +1167,11 @@ class ORMDatabase
 	 * @param  string  $table   The table to use when no table is specified in the shorthand
 	 * @param  string  $column  The shorthand column definition - see RecordSet::build() for possible syntaxes
 	 * @return array{0: string, 1: string}  The $table and $column, suitable for use with Schema
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private static function getTableAndColumn(Schema $schema, string $table, string $column): array
 	{
@@ -1172,6 +1212,11 @@ class ORMDatabase
 	/**
 	 * @param array<array-key, mixed> $params
 	 * @return array<array-key, mixed>
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function injectFromAndGroupByClauses(Database $db, Schema $schema, array $params, string $table): array
 	{
@@ -1396,6 +1441,11 @@ class ORMDatabase
 	 * @param  string  $comparison_operator  The comparison operator for the condition
 	 * @param  mixed   $value                The value for the condition, which allows the $comparison_operator to be tweaked for NULL values
 	 * @return string  A SQL condition using Database::escape() placeholders
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function makeCondition(Schema $schema, string $table, string $column, string $comparison_operator, mixed $value): string
 	{

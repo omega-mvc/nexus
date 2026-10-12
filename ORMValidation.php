@@ -184,6 +184,11 @@ class ORMValidation
 	 * @param  string $related_class  The name of the related class
 	 * @param  string $route          The route to the related class
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function addManyToManyRule(mixed $class, string $related_class, ?string $route = null): void
 	{
@@ -243,6 +248,11 @@ class ORMValidation
 	 * @param  string $related_class  The name of the related class
 	 * @param  string $route          The route to the related class
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function addOneToManyRule(mixed $class, string $related_class, ?string $route = null): void
 	{
@@ -450,6 +460,11 @@ class ORMValidation
 	 * @param  array<array-key, mixed>  &$values      An associative array of all values going into the row (needs all for multi-field unique constraint checking)
 	 * @param  array<array-key, mixed>  &$old_values  The old values from the record
 	 * @return string|null  An error message for the column specified
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function checkAgainstSchema(Schema $schema, ActiveRecord $object, string $column, mixed &$values, mixed &$old_values): ?string
 	{
@@ -543,6 +558,11 @@ class ORMValidation
 	 * @param  mixed                            $conditional_values  If `NULL`, any value in the main column will trigger the conditional columns, otherwise the value must match one of these
 	 * @param  string|array<array-key, string>  $conditional_columns  The columns that are to be required
 	 * @return array<string, string>|null  The error messages for the rule specified
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function checkConditionalRule(Schema $schema, string $class, mixed &$values, mixed $main_columns, mixed $conditional_values, mixed $conditional_columns): ?array
 	{
@@ -595,6 +615,11 @@ class ORMValidation
 	 * @param  string  $column  The column to check
 	 * @param  mixed   $value   The value to check
 	 * @return string|null  An error message for the column specified
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function checkDataType(Schema $schema, string $class, string $column, mixed $value): ?string
 	{
@@ -695,6 +720,11 @@ class ORMValidation
 	 * @param  string  $column   The column to check
 	 * @param  array<array-key, mixed>  &$values  The values to check
 	 * @return string|null  An error message for the column specified
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	private static function checkForeignKeyConstraints(Schema $schema, string $class, string $column, mixed &$values): ?string
 	{
@@ -738,6 +768,11 @@ class ORMValidation
 	 * @param  array<array-key, mixed>  &$values  An associative array of all values for the record
 	 * @param  array<array-key, string>  $columns  The columns to check
 	 * @return string|null  An error message for the rule
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function checkOneOrMoreRule(Schema $schema, string $class, mixed &$values, array $columns): ?string
 	{
@@ -770,6 +805,11 @@ class ORMValidation
 	 * @param  array<array-key, mixed>  &$values  An associative array of all values for the record
 	 * @param  array<array-key, string>  $columns  The columns to check
 	 * @return string|null  An error message for the rule
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function checkOnlyOneRule(Schema $schema, string $class, mixed &$values, array $columns): ?string
 	{
@@ -809,6 +849,11 @@ class ORMValidation
 	 * @param  array<array-key, mixed>  &$values      An associative array of all values going into the row (needs all for multi-field unique constraint checking)
 	 * @param  array<array-key, mixed>  &$old_values  The old values for the record
 	 * @return array<string, string>|null  A single element associative array with the key being the primary keys joined by ,s and the value being the error message
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function checkPrimaryKeys(Schema $schema, ActiveRecord $object, mixed &$values, mixed &$old_values): ?array
 	{
@@ -937,6 +982,11 @@ class ORMValidation
 	 * @param  string         $related_class     The name of the related class
 	 * @param  string         $route             The name of the route from the class to the related class
 	 * @return string|null  An error message for the rule
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	private static function checkRelatedOneOrMoreRule(ActiveRecord $object, mixed &$values, mixed &$related_records, string $related_class, string $route): ?string
 	{
@@ -974,6 +1024,11 @@ class ORMValidation
 	 * @param  array<array-key, mixed>  &$values      The values to check
 	 * @param  array<array-key, mixed>  &$old_values  The old values for the record
 	 * @return array<string, string>  An aray of error messages for the unique constraints
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	private static function checkUniqueConstraints(Schema $schema, ActiveRecord $object, mixed &$values, mixed &$old_values): array
 	{
@@ -1138,6 +1193,10 @@ class ORMValidation
 	 * @param  Database  $db      The database to run the statements through
 	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private static function runQuery(Database $db, array $params): Result
 	{
@@ -1216,6 +1275,11 @@ class ORMValidation
 	 * @param  array<array-key, mixed>  &$values  An associative array of all values for the record
 	 * @param  string  $column   The column to check
 	 * @return boolean  If the column has a value
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function hasValue(Schema $schema, string $class, mixed &$values, string $column): bool
 	{
@@ -1487,6 +1551,11 @@ class ORMValidation
 	 * @param  mixed  $class   The class name or instance of the class the column is located in
 	 * @param  string $column  The column to set as case-insensitive
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function setColumnCaseInsensitive(mixed $class, string $column): void
 	{
@@ -1598,6 +1667,11 @@ class ORMValidation
 	 * @param  array<array-key, mixed>  $values      The values to validate
 	 * @param  array<array-key, mixed>  $old_values  The old values for the record
 	 * @return array<string, string>  An array of messages
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
 	 */
 	public static function validate(ActiveRecord $object, array $values, array $old_values): array
 	{
@@ -1698,6 +1772,11 @@ class ORMValidation
 	 * @param  RelatedValues &$values           The values for the object
 	 * @param  RelatedRecords &$related_records  The related records for the object
 	 * @return array<string, string|array{name: string, errors: array<string, string>}>  An array of messages
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRemainingException
+	 * @throws NoRowsException
+	 * @throws AuthorizationException
 	 */
 	public static function validateRelated(ActiveRecord $object, mixed &$values, mixed &$related_records): array
 	{

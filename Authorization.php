@@ -66,6 +66,10 @@ class Authorization
 	 * @param  string $resource    The resource we are checking permissions for
 	 * @param  string $permission  The permission to require from the user
 	 * @return boolean  If the user has the required permissions
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function checkACL(string $resource, string $permission): bool
 	{
@@ -101,6 +105,10 @@ class Authorization
 	 *
 	 * @param  string $level  The level to check against the logged in user's level
 	 * @return boolean  If the user has the required auth level
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function checkAuthLevel(string $level): bool
 	{
@@ -217,6 +225,10 @@ class Authorization
 	 * Checks to see if the user has an auth level or ACLs defined
 	 *
 	 * @return boolean  If the user is logged in
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function checkLoggedIn(): bool
 	{
@@ -235,6 +247,10 @@ class Authorization
 	 * Destroys the user's auth level and/or ACLs
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function destroyUserInfo(): void
 	{
@@ -267,6 +283,10 @@ class Authorization
 	 * @param  boolean $clear        If the requested url should be cleared from the session after it is retrieved
 	 * @param  string  $default_url  The default URL to return if the user was not redirected
 	 * @return string  The URL that was requested before they were redirected to the login page
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function getRequestedURL(bool $clear, ?string $default_url = null): string
 	{
@@ -282,6 +302,10 @@ class Authorization
 	 * Gets the ACLs for the logged in user
 	 *
 	 * @return ?array<string, mixed>  The logged in user's ACLs, `NULL` if none are set
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function getUserACLs(): ?array
 	{
@@ -295,6 +319,10 @@ class Authorization
 	 * Gets the authorization level for the logged in user
 	 *
 	 * @return ?string  The logged in user's auth level, `NULL` if none is set
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function getUserAuthLevel(): ?string
 	{
@@ -307,6 +335,10 @@ class Authorization
 	 * Gets the value that was set as the user token, `NULL` if no token has been set
 	 *
 	 * @return mixed  The user token that had been set, `NULL` if none
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function getUserToken(): mixed
 	{
@@ -318,6 +350,10 @@ class Authorization
 	 * Redirects the user to the login page
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function redirect(): void
 	{
@@ -332,6 +368,10 @@ class Authorization
 	 * @param  string $resource    The resource we are checking permissions for
 	 * @param  string $permission  The permission to require from the user
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function requireACL(string $resource, string $permission): void
 	{
@@ -350,6 +390,10 @@ class Authorization
 	 *
 	 * @param  string $level  The level to check against the logged in user's level
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function requireAuthLevel(string $level): void
 	{
@@ -367,6 +411,10 @@ class Authorization
 	 * Redirect the user to the login page if they do not have an auth level or ACLs
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function requireLoggedIn(): void
 	{
@@ -424,6 +472,10 @@ class Authorization
 	 *
 	 * @param  string  $url  The URL to save as the requested URL
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function setRequestedURL(string $url): void
 	{
@@ -449,6 +501,10 @@ class Authorization
 	 *
 	 * @param  array<string, array<int, mixed>> $acls  The logged in user's ACLs - see method description for format
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function setUserACLs(array $acls): void
 	{
@@ -462,6 +518,10 @@ class Authorization
 	 *
 	 * @param  string $level  The logged in user's auth level
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function setUserAuthLevel(string $level): void
 	{
@@ -476,6 +536,10 @@ class Authorization
 	 *
 	 * @param  mixed $token  The user's token. This could be a user id, an email address, a user object, etc.
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function setUserToken(mixed $token): void
 	{

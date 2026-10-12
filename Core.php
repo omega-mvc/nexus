@@ -1132,6 +1132,7 @@ class Core
 	 * @internal
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function sendMessagesOnShutdown(): void
 	{

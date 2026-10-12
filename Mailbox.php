@@ -56,6 +56,7 @@ class Mailbox
 	 * @param File        $private_key_file      The file the S/MIME private key is stored in - required for decryption only
 	 * @param string       $private_key_password  The password for the private key
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function addSMIMEPair(string $email_address, mixed $certificate_file, ?File $private_key_file = null, ?string $private_key_password = null): void
 	{
@@ -1065,6 +1066,7 @@ class Mailbox
 	 * Connects to the server
 	 *
 	 * @return void
+	 * @throws ValidationException
 	 */
 	private function connect(): void
 	{
@@ -1191,6 +1193,7 @@ class Mailbox
 	 *
 	 * @param  integer|array<array-key, mixed> $uid  The UID(s) of the message(s) to delete
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public function deleteMessages(mixed $uid): void
 	{
@@ -1265,6 +1268,7 @@ class Mailbox
 	 * @param  integer $uid               The UID of the message to retrieve
 	 * @param  boolean $convert_newlines  If `\r\n` should be converted to `\n` in the `text` and `html` parts the message
 	 * @return array<string, mixed>  The parsed email message - see method description for details
+	 * @throws ValidationException
 	 */
 	public function fetchMessage(int $uid, bool $convert_newlines = false): array
 	{
@@ -1288,6 +1292,7 @@ class Mailbox
 	 *
 	 * @param  integer $uid  The UID of the message to retrieve
 	 * @return string  The raw message source of the email
+	 * @throws ValidationException
 	 */
 	public function fetchMessageSource(int $uid): string
 	{
@@ -1353,6 +1358,7 @@ class Mailbox
 	 * @param  integer $limit  The number of messages to retrieve
 	 * @param  integer $page   The page of messages to retrieve
 	 * @return array<int, array<string, mixed>>  A list of messages on the server - see method description for details
+	 * @throws ValidationException
 	 */
 	public function listMessages(?int $limit = null, ?int $page = null): array
 	{

@@ -40,6 +40,10 @@ class Messaging
 	 * @param  string $name       The name or array of names of the message(s) to check for, or `'*'` to check for any
 	 * @param  string $recipient  The intended recipient
 	 * @return boolean  If a message of the name and recipient specified exists
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function check(string $name, ?string $recipient = null): bool
 	{
@@ -76,6 +80,10 @@ class Messaging
 	 * @param  string  $name
 	 * @param  string  $message
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function create(string $name, string $recipient, ?string $message = null): void
 	{
@@ -95,6 +103,10 @@ class Messaging
 	 * @internal
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function reset(): void
 	{
@@ -108,6 +120,10 @@ class Messaging
 	 * @param  string $name       The name of the message to retrieve
 	 * @param  string $recipient  The intended recipient
 	 * @return string  The message contents
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function retrieve(string $name, ?string $recipient = null): string
 	{
@@ -144,6 +160,10 @@ class Messaging
 	 * @param  string $recipient  The intended recipient
 	 * @param  string $css_class  Overrides using the `$name` as the CSS class when displaying the message - only used if a single `$name` is specified
 	 * @return boolean  If one or more messages was shown
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function show(mixed $name, ?string $recipient = null, ?string $css_class = null): bool
 	{

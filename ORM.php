@@ -380,6 +380,11 @@ class ORM
 	 *
 	 * @param  string $class  The name of the class to create
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function defineActiveRecordClass(string $class): void
 	{
@@ -416,6 +421,10 @@ class ORM
 	 * @param  string $database_name  The database to enable caching for
 	 * @param  string $key_token      This is a token that is used in cache keys to prevent conflicts for server-wide caches - when non-NULL the document root is used
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function enableSchemaCaching(Cache $cache, string $database_name = 'default', ?string $key_token = null): void
 	{
@@ -756,6 +765,11 @@ class ORM
 	 * @param  string $column  The database column
 	 * @param  mixed  $value   The value to possibly objectify
 	 * @return mixed  The scalar or object version of the value, depending on the column type and column options
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function objectify(string $class, string $column, mixed $value): mixed
 	{

@@ -860,6 +860,7 @@ class Timestamp
 	 *
 	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this timestamp is equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function eq(mixed $other_timestamp = null): bool
 	{
@@ -926,6 +927,7 @@ class Timestamp
 	 * @param  boolean                          $simple           When `TRUE`, the returned value will only include the difference in the two timestamps, but not `from now`, `ago`, `after` or `before`
 	 * @param  boolean                           $simple
 	 * @return string  The fuzzy difference in time between the this timestamp and the one provided
+	 * @throws ValidationException
 	 */
 	public function getFuzzyDifference(mixed $other_timestamp = null, bool $simple = false): string
 	{
@@ -1003,6 +1005,7 @@ class Timestamp
 	 *
 	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as now
 	 * @return boolean  If this timestamp is greater than the one passed
+	 * @throws ValidationException
 	 */
 	public function gt(mixed $other_timestamp = null): bool
 	{
@@ -1016,6 +1019,7 @@ class Timestamp
 	 *
 	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as now
 	 * @return boolean  If this timestamp is greater than or equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function gte(mixed $other_timestamp = null): bool
 	{
@@ -1029,6 +1033,7 @@ class Timestamp
 	 *
 	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this timestamp is less than the one passed
+	 * @throws ValidationException
 	 */
 	public function lt(mixed $other_timestamp = null): bool
 	{
@@ -1042,6 +1047,7 @@ class Timestamp
 	 *
 	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this timestamp is less than or equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function lte(mixed $other_timestamp = null): bool
 	{
@@ -1064,6 +1070,7 @@ class Timestamp
 	 * @param  string $format    The current timestamp will be formatted with this string, and the output used to create a new object. The format should **not** include the timezone (character `e`).
 	 * @param  string $timezone  The timezone for the new object if different from the current timezone
 	 * @return Timestamp  The new timestamp
+	 * @throws ValidationException
 	 */
 	public function modify(string $format, ?string $timezone = null): Timestamp
 	{

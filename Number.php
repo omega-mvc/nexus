@@ -41,6 +41,7 @@ class Number
 	 * @param  integer        $from_base  The base to convert from - must be between `2` and `16`
 	 * @param  integer        $to_base    The base to convert to - must be between `2` and `16`
 	 * @return string  The number converted to the new base
+	 * @throws ValidationException
 	 */
 	public static function baseConvert(mixed $number, int $from_base, int $to_base): string
 	{
@@ -745,6 +746,7 @@ class Number
 	 *
 	 * @param  integer $scale  The number of places after the decimal to return
 	 * @return \Number  Pi
+	 * @throws ValidationException
 	 */
 	public static function pi(int $scale): Number
 	{
@@ -948,6 +950,7 @@ class Number
 	 *
 	 * @param  integer $scale  The number of places after the decimal - overrides the scale for this number
 	 * @return \Number  The absolute number
+	 * @throws ValidationException
 	 */
 	public function abs(?int $scale = null): Number
 	{
@@ -987,6 +990,7 @@ class Number
 	 * Rounds the number to the next highest integer
 	 *
 	 * @return \Number  The next highest integer
+	 * @throws ValidationException
 	 */
 	public function ceil(): Number
 	{
@@ -1084,6 +1088,7 @@ class Number
 	 * Rounds the number to the next lowest integer
 	 *
 	 * @return \Number  The next lowest integer
+	 * @throws ValidationException
 	 */
 	public function floor(): Number
 	{
@@ -1348,6 +1353,7 @@ class Number
 	 *
 	 * @param  integer $scale  The number of places after the decimal - overrides the scale for this number
 	 * @return \Number  The negated number
+	 * @throws ValidationException
 	 */
 	public function neg(?int $scale = null): Number
 	{
@@ -1454,6 +1460,7 @@ class Number
 	 *
 	 * @param  integer $scale  The number of places after (or before if negative) the decimal to round to
 	 * @return \Number  The rounded result
+	 * @throws ValidationException
 	 */
 	public function round(int $scale): Number
 	{
@@ -1515,6 +1522,7 @@ class Number
 	 *
 	 * @param  integer $scale  The number of places after the decimal - overrides the scale for this number
 	 * @return \Number  The square root
+	 * @throws ValidationException
 	 */
 	public function sqrt(?int $scale = null): Number
 	{
@@ -1635,6 +1643,7 @@ class Number
 	 *
 	 * @param  integer $scale  The number of places after (or before if negative) the decimal
 	 * @return \Number  The square root
+	 * @throws ValidationException
 	 */
 	public function trunc(int $scale): Number
 	{

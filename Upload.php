@@ -361,6 +361,7 @@ class Upload
 	 * @param  string $field  The field to get the file array for
 	 * @param  mixed  $index  If the field is an array file upload field, use this to specify which array index to return
 	 * @return UploadFileEntry  The file info array from `$_FILES`
+	 * @throws ValidationException
 	 */
 	private function extractFileUploadArray(string $field, mixed $index = null): array
 	{
@@ -692,6 +693,7 @@ class Upload
 	 *
 	 * @param UploadFileEntry $file_array  The `$_FILES` array for a single file
 	 * @return NULL|string  The validation error message, or `NULL` if there is no error
+	 * @throws ValidationException
 	 */
 	private function validateField(array $file_array): ?string
 	{

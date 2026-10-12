@@ -399,6 +399,7 @@ class Money
 	 *
 	 * @param  string $new_currency  The ISO code (three letters, e.g. `'USD'`) for the new currency
 	 * @return Money  A new Money object representing this amount in the new currency
+	 * @throws ValidationException
 	 */
 	public function convert(string $new_currency): Money
 	{

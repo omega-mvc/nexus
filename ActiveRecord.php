@@ -309,6 +309,11 @@ abstract class ActiveRecord
 	 * @param  mixed  $value     The value to compare to
 	 * @param  mixed $result     The result of the method call(s)
 	 * @return boolean  If the comparison was successful
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	private static function checkCondition(string $operator, mixed $value, mixed $result): bool
 	{
@@ -465,6 +470,11 @@ abstract class ActiveRecord
 	 * @param  ActiveRecord $record      The record to check
 	 * @param  array<string, mixed> $conditions  The conditions to check - see RecordSet::filter() for format details
 	 * @return boolean  If the record meets all conditions
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function checkConditions(ActiveRecord $record, array $conditions): bool
 	{
@@ -652,6 +662,11 @@ abstract class ActiveRecord
 	 * @param string $subject  An underscore_notation subject - either a singular or plural class name
 	 * @param string|NULL $route  The route to the subject
 	 * @return array{0: string, 1: string, 2: bool}  An array with the structure: array(0 => $subject, 1 => $route, 2 => $plural)
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private static function determineSubject(string $class, string $subject, ?string $route): array
 	{
@@ -718,6 +733,11 @@ abstract class ActiveRecord
 	 * @param  ActiveRecord|array<array-key, mixed>|bool|float|int|string $record   An ActiveRecord object, an array of the records data, an array of primary key data or a scalar primary key value
 	 * @param  string                         $class    The class name, if $record isn't an ActiveRecord
 	 * @return string|NULL  A hash of the record's primary key value or NULL if the record doesn't exist yet
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function hash(mixed $record, ?string $class = null): mixed
 	{
@@ -860,6 +880,11 @@ abstract class ActiveRecord
 	 * @param  Schema $schema  The schema object to get the column info from
 	 * @param  string $table   The table to get the column info for
 	 * @return array<string, array<mixed>>  The info for each column
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function getColumnInfo(Schema $schema, string $table): array
 	{
@@ -887,6 +912,11 @@ abstract class ActiveRecord
 	 * @param  string $table   The table the column is part of
 	 * @param  string $column  The column to get the info for
 	 * @return array<mixed>  The info for the column
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function getColumnInfoForColumn(Schema $schema, string $table, string $column): array
 	{
@@ -904,6 +934,11 @@ abstract class ActiveRecord
 	 * @param  string $column   The column to get the info for
 	 * @param  string $element  The element to return
 	 * @return string  The element value
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function getColumnInfoString(Schema $schema, string $table, string $column, string $element): string
 	{
@@ -921,6 +956,11 @@ abstract class ActiveRecord
 	 * @param  string $column   The column to get the info for
 	 * @param  string $element  The element to return
 	 * @return int  The element value
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function getColumnInfoInt(Schema $schema, string $table, string $column, string $element): int
 	{
@@ -982,6 +1022,10 @@ abstract class ActiveRecord
 	 * @param  Database                $db      The database to run the query on
 	 * @param  array<array-key, mixed> $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private static function runQuery(Database $db, array $params): Result
 	{
@@ -1074,6 +1118,11 @@ abstract class ActiveRecord
 	 * @param  mixed  $value  The value passed
 	 * @param  string $class  The record class the set contains
 	 * @return RecordSet  The record set
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	private static function recordSetValue(mixed $value, string $class): RecordSet
 	{
@@ -1150,6 +1199,11 @@ abstract class ActiveRecord
 	 * @param  string $method_name  The name of the method called
 	 * @param  array<int, mixed> $parameters  The parameters passed
 	 * @return mixed  The value returned by the method called
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function __call(mixed $method_name, mixed $parameters)
 	{
@@ -1360,6 +1414,11 @@ abstract class ActiveRecord
 	 * @internal
 	 *
 	 * @return ActiveRecord
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function __clone()
 	{
@@ -1418,6 +1477,10 @@ abstract class ActiveRecord
 	 *
 	 * @param  mixed $key  The primary key or unique key value(s) - single column primary keys will accept a scalar value, all others must be an associative array of `(string) {column} => (mixed) {value}`
 	 * @return ActiveRecord
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function __construct(mixed $key = null)
 	{
@@ -1607,6 +1670,11 @@ abstract class ActiveRecord
 	 * Creates the Database::translatedQuery() insert statement params
 	 *
 	 * @return array<int, mixed>  The parameters for an Database::translatedQuery() SQL insert statement
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	protected function constructInsertParams(): array
 	{
@@ -1651,6 +1719,11 @@ abstract class ActiveRecord
 	 * Creates the Database::translatedQuery() update statement params
 	 *
 	 * @return array<array-key, mixed>  The parameters for an Database::translatedQuery() SQL update statement
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	protected function constructUpdateParams(): array
 	{
@@ -1693,6 +1766,11 @@ abstract class ActiveRecord
 	 *
 	 * @param  boolean $force_cascade  When TRUE, this will cause all child objects to be deleted, even if the ON DELETE clause is RESTRICT or NO ACTION
 	 * @return ActiveRecord|null  The record object, to allow for method chaining
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function delete(bool $force_cascade = false): mixed
 	{
@@ -1956,6 +2034,11 @@ abstract class ActiveRecord
 	 * @param  string $column      The name of the column to retrieve
 	 * @param  mixed  $formatting  The formatting string
 	 * @return string  The encoded value for the column specified
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	protected function encode(string $column, mixed $formatting = null): string
 	{
@@ -2047,6 +2130,11 @@ abstract class ActiveRecord
 	 * Checks to see if the record exists in the database
 	 *
 	 * @return boolean  If the record exists in the database
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function exists(): bool
 	{
@@ -2150,6 +2238,11 @@ abstract class ActiveRecord
 	 * @param  string $column   The name of the column to inspect
 	 * @param  string $element  The metadata element to retrieve
 	 * @return mixed  The metadata array for the column, or the metadata element specified
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	protected function inspect(string $column, ?string $element = null): mixed
 	{
@@ -2208,6 +2301,10 @@ abstract class ActiveRecord
 	 * @throws NotFoundException  When the record could not be found in the database
 	 *
 	 * @return ActiveRecord  The record object, to allow for method chaining
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function load(): ActiveRecord
 	{
@@ -2249,6 +2346,11 @@ abstract class ActiveRecord
 	 * @param  Iterator $result               The result object to use for loading the current object
 	 * @param  boolean  $ignore_identity_map  If the identity map should be ignored and the values loaded no matter what
 	 * @return boolean  If the record was loaded from the identity map
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
 	 */
 	protected function loadFromResult(Iterator $result, bool $ignore_identity_map = false): bool
 	{
@@ -2367,18 +2469,31 @@ abstract class ActiveRecord
 	}
 
 
-	/*
+	/**
 	 * Sets the values for this record by getting values from the request through the Request class
 	 *
 	 * @param  boolean $recursive  If all one-to-many tables and one-to-one relationships should be populated
 	 * @return ActiveRecord  The record object, to allow for method chaining
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function populate(mixed $recursive = false): mixed
 	{
 		$class = get_class($this);
 
 		if (ORM::getActiveRecordMethod($class, 'populate')) {
-			return $this->__call('populate', array());
+			$result = $this->__call('populate', array());
+			if (!$result instanceof ActiveRecord) {
+				throw new ProgrammerException(
+					'The %s::populate() method must return an instance of ActiveRecord, %s returned',
+					$class,
+					get_debug_type($result)
+				);
+			}
+			return $result;
 		}
 
 		ORM::callHookCallbacks(
@@ -2447,6 +2562,11 @@ abstract class ActiveRecord
 	 * @param  string $column      The name of the column to retrieve
 	 * @param  mixed  $formatting  The formatting parameter, if applicable
 	 * @return string  The formatted value for the column specified
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	protected function prepare(string $column, mixed $formatting = null): string
 	{
@@ -2556,6 +2676,11 @@ abstract class ActiveRecord
 	 *
 	 * @param  boolean $include_doc_comments  If the doc block comments for each method should be included
 	 * @return array<string, string>  An associative array of method name => method signature
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function reflect(bool $include_doc_comments = false): array
 	{
@@ -2834,6 +2959,11 @@ abstract class ActiveRecord
 	 *
 	 * @param  string $related_class  The plural related class to replicate - see method description for details
 	 * @return ActiveRecord  The cloned record
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function replicate(?string $related_class = null): ActiveRecord
 	{
@@ -3032,6 +3162,11 @@ abstract class ActiveRecord
 	 * @param  string $column  The column to set the value to
 	 * @param  mixed  $value   The value to set
 	 * @return ActiveRecord  This record, to allow for method chaining
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	protected function set(string $column, mixed $value): ActiveRecord
 	{
@@ -3076,6 +3211,10 @@ abstract class ActiveRecord
 	 *
 	 * @param  boolean $force_cascade  When storing related records, this will force deleting child records even if they have their own children in a relationship with an RESTRICT or NO ACTION for the ON DELETE clause
 	 * @return ActiveRecord  The record object, to allow for method chaining
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function store(bool $force_cascade = false): ActiveRecord
 	{
@@ -3098,6 +3237,8 @@ abstract class ActiveRecord
 		$db     = ORMDatabase::retrieve($class, 'write');
 		$schema = ORMSchema::retrieve($class);
 
+		$inside_db_transaction = $db->isInsideTransaction();
+
 		try {
 			$table = ORM::tablize($class);
 
@@ -3113,8 +3254,6 @@ abstract class ActiveRecord
 					$new_autoincrementing_record = true;
 				}
 			}
-
-			$inside_db_transaction = $db->isInsideTransaction();
 
 			if (!$inside_db_transaction) {
 				$db->translatedQuery('BEGIN');
@@ -3301,6 +3440,10 @@ abstract class ActiveRecord
 	 * @param  boolean $return_messages      If an array of validation messages should be returned instead of an exception being thrown
 	 * @param  boolean $remove_column_names  If column names should be removed from the returned messages, leaving just the message itself
 	 * @return array<mixed>|void  If $return_messages is TRUE, an array of validation messages will be returned
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public function validate(bool $return_messages = false, bool $remove_column_names = false): mixed
 	{

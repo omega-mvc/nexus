@@ -116,6 +116,7 @@ class Request
 	 * @param string|null  $cast_to  The data type to cast to
 	 * @param integer      $level    The nesting level of the call
 	 * @return mixed  The casted `$value`
+	 * @throws ValidationException
 	 */
 	private static function cast(mixed $value, ?string $cast_to, int $level = 0): mixed
 	{
@@ -293,6 +294,7 @@ class Request
 	 * @param  string|null $cast_to        Cast the value to this data type
 	 * @param  mixed       $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead
 	 * @return string  The encoded value
+	 * @throws ValidationException
 	 */
 	public static function encode(string $key, ?string $cast_to = null, mixed $default_value = null): string
 	{
@@ -383,6 +385,10 @@ class Request
 	 *
 	 * @param  string $url  The URL to generate a token for, default to the current page
 	 * @return string  The token to be submitted with the form
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function generateCSRFToken(?string $url = null): string
 	{
@@ -446,6 +452,7 @@ class Request
 	 * @param  mixed   $default_value          If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead. This value will get cast if a `$cast_to` is specified.
 	 * @param  boolean $use_default_for_blank  If the request value is a blank string and `$default_value` is specified, this flag will cause the `$default_value` to be returned
 	 * @return mixed  The value
+	 * @throws ValidationException
 	 */
 	public static function get(string $key, ?string $cast_to = null, mixed $default_value = null, bool $use_default_for_blank = false): mixed
 	{
@@ -566,6 +573,7 @@ class Request
 	 * @param  string $key           The key to get the value of - array elements can be accessed via `[sub-key]` syntax
 	 * @param  array<int|string, mixed>  $valid_values  The array of values that are permissible, if one is not selected, picks first
 	 * @return mixed  The value
+	 * @throws ValidationException
 	 */
 	public static function getValid(string $key, array $valid_values): mixed
 	{
@@ -791,6 +799,7 @@ class Request
 	 * @param  string $cast_to        Cast the value to this data type
 	 * @param  mixed  $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead
 	 * @return string  The prepared value
+	 * @throws ValidationException
 	 */
 	public static function prepare(string $key, ?string $cast_to = null, mixed $default_value = null): string
 	{
@@ -846,6 +855,10 @@ class Request
 	 * @internal
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function reset(): void
 	{
@@ -954,6 +967,10 @@ class Request
 	 * @param  string $token  The request token to validate
 	 * @param  string $url    The URL to validate the token for, default to the current page
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function validateCSRFToken(string $token, ?string $url = null): void
 	{

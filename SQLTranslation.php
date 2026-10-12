@@ -204,6 +204,10 @@ class SQLTranslation
 	 *
 	 * @param  Database $database    The database being translated for
 	 * @return SQLTranslation
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function __construct(Database $database)
 	{
@@ -236,6 +240,10 @@ class SQLTranslation
 	 * Clears all of the schema info out of the object and, if set, the Cache object
 	 *
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function clearCache(): void
 	{
@@ -251,6 +259,10 @@ class SQLTranslation
 	 * Adds a number of math functions to SQLite that MSSQL, MySQL and PostgreSQL have by default
 	 *
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function createSQLiteFunctions(): void
 	{
@@ -298,6 +310,10 @@ class SQLTranslation
 	 *
 	 * @param  Cache  $cache  The cache to cache to
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function enableCaching(Cache $cache, mixed $key_token = null): void
 	{
@@ -334,6 +350,10 @@ class SQLTranslation
 	 *
 	 * @param  string $sql  The SQL to fix
 	 * @return string  The fixed SQL
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function fixMSSQLNationalColumns(string $sql): string
 	{
@@ -645,6 +665,10 @@ class SQLTranslation
 	 * @param  array<int|string, string> $statements            The SQL statements to translate
 	 * @param  array<int, string>|null &$rollback_statements  SQL statements to rollback the returned SQL statements if something goes wrong - only applicable for MySQL `ALTER TABLE` statements
 	 * @return array<int|string, string>  The translated SQL statements all ready for execution. Statements that have been translated will have string key of the number, `:` and the original SQL, all other will have a numeric key.
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function translate(array $statements, mixed &$rollback_statements = null): array
 	{
@@ -714,6 +738,10 @@ class SQLTranslation
 	 *
 	 * @param  string $sql  The SQL to translate
 	 * @return string  The translated SQL
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function translateBasicSyntax(string $sql): string
 	{

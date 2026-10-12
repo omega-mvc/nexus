@@ -113,6 +113,11 @@ class ORMRelated
 	 * @param  ActiveRecord|array<array-key, mixed>|string|int|null $record  The record (or primary key of the record) to be associated
 	 * @param  ?string                                   $route             The route to use between the current class and the related class
 	 * @return void
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function associateRecord(string $class, array &$related_records, string $related_class, mixed $record, ?string $route = null): void
 	{
@@ -151,6 +156,11 @@ class ORMRelated
 	 * @param  ActiveRecord|RecordSet|array<array-key, mixed> $records_to_associate  An ActiveRecord, a RecordSet, an array of records, or an array of primary keys of the records to be associated
 	 * @param  ?string                                    $route                 The route to use between the current class and the related class
 	 * @return void
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws ValidationException
+	 * @throws AuthorizationException
 	 */
 	public static function associateRecords(string $class, array &$related_records, string $related_class, mixed $records_to_associate, ?string $route = null): void
 	{
@@ -199,6 +209,11 @@ class ORMRelated
 	 * @param  string $related_class     The class that is related to the current record
 	 * @param  ?string $route            The route to follow for the class specified
 	 * @return RecordSet  A record set of the related records
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
 	 */
 	public static function buildRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): RecordSet
 	{
@@ -370,6 +385,10 @@ class ORMRelated
 	 * @param  Database     $db      The database to run the statements through
 	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private static function runQuery(Database $db, array $params): Result
 	{
@@ -395,6 +414,11 @@ class ORMRelated
 	 * @param  string    $column  The column the value was fetched for
 	 * @param  mixed     $value   The value to unescape
 	 * @return mixed  The unescaped value
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function unescapeValue(Database $db, Schema $schema, string $table, string $column, mixed $value): mixed
 	{
@@ -419,6 +443,11 @@ class ORMRelated
 	 * @param  string  $table   The table the column belongs to
 	 * @param  string  $column  The column to get the placeholder for
 	 * @return string  The placeholder for the column specified
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private static function placeholder(Schema $schema, string $table, string $column): string
 	{
@@ -459,6 +488,11 @@ class ORMRelated
 	 * @param  string $related_class     The class that is related to the current record
 	 * @param  ?string $route            The route to follow for the class specified
 	 * @return integer  The number of related records
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	public static function countRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): int
 	{
@@ -539,6 +573,11 @@ class ORMRelated
 	 * @param  string $related_class     The related class name
 	 * @param  ?string $route            The route to the related class
 	 * @return ActiveRecord  An instance of the class specified
+	 * @throws NotFoundException
+	 * @throws NoRemainingException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws AuthorizationException
 	 */
 	public static function createRecord(string $class, array $values, array &$related_records, string $related_class, ?string $route = null): ActiveRecord
 	{
@@ -616,6 +655,11 @@ class ORMRelated
 	 * @param  string $related_class  The related class being filtered for
 	 * @param  ?string $route         The route to the related class
 	 * @return string  The first primary key column in the related class
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function determineFirstPKColumn(string $class, string $related_class, ?string $route = null): string
 	{
@@ -659,6 +703,11 @@ class ORMRelated
 	 * @param  string $related_class  The related class being filtered for
 	 * @param  ?string $route         The route to the related class
 	 * @return string  The prefix to filter the request fields by
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function determineRequestFilter(string $class, string $related_class, ?string $route = null): string
 	{
@@ -697,6 +746,11 @@ class ORMRelated
 	 * @param  string $related_class     The class we are associating with the current record
 	 * @param  string $route             The route to use between the current class and the related class
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function flagForAssociation(string $class, array &$related_records, string $related_class, ?string $route = null): void
 	{
@@ -728,6 +782,11 @@ class ORMRelated
 	 * @param  string $related_class  The related class the ordering rules apply to
 	 * @param  string $route          The route to the related table, should be a column name in the current table or a join table name
 	 * @return array<string, string>  An array of the order bys - see RecordSet::build() for format
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function getOrderBys(string $class, string $related_class, string $route): array
 	{
@@ -756,6 +815,11 @@ class ORMRelated
 	 * @param  string $related_class     The class that is related to the current record
 	 * @param  string $route             The route to follow for the class specified
 	 * @return array<int|string, mixed>  The primary keys of the related records
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	public static function getPrimaryKeys(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): array
 	{
@@ -874,6 +938,11 @@ class ORMRelated
 	 * @param  string $related_class  The related class to get the record name of
 	 * @param  ?string $route  The route to the related class, if any
 	 * @return string  The record name for the related class specified
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function getRelatedRecordName(string $class, string $related_class, ?string $route = null): string
 	{
@@ -917,6 +986,11 @@ class ORMRelated
 	 * @param  string $related_class     The related class we are checking for
 	 * @param  string $route             The route to the related class
 	 * @return bool  Whether the related records exist for the record specified
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws ValidationException
+	 * @throws AuthorizationException
 	 */
 	public static function hasRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): bool
 	{
@@ -951,6 +1025,11 @@ class ORMRelated
 	 * @param  string $related_class     The related class to populate
 	 * @param  string $route             The route to the related class
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function linkRecords(string $class, array &$related_records, string $related_class, ?string $route = null): void
 	{
@@ -1022,6 +1101,11 @@ class ORMRelated
 	 * @param  string $record_name     The human version of the related record
 	 * @param  ?string $route          The route to the related class
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function overrideRelatedRecordName(mixed $class, string $related_class, string $record_name, ?string $route = null): void
 	{
@@ -1061,6 +1145,11 @@ class ORMRelated
 	 * @param  string  $route             The route to the related class
 	 * @param  boolean $recursive         If a recursive populate should be performed on the child records
 	 * @return void
+	 * @throws NotFoundException
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function populateRecords(string $class, array &$related_records, string $related_class, ?string $route = null, bool $recursive = false): void
 	{
@@ -1121,6 +1210,11 @@ class ORMRelated
 	 * @param  array<string, string>  &$signatures  The associative array of `{method_name} => {signature}`
 	 * @param  boolean $include_doc_comments  If the doc block comments for each method should be included
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function reflect(string $class, array &$signatures, bool $include_doc_comments): void
 	{
@@ -1456,6 +1550,11 @@ class ORMRelated
 	 * @param string               $method         The method to be called on the related class that will return the name
 	 * @param ?string              $route          The route to the related class
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function registerValidationNameMethod(mixed $class, string $related_class, string $method, ?string $route = null): void
 	{
@@ -1499,6 +1598,11 @@ class ORMRelated
 	 * @param  array<string, string>  $order_bys       An array of the order bys for this table.column combination - see RecordSet::build() for format
 	 * @param  string $route           The route to the related table, this should be a column name in the current table or a join table name
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function setOrderBys(mixed $class, string $related_class, array $order_bys, ?string $route = null): void
 	{
@@ -1537,6 +1641,11 @@ class ORMRelated
 	 * @param  integer $count             The number of records
 	 * @param  string  $route             The route to follow for the class specified
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function setCount(string $class, array &$related_records, string $related_class, int $count, ?string $route = null): void
 	{
@@ -1578,6 +1687,11 @@ class ORMRelated
 	 * @param  array<int|string, mixed>  $primary_keys      The records to set
 	 * @param  string $route             The route to use between the current class and the related class
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function setPrimaryKeys(string $class, array &$related_records, string $related_class, array $primary_keys, ?string $route = null): void
 	{
@@ -1615,6 +1729,11 @@ class ORMRelated
 	 * @param  RecordSet $records       The records are associating
 	 * @param  string $route             The route to use between the current class and the related class
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public static function setRecordSet(string $class, array &$related_records, string $related_class, RecordSet $records, ?string $route = null): void
 	{
@@ -1651,6 +1770,11 @@ class ORMRelated
 	 * @param  RelatedRecords   &$related_records  The related records array
 	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related records that are being deleted
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public static function store(string $class, array &$values, array &$related_records, bool $force_cascade): void
 	{
@@ -1686,6 +1810,11 @@ class ORMRelated
 	 * @param  array<string, mixed>  $relationship  The information about the relationship between this object and the records in the record set
 	 * @param  RelatedInfo  $related_info  An array containing the keys `'record_set'`, `'count'`, `'primary_keys'` and `'associate'`
 	 * @return void
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws ValidationException
 	 */
 	public static function storeManyToMany(string $class, array &$values, array $relationship, array $related_info): void
 	{
@@ -1770,6 +1899,10 @@ class ORMRelated
 	 * @param  string  $route             The route to the related class
 	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related records that are being deleted
 	 * @return void
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function storeOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route, bool $force_cascade): void
 	{
@@ -1845,6 +1978,11 @@ class ORMRelated
 	 * @param  RelatedValues  &$values           The values for the object
 	 * @param  RelatedRecords  &$related_records  The related records for the object
 	 * @return array<string, string|array{name: string, errors: array<string, string>}>  The validation messages for the related records
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRemainingException
+	 * @throws NoRowsException
+	 * @throws AuthorizationException
 	 */
 	public static function validate(string $class, array &$values, array &$related_records): array
 	{
@@ -1887,6 +2025,11 @@ class ORMRelated
 	 * @param  string $related_class     The name of the class for this record set
 	 * @param  string $route             The route between the table and related table
 	 * @return array<string, string|array{name: string, errors: array<string, string>}>  An array of validation messages
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRemainingException
+	 * @throws NoRowsException
+	 * @throws AuthorizationException
 	 */
 	private static function validateOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route): array
 	{
@@ -1985,6 +2128,11 @@ class ORMRelated
 	 * @param  string $route          The route between the table and related table
 	 * @param  RelatedInfo  $related_info   The related info to validate
 	 * @return array<string, string>  An array of validation messages
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	private static function validateManyToMany(string $class, string $related_class, string $route, array $related_info): array
 	{

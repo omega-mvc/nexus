@@ -536,6 +536,7 @@ class Image extends File
 	 *
 	 * @param  string $temp_dir  The directory to use for the ImageMagick temp dir
 	 * @return void
+	 * @throws ValidationException
 	 */
 	public static function setImageMagickTempDir(string $temp_dir): void
 	{
@@ -609,6 +610,7 @@ class Image extends File
 	 * @param  numeric|string $crop_from_x  The number of pixels from the left of the image to start the crop from, or a horizontal position of `'left'`, `'center'` or `'right'`
 	 * @param  numeric|string $crop_from_y  The number of pixels from the top of the image to start the crop from, or a vertical position of `'top'`, `'center'` or `'bottom'`
 	 * @return Image  The image object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function crop(mixed $new_width, mixed $new_height, mixed $crop_from_x, mixed $crop_from_y): Image
 	{
@@ -718,6 +720,7 @@ class Image extends File
 	 * @param  string  $horizontal_position  A horizontal position of `'left'`, `'center'` or `'right'`
 	 * @param  string  $vertical_position    A vertical position of `'top'`, `'center'` or `'bottom'`
 	 * @return Image  The image object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function cropToRatio(mixed $ratio_width, mixed $ratio_height, string $horizontal_position = 'center', string $vertical_position = 'center'): Image
 	{
@@ -783,6 +786,7 @@ class Image extends File
 	 * Desaturation does not occur until ::saveChanges() is called.
 	 *
 	 * @return Image  The image object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function desaturate(): Image
 	{
@@ -807,6 +811,7 @@ class Image extends File
 	 * Gets the dimensions of the image as of the last modification
 	 *
 	 * @return array{width: int, height: int}  An associative array: `'width' => {integer}, 'height' => {integer}`
+	 * @throws ValidationException
 	 */
 	private function getCurrentDimensions(): array
 	{
@@ -830,6 +835,7 @@ class Image extends File
 	 * Returns the width and height of the image as a two element array
 	 *
 	 * @return array{0: int, 1: int}  In the format `0 => (int) {width}, 1 => (int) {height}`
+	 * @throws ValidationException
 	 */
 	public function getDimensions(): array
 	{
@@ -845,6 +851,7 @@ class Image extends File
 	 * Returns the height of the image
 	 *
 	 * @return integer  The height of the image in pixels
+	 * @throws ValidationException
 	 */
 	public function getHeight(): int
 	{
@@ -875,6 +882,7 @@ class Image extends File
 	 * Returns the width of the image
 	 *
 	 * @return integer  The width of the image in pixels
+	 * @throws ValidationException
 	 */
 	public function getWidth(): int
 	{
@@ -1298,6 +1306,7 @@ class Image extends File
 	 * @param  integer $canvas_height   The height of the canvas to fit the image on, `0` for no constraint
 	 * @param  boolean $allow_upsizing  If the image is smaller than the desired canvas, the image will be increased in size
 	 * @return Image  The image object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function resize(int $canvas_width, int $canvas_height, bool $allow_upsizing = false): Image
 	{
@@ -1372,6 +1381,7 @@ class Image extends File
 	 * Rotation does not occur until ::saveChanges() is called.
 	 *
 	 * @param  integer $degrees   The number of degrees to rotate - 90, 180, or 270
+	 * @throws ValidationException
 	 */
 	public function rotate(int $degrees): mixed
 	{
@@ -1431,6 +1441,7 @@ class Image extends File
 	 * @param  string   $new_image_type
 	 * @param  boolean  $overwrite
 	 * @return Image  The image object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function saveChanges(?string $new_image_type = null, int $jpeg_quality = 90, bool $overwrite = false): Image
 	{

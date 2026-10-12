@@ -158,6 +158,7 @@ class Date
 	 *
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function eq(mixed $other_date = null): bool
 	{
@@ -224,6 +225,7 @@ class Date
 	 * @param  boolean|Date|object|string|integer $other_date  The date to create the difference with, `NULL` is interpreted as today
 	 * @param  boolean                     $simple      When `TRUE`, the returned value will only include the difference in the two dates, but not `from now`, `ago`, `after` or `before`
 	 * @return string  The fuzzy difference in time between the this date and the one provided
+	 * @throws ValidationException
 	 */
 	public function getFuzzyDifference(mixed $other_date = null, bool $simple = false): string
 	{
@@ -304,6 +306,7 @@ class Date
 	 *
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is greater than the one passed
+	 * @throws ValidationException
 	 */
 	public function gt(mixed $other_date = null): bool
 	{
@@ -317,6 +320,7 @@ class Date
 	 *
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is greater than or equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function gte(mixed $other_date = null): bool
 	{
@@ -330,6 +334,7 @@ class Date
 	 *
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is less than the one passed
+	 * @throws ValidationException
 	 */
 	public function lt(mixed $other_date = null): bool
 	{
@@ -343,6 +348,7 @@ class Date
 	 *
 	 * @param  Date|object|string|integer $other_date  The date to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this date is less than or equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function lte(mixed $other_date = null): bool
 	{
@@ -364,6 +370,7 @@ class Date
 	 *
 	 * @param  string $format  The current date will be formatted with this string, and the output used to create a new object
 	 * @return Date  The new date
+	 * @throws ValidationException
 	 */
 	public function modify(string $format): Date
 	{

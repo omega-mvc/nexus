@@ -169,6 +169,7 @@ class Time
 	 *
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this time is equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function eq(mixed $other_time = null): bool
 	{
@@ -234,6 +235,7 @@ class Time
 	 * @param  boolean|Time|object|string|integer $other_time  The time to create the difference with, `NULL` is interpreted as now, `TRUE` sets `$simple`
 	 * @param  boolean $simple  When `TRUE`, the returned value will only include the difference in the two times, but not `from now`, `ago`, `after` or `before`
 	 * @return string  The fuzzy difference in time between the this time and the one provided
+	 * @throws ValidationException
 	 */
 	public function getFuzzyDifference(mixed $other_time = null, bool $simple = false): string
 	{
@@ -315,6 +317,7 @@ class Time
 	 *
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as now
 	 * @return boolean  If this time is greater than the one passed
+	 * @throws ValidationException
 	 */
 	public function gt(mixed $other_time = null): bool
 	{
@@ -328,6 +331,7 @@ class Time
 	 *
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as now
 	 * @return boolean  If this time is greater than or equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function gte(mixed $other_time = null): bool
 	{
@@ -341,6 +345,7 @@ class Time
 	 *
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this time is less than the one passed
+	 * @throws ValidationException
 	 */
 	public function lt(mixed $other_time = null): bool
 	{
@@ -354,6 +359,7 @@ class Time
 	 *
 	 * @param  Time|object|string|integer $other_time  The time to compare with, `NULL` is interpreted as today
 	 * @return boolean  If this time is less than or equal to the one passed
+	 * @throws ValidationException
 	 */
 	public function lte(mixed $other_time = null): bool
 	{
@@ -374,6 +380,7 @@ class Time
 	 *
 	 * @param  string $format  The current time will be formatted with this string, and the output used to create a new object
 	 * @return Time  The new time
+	 * @throws ValidationException
 	 */
 	public function modify(string $format): Time
 	{

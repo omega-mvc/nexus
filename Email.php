@@ -686,6 +686,7 @@ class Email
 	 * @param  string       $filename   The name to give the attachement - optional if `$contents` is an File object
 	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if incorrectly detected
 	 * @return Email  The email object, to allow for method chaining
+	 * @throws ValidationException
 	 */
 	public function addAttachment(string|File $contents, ?string $filename = null, ?string $mime_type = null): Email
 	{
@@ -717,6 +718,7 @@ class Email
 	 * @param  string       $filename   The name to give the attachement - optional if `$contents` is an File object
 	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if incorrectly detected
 	 * @return string  The fully-formed `cid:` URL for use in HTML `src` attributes
+	 * @throws ValidationException
 	 */
 	public function addRelatedFile(string|File $contents, ?string $filename = null, ?string $mime_type = null): string
 	{
@@ -1036,6 +1038,7 @@ class Email
 	 * @param  string $headers  The headers for the message
 	 * @param  string $body     The message body
 	 * @return array{0: string, 1: string}  `0` => The message headers, `1` => The message body
+	 * @throws ValidationException
 	 */
 	private function createSMIMEBody(string $to, string $subject, string $headers, string $body): array
 	{
@@ -1214,6 +1217,7 @@ class Email
 	 * @param  string|null  $filename   The filename to use for the file, or `NULL` to derive it from an File object
 	 * @param  string|null  $mime_type  The mime type of the file, or `NULL` to derive it from an File object
 	 * @return array{0: string, 1: string, 2: string|null}  `0` => the file contents, `1` => the filename, `2` => the mime type
+	 * @throws ValidationException
 	 */
 	private function extrapolateFileInfo(string|File $contents, ?string $filename, ?string $mime_type): array
 	{

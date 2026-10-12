@@ -84,6 +84,11 @@ class ORMMoney
 	 * @param  string $column           The column to format as an Money object
 	 * @param  string $currency_column  If specified, this column will store the currency of the Money object
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureMoneyColumn(mixed $class, string $column, ?string $currency_column = null): void
 	{

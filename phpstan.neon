@@ -15,7 +15,26 @@ parameters:
     checkUninitializedProperties: true
     checkBenevolentUnionTypes: true
     checkImplicitMixed: true
+    checkTooWideThrowTypesInProtectedAndPublicMethods: true
     reportUnmatchedIgnoredErrors: false
+
+    # Exception model (see https://phpstan.org/blog/bring-your-exceptions-under-control)
+    # Flourish "expected" exceptions are checked: callers must handle them, so they
+    # have to be declared in @throws. Everything else — UnexpectedException and its
+    # subclasses (Programmer/Environment/Connectivity/SQL) plus all native PHP
+    # exceptions — is unchecked and does not require a @throws tag.
+    exceptions:
+        checkedExceptionClasses:
+            - ExpectedException
+        # Keep the default (true): an absent @throws may still hide undocumented
+        # exceptions, which avoids false positives on intentional defensive catch
+        # blocks and on native interfaces (Iterator/ArrayAccess) that cannot
+        # declare @throws.
+        implicitThrows: true
+        check:
+            missingCheckedExceptionInThrows: true
+            throwTypeCovariance: true
+            tooWideImplicitThrowType: true
 
     type_coverage:
         return_type: 100

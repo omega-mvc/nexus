@@ -90,6 +90,10 @@ class Statement
 	 * @param  array<int, string> $placeholders        The data type placeholders
 	 * @param  string|null $untranslated_sql  The SQL statement before any translation was applied
 	 * @return Statement
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function __construct(mixed $database, mixed $query, mixed $placeholders, mixed $untranslated_sql)
 	{
@@ -356,6 +360,10 @@ class Statement
 	 * @param  mixed   &$extra     A variable to place extra information needed by some database extensions
 	 * @param  boolean $different  If this statement is different than the last statement run on the Database instance
 	 * @return mixed  The (usually boolean) result of the extension function/method call
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function execute(array $params, mixed &$extra, bool $different): mixed
 	{
@@ -453,6 +461,10 @@ class Statement
 	 * @param  mixed   &$extra     A variable to place extra information needed by some database extensions
 	 * @param  boolean $different  If this statement is different than the last statement run on the Database instance
 	 * @return Result  The result object that was populated
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function executeQuery(Result $result, array $params, mixed &$extra, bool $different): Result
 	{
@@ -643,6 +655,10 @@ class Statement
 	 * @param  mixed             &$extra     A variable to place extra information needed by some database extensions
 	 * @param  boolean           $different  If this statement is different than the last statement run on the Database instance
 	 * @return UnbufferedResult  The result object that was populated
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function executeUnbufferedQuery(UnbufferedResult $result, array $params, mixed &$extra, bool $different): UnbufferedResult
 	{
@@ -974,6 +990,10 @@ class Statement
 	 * without any placeholders.
 	 *
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function regenerateStatement(): void
 	{

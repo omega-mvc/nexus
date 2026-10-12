@@ -527,6 +527,10 @@ class Database
 	 * Clears all of the schema info out of the object and, if set, the Cache object
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function clearCache(): void
 	{
@@ -563,6 +567,9 @@ class Database
 	 * @throws AuthorizationException  When the username and password are not accepted
 	 *
 	 * @return void
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function connect(): void
 	{
@@ -824,6 +831,10 @@ class Database
 	 * Determines the character set of a SQL Server database
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	protected function determineCharacterSet(): void
 	{
@@ -960,6 +971,10 @@ class Database
 	 * @param  Cache $cache      The cache to cache to
 	 * @param  string $key_token  Internal use only! (this will be used in the cache key to uniquely identify the cache for this Database object)
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function enableCaching(mixed $cache, ?string $key_token = null): void
 	{
@@ -1198,6 +1213,10 @@ class Database
 	 *
 	 * @param  mixed $value  The blob to escape
 	 * @return string  The escaped blob
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function escapeBlob(mixed $value): string
 	{
@@ -1370,6 +1389,10 @@ class Database
 	 *
 	 * @param  mixed $value  The string to escape
 	 * @return string  The escaped string
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function escapeString(mixed $value): string
 	{
@@ -1630,6 +1653,10 @@ class Database
 	 *
 	 * @param  string|Statement $statement  One or more SQL statements in a string or an Statement prepared statement
 	 * @return Result|UnbufferedResult|null  The result of the executed prepared statement, or `NULL` when a SQL string was executed
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function execute(string|Statement $statement): Result|UnbufferedResult|null
 	{
@@ -1691,6 +1718,10 @@ class Database
 	 * Returns the database connection resource or object
 	 *
 	 * @return mixed  The database connection
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function getConnection(): mixed
 	{
@@ -1749,6 +1780,10 @@ class Database
 	 * Gets the SQLTranslation object used for translated queries
 	 *
 	 * @return SQLTranslation  The SQL translation object
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function getSQLTranslation(): SQLTranslation
 	{
@@ -1785,6 +1820,10 @@ class Database
 	 * Gets the version of the database system
 	 *
 	 * @return string  The database system version
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function getVersion(): string
 	{
@@ -1834,6 +1873,10 @@ class Database
 	 * @param  Result $result    The result object for the query
 	 * @param  mixed   $resource  Only applicable for `pdo`, `oci8` and `sqlsrv` extentions or `mysqli` prepared statements - this is either the `PDOStatement` object, `mysqli_stmt` object or the `oci8` or `sqlsrv` resource
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function handleAutoIncrementedValue(Result $result, mixed $resource = null): void
 	{
@@ -2057,6 +2100,8 @@ class Database
 	 *
 	 * @param  array<array-key, mixed>|string $errors  An array or string of error information
 	 * @return void
+	 * @throws NotFoundException
+	 * @throws AuthorizationException
 	 */
 	private function handleConnectionErrors(array|string $errors): void
 	{
@@ -2387,6 +2432,10 @@ class Database
 	 * @param  string|Statement $statement  The statement to perform
 	 * @param  array<int,mixed>  $params     The parameters for prepared statements
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function perform(string|Statement $statement, array $params): void
 	{
@@ -2458,6 +2507,10 @@ class Database
 	 * @param  Result            $result     The result object for the query
 	 * @param  array<int,mixed>  $params     The parameters for prepared statements
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function performQuery(string|Statement $statement, Result $result, array $params): void
 	{
@@ -2592,6 +2645,10 @@ class Database
 	 * @param  UnbufferedResult $result     The result object for the query
 	 * @param  array<int, mixed> $params     The parameters for prepared statements
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function performUnbufferedQuery(string|Statement $statement, UnbufferedResult $result, array $params): void
 	{
@@ -2635,6 +2692,10 @@ class Database
 	 *
 	 * @param  string  $sql  The SQL to prepare
 	 * @return Statement  A prepared statement object that can be passed to ::query(), ::unbufferedQuery() or ::execute()
+	 * @throws AuthorizationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws NotFoundException
 	 */
 	public function prepare(string $sql): Statement
 	{
@@ -2652,6 +2713,10 @@ class Database
 	 * @param  string  $sql        The SQL to prepare
 	 * @param  boolean $translate  If the SQL should be translated using SQLTranslation
 	 * @return Statement  A prepare statement object that can be passed to ::query(), ::unbufferedQuery() or ::execute()
+	 * @throws AuthorizationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws NotFoundException
 	 */
 	private function prepareStatement(string $sql, bool $translate = false): Statement
 	{
@@ -2757,6 +2822,10 @@ class Database
 	 * @param  boolean $translate          If the SQL should be translated
 	 * @param  array<int, string>|null   &$rollback_queries  MySQL doesn't allow transactions around `ALTER TABLE` statements, and some of those require multiple statements, so this is an array of "undo" SQL statements
 	 * @return array<int|string, string>  The split out SQL queries, queries that have been translated will have a string key of a number, `:` and the original SQL, non-translated SQL will have a numeric key
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function preprocess(string $sql, array $values, bool $translate, mixed &$rollback_queries = null): array
 	{
@@ -2905,6 +2974,10 @@ class Database
 	 *
 	 * @param  string|Statement $statement  One or more SQL statements in a string or a single Statement prepared statement
 	 * @return Result|array<int, Result>  The Result object(s) for the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function query(mixed $statement): mixed
 	{
@@ -2989,6 +3062,11 @@ class Database
 	 * @param  'Result'|'UnbufferedResult'|null $result_type  The type of result object to return, Result or UnbufferedResult
 	 * @param  array<int, mixed> $params     The values bound into the statement
 	 * @return ($result_type is 'Result' ? Result : ($result_type is 'UnbufferedResult' ? UnbufferedResult : null))  The result for the query
+	 * @throws AuthorizationException
+	 * @throws SQLException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function run(mixed $statement, ?string $result_type = null, mixed $params = array()): mixed
 	{
@@ -3075,6 +3153,10 @@ class Database
 	 * @param  array<int, string>   $rollback_statements  The SQL statements used to rollback `ALTER TABLE` statements
 	 * @param  integer $start_number         The number query that failed - this is used to determine which rollback statements to run
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function runRollbackStatements(array $rollback_statements, int $start_number): void
 	{
@@ -3243,6 +3325,10 @@ class Database
 	 *
 	 * @param  string $sql    One or more SQL statements
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function translatedExecute(string $sql): void
 	{
@@ -3277,6 +3363,10 @@ class Database
 	 *
 	 * @param  string  $sql  The SQL to prepare
 	 * @return Statement  A prepared statement object that can be passed to ::query(), ::unbufferedQuery() or ::execute()
+	 * @throws AuthorizationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws NotFoundException
 	 */
 	public function translatedPrepare(string $sql): Statement
 	{
@@ -3289,6 +3379,10 @@ class Database
 	 *
 	 * @param  string $sql    One or more SQL statements
 	 * @return Result|array<int, Result>  The Result object(s) for the query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function translatedQuery(string $sql): mixed
 	{
@@ -3332,6 +3426,10 @@ class Database
 	 *
 	 * @param  string|Statement $statement  A single SQL statement
 	 * @return UnbufferedResult  The result object for the unbuffered query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function unbufferedQuery(mixed $statement): mixed
 	{
@@ -3368,6 +3466,10 @@ class Database
 	 *
 	 * @param  string $sql    A single SQL statement
 	 * @return UnbufferedResult  The result object for the unbuffered query
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function unbufferedTranslatedQuery(string $sql): mixed
 	{
@@ -3503,6 +3605,10 @@ class Database
 	 *
 	 * @param  mixed $value  The value to unescape
 	 * @return string  The binary data
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function unescapeBlob(mixed $value): string
 	{

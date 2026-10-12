@@ -85,6 +85,11 @@ class ORMDate
 	 * @param  mixed  $class   The class name or instance of the class
 	 * @param  string $column  The column to set as a date created column
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureDateCreatedColumn(mixed $class, string $column): void
 	{
@@ -124,6 +129,11 @@ class ORMDate
 	 * @param  mixed  $class   The class name or instance of the class
 	 * @param  string $column  The column to set as a date updated column
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureDateUpdatedColumn(mixed $class, string $column): void
 	{
@@ -166,6 +176,11 @@ class ORMDate
 	 * @param  string $timestamp_column  The timestamp column to store the timezone for
 	 * @param  string $timezone_column   The column to store the timezone in
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function configureTimezoneColumn(mixed $class, string $timestamp_column, string $timezone_column): void
 	{
@@ -366,6 +381,11 @@ class ORMDate
 	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
 	 */
 	public static function setDateCreated(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{
@@ -406,6 +426,11 @@ class ORMDate
 	 * @param  array<array-key, mixed>  &$related_records  Any records related to this record
 	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public static function setDateUpdated(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
 	{

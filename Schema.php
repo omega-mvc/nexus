@@ -217,6 +217,10 @@ class Schema
 	 * @internal
 	 *
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function clearCache(): void
 	{
@@ -245,6 +249,11 @@ class Schema
 	 *
 	 * @param string  $filter_table  The only return this table and tables that rely on it
 	 * @return list<string>  An array of table names
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function determineTableCreationOrder(?string $filter_table = null): array
 	{
@@ -308,6 +317,10 @@ class Schema
 	 * @param  Cache $cache      The cache to cache to
 	 * @param  string $key_token  Internal use only! (this will be used in the cache key to uniquely identify the cache for this Schema object)
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function enableCaching(Cache $cache, ?string $key_token = null): void
 	{
@@ -337,6 +350,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to fetch the column info for
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRemainingException
+	 * @throws NoRowsException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function fetchColumnInfo(string $table): void
 	{
@@ -387,6 +405,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to fetch the column info for
 	 * @return array<string, ColumnInfoRow>  The column info for the table specified - see ::getColumnInfo() for details
+	 * @throws ValidationException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function fetchDB2ColumnInfo(string $table): array
 	{
@@ -549,6 +572,11 @@ class Schema
 	 * Fetches the key info for a DB2 database
 	 *
 	 * @return TableKeyInfo  The keys arrays for every table in the database - see ::getKeys() for details
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function fetchDB2Keys(): array
 	{
@@ -731,6 +759,11 @@ class Schema
 	 * Gets the `PRIMARY KEY`, `FOREIGN KEY` and `UNIQUE` key constraints from the database
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function fetchKeys(): void
 	{
@@ -777,6 +810,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to fetch the column info for
 	 * @return array<string, ColumnInfoRow>  The column info for the table specified - see ::getColumnInfo() for details
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function fetchMSSQLColumnInfo(string $table): array
 	{
@@ -963,6 +1001,11 @@ class Schema
 	 * Fetches the key info for an MSSQL database
 	 *
 	 * @return TableKeyInfo  The key info arrays for every table in the database - see ::getKeys() for details
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function fetchMSSQLKeys(): array
 	{
@@ -1104,6 +1147,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to fetch the column info for
 	 * @return array<string, ColumnInfoRow>  The column info for the table specified - see ::getColumnInfo() for details
+	 * @throws ValidationException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
 	 */
 	private function fetchMySQLColumnInfo(string $table): array
 	{
@@ -1279,6 +1327,11 @@ class Schema
 	 * Fetches the keys for a MySQL database
 	 *
 	 * @return TableKeyInfo  The keys arrays for every table in the database - see ::getKeys() for details
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function fetchMySQLKeys(): array
 	{
@@ -1337,6 +1390,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to fetch the column info for
 	 * @return array<string, ColumnInfoRow>  The column info for the table specified - see ::getColumnInfo() for details
+	 * @throws ValidationException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function fetchOracleColumnInfo(string $table): array
 	{
@@ -1558,6 +1616,11 @@ class Schema
 	 * Fetches the key info for an Oracle database
 	 *
 	 * @return TableKeyInfo  The keys arrays for every table in the database - see ::getKeys() for details
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function fetchOracleKeys(): array
 	{
@@ -1705,6 +1768,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to fetch the column info for
 	 * @return array<string, ColumnInfoRow>  The column info for the table specified - see ::getColumnInfo() for details
+	 * @throws ValidationException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function fetchPostgreSQLColumnInfo(string $table): array
 	{
@@ -1876,6 +1944,11 @@ class Schema
 	 * Fetches the key info for a PostgreSQL database
 	 *
 	 * @return TableKeyInfo  The keys arrays for every table in the database - see ::getKeys() for details
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function fetchPostgreSQLKeys(): array
 	{
@@ -2068,6 +2141,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to fetch the column info for
 	 * @return array<string, ColumnInfoRow>  The column info for the table specified - see ::getColumnInfo() for details
+	 * @throws ValidationException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
 	 */
 	private function fetchSQLiteColumnInfo(string $table): array
 	{
@@ -2189,6 +2267,11 @@ class Schema
 	 * Fetches the key info for an SQLite database
 	 *
 	 * @return TableKeyInfo  The keys arrays for every table in the database - see ::getKeys() for details
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	private function fetchSQLiteKeys(): array
 	{
@@ -2321,6 +2404,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to find the relationships on
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function findManyToManyRelationships(string $table): void
 	{
@@ -2406,6 +2494,11 @@ class Schema
 	 * Finds the one-to-one, many-to-one, one-to-many and many-to-many relationships in the database
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	private function findRelationships(): void
 	{
@@ -2536,6 +2629,11 @@ class Schema
 	 * @param  string $column   The column to get the info for
 	 * @param  string $element  The element to return: `'type'`, `'placeholder'`, `'not_null'`, `'default'`, `'valid_values'`, `'max_length'`, `'min_value'`, `'max_value'`, `'decimal_places'`, `'auto_increment'`, `'comment'`
 	 * @return mixed  The column info for the table/column/element specified - see method description for format
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function getColumnInfo(string $table, ?string $column = null, ?string $element = null): mixed
 	{
@@ -2596,6 +2694,10 @@ class Schema
 	 * Returns the databases on the current server
 	 *
 	 * @return list<string>  The databases on the current server
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	public function getDatabases(): array
 	{
@@ -2684,6 +2786,11 @@ class Schema
 	 * @param  string $table     The table to return the keys for
 	 * @param  string $key_type  The type of key to return: `'primary'`, `'foreign'`, `'unique'`
 	 * @return ($key_type is 'primary' ? list<string> : ($key_type is 'unique' ? list<list<string>> : ($key_type is 'foreign' ? list<ForeignKey> : (list<string>|list<list<string>>|list<ForeignKey>|KeyInfoRow))))  An array of all keys, or just the type specified - see method description for format
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public function getKeys(string $table, ?string $key_type = null): array
 	{
@@ -2782,6 +2889,11 @@ class Schema
 	 * @param  string $table              The table to return the relationships for
 	 * @param  string $relationship_type  The type of relationship to return: `'one-to-one'`, `'many-to-one'`, `'one-to-many'`, `'many-to-many'`
 	 * @return ($relationship_type is 'one-to-one'|'many-to-one'|'one-to-many'|'many-to-many' ? list<array<string, mixed>> : array<string, list<array<string, mixed>>>)  An array of all relationships, or just the type specified - see method description for format
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public function getRelationships(string $table, ?string $relationship_type = null): array
 	{
@@ -2828,6 +2940,11 @@ class Schema
 	 *
 	 * @param  boolean|string  $creation_order  `TRUE` to return in a valid table creation order, or a table name to return that table and any tables that depend on it, in table creation order
 	 * @return list<string>  The tables in the current database, all converted to lowercase
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws ValidationException
 	 */
 	public function getTables(mixed $creation_order = null): array
 	{
@@ -2990,6 +3107,11 @@ class Schema
 	 *
 	 * @param  string $table  The table to check
 	 * @return boolean  If the table is a joining table
+	 * @throws ValidationException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	private function isJoiningTable(string $table): bool
 	{
@@ -3045,6 +3167,10 @@ class Schema
 	 * Merges the column info with the column info override
 	 *
 	 * @return void
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
 	 */
 	private function mergeColumnInfo(): void
 	{
@@ -3133,6 +3259,11 @@ class Schema
 	 * Merges the keys with the keys override
 	 *
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	private function mergeKeys(): void
 	{
@@ -3206,6 +3337,11 @@ class Schema
 	 * @param  string $table        The table to override
 	 * @param  string $column       The column to override
 	 * @return void
+	 * @throws ValidationException
+	 * @throws NoRemainingException
+	 * @throws NoRowsException
+	 * @throws AuthorizationException
+	 * @throws NotFoundException
 	 */
 	public function setColumnInfoOverride(array $column_info, string $table, ?string $column = null): void
 	{
@@ -3236,6 +3372,11 @@ class Schema
 	 * @param  string $table     The table to override
 	 * @param  string $key_type  The key type to override: `'primary'`, `'foreign'`, `'unique'`
 	 * @return void
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
 	 */
 	public function setKeysOverride(array $keys, string $table, ?string $key_type = null): void
 	{
