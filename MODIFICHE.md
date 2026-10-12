@@ -797,3 +797,26 @@
 - **Verifica**: `php -l` pulito sui file modificati a mano; `vendor/bin/phpcs --report=summary` → **0 errori, 1694 warning in 55 file** (1684 `LineLength.TooLong`, 6 `ConstantVisibility.NotFound`, 4 `PropertyDeclaration.Underscore`); `vendor/bin/phpstan analyse` → **0 errori**; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota. I 1694 warning residui sono righe > 120 caratteri e naming storico, non bloccanti.
 - **Prossimo**: nessuna fase residua richiesta; progetto a 0 errori PHPStan livello 10 e 0 errori phpcs.
+### [2026-10-12 22:23] - Fase 6: PHPStan checked-exceptions — @throws mancanti a 0
+
+- **File**: `phpstan.neon` + 39 file `.php` (intero progetto)
+- **Intervallo righe**: n/d (annotazioni `@throws` distribuite nei docblock)
+- **Tipo**: `config` + `tipizzazione`
+- **Descrizione**: abilitato in `phpstan.neon` il modello delle eccezioni "checked" di PHPStan: `exceptions.checkedExceptionClasses: [ExpectedException]` (solo il ramo `ExpectedException` è checked; `UnexpectedException` e le eccezioni native restano unchecked), con `implicitThrows: true` e `check.missingCheckedExceptionInThrows/throwTypeCovariance/tooWideImplicitThrowType: true`, più `checkTooWideThrowTypesInProtectedAndPublicMethods: true`. Aggiunti **1462 tag `@throws`** nei docblock dei metodi che lanciano (direttamente o per propagazione nel call-graph) una delle 6 eccezioni checked: `ValidationException`, `NotFoundException`, `NoRowsException`, `NoRemainingException`, `EmptySetException`, `AuthorizationException`. Ordine canonico dei tag: Validation, NotFound, NoRows, NoRemaining, EmptySet, Authorization.
+- **Motivazione**: richiesta esplicita dell'utente di far segnalare a PHPStan i `@throws` mancanti nei docblock.
+- **Impatto**: `nullo` sul comportamento a runtime (aggiunta di soli tag PHPDoc).
+- **Verifica**: `php -l` pulito su tutti i 39 file; `vendor/bin/phpstan analyse` → **0 errori totali**; controllo duplicati `@throws` per docblock → nessuno; `vendor/bin/phpunit --testsuite Unit` → OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
+- **Prossimo**: nessuna fase residua; progetto a 0 errori PHPStan livello 10 (checked-exceptions attivo), 0 errori phpcs, test Unit OK.
+
+### [2026-10-12 22:23] - Fase 6: fix oneste dei collaterali (ActiveRecord::populate, catch morti, variabile indefinita)
+
+- **File**: `ActiveRecord.php`, `Database.php`, `SQLSchemaTranslation.php`
+- **Intervallo righe**: `ActiveRecord.php:2472-2539` (`populate()`), `ActiveRecord.php::store()` (variabile di transazione), `Database.php::run()`, `SQLSchemaTranslation.php::query()`
+- **Tipo**: `fix` + `tipizzazione`
+- **Descrizione**: (1) `ActiveRecord::populate()`: il commento del metodo apriva con `/*` (un solo asterisco, così anche nel master originale), perciò PHPStan non lo leggeva come docblock e i 5 `@throws` già presenti erano ignorati → errore `missingType.checkedException` perpetuo. Convertito in `/**`; poiché ora PHPStan legge anche `@return ActiveRecord`, il ramo `return $this->__call('populate', array())` (che ritorna `mixed` dal callback utente, `callable(mixed ...): mixed|null`) è stato protetto con una guardia onesta che lancia `ProgrammerException` se il risultato non è un'istanza di `ActiveRecord`. (2) `ActiveRecord::store()`: `$inside_db_transaction = $db->isInsideTransaction()` spostata **prima** del `try` (era assegnata dentro; il `catch (FlourishException)` poteva usarla non definita → `variable.undefined`), coerente col pattern di `delete()`. (3) `Database::run()` e `SQLSchemaTranslation::query()`: aggiunto `@throws SQLException` (eccezione unchecked realmente lanciata via `throwException()`) così i `catch (SQLException)` difensivi non risultano più `catch.neverThrown`.
+- **Motivazione**: chiudere i collaterali senza silenziamenti (scartata l'opzione `reportUncheckedExceptionDeadCatch: false`; nessun `@phpstan-ignore`).
+- **Impatto**: `minimo`. `populate()` lancia `ProgrammerException` solo se un override utente viola il contratto documentato `@return ActiveRecord` (prima ritornava il valore grezzo); gli altri fix sono behavior-safe (il trasferimento della variabile di transazione non cambia nulla tra i due punti).
+- **Verifica**: `php -l` pulito; `vendor/bin/phpstan analyse` → 0 errori totali; nessun duplicato `@throws`; `vendor/bin/phpunit --testsuite Unit` → OK.
+- **Issue/Rischio**: la guardia su `populate()` è l'unico punto con impatto potenziale su codice utente non conforme al contratto.
+- **Prossimo**: nessuna fase residua.
