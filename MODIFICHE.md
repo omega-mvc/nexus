@@ -875,3 +875,80 @@
 - **Impatto**: `nessuno` sul comportamento e sull'API. L'autoload è una `classmap` che scansiona ricorsivamente `src/`, quindi le classi si risolvono identicamente; nessun `require`/`include` per path nel codice.
 - **Verifica**: `composer dump-autoload` + controllo `ReflectionClass` -> `Email`/`SMTP`/`Mailbox` caricate da `src/Nexus/Mailer/`; `php -l` pulito sui 3 file; `vendor/bin/phpstan analyse` -> 0 errori (EXIT 0); `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota.
+
+### [2026-10-13 02:36] - Packaging (Fase 4): classi Cookie e Session in src/Nexus/
+
+- **File**: `Cookie.php` -> `src/Nexus/Cookie/Cookie.php`; `Session.php` -> `src/Nexus/Session/Session.php`
+- **Intervallo righe**: n/d (solo `git mv` + rigenerazione autoload)
+- **Tipo**: `refactor`
+- **Descrizione**: create due cartelle per ruolo e spostate le rispettive classi: `Cookie` (gestione dei cookie con default per path/dominio/expires/secure/httponly) in `src/Nexus/Cookie/` e `Session` (gestione della sessione) in `src/Nexus/Session/`. Spostamento con `git mv` (rename 100%), nessuna modifica di contenuto. `Buffer` resta nella root: è l'output buffering, non correlato a cookie/sessione. I nomi delle classi restano globali e invariati (nessun namespace).
+- **Motivazione**: completare il packaging di `omega-mvc/nexus` raccogliendo per ruolo le classi di stato lato client e di sessione.
+- **Impatto**: `nessuno` sul comportamento e sull'API. L'autoload è una `classmap` che scansiona ricorsivamente `src/`, quindi le classi si risolvono identicamente; nessun `require`/`include` per path nel codice.
+- **Verifica**: `composer dump-autoload` + controllo `ReflectionClass` -> `Cookie` e `Session` caricate dalle nuove posizioni; `php -l` pulito sui 2 file; `vendor/bin/phpstan analyse` -> 0 errori (EXIT 0); `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota. Restano nella root le altre classi, da gerarchizzare nelle fasi successive.
+
+### [2026-10-13 02:46] - Packaging (Fase 5): classi filesystem in src/Nexus/Filesystem/ + precedenza classmap
+
+- **File**: `Filesystem.php` -> `src/Nexus/Filesystem/Filesystem.php`; `File.php` -> `src/Nexus/Filesystem/File.php`; `Directory.php` -> `src/Nexus/Filesystem/Directory.php`; `Image.php` -> `src/Nexus/Filesystem/Image.php`; `Upload.php` -> `src/Nexus/Filesystem/Upload.php`; `composer.json`
+- **Intervallo righe**: n/d (solo `git mv` + config autoload)
+- **Tipo**: `refactor` | `config`
+- **Descrizione**: raccolte in `src/Nexus/Filesystem/` le classi del filesystem: `Filesystem`, `File`, `Directory`, `Image` (che estende `File`) e `Upload` (spostamento con `git mv`, rename 100%, nessuna modifica di contenuto; nomi classe globali invariati). In `composer.json` l'ordine di `autoload.classmap` è cambiato da `[".", "src/"]` a `["src/", "."]` per dare precedenza alle classi del progetto: la classe `File` (unico nome generico) veniva risolta sul fixture `vendor/squizlabs/php_codesniffer/src/Standards/Squiz/Tests/Classes/ClassDeclarationUnitTest.inc`, causando un parse error all'autoload. Ripristinato anche `flourish.rev` (file di versione `0.9.0`, presente in HEAD ma assente nel working tree senza intervento esplicito).
+- **Motivazione**: proseguire il packaging di `omega-mvc/nexus` raccogliendo per ruolo le classi di filesystem (in Omega il gruppo è `src/Omega/Filesystem/`); garantire che l'autoload risolva le classi del progetto e non i fixture presenti in `vendor/`.
+- **Impatto**: `nessuno` sul comportamento e sull'API. L'autoload è una `classmap` ricorsiva; l'inversione d'ordine cambia solo la precedenza in caso di ambiguità (prima vincevano i fixture di `vendor/`).
+- **Verifica**: `composer dump-autoload` + controllo `ReflectionClass` -> `Filesystem`/`File`/`Image`/`Upload` caricate da `src/Nexus/Filesystem/` (`File` risolto correttamente solo dopo il fix d'ordine della classmap); `php -l` pulito sui 5 file; `vendor/bin/phpstan analyse` -> 0 errori (EXIT 0); `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
+- **Issue/Rischio**: **`class Directory` collide con la classe interna PHP `Directory`** (sempre registrata: `class_exists('Directory', false) === true`): dichiararla nel namespace globale produce `PHP Fatal error: Cannot redeclare class Directory`. Il file `src/Nexus/Filesystem/Directory.php` è quindi di fatto non caricabile/utilizzabile. Problema **pre-esistente** (introdotto dalla rimozione del prefisso `f`: nell'originale era `fDirectory`), non una regressione di questa fase. È l'unica collisione di nome rilevata su tutte le classi del progetto. Da decidere: rinominare la classe (cambio API pubblica), rimuoverla se inutilizzata, o altro.
+
+### [2026-10-13 11:34] - Packaging (Fase 6): Validation e Authorization + loro eccezioni
+
+- **File**: `Validation.php` -> `src/Nexus/Validation/Validation.php`; `ValidationException.php` -> `src/Nexus/Validation/ValidationException.php`; `Authorization.php` -> `src/Nexus/Authorization/Authorization.php`; `AuthorizationException.php` -> `src/Nexus/Authorization/AuthorizationException.php`
+- **Intervallo righe**: n/d (solo `git mv` + rigenerazione autoload)
+- **Tipo**: `refactor`
+- **Descrizione**: create le cartelle per ruolo `src/Nexus/Validation/` e `src/Nexus/Authorization/` e spostate le classi omonime assieme alle rispettive eccezioni: `Validation` con `ValidationException`, `Authorization` con `AuthorizationException` (come richiesto: "con le loro eccezioni"). Spostamento con `git mv` (rename 100%), nessuna modifica di contenuto. I nomi delle classi restano globali e invariati (nessun namespace); le eccezioni continuano a estendere `ExpectedException` (rimasta nella root).
+- **Motivazione**: completare il packaging di `omega-mvc/nexus` raccogliendo per dominio classi ed eccezioni di competenza.
+- **Impatto**: `nessuno` sul comportamento e sull'API. L'autoload è una `classmap` ricorsiva su `src/`; nessun `require`/`include` per path nel codice.
+- **Verifica**: `composer dump-autoload` + controllo `ReflectionClass` -> `Validation`/`ValidationException`/`Authorization`/`AuthorizationException` caricate dalle nuove posizioni; `php -l` pulito sui 4 file; `vendor/bin/phpstan analyse` -> 0 errori (EXIT 0); `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota. Resta aperta la questione `Directory` (collisione con la classe interna PHP `Directory`) segnalata nella Fase 5.
+
+### [2026-10-13 13:43] - Packaging (Fase 8): Date, Time, Timestamp in src/Nexus/Date/
+
+- **File**: Date.php, Time.php, Timestamp.php -> src/Nexus/Date/*.php
+- **Intervallo righe**: n/d (solo  + rigenerazione autoload)
+- **Tipo**: 
+- **Descrizione**: Spostate le classi , ,  in  con  (rename 100%, nessuna modifica di contenuto). Nessuna ereditarietà tra loro.
+- **Motivazione**: raggruppamento per dominio temporale, coerente con il packaging Nexus.
+- **Impatto**:  sull'API/comportamento (classi globali invariati). Autoload via classmap su .
+- **Verifica**: Generating autoload files
+Generated autoload files; No syntax errors detected in Standard input code pulito sui 3 file;  conferma la corretta risoluzione.
+- **Issue/Rischio**: nessuna regressione nota.
+
+
+### [2026-10-13 13:49] - Packaging (Fase 8): Date, Time, Timestamp in src/Nexus/Date/
+
+- **File**: Date.php, Time.php, Timestamp.php -> src/Nexus/Date/*.php
+- **Intervallo righe**: n/d (solo `git mv` + rigenerazione autoload)
+- **Tipo**: `refactor`
+- **Descrizione**: Spostate le classi `Date`, `Time`, `Timestamp` in `src/Nexus/Date/` con `git mv` (rename 100%, nessuna modifica di contenuto). Nessuna ereditarietà tra loro.
+- **Motivazione**: raggruppamento per dominio temporale, coerente con il packaging Nexus.
+- **Impatto**: `nessuno` sull'API/comportamento (classi globali invariati). Autoload via classmap su `src/`.
+- **Verifica**: `composer dump-autoload`; `php -l` pulito sui 3 file; `ReflectionClass` conferma la corretta risoluzione.
+- **Issue/Rischio**: nessuna regressione nota.
+
+
+### [2026-10-13 14:27] - Packaging (Fase 9): completamento spostamenti root → src/Nexus (per dominio)
+
+- **File** (spostati con `git mv`, rename 100%):
+  - Core.php → `src/Nexus/Core/Core.php`
+  - Grammar.php, Text.php, UTF8.php → `src/Nexus/Text/`
+  - Number.php, Money.php → `src/Nexus/Math/`
+  - JSON.php, XML.php → `src/Nexus/Serialization/`
+  - Cryptography.php → `src/Nexus/Cryptography/Cryptography.php`
+  - Request.php, URL.php, Buffer.php, Messaging.php → `src/Nexus/Http/`
+  - HTML.php, Templating.php, CRUD.php → `src/Nexus/View/`
+
+- **Tipo**: `refactor`
+- **Descrizione**: Completato il packaging delle classi rimanenti nella root: raggruppate per dominio. Root ora completamente svuotato delle classi PHP.
+- **Motivazione**: organizzazione coerente con il resto del progetto.
+- **Impatto**: `nessuno` sull'API/comportamento (classi globali invariati). Autoload via `classmap` su `src/`.
+- **Verifica**: `composer dump-autoload` dopo ogni gruppo; `php -l` su tutti i file spostati; `ReflectionClass` conferma risoluzione corretta. Nessuna esecuzione di phpstan/phpunit (regole AGENTS.md).
+- **Issue/Rischio**: nessuna regressione nota. Resta aperta la questione `Directory` (collisione con classe interna PHP `Directory`) segnalata in Fase 5 (da gestire a packaging finito, con namespace).
+
