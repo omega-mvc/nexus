@@ -15,7 +15,7 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMRelated
+ * @link       http://flourishlib.com/Related
  *
  * @version    1.0.0b47
  * @changes    1.0.0b47  Fixed issues with set_null db constraints and one-to-many table relationships [jt, 2013-05-22]
@@ -32,7 +32,7 @@ declare(strict_types=1);
  * @changes    1.0.0b36  Fixed ::getPrimaryKeys() to not throw SQL exceptions [wb, 2010-10-20]
  * @changes    1.0.0b35  Backwards Compatibility Break - changed the validation messages array to use nesting for child records [wb-imarc+wb, 2010-10-03]
  * @changes    1.0.0b35  Updated ::getPrimaryKeys() to always return primary keys in a consistent order when no order bys are specified [wb, 2010-07-26]
- * @changes    1.0.0b34  Updated the class to work with fixes in ORMRelated [wb, 2010-07-22]
+ * @changes    1.0.0b34  Updated the class to work with fixes in Related [wb, 2010-07-22]
  * @changes    1.0.0b33  Fixed the related table populate action to use the plural underscore_notation version of the related class name [wb, 2010-07-08]
  * @changes    1.0.0b32  Backwards Compatibility Break - related table populate action now use the underscore_notation version of the class name instead of the related table name, allowing for related tables in non-standard schemas [wb, 2010-06-23]
  * @changes    1.0.0b31  Fixed ::reflect() to properly show parameters for associate methods [wb, 2010-06-08]
@@ -71,7 +71,7 @@ declare(strict_types=1);
  * @phpstan-type RelatedRecords array<string, array<string, RelatedInfo>>
  * @phpstan-type RelatedValues  array<array-key, mixed>
  */
-class ORMRelated
+class Related
 {
 	/**
 	 * A generic cache for the class
@@ -1789,11 +1789,11 @@ class ORMRelated
 
 				$relationship = ORMSchema::getRoute($schema, $table, $related_table, $route);
 				if (isset($relationship['join_table'])) {
-					ORMRelated::storeManyToMany($class, $values, $relationship, $related_info);
+					Related::storeManyToMany($class, $values, $relationship, $related_info);
 				} else {
 					$related_class = ORM::classize($related_table);
 					$related_class = ORM::getRelatedClass($class, $related_class);
-					ORMRelated::storeOneToStar($class, $values, $related_records, $related_class, $route, $force_cascade);
+					Related::storeOneToStar($class, $values, $related_records, $related_class, $route, $force_cascade);
 				}
 			}
 		}
@@ -2171,7 +2171,7 @@ class ORMRelated
 	/**
 	 * Forces use as a static class
 	 *
-	 * @return ORMRelated
+	 * @return Related
 	 */
 	private function __construct()
     {

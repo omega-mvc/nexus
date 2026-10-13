@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMColumn
+ * @link       http://flourishlib.com/Column
  *
  * @version    1.0.0b16
  * @changes    1.0.0b16  Add ::configurePasswordColumn() [wb, 2016-10-14]
@@ -30,7 +30,7 @@ declare(strict_types=1);
  * @changes    1.0.0b2   Fixed a bug with objectifying number columns [wb, 2008-11-24]
  * @changes    1.0.0b    The initial implementation [wb, 2008-05-27]
  */
-class ORMColumn
+class Column
 {
 	/**
 	 * Columns that should be formatted as email addresses
@@ -1122,7 +1122,7 @@ class ORMColumn
 	/**
 	 * Forces use as a static class
 	 *
-	 * @return ORMColumn
+	 * @return Column
 	 */
 	private function __construct()
     {

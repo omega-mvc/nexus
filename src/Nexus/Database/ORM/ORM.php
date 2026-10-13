@@ -44,7 +44,7 @@ declare(strict_types=1);
  * @changes    1.0.0b2   Added ::replicate() and ::registerReplicateCallback() for ActiveRecord::replicate() [wb, 2008-12-12]
  * @changes    1.0.0b    The initial implementation [wb, 2007-08-04]
  *
- * @phpstan-import-type RelatedRecords from ORMRelated
+ * @phpstan-import-type RelatedRecords from Related
  */
 class ORM
 {

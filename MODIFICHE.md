@@ -952,3 +952,17 @@ Generated autoload files; No syntax errors detected in Standard input code pulit
 - **Verifica**: `composer dump-autoload` dopo ogni gruppo; `php -l` su tutti i file spostati; `ReflectionClass` conferma risoluzione corretta. Nessuna esecuzione di phpstan/phpunit (regole AGENTS.md).
 - **Issue/Rischio**: nessuna regressione nota. Resta aperta la questione `Directory` (collisione con classe interna PHP `Directory`) segnalata in Fase 5 (da gestire a packaging finito, con namespace).
 
+
+
+### [2026-10-14 00:53] - Refactor (Fase 10): rimozione prefisso ORM da classi (parziale, senza collisioni globali)
+
+- **File rinominati (classe+file, git mv)**:
+  - `src/Nexus/Database/ORM/Column/ORMColumn.php` → `src/Nexus/Database/ORM/Column/Column.php` (classe `Column`)
+  - `src/Nexus/Database/ORM/Column/ORMOrdering.php` → `src/Nexus/Database/ORM/Column/Ordering.php` (classe `Ordering`)
+  - `src/Nexus/Database/ORM/Relation/ORMRelated.php` → `src/Nexus/Database/ORM/Relation/Related.php` (classe `Related`)
+
+- **Non rinominati**: `ORM.php` lasciato invariato; altre classi ORM (`ORMDatabase`, `ORMSchema`, `ORMDate`, `ORMFile`, `ORMJSON`, `ORMMoney`, `ORMValidation`) non rinominate per evitare collisioni con classi globali già esistenti (nessun namespace in questa fase).
+- **Refactor testuale**: aggiornate tutte le occorrenze di `ORMColumn`, `ORMOrdering`, `ORMRelated` nelle sottocartelle ORM a `Column`, `Ordering`, `Related` (docblock, `@link`, `@return`, `@phpstan-import-type`, chiamate statiche/metodi).
+- **Verifica**: `composer dump-autoload`; `php -l` sui file coinvolti; `ReflectionClass` conferma risoluzione corretta per `Column`, `Ordering`, `Related`.
+- **Note**: conforme alle regole AGENTS.md (nessuna esecuzione automatica di phpstan/phpunit/phpcs).
+

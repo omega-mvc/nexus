@@ -84,10 +84,10 @@ declare(strict_types=1);
  * @changes    1.0.0b24  Changed ::validate() to remove duplicate validation messages [wb, 2009-06-30]
  * @changes    1.0.0b23  Updated code for new ORMValidation::validateRelated() API [wb, 2009-06-26]
  * @changes    1.0.0b22  Added support for the $formatting parameter to encode methods on char, text and varchar columns [wb, 2009-06-19]
- * @changes    1.0.0b21  Performance tweaks and updates for ORM and ORMRelated API changes [wb, 2009-06-15]
+ * @changes    1.0.0b21  Performance tweaks and updates for ORM and Related API changes [wb, 2009-06-15]
  * @changes    1.0.0b20  Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
- * @changes    1.0.0b19  Added `list{RelatedRecords}()` methods, updated code for new ORMRelated API [wb, 2009-06-02]
- * @changes    1.0.0b18  Changed ::store() to use new ORMRelated::store() method [wb, 2009-06-02]
+ * @changes    1.0.0b19  Added `list{RelatedRecords}()` methods, updated code for new Related API [wb, 2009-06-02]
+ * @changes    1.0.0b18  Changed ::store() to use new Related::store() method [wb, 2009-06-02]
  * @changes    1.0.0b17  Added some missing parameter information to ::reflect() [wb, 2009-06-01]
  * @changes    1.0.0b16  Fixed bugs in ::__clone() and ::replicate() related to recursive relationships [wb-imarc, 2009-05-20]
  * @changes    1.0.0b15  Fixed an incorrect variable reference in ::store() [wb, 2009-05-06]
@@ -106,8 +106,8 @@ declare(strict_types=1);
  * @changes    1.0.0b2   Added the ::__clone() method to properly duplicate a record [wb, 2008-12-04]
  * @changes    1.0.0b    The initial implementation [wb, 2007-08-04]
  *
- * @phpstan-import-type RelatedRecords from ORMRelated
- * @phpstan-import-type RelatedValues  from ORMRelated
+ * @phpstan-import-type RelatedRecords from Related
+ * @phpstan-import-type RelatedValues  from Related
  */
 abstract class ActiveRecord
 {
@@ -1161,7 +1161,7 @@ abstract class ActiveRecord
 	 * Records that are related to the current record via some relationship
 	 *
 	 * This array is used to cache related records so that a database query
-	 * is not required each time related records are accessed. The ORMRelated
+	 * is not required each time related records are accessed. The Related
 	 * class handles most of the interaction with this array.
 	 *
 	 * @var RelatedRecords
@@ -1303,36 +1303,36 @@ abstract class ActiveRecord
 				list ($subject, $route, $plural) = self::determineSubject($class, $subject, $route);
 
 				if ($plural) {
-					ORMRelated::associateRecords($class, $this->related_records, $subject, self::recordsValue($records), $route);
+					Related::associateRecords($class, $this->related_records, $subject, self::recordsValue($records), $route);
 				} else {
-					ORMRelated::associateRecord($class, $this->related_records, $subject, $records, $route);
+					Related::associateRecord($class, $this->related_records, $subject, $records, $route);
 				}
 				return $this;
 
 			case 'build':
 				if (isset($parameters[0])) {
-					return ORMRelated::buildRecords($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::buildRecords($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
 				}
-				return ORMRelated::buildRecords($class, $this->values, $this->related_records, $subject);
+				return Related::buildRecords($class, $this->values, $this->related_records, $subject);
 
 			case 'count':
 				if (isset($parameters[0])) {
-					return ORMRelated::countRecords($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::countRecords($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
 				}
-				return ORMRelated::countRecords($class, $this->values, $this->related_records, $subject);
+				return Related::countRecords($class, $this->values, $this->related_records, $subject);
 
 			case 'create':
 				if (isset($parameters[0])) {
-					return ORMRelated::createRecord($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::createRecord($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
 				}
-				return ORMRelated::createRecord($class, $this->values, $this->related_records, $subject);
+				return Related::createRecord($class, $this->values, $this->related_records, $subject);
 
 			case 'has':
 				$route = isset($parameters[0]) ? self::routeValue($parameters[0]) : null;
 
 				list ($subject, $route, ) = self::determineSubject($class, $subject, $route);
 
-				return ORMRelated::hasRecords($class, $this->values, $this->related_records, $subject, $route);
+				return Related::hasRecords($class, $this->values, $this->related_records, $subject, $route);
 
 			case 'inject':
 				if (sizeof($parameters) < 1) {
@@ -1343,25 +1343,25 @@ abstract class ActiveRecord
 				}
 
 				if (isset($parameters[1])) {
-					ORMRelated::setRecordSet($class, $this->related_records, $subject, self::recordSetValue($parameters[0], $subject), self::routeValue($parameters[1]));
+					Related::setRecordSet($class, $this->related_records, $subject, self::recordSetValue($parameters[0], $subject), self::routeValue($parameters[1]));
 				} else {
-					ORMRelated::setRecordSet($class, $this->related_records, $subject, self::recordSetValue($parameters[0], $subject));
+					Related::setRecordSet($class, $this->related_records, $subject, self::recordSetValue($parameters[0], $subject));
 				}
 				return null;
 
 			case 'link':
 				if (isset($parameters[0])) {
-					ORMRelated::linkRecords($class, $this->related_records, $subject, self::routeValue($parameters[0]));
+					Related::linkRecords($class, $this->related_records, $subject, self::routeValue($parameters[0]));
 				} else {
-					ORMRelated::linkRecords($class, $this->related_records, $subject);
+					Related::linkRecords($class, $this->related_records, $subject);
 				}
 				return $this;
 
 			case 'list':
 				if (isset($parameters[0])) {
-					return ORMRelated::getPrimaryKeys($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::getPrimaryKeys($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
 				}
-				return ORMRelated::getPrimaryKeys($class, $this->values, $this->related_records, $subject);
+				return Related::getPrimaryKeys($class, $this->values, $this->related_records, $subject);
 
 			case 'populate':
 				$route = isset($parameters[0]) ? $parameters[0] : null;
@@ -1374,7 +1374,7 @@ abstract class ActiveRecord
 
 				list ($subject, $route, ) = self::determineSubject($class, $subject, $route);
 
-				ORMRelated::populateRecords($class, $this->related_records, $subject, $route, $recursive);
+				Related::populateRecords($class, $this->related_records, $subject, $route, $recursive);
 				return $this;
 
 			case 'tally':
@@ -1386,9 +1386,9 @@ abstract class ActiveRecord
 				}
 
 				if (isset($parameters[1])) {
-					ORMRelated::setCount($class, $this->related_records, $subject, self::intValue($parameters[0]), self::routeValue($parameters[1]));
+					Related::setCount($class, $this->related_records, $subject, self::intValue($parameters[0]), self::routeValue($parameters[1]));
 				} else {
-					ORMRelated::setCount($class, $this->related_records, $subject, self::intValue($parameters[0]));
+					Related::setCount($class, $this->related_records, $subject, self::intValue($parameters[0]));
 				}
 				return null;
 
@@ -2846,7 +2846,7 @@ abstract class ActiveRecord
 			$signatures[$inspect_method] = $signature;
 		}
 
-		ORMRelated::reflect($class, $signatures, $include_doc_comments);
+		Related::reflect($class, $signatures, $include_doc_comments);
 
 		ORM::callReflectCallbacks($class, $signatures, $include_doc_comments);
 
@@ -3088,7 +3088,7 @@ abstract class ActiveRecord
 			}
 
 			// Get the related records
-			$record_set = ORMRelated::buildRecords($class, $this->values, $this->related_records, $related_class, $route);
+			$record_set = Related::buildRecords($class, $this->values, $this->related_records, $related_class, $route);
 
 			// One-to-many records need to be replicated, possibly recursively
 			if ($one_to_many) {
@@ -3105,7 +3105,7 @@ abstract class ActiveRecord
 			}
 
 			// Cause the related records to be associated with the new clone
-			ORMRelated::associateRecords($class, $clone->related_records, $related_class, $record_set, $route);
+			Related::associateRecords($class, $clone->related_records, $related_class, $record_set, $route);
 		}
 
 		ActiveRecord::$replicate_level--;
@@ -3351,7 +3351,7 @@ abstract class ActiveRecord
 			}
 
 			// Storing *-to-many and one-to-one relationships
-			ORMRelated::store($class, $this->values, $this->related_records, $force_cascade);
+			Related::store($class, $this->values, $this->related_records, $force_cascade);
 
 
 			ORM::callHookCallbacks(

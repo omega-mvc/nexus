@@ -11,7 +11,7 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMOrdering
+ * @link       http://flourishlib.com/Ordering
  *
  * @version    1.0.0b19
  * @changes    1.0.0b19  Updated code to work with the new ORM API [wb, 2010-08-06]
@@ -34,7 +34,7 @@ declare(strict_types=1);
  * @changes    1.0.0b2   Fixed a bug with ::inspect(), 'max_ordering_value' was being returned as 'max_ordering_index' [wb, 2009-03-02]
  * @changes    1.0.0b    The initial implementation [wb, 2008-06-25]
  */
-class ORMOrdering
+class Ordering
 {
 	/**
 	 * The columns configured as ordering columns
@@ -839,7 +839,7 @@ class ORMOrdering
 	/**
 	 * Forces use as a static class
 	 *
-	 * @return ORMOrdering
+	 * @return Ordering
 	 */
 	private function __construct()
     {

@@ -867,7 +867,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		$params[0] = (is_string($params[0]) ? $params[0] : '') . 'CASE ' . $sql . 'END ASC';
 
-		if ($related_order_bys = ORMRelated::getOrderBys($this->getSingleClass(), $related_class, $route ?? '')) {
+		if ($related_order_bys = Related::getOrderBys($this->getSingleClass(), $related_class, $route ?? '')) {
 			$params[0] .= ', ';
 			$params = ORMDatabase::addOrderByClause($db, $schema, $params, ORM::tablize($related_class), $related_order_bys);
 		}

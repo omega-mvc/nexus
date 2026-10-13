@@ -39,7 +39,7 @@ declare(strict_types=1);
  * @changes    1.0.0b10  Fixed UNIQUE constraint checking so it is only done once per constraint, fixed some UTF-8 case sensitivity issues [wb, 2009-06-17]
  * @changes    1.0.0b9   Updated code for new ORM API [wb, 2009-06-15]
  * @changes    1.0.0b8   Updated code to use new ValidationException::formatField() method [wb, 2009-06-04]
- * @changes    1.0.0b7   Updated ::validateRelated() to use new ORMRelated::validate() method and ::checkRelatedOneOrMoreRule() to use new `$related_records` structure [wb, 2009-06-02]
+ * @changes    1.0.0b7   Updated ::validateRelated() to use new Related::validate() method and ::checkRelatedOneOrMoreRule() to use new `$related_records` structure [wb, 2009-06-02]
  * @changes    1.0.0b6   Changed date/time/timestamp checking from `strtotime()` to Date/Time/Timestamp for better localization support [wb, 2009-06-01]
  * @changes    1.0.0b5   Fixed a bug in ::checkOnlyOneRule() where no values would not be flagged as an error [wb, 2009-04-23]
  * @changes    1.0.0b4   Fixed a bug in ::checkUniqueConstraints() related to case-insensitive columns [wb, 2009-02-15]
@@ -47,8 +47,8 @@ declare(strict_types=1);
  * @changes    1.0.0b2   Fixed a bug with ::addManyToManyValidationRule() [wb, 2008-12-08]
  * @changes    1.0.0b    The initial implementation [wb, 2007-08-04]
  *
- * @phpstan-import-type RelatedValues  from ORMRelated
- * @phpstan-import-type RelatedRecords from ORMRelated
+ * @phpstan-import-type RelatedValues  from Related
+ * @phpstan-import-type RelatedRecords from Related
  *
  * @phpstan-type ColumnsRule      array{columns: array<array-key, string>}
  * @phpstan-type ConditionalRule array{main_columns: array<array-key, string>, conditional_values: mixed, conditional_columns: array<array-key, string>}
@@ -1005,7 +1005,7 @@ class ORMValidation
 			return null;
 		}
 
-		$name = Grammar::pluralize(ORMRelated::getRelatedRecordName($class, $related_class, $route));
+		$name = Grammar::pluralize(Related::getRelatedRecordName($class, $related_class, $route));
 		if ($name === false) {
 			$name = '';
 		}
@@ -1795,7 +1795,7 @@ class ORMValidation
 			}
 		}
 
-		$related_messages    = ORMRelated::validate($class, $values, $related_records);
+		$related_messages    = Related::validate($class, $values, $related_records);
 		$validation_messages = array_merge($validation_messages, $related_messages);
 
 		return $validation_messages;
