@@ -4,3 +4,4 @@ phpunit.xml
 phpstan.cache
 /build/
 /tests/_output/
+AUDIT_NEXUS_DATABASE_VS_OMEGA_DATABASE.md
