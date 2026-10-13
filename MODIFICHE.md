@@ -864,3 +864,14 @@
 - **Impatto**: `nessuno` sul comportamento e sull'API. L'autoload è una `classmap` che scansiona ricorsivamente `src/`, quindi le classi si risolvono identicamente; nessun `require`/`include` per path nel codice (verificato).
 - **Verifica**: `composer dump-autoload` -> tutte le 22 classi caricate dalle nuove posizioni (controllo via `ReflectionClass`); `php -l` pulito su tutti i file in `src/`; `vendor/bin/phpstan analyse` -> 0 errori (EXIT 0); `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
 - **Issue/Rischio**: nessuna regressione nota. Restano nella root le classi non-database, che verranno gerarchizzate nelle fasi successive.
+
+### [2026-10-13 02:32] - Packaging (Fase 3): classi mail in src/Nexus/Mailer/
+
+- **File**: `Email.php` -> `src/Nexus/Mailer/Email.php`; `SMTP.php` -> `src/Nexus/Mailer/SMTP.php`; `Mailbox.php` -> `src/Nexus/Mailer/Mailbox.php`
+- **Intervallo righe**: n/d (solo `git mv` + rigenerazione autoload)
+- **Tipo**: `refactor`
+- **Descrizione**: le classi per la gestione delle email sono state raccolte in `src/Nexus/Mailer/`: `Email` (composizione e invio), `SMTP` (trasporto SMTP) e `Mailbox` (retrieval IMAP). Spostamento con `git mv` (rename 100%), nessuna modifica di contenuto. `Messaging` resta nella root: è il sistema di messaggi flash (`check`/`create`/`retrieve`/`show`) e non è correlato alle email (nessuna classe lo estende). I nomi delle classi restano globali e invariati (nessun namespace).
+- **Motivazione**: completare il packaging di `omega-mvc/nexus` raccogliendo per ruolo le classi di gestione della posta.
+- **Impatto**: `nessuno` sul comportamento e sull'API. L'autoload è una `classmap` che scansiona ricorsivamente `src/`, quindi le classi si risolvono identicamente; nessun `require`/`include` per path nel codice.
+- **Verifica**: `composer dump-autoload` + controllo `ReflectionClass` -> `Email`/`SMTP`/`Mailbox` caricate da `src/Nexus/Mailer/`; `php -l` pulito sui 3 file; `vendor/bin/phpstan analyse` -> 0 errori (EXIT 0); `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota.
