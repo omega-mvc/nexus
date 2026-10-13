@@ -853,3 +853,14 @@
 - **Impatto**: `nullo` sul comportamento — nessun test di integrazione esiste, e `NoRemainingException` è una classe vuota (`extends ExpectedException {}`).
 - **Verifica**: `php -l NoRemainingException.php` pulito; `vendor/bin/phpunit` (senza `--testsuite`) -> OK (48 test, 74 assertion); `composer test` -> OK (48 test, 74 assertion); `vendor/bin/phpstan analyse` -> 0 errori.
 - **Issue/Rischio**: nessuna regressione nota. Se in futuro verranno aggiunti test di integrazione, la suite va reintrodotta in `phpunit.xml.dist`.
+
+### [2026-10-13 02:07] - Packaging (Fase 2): gerarchizzazione delle classi Database in src/Nexus/Database/
+
+- **File**: 22 file `.php` spostati dalla root a `src/Nexus/Database/` (nessuna modifica di contenuto)
+- **Intervallo righe**: n/d (solo `git mv` + rigenerazione autoload)
+- **Tipo**: `refactor`
+- **Descrizione**: le classi del database sono state raccolte sotto `src/Nexus/Database/` con una gerarchia per ruolo, allineata allo stile del framework (`src/Omega/Database/`): `Database.php` in radice come classe principale; `Exceptions/` (`SQLException`, `ConnectivityException`); `Query/` (`Statement`, `Result`, `UnbufferedResult`); `Schema/` (`Schema`); `Translation/` (`SQLTranslation`, `SQLSchemaTranslation`); `ORM/` con `ORM`, `ActiveRecord`, `RecordSet`, i ponti `ORMDatabase`/`ORMSchema`, più `Column/` (`ORMColumn`, `ORMDate`, `ORMFile`, `ORMJSON`, `ORMMoney`, `ORMOrdering`), `Relation/` (`ORMRelated`) e `Validation/` (`ORMValidation`). I nomi delle classi restano globali e invariati (nessun namespace).
+- **Motivazione**: completare il packaging di `omega-mvc/nexus` organizzando il sottosistema DB per ruolo, rispecchiando la struttura del framework di riferimento.
+- **Impatto**: `nessuno` sul comportamento e sull'API. L'autoload è una `classmap` che scansiona ricorsivamente `src/`, quindi le classi si risolvono identicamente; nessun `require`/`include` per path nel codice (verificato).
+- **Verifica**: `composer dump-autoload` -> tutte le 22 classi caricate dalle nuove posizioni (controllo via `ReflectionClass`); `php -l` pulito su tutti i file in `src/`; `vendor/bin/phpstan analyse` -> 0 errori (EXIT 0); `vendor/bin/phpunit --testsuite Unit` -> OK (48 test, 74 assertion).
+- **Issue/Rischio**: nessuna regressione nota. Restano nella root le classi non-database, che verranno gerarchizzate nelle fasi successive.
