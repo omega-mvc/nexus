@@ -976,3 +976,13 @@ Generated autoload files; No syntax errors detected in Standard input code pulit
 - **Verifica**: `php -l` su tutti i file `src/` (0 errori); `ReflectionClass` conferma `Connection` e `ORMDatabase`; sweep righe >120 caratteri = **0**; `vendor/bin/phpstan analyse` (full) -> **0 errori**; `vendor/bin/phpcs --report=summary` -> **0 ERRORS** (restano 10 WARNING pre-esistenti non di lunghezza riga).
 - **Issue/Rischio**: la variabile `'Database' => $this->database` (opzione driver sqlsrv) e stata volutamente NON rinominata. Restano 10 warning phpcs pre-esistenti e fuori scope: 6 `PSR12.Properties.ConstantVisibility.NotFound` (`Database/ORM/Column/ORMFile.php`, `Filesystem/Upload.php` x3, `Mailer/Email.php` x2) e 4 `PSR2.Classes.PropertyDeclaration.Underscore` (`Serialization/XML.php`).
 
+### [2026-10-14 12:10] - Style: azzeramento warning phpcs residui (visibilita costanti, prefisso `$__`)
+
+- **File**: `src/Nexus/Database/ORM/Column/ORMFile.php`; `src/Nexus/Filesystem/Upload.php`; `src/Nexus/Mailer/Email.php`; `src/Nexus/Serialization/XML.php`
+- **Tipo**: `style`
+- **Descrizione**: aggiunta la visibilita `public` alle costanti `TEMP_DIRECTORY` (`ORMFile`), `check`/`count`/`filter` (`Upload`), `EMAIL_REGEX`/`NAME_EMAIL_REGEX` (`Email`): la visibilita di default era gia `public`, quindi nessun cambio di comportamento. Rinominati i 4 campi `protected` di `XML` togliendo il prefisso `$__` (`$__custom_prefixes` -> `$custom_prefixes`, `$__dom` -> `$dom`, `$__xpath` -> `$xpath`, `$__xml` -> `$xml`); tali campi non erano referenziati da nessuna parte nel codice (solo dichiarati). Le stringhe letterali (`'Upload::check'`, `'__flourish_temp'`) sono rimaste invariate.
+- **Motivazione**: azzerare anche i 10 warning PSR-12 residui non legati alla lunghezza riga, cosi da avere una codebase completamente pulita da phpcs.
+- **Impatto**: nessuno sul comportamento. In teoria rinominare campi `protected` modifica l'API per eventuali sottoclassi esterne, ma questi campi non sono usati internamente; le costanti restano `public`.
+- **Verifica**: `php -l` pulito sui 4 file; `vendor/bin/phpcs --report=summary` -> **0 ERRORS, 0 WARNINGS**.
+- **Issue/Rischio**: nessuno.
+
