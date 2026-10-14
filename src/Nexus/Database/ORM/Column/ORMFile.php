@@ -68,7 +68,7 @@ class ORMFile
 	 *
 	 * @var string
 	 */
-	const string TEMP_DIRECTORY = '__flourish_temp';
+	public const string TEMP_DIRECTORY = '__flourish_temp';
 
 
 	/**

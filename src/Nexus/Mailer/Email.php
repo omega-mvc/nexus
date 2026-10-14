@@ -79,7 +79,7 @@ class Email
 	 *
 	 * @var string
 	 */
-	const string EMAIL_REGEX =
+	public const string EMAIL_REGEX =
 		'~^[ \t]*(                                                                      # Allow leading whitespace
 						   (?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")
 						   # An "atom" or a quoted string
@@ -105,7 +105,7 @@ class Email
 	 *
 	 * @var string
 	 */
-	const string NAME_EMAIL_REGEX =
+	public const string NAME_EMAIL_REGEX =
 		'~^[ \t]*(                                                                            # Allow leading whitespace
 								(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*)
 								# An "atom" or a quoted string

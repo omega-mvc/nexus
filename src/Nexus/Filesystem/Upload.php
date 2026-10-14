@@ -43,9 +43,9 @@ declare(strict_types=1);
 class Upload
 {
 	// The following constants allow for nice looking callbacks to static methods
-	const string check  = 'Upload::check';
-	const string count  = 'Upload::count';
-	const string filter = 'Upload::filter';
+	public const string check  = 'Upload::check';
+	public const string count  = 'Upload::count';
+	public const string filter = 'Upload::filter';
 
 
 	/**

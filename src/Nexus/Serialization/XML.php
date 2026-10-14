@@ -104,28 +104,28 @@ class XML implements ArrayAccess
 	 *
 	 * @var array<string, string>
 	 */
-	protected array $__custom_prefixes = array();
+	protected array $custom_prefixes = array();
 
 	/**
 	 * The dom element for this XML
 	 *
 	 * @var DOMAttr|DOMElement|null
 	 */
-	protected mixed $__dom = null;
+	protected mixed $dom = null;
 
 	/**
 	 * An XPath object for performing xpath lookups
 	 *
 	 * @var DOMXPath
 	 */
-	protected ?DOMXPath $__xpath = null;
+	protected ?DOMXPath $xpath = null;
 
 	/**
 	 * The XML string for serialization
 	 *
 	 * @var string|null
 	 */
-	protected mixed $__xml = null;
+	protected mixed $xml = null;
 
 	/**
 	 * The methods that can be called using the callback syntax
