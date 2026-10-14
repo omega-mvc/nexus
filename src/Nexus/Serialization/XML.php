@@ -5,8 +5,7 @@ declare(strict_types=1);
 /**
  * Provides functionality for XML files
  *
- * This class is implemented to use the UTF-8 character encoding. Please see
- * http://flourishlib.com/docs/UTF-8 for more information.
+ * This class is implemented to use the UTF-8 character encoding.
  *
  * @copyright  Copyright (c) 2007-2011 Will Bond, others
  * @author     Will Bond [wb] <will@flourishlib.com>
@@ -14,14 +13,14 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/XML
  *
  * @version    1.0.0b8
  * @changes    1.0.0b8  Fixed a method signature [wb, 2011-08-24]
  * @changes    1.0.0b7  Added a workaround for iconv having issues in MAMP 1.9.4+ [wb, 2011-07-26]
  * @changes    1.0.0b6  Updated class to use Core::startErrorCapture() instead of `error_reporting()` [wb, 2010-08-09]
  * @changes    1.0.0b5  Added the `$fix_entities_encoding` parameter to ::__construct() [cr-imarc+wb, 2010-08-08]
- * @changes    1.0.0b4  Updated the class to automatically add a `__` prefix for the default namespace and to use that for attribute and child element access [wb, 2010-04-06]
+ * @changes    1.0.0b4  Updated the class to automatically add a `__` prefix for the default namespace and to use that
+ * for attribute and child element access [wb, 2010-04-06]
  * @changes    1.0.0b3  Added the `$http_timeout` parameter to ::__construct() [wb, 2009-09-16]
  * @changes    1.0.0b2  Added instance functionality for reading of XML files [wb, 2009-09-01]
  * @changes    1.0.0b   The initial implementation [wb, 2008-01-13]
@@ -163,9 +162,13 @@ class XML implements ArrayAccess
 	 *
 	 * @throws ValidationException    When the source XML is invalid or does not exist
 	 *
-	 * @param  File|string|DOMElement  $source                 The source of the XML, either an File object, a string of XML, a file path or a URL
-	 * @param  numeric|boolean         $http_timeout           The timeout to use in seconds when requesting an XML file from a URL, or a boolean `$fix_entities_encoding` value
-	 * @param  boolean                 $fix_entities_encoding  This will fix two common XML authoring errors and should only be used when experiencing decoding issues - HTML entities that haven't been encoded as XML, and XML content published in ISO-8859-1 or Windows-1252 encoding without an explicit encoding attribute
+	 * @param  File|string|DOMElement  $source                 The source of the XML, either an File object, a string of
+	 * XML, a file path or a URL
+	 * @param  numeric|boolean         $http_timeout           The timeout to use in seconds when requesting an XML file
+	 * from a URL, or a boolean `$fix_entities_encoding` value
+	 * @param  boolean                 $fix_entities_encoding  This will fix two common XML authoring errors and should
+	 * only be used when experiencing decoding issues - HTML entities that haven't been encoded as XML, and XML content
+	 * published in ISO-8859-1 or Windows-1252 encoding without an explicit encoding attribute
 	 * @return XML
 	 */
 	public function __construct(mixed $source, mixed $http_timeout = null, mixed $fix_entities_encoding = null)
@@ -416,7 +419,8 @@ class XML implements ArrayAccess
 
 
 	/**
-	 * Fixes HTML entities that aren't XML encoded and fixes ISO-8859-1/Windows-1252 encoded content that does not have an encoding attribute
+	 * Fixes HTML entities that aren't XML encoded and fixes ISO-8859-1/Windows-1252 encoded content that does not have
+	 * an encoding attribute
 	 *
 	 * @param string $xml  The XML to fix
 	 * @return string  The fixed XML
@@ -670,7 +674,8 @@ class XML implements ArrayAccess
 	 *
 	 * @param  string  $path        The XPath path to query
 	 * @param  boolean $first_only  If only the first match should be returned
-	 * @return array<int|string, mixed>|string|XML|null  An array of matching elements, or a string or XML object if `$first_only` is `TRUE`
+	 * @return array<int|string, mixed>|string|XML|null  An array of matching elements, or a string or XML object if
+	 * `$first_only` is `TRUE`
 	 * @throws ValidationException
 	 */
 	public function xpath(string $path, bool $first_only = false): mixed
@@ -679,13 +684,13 @@ class XML implements ArrayAccess
 
 		if ($first_only) {
 			if (!$result->length) {
-                return null;
-            }
+				return null;
+			}
 			$result = array($result->item(0));
 		} else {
 			if (!$result->length) {
-                return array();
-            }
+				return array();
+			}
 		}
 
 		$keys_to_remove = array();

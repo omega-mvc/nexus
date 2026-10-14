@@ -3,17 +3,18 @@
 declare(strict_types=1);
 
 /**
- * Allows defining and checking user authentication via ACLs, authorization levels or a simple logged in/not logged in scheme
+ * Allows defining and checking user authentication via ACLs, authorization levels or a simple logged in/not logged in
+ * scheme
  *
  * @copyright  Copyright (c) 2007-2011 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Authorization
  *
  * @version    1.0.0b6
- * @changes    1.0.0b6  Fixed ::checkIP() to not trigger a notice when `$_SERVER['REMOTE_ADDR']` is not set [wb, 2011-05-10]
+ * @changes    1.0.0b6  Fixed ::checkIP() to not trigger a notice when `$_SERVER['REMOTE_ADDR']` is not set [wb,
+ * 2011-05-10]
  * @changes    1.0.0b5  Added ::getLoginPage() [wb, 2010-03-09]
  * @changes    1.0.0b4  Updated class to use new Session API [wb, 2009-10-23]
  * @changes    1.0.0b3  Updated class to use new Session API [wb, 2009-05-08]
@@ -51,7 +52,8 @@ class Authorization
 	 * actual IPs.
 	 *
 	 * @param  string $name       The name to give the IP addresses/ranges
-	 * @param  mixed  $ip_ranges  This can be string (or array of strings) of the IPs or IP ranges to restrict to - please see ::checkIP() for format details
+	 * @param  mixed  $ip_ranges  This can be string (or array of strings) of the IPs or IP ranges to restrict to -
+	 * please see ::checkIP() for format details
 	 * @return void
 	 */
 	public static function addNamedIPRange(string $name, mixed $ip_ranges): void
@@ -84,14 +86,24 @@ class Authorization
 
 		if (isset($acls[$resource])) {
 			$resource_permissions = $acls[$resource];
-			if (is_array($resource_permissions) && (in_array($permission, $resource_permissions) || in_array('*', $resource_permissions))) {
+			if (
+				is_array($resource_permissions) && (in_array($permission, $resource_permissions) || in_array(
+					'*',
+					$resource_permissions
+				))
+			) {
 				return true;
 			}
 		}
 
 		if (isset($acls['*'])) {
 			$wildcard_permissions = $acls['*'];
-			if (is_array($wildcard_permissions) && (in_array($permission, $wildcard_permissions) || in_array('*', $wildcard_permissions))) {
+			if (
+				is_array($wildcard_permissions) && (in_array($permission, $wildcard_permissions) || in_array(
+					'*',
+					$wildcard_permissions
+				))
+			) {
 				return true;
 			}
 		}
@@ -145,7 +157,8 @@ class Authorization
 	 *   - 192.168.1.0/255.255.255.0
 	 *   - 208.77.188.160/255.255.255.240
 	 *
-	 * @param  mixed $ip_ranges  A string (or array of strings) of the IPs or IP ranges to restrict to - see method description for details
+	 * @param  mixed $ip_ranges  A string (or array of strings) of the IPs or IP ranges to restrict to - see method
+	 * description for details
 	 * @return boolean  If the user is coming from (one of) the IPs or ranges specified
 	 */
 	public static function checkIP(mixed $ip_ranges): bool
@@ -205,7 +218,8 @@ class Authorization
 			if (($range_ip_long & $mask_long) != $range_ip_long) {
 				$proper_range_ip = long2ip($range_ip_long & $mask_long);
 				throw new ProgrammerException(
-					'The range base IP address specified, %1$s, is invalid for the CIDR range or subnet mask provided (%2$s). The proper IP is %3$s.',
+					'The range base IP address specified, %1$s, is invalid for the CIDR range or subnet mask provided '
+						. '(%2$s). The proper IP is %3$s.',
 					$range_ip,
 					'/' . $range_mask,
 					$proper_range_ip
@@ -233,10 +247,10 @@ class Authorization
 	public static function checkLoggedIn(): bool
 	{
 		if (
-            Session::get(__CLASS__ . '::user_auth_level', null) !== null ||
+			Session::get(__CLASS__ . '::user_auth_level', null) !== null ||
 			Session::get(__CLASS__ . '::user_acls', null) !== null ||
 			Session::get(__CLASS__ . '::user_token', null) !== null
-        ) {
+		) {
 			return true;
 		}
 		return false;
@@ -595,8 +609,8 @@ class Authorization
 	 * @return Authorization
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

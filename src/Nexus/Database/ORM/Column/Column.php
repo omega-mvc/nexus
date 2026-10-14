@@ -10,7 +10,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Column
  *
  * @version    1.0.0b16
  * @changes    1.0.0b16  Add ::configurePasswordColumn() [wb, 2016-10-14]
@@ -18,12 +17,16 @@ declare(strict_types=1);
  * @changes    1.0.0b14  Updated code to work with the new ORM API [wb, 2010-08-06]
  * @changes    1.0.0b13  Fixed ::reflect() to include some missing parameters [wb, 2010-06-08]
  * @changes    1.0.0b12  Changed validation messages array to use column name keys [wb, 2010-05-26]
- * @changes    1.0.0b11  Fixed a bug with ::prepareLinkColumn() returning `http://` for empty link columns and not adding `http://` to links that contained a /, but did not start with it [wb, 2010-03-16]
- * @changes    1.0.0b10  Fixed ::reflect() to specify the value returned from `set` and `generate` methods, changed ::generate() methods to return the newly generated string [wb, 2010-03-15]
- * @changes    1.0.0b9   Changed email columns to be automatically trimmed if they are a value email address surrounded by whitespace [wb, 2010-03-14]
+ * @changes    1.0.0b11  Fixed a bug with ::prepareLinkColumn() returning `http://` for empty link columns and not
+ * adding `http://` to links that contained a /, but did not start with it [wb, 2010-03-16]
+ * @changes    1.0.0b10  Fixed ::reflect() to specify the value returned from `set` and `generate` methods, changed
+ * ::generate() methods to return the newly generated string [wb, 2010-03-15]
+ * @changes    1.0.0b9   Changed email columns to be automatically trimmed if they are a value email address surrounded
+ * by whitespace [wb, 2010-03-14]
  * @changes    1.0.0b8   Made the validation on link columns a bit more strict [wb, 2010-03-09]
  * @changes    1.0.0b7   Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
- * @changes    1.0.0b6   Changed SQL statements to use value placeholders, identifier escaping and schema support [wb, 2009-10-22]
+ * @changes    1.0.0b6   Changed SQL statements to use value placeholders, identifier escaping and schema support [wb,
+ * 2009-10-22]
  * @changes    1.0.0b5   Updated to use new ORM::registerInspectCallback() method [wb, 2009-07-13]
  * @changes    1.0.0b4   Updated code for new ORM API [wb, 2009-06-15]
  * @changes    1.0.0b3   Updated code to use new ValidationException::formatField() method [wb, 2009-06-04]
@@ -287,7 +290,8 @@ class Column
 		$required_length = 80;
 		if ($max_length < $required_length) {
 			throw new ProgrammerException(
-				'The column specified, %1$s, has a maximum length of %2$s. Must be at least %3$s to be set as a password column.',
+				'The column specified, %1$s, has a maximum length of %2$s. Must be at least %3$s to be set as a '
+					. 'password column.',
 				$column,
 				$max_length,
 				$required_length
@@ -320,7 +324,8 @@ class Column
 	 *
 	 * @param  mixed   $class   The class name or instance of the class
 	 * @param  string  $column  The column to set as a random column
-	 * @param  string  $type    The type of random string, must be one of: `'alphanumeric'`, `'alpha'`, `'numeric'`, `'hexadecimal'`
+	 * @param  string  $type    The type of random string, must be one of: `'alphanumeric'`, `'alpha'`, `'numeric'`,
+	 * `'hexadecimal'`
 	 * @param  integer $length  The length of the random string
 	 * @return void
 	 * @throws ValidationException
@@ -339,7 +344,8 @@ class Column
 		$valid_data_types = array('varchar', 'char', 'text');
 		if (!in_array($data_type, $valid_data_types)) {
 			throw new ProgrammerException(
-				'The column specified, %1$s, is a %2$s column. Must be one of %3$s to be set as a random string column.',
+				'The column specified, %1$s, is a %2$s column. '
+					. 'Must be one of %3$s to be set as a random string column.',
 				$column,
 				$data_type,
 				join(', ', $valid_data_types)
@@ -401,8 +407,15 @@ class Column
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	public static function encodeNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
-	{
+	public static function encodeNumberColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): string {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column      = Grammar::underscorize($subject);
@@ -452,8 +465,15 @@ class Column
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function generate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
-	{
+	public static function generate(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): string {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -475,7 +495,15 @@ class Column
 				$sql = "SELECT %r FROM %r WHERE %r = %s";
 				do {
 					$value = Cryptography::randomString($settings['length'], $settings['type']);
-				} while (($result = $db->query($sql, $column, $table, $column, $value)) instanceof Result && $result->countReturnedRows());
+				} while (
+					($result = $db->query(
+						$sql,
+						$column,
+						$table,
+						$column,
+						$value
+					)) instanceof Result && $result->countReturnedRows()
+				);
 			}
 		}
 
@@ -574,8 +602,15 @@ class Column
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return string  The formatted link
 	 */
-	public static function prepareLinkColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
-	{
+	public static function prepareLinkColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): string {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -616,8 +651,15 @@ class Column
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	public static function prepareNumberColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
-	{
+	public static function prepareNumberColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): string {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column      = Grammar::underscorize($subject);
@@ -677,9 +719,12 @@ class Column
 					$signature .= "/**\n";
 					$signature .= " * Prepares the value of " . $column . " for output into HTML\n";
 					$signature .= " * \n";
-					$signature .= " * This method will ensure all links that start with a domain name are preceeded by http://\n";
+					$signature .=
+						" * This method will ensure all links that start with a domain name are preceeded by http://\n";
 					$signature .= " * \n";
-					$signature .= " * @param  boolean \$create_link  Will cause link to be automatically converted into an [a] tag\n";
+					$signature .=
+						" * @param  boolean \$create_link  Will cause link to be automatically converted into an [a] "
+							. "tag\n";
 					$signature .= " * @return string  The HTML-ready value\n";
 					$signature .= " */\n";
 				}
@@ -718,7 +763,8 @@ class Column
 					$signature .= "/**\n";
 					$signature .= " * Sets the value for " . $column . "\n";
 					$signature .= " * \n";
-					$signature .= " * @param  Number|string|integer \$" . $column . "  The new value - don't use floats since they are imprecise\n";
+					$signature .= " * @param  Number|string|integer \$" . $column .
+						"  The new value - don't use floats since they are imprecise\n";
 					$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
 					$signature .= " */\n";
 				}
@@ -736,7 +782,10 @@ class Column
 					$signature .= " * resulting in the value without any thousands separators\n";
 					$signature .= " * \n";
 					if ($type == 'float') {
-						$signature .= " * @param  integer \$decimal_places  The number of decimal places to display - not passing any value or passing NULL will result in the intrisinc number of decimal places being shown\n";
+						$signature .=
+							" * @param  integer \$decimal_places  The number of decimal places to display - not "
+								. "passing any value or passing NULL will result in the intrisinc number of decimal "
+								. "places being shown\n";
 					}
 					$signature .= " * @return string  The HTML form-ready value\n";
 					$signature .= " */\n";
@@ -759,7 +808,10 @@ class Column
 					$signature .= " * resulting in the value including thousands separators\n";
 					$signature .= " * \n";
 					if ($type == 'float') {
-						$signature .= " * @param  integer \$decimal_places  The number of decimal places to display - not passing any value or passing NULL will result in the intrisinc number of decimal places being shown\n";
+						$signature .=
+							" * @param  integer \$decimal_places  The number of decimal places to display - not "
+								. "passing any value or passing NULL will result in the intrisinc number of decimal "
+								. "places being shown\n";
 					}
 					$signature .= " * @return string  The HTML-ready value\n";
 					$signature .= " */\n";
@@ -800,9 +852,12 @@ class Column
 				$signature = '';
 				if ($include_doc_comments) {
 					$signature .= "/**\n";
-					$signature .= " * Generates a new random " . $settings['type'] . " character " . $settings['type'] . " string for " . $column . "\n";
+					$signature .= " * Generates a new random " . $settings['type'] . " character " . $settings['type'] .
+						" string for " . $column . "\n";
 					$signature .= " * \n";
-					$signature .= " * If there is a UNIQUE constraint on the column and the value is not unique it will be regenerated until unique\n";
+					$signature .=
+						" * If there is a UNIQUE constraint on the column and the value is not unique it will be "
+							. "regenerated until unique\n";
 					$signature .= " * \n";
 					$signature .= " * @return string  The randomly generated string\n";
 					$signature .= " */\n";
@@ -846,8 +901,14 @@ class Column
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	public static function resetPasswordColumn(ActiveRecord $self, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function resetPasswordColumn(
+		ActiveRecord $self,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = ORM::getClass($self);
 
 		if (empty(self::$password_columns[$class])) {
@@ -883,8 +944,15 @@ class Column
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	public static function setEmailColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
-	{
+	public static function setEmailColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): ActiveRecord {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -929,8 +997,13 @@ class Column
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	public static function setRandomStrings(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function setRandomStrings(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		if ($object->exists()) {
 			return;
 		}
@@ -968,8 +1041,14 @@ class Column
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	public static function validateEmailColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function validateEmailColumns(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = get_class($object);
 
 		if (empty(self::$email_columns[$class])) {
@@ -1003,8 +1082,14 @@ class Column
 	 * @param  array<array-key, mixed> &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	public static function validateLinkColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function validateLinkColumns(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = get_class($object);
 
 		if (empty(self::$link_columns[$class])) {
@@ -1019,7 +1104,12 @@ class Column
 			$ip_regex       = '(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])';
 			$hostname_regex = '[a-z]+(?:[a-z0-9\-]*[a-z0-9]\.?|\.)*';
 			$domain_regex   = '([a-z]+([a-z0-9\-]*[a-z0-9])?\.)+[a-z]{2,}';
-			if (!preg_match('#^(https?://(' . $ip_regex . '|' . $hostname_regex . ')(?=/|$)|' . $domain_regex . '(?=/|$)|/)#i', $values[$column])) {
+			if (
+				!preg_match(
+					'#^(https?://(' . $ip_regex . '|' . $hostname_regex . ')(?=/|$)|' . $domain_regex . '(?=/|$)|/)#i',
+					$values[$column]
+				)
+			) {
 				$validation_messages[$column] = self::compose(
 					'%sPlease enter a link in the form http://www.example.com',
 					ValidationException::formatField(ORM::getColumnName($class, $column))
@@ -1043,8 +1133,14 @@ class Column
 	 * @return void
 	 * @throws ValidationException
 	 */
-	public static function validatePasswordColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function validatePasswordColumns(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = get_class($object);
 
 		if (empty(self::$password_columns[$class])) {
@@ -1099,8 +1195,15 @@ class Column
 	 * @param  array<array-key, mixed> $parameters        The parameters passed to the method
 	 * @return void
 	 */
-	public static function verifyPassword(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): void
-	{
+	public static function verifyPassword(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): void {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -1125,8 +1228,8 @@ class Column
 	 * @return Column
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

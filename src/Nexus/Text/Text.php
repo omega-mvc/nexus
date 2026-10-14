@@ -10,7 +10,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Text
  *
  * @version    1.0.0b2
  * @changes    1.0.0b2  Updated ::compose() to more handle `$components` passed as an array [wb, 2009-02-05]
@@ -23,7 +22,9 @@ class Text
 	 *
 	 * @var array
 	 */
-	/** @var array{'pre':list<callable(mixed):mixed|array<int|string,mixed>>,'post':list<callable(mixed):mixed|array<int|string,mixed>>} */
+	/**
+	 * @var array<string, list<callable(mixed):mixed|array<int|string,mixed>>>
+	 */
 	private static array $compose_callbacks = array(
 		'pre'  => array(),
 		'post' => array()
@@ -31,7 +32,8 @@ class Text
 
 
 	/**
-	 * Performs an [http://php.net/sprintf sprintf()] on a string and provides a hook for modifications such as internationalization
+	 * Performs an [http://php.net/sprintf sprintf()] on a string and provides a hook for modifications such as
+	 * internationalization
 	 *
 	 * @param  string  $message    A message to compose
 	 * @param  mixed   ...$components  A string or number to insert into the message
@@ -111,7 +113,8 @@ class Text
 	 * the interpolated variables. Because of this, most of the time the `'pre'`
 	 * timing should be chosen.
 	 *
-	 * @param  string   $timing    When the callback should be executed - `'pre'` or `'post'` performing the actual composition
+	 * @param  string   $timing    When the callback should be executed - `'pre'` or `'post'` performing the actual
+	 * composition
 	 * @param  callable(mixed...):mixed $callback  The callback
 	 * @return void
 	 */
@@ -124,7 +127,16 @@ class Text
 		if ($callback === null && func_num_args() === 2) {
 			$callback = $timing;
 			$timing = 'pre';
-		} elseif (func_num_args() === 2 && !is_callable($callback) && (is_callable($timing) || is_array($timing) || (is_string($timing) && strpos($timing, '::') !== false))) {
+		} elseif (
+			func_num_args() === 2 && !is_callable($callback) && (is_callable($timing) || is_array(
+				$timing
+			) || (is_string(
+				$timing
+			) && strpos(
+				$timing,
+				'::'
+			) !== false))
+		) {
 			$temp = $callback;
 			$callback = $timing;
 			$timing = is_string($temp) ? $temp : 'pre';
@@ -176,8 +188,8 @@ class Text
 	 * @return Text
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

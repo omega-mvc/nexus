@@ -10,20 +10,26 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/SMTP
  *
  * @version    1.0.0b12
  * @changes    1.0.0b11  Enhanced the error checking for ::write() [wb, 2011-06-03]
- * @changes    1.0.0b12  Added ::hackLineEnding() to support SMTP servers that require `\n` line endings instead of `\r\n` [wb, 2019-06-29]
- * @changes    1.0.0b10  Added code to work around PHP bug #42682 (http://bugs.php.net/bug.php?id=42682) where `stream_select()` doesn't work on 64bit machines from PHP 5.2.0 to 5.2.5, improved timeouts while reading data [wb, 2011-01-10]
- * @changes    1.0.0b9   Fixed a bug where lines starting with `.` and containing other content would have the `.` stripped [wb, 2010-09-11]
+ * @changes    1.0.0b12  Added ::hackLineEnding() to support SMTP servers that require `\n` line endings instead of
+ * `\r\n` [wb, 2019-06-29]
+ * @changes    1.0.0b10  Added code to work around PHP bug #42682 (http://bugs.php.net/bug.php?id=42682) where
+ * `stream_select()` doesn't work on 64bit machines from PHP 5.2.0 to 5.2.5, improved timeouts while reading data [wb,
+ * 2011-01-10]
+ * @changes    1.0.0b9   Fixed a bug where lines starting with `.` and containing other content would have the `.`
+ * stripped [wb, 2010-09-11]
  * @changes    1.0.0b8   Updated the class to use Email::getFQDN() [wb, 2010-09-07]
  * @changes    1.0.0b7   Updated class to use new Core::startErrorCapture() functionality [wb, 2010-08-09]
  * @changes    1.0.0b6   Updated the class to use new Core functionality [wb, 2010-07-05]
  * @changes    1.0.0b5   Hacked around a bug in PHP 5.3 on Windows [wb, 2010-06-22]
- * @changes    1.0.0b4   Updated the class to not connect and authenticate until a message is sent, moved message id generation in Email [wb, 2010-05-05]
- * @changes    1.0.0b3   Fixed a bug with connecting to servers that send an initial response of `220-` and instead of `220 ` [wb, 2010-04-26]
- * @changes    1.0.0b2   Fixed a bug where `STARTTLS` would not be triggered if it was last in the SMTP server's list of supported extensions [wb, 2010-04-20]
+ * @changes    1.0.0b4   Updated the class to not connect and authenticate until a message is sent, moved message id
+ * generation in Email [wb, 2010-05-05]
+ * @changes    1.0.0b3   Fixed a bug with connecting to servers that send an initial response of `220-` and instead of
+ * `220 ` [wb, 2010-04-26]
+ * @changes    1.0.0b2   Fixed a bug where `STARTTLS` would not be triggered if it was last in the SMTP server's list of
+ * supported extensions [wb, 2010-04-20]
  * @changes    1.0.0b    The initial implementation [wb, 2010-04-20]
  */
 class SMTP
@@ -118,7 +124,8 @@ class SMTP
 	 *
 	 * @param string  $host     The hostname or IP address to connect to
 	 * @param integer $port     The port number to use
-	 * @param boolean $secure   If the connection should be secure - if `STARTTLS` is available, the connection will be upgraded even if this is `FALSE`
+	 * @param boolean $secure   If the connection should be secure - if `STARTTLS` is available, the connection will be
+	 * upgraded even if this is `FALSE`
 	 * @param integer $timeout  The timeout for the connection - defaults to the `default_socket_timeout` ini setting
 	 * @return SMTP
 	 */
@@ -228,7 +235,10 @@ class SMTP
 		$connection = fsockopen($host, $this->port, $error_int, $error_string, (float) $this->timeout);
 
 		foreach (Core::stopErrorCapture('#ssl#i') as $error) {
-			throw new ConnectivityException('There was an error connecting to the server. A secure connection was requested, but was not available. Try a non-secure connection instead.');
+			throw new ConnectivityException(
+				'There was an error connecting to the server. A secure connection was requested, but was not '
+					. 'available. Try a non-secure connection instead.'
+			);
 		}
 
 		if ($connection === false) {
@@ -304,11 +314,15 @@ class SMTP
 				$request_params[$_match[1]] = ($_match[2][0] == '"') ? substr($_match[2], 1, -1) : $_match[2];
 			}
 
-			$missing_qop_auth = !isset($request_params['qop']) || !in_array('auth', explode(',', $request_params['qop']));
+			$missing_qop_auth = !isset($request_params['qop']) || !in_array('auth', explode(
+				',',
+				$request_params['qop']
+			));
 			$missing_nonce    = empty($request_params['nonce']);
 			if ($missing_qop_auth || $missing_nonce) {
 				throw new UnexpectedException(
-					'The SMTP server %1$s on port %2$s claims to support DIGEST-MD5, but does not seem to provide auth functionality',
+					'The SMTP server %1$s on port %2$s claims to support DIGEST-MD5, but does not seem to provide auth '
+						. 'functionality',
 					$this->host,
 					$this->port
 				);
@@ -345,13 +359,19 @@ class SMTP
 			$response = $this->write('AUTH CRAM-MD5', 1);
 			$match     = $this->find($response, '#^334 (.*)$#');
 			$challenge = base64_decode($match[0][1]);
-			$response  = $this->write(base64_encode($this->username . ' ' . Cryptography::hashHMAC('md5', $challenge, $this->password)), 1);
+			$response  = $this->write(
+				base64_encode($this->username . ' ' . Cryptography::hashHMAC('md5', $challenge, $this->password)),
+				1
+			);
 		} elseif (in_array('LOGIN', $auth_methods)) {
 			$response = $this->write('AUTH LOGIN', 1);
 			$this->write(base64_encode($this->username), 1);
 			$response = $this->write(base64_encode($this->password), 1);
 		} elseif (in_array('PLAIN', $auth_methods)) {
-			$response = $this->write('AUTH PLAIN ' . base64_encode($this->username . "\0" . $this->username . "\0" . $this->password), 1);
+			$response = $this->write(
+				'AUTH PLAIN ' . base64_encode($this->username . "\0" . $this->username . "\0" . $this->password),
+				1
+			);
 		}
 
 		if ($this->find($response, '#^535[ -]#')) {
@@ -517,7 +537,8 @@ class SMTP
 	 * @throws ValidationException  When the message is too large for the server
 	 *
 	 * @param string $from     The email address being sent from - this will be used as the `Return-Path` header
-	 * @param array<int, string> $to       All of the To, Cc and Bcc email addresses to send the message to - this does not affect the message headers in any way
+	 * @param array<int, string> $to       All of the To, Cc and Bcc email addresses to send the message to - this does
+	 * not affect the message headers in any way
 	 * @param string $headers  The message headers - the Bcc header will be removed if present
 	 * @param string $body     The mail body
 	 * @return void
@@ -561,7 +582,10 @@ class SMTP
 			}
 			$rcpt_to = trim($rcpt_to);
 
-			$this->write($mail_from . $this->line_ending . $rcpt_to . $this->line_ending . "DATA" . $this->line_ending, $expect);
+			$this->write(
+				$mail_from . $this->line_ending . $rcpt_to . $this->line_ending . "DATA" . $this->line_ending,
+				$expect
+			);
 		} else {
 			$this->write($mail_from, 1);
 			foreach ($to as $email) {
@@ -599,7 +623,11 @@ class SMTP
 		$res = fwrite($this->connection, $data);
 
 		if ($res === false || $res === 0) {
-			throw new ConnectivityException('Unable to write data to SMTP server %1$s on port %2$s', $this->host, $this->port);
+			throw new ConnectivityException(
+				'Unable to write data to SMTP server %1$s on port %2$s',
+				$this->host,
+				$this->port
+			);
 		}
 		$response = $this->read($expect);
 		return $response;

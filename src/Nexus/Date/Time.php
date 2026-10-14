@@ -10,15 +10,17 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Time
  *
  * @version    1.0.0b12
  * @changes    1.0.0b12  Fixed a method signature [wb, 2011-08-24]
- * @changes    1.0.0b11  Fixed a bug with the constructor not properly handling unix timestamps that are negative integers [wb, 2011-06-02]
+ * @changes    1.0.0b11  Fixed a bug with the constructor not properly handling unix timestamps that are negative
+ * integers [wb, 2011-06-02]
  * @changes    1.0.0b10  Changed the `$time` attribute to be protected [wb, 2011-03-20]
  * @changes    1.0.0b9   Added the `$simple` parameter to ::getFuzzyDifference() [wb, 2010-03-15]
- * @changes    1.0.0b8   Added a call to Timestamp::callUnformatCallback() in ::__construct() for localization support [wb, 2009-06-01]
- * @changes    1.0.0b7   Backwards compatibility break - Removed ::getSecondsDifference(), added ::eq(), ::gt(), ::gte(), ::lt(), ::lte() [wb, 2009-03-05]
+ * @changes    1.0.0b8   Added a call to Timestamp::callUnformatCallback() in ::__construct() for localization support
+ * [wb, 2009-06-01]
+ * @changes    1.0.0b7   Backwards compatibility break - Removed ::getSecondsDifference(), added ::eq(), ::gt(),
+ * ::gte(), ::lt(), ::lte() [wb, 2009-03-05]
  * @changes    1.0.0b6   Fixed an outdated Core method call [wb, 2009-02-23]
  * @changes    1.0.0b5   Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b4   Fixed ::__construct() to properly handle the 5.0 to 5.1 change in strtotime() [wb, 2009-01-21]
@@ -142,7 +144,8 @@ class Time
 
 
 	/**
-	 * Changes the time by the adjustment specified, only adjustments of `'hours'`, `'minutes'`, and `'seconds'` are allowed
+	 * Changes the time by the adjustment specified, only adjustments of `'hours'`, `'minutes'`, and `'seconds'` are
+	 * allowed
 	 *
 	 * @throws ValidationException  When `$adjustment` is not a valid relative time measurement
 	 *
@@ -183,7 +186,8 @@ class Time
 	 *
 	 * @throws ValidationException  When a non-time formatting character is included in `$format`
 	 *
-	 * @param  string $format  The [http://php.net/date date()] function compatible formatting string, or a format name from Timestamp::defineFormat()
+	 * @param  string $format  The [http://php.net/date date()] function compatible formatting string, or a format name
+	 * from Timestamp::defineFormat()
 	 * @return string  The formatted time
 	 */
 	public function format(string $format): string
@@ -232,8 +236,10 @@ class Time
 	 *
 	 *  - `'55 minutes'` would be represented as `'1 hour'`, however `'45 minutes'` would not
 	 *
-	 * @param  boolean|Time|object|string|integer $other_time  The time to create the difference with, `NULL` is interpreted as now, `TRUE` sets `$simple`
-	 * @param  boolean $simple  When `TRUE`, the returned value will only include the difference in the two times, but not `from now`, `ago`, `after` or `before`
+	 * @param  boolean|Time|object|string|integer $other_time  The time to create the difference with, `NULL` is
+	 * interpreted as now, `TRUE` sets `$simple`
+	 * @param  boolean $simple  When `TRUE`, the returned value will only include the difference in the two times, but
+	 * not `from now`, `ago`, `after` or `before`
 	 * @return string  The fuzzy difference in time between the this time and the one provided
 	 * @throws ValidationException
 	 */
@@ -276,8 +282,8 @@ class Time
 
 		foreach ($break_points as $break_point => $unit_info) {
 			if (abs($diff) > $break_point) {
-                continue;
-            }
+				continue;
+			}
 
 			$unit_diff = round(abs($diff) / $unit_info[0]);
 			$units     = Grammar::inflectOnQuantity($unit_diff, $unit_info[1], $unit_info[2]);
@@ -378,13 +384,14 @@ class Time
 	 *  - `'17:i:s'` to set the hour of the time to 5 PM
 	 *  - 'H:00:00'` to set the time to the beginning of the current hour
 	 *
-	 * @param  string $format  The current time will be formatted with this string, and the output used to create a new object
+	 * @param  string $format  The current time will be formatted with this string, and the output used to create a new
+	 * object
 	 * @return Time  The new time
 	 * @throws ValidationException
 	 */
 	public function modify(string $format): Time
 	{
-        return new Time($this->format($format));
+		return new Time($this->format($format));
 	}
 }
 

@@ -10,65 +10,93 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Schema
  *
  * @version    1.0.0b52
  * @changes    1.0.0b52  Use UTF8::len() instead of strlen(utf8_decode()) [wb, 2016-10-17]
- * @changes    1.0.0b51  Fixed handling of getting tables in table creation order when a table references itself, fixed default value detection for the last column in a MySQL table [wb, 2012-01-12]
+ * @changes    1.0.0b51  Fixed handling of getting tables in table creation order when a table references itself, fixed
+ * default value detection for the last column in a MySQL table [wb, 2012-01-12]
  * @changes    1.0.0b50  Fixed detection of explicitly named SQLite foreign key constraints [wb, 2011-08-23]
  * @changes    1.0.0b49  Added support for spatial/geometric data types in MySQL and PostgreSQL [wb, 2011-05-26]
- * @changes    1.0.0b48  Fixed a bug with ::getTables() not working on MySQL 4.x, fixed ::getKeys() to always return a reset array [wb, 2011-05-24]
- * @changes    1.0.0b47  Backwards Compatibility Break - ::getTables(), ::getColumnInfo(), ::getDatabases(), ::getKeys() and ::getRelationships() now return database, schema, table and column names in lowercase, added the `$creation_order` parameter to ::getTables(), fixed bugs with getting column and key information from MSSQL, Oracle and SQLite [wb, 2011-05-09]
- * @changes    1.0.0b46  Enhanced SQLite schema detection to cover situations where `UNIQUE` constraints are defined separately from the table and when comments are used in `CREATE TABLE` statements [wb, 2011-02-06]
- * @changes    1.0.0b45  Fixed Oracle auto incrementing detection to work with `INSERT OR UPDATE` triggers, fixed detection of dynamic default date/time/timestamp values for DB2 and Oracle [wb, 2010-12-04]
+ * @changes    1.0.0b48  Fixed a bug with ::getTables() not working on MySQL 4.x, fixed ::getKeys() to always return a
+ * reset array [wb, 2011-05-24]
+ * @changes    1.0.0b47  Backwards Compatibility Break - ::getTables(), ::getColumnInfo(), ::getDatabases(), ::getKeys()
+ * and ::getRelationships() now return database, schema, table and column names in lowercase, added the
+ * `$creation_order` parameter to ::getTables(), fixed bugs with getting column and key information from MSSQL, Oracle
+ * and SQLite [wb, 2011-05-09]
+ * @changes    1.0.0b46  Enhanced SQLite schema detection to cover situations where `UNIQUE` constraints are defined
+ * separately from the table and when comments are used in `CREATE TABLE` statements [wb, 2011-02-06]
+ * @changes    1.0.0b45  Fixed Oracle auto incrementing detection to work with `INSERT OR UPDATE` triggers, fixed
+ * detection of dynamic default date/time/timestamp values for DB2 and Oracle [wb, 2010-12-04]
  * @changes    1.0.0b44  Fixed the list of valid elements for ::getColumnInfo() [wb, 2010-11-28]
  * @changes    1.0.0b43  Added the `comment` element to the information returned by ::getColumnInfo() [wb, 2010-11-28]
  * @changes    1.0.0b42  Fixed a bug with MySQL detecting default `ON DELETE` clauses [wb, 2010-10-19]
  * @changes    1.0.0b41  Fixed handling MySQL table names that require quoting [wb, 2010-08-24]
- * @changes    1.0.0b40  Fixed bugs in the documentation and error message of ::getColumnInfo() about what are valid elements [wb, 2010-07-21]
- * @changes    1.0.0b39  Fixed a regression where key detection SQL was not compatible with PostgreSQL 8.1 [wb, 2010-04-13]
+ * @changes    1.0.0b40  Fixed bugs in the documentation and error message of ::getColumnInfo() about what are valid
+ * elements [wb, 2010-07-21]
+ * @changes    1.0.0b39  Fixed a regression where key detection SQL was not compatible with PostgreSQL 8.1 [wb,
+ * 2010-04-13]
  * @changes    1.0.0b38  Added Oracle support to ::getDatabases() [wb, 2010-04-13]
  * @changes    1.0.0b37  Fixed ::getDatabases() for MSSQL [wb, 2010-04-09]
- * @changes    1.0.0b36  Fixed PostgreSQL to properly report explicit `NULL` default values via ::getColumnInfo() [wb, 2010-03-30]
- * @changes    1.0.0b35  Added `max_length` values for various text and blob data types across all databases [wb, 2010-03-29]
- * @changes    1.0.0b34  Added `min_value` and `max_value` attributes to ::getColumnInfo() to specify the valid range for numeric columns [wb, 2010-03-16]
- * @changes    1.0.0b33  Changed it so that PostgreSQL unique indexes containing functions are ignored since they can't be properly detected at this point [wb, 2010-03-14]
+ * @changes    1.0.0b36  Fixed PostgreSQL to properly report explicit `NULL` default values via ::getColumnInfo() [wb,
+ * 2010-03-30]
+ * @changes    1.0.0b35  Added `max_length` values for various text and blob data types across all databases [wb,
+ * 2010-03-29]
+ * @changes    1.0.0b34  Added `min_value` and `max_value` attributes to ::getColumnInfo() to specify the valid range
+ * for numeric columns [wb, 2010-03-16]
+ * @changes    1.0.0b33  Changed it so that PostgreSQL unique indexes containing functions are ignored since they can't
+ * be properly detected at this point [wb, 2010-03-14]
  * @changes    1.0.0b32  Fixed ::getTables() to not include views for MySQL [wb, 2010-03-14]
  * @changes    1.0.0b31  Fixed the creation of the default caching key for ::enableCaching() [wb, 2010-03-02]
- * @changes    1.0.0b30  Fixed the class to work with lower privilege Oracle accounts and added detection of Oracle number columns [wb, 2010-01-25]
- * @changes    1.0.0b29  Added on_delete and on_update elements to one-to-one relationship info retrieved by ::getRelationships() [wb, 2009-12-16]
- * @changes    1.0.0b28  Fixed a bug with detecting some multi-column unique constraints in SQL Server databases [wb, 2009-11-13]
- * @changes    1.0.0b27  Added a parameter to ::enableCaching() to provide a key token that will allow cached values to be shared between multiple databases with the same schema [wb, 2009-10-28]
- * @changes    1.0.0b26  Added the placeholder element to the output of ::getColumnInfo(), added support for PostgreSQL, MSSQL and Oracle "schemas", added support for parsing quoted SQLite identifiers [wb, 2009-10-22]
- * @changes    1.0.0b25  One-to-one relationships utilizing the primary key as a foreign key are now properly detected [wb, 2009-09-22]
+ * @changes    1.0.0b30  Fixed the class to work with lower privilege Oracle accounts and added detection of Oracle
+ * number columns [wb, 2010-01-25]
+ * @changes    1.0.0b29  Added on_delete and on_update elements to one-to-one relationship info retrieved by
+ * ::getRelationships() [wb, 2009-12-16]
+ * @changes    1.0.0b28  Fixed a bug with detecting some multi-column unique constraints in SQL Server databases [wb,
+ * 2009-11-13]
+ * @changes    1.0.0b27  Added a parameter to ::enableCaching() to provide a key token that will allow cached values to
+ * be shared between multiple databases with the same schema [wb, 2009-10-28]
+ * @changes    1.0.0b26  Added the placeholder element to the output of ::getColumnInfo(), added support for PostgreSQL,
+ * MSSQL and Oracle "schemas", added support for parsing quoted SQLite identifiers [wb, 2009-10-22]
+ * @changes    1.0.0b25  One-to-one relationships utilizing the primary key as a foreign key are now properly detected
+ * [wb, 2009-09-22]
  * @changes    1.0.0b24  Fixed MSSQL support to work with ODBC database connections [wb, 2009-09-18]
  * @changes    1.0.0b23  Fixed a bug where one-to-one relationships were being listed as many-to-one [wb, 2009-07-21]
- * @changes    1.0.0b22  PostgreSQL UNIQUE constraints that are created as indexes and not table constraints are now properly detected [wb, 2009-07-08]
+ * @changes    1.0.0b22  PostgreSQL UNIQUE constraints that are created as indexes and not table constraints are now
+ * properly detected [wb, 2009-07-08]
  * @changes    1.0.0b21  Added support for the UUID data type in PostgreSQL [wb, 2009-06-18]
  * @changes    1.0.0b20  Add caching of merged info, improved performance of ::getColumnInfo() [wb, 2009-06-15]
  * @changes    1.0.0b19  Fixed a couple of bugs with ::setKeysOverride() [wb, 2009-06-04]
  * @changes    1.0.0b18  Added missing support for MySQL mediumint columns [wb, 2009-05-18]
- * @changes    1.0.0b17  Fixed a bug with ::clearCache() not properly reseting the tables and databases list [wb, 2009-05-13]
- * @changes    1.0.0b16  Backwards Compatibility Break - ::setCacheFile() changed to ::enableCaching() and now requires an Cache object, ::flushInfo() renamed to ::clearCache(), added Oracle support [wb, 2009-05-04]
+ * @changes    1.0.0b17  Fixed a bug with ::clearCache() not properly reseting the tables and databases list [wb,
+ * 2009-05-13]
+ * @changes    1.0.0b16  Backwards Compatibility Break - ::setCacheFile() changed to ::enableCaching() and now requires
+ * an Cache object, ::flushInfo() renamed to ::clearCache(), added Oracle support [wb, 2009-05-04]
  * @changes    1.0.0b15  Added support for the three different types of identifier quoting in SQLite [wb, 2009-03-28]
  * @changes    1.0.0b14  Added support for MySQL column definitions containing the COLLATE keyword [wb, 2009-03-28]
- * @changes    1.0.0b13  Fixed a bug with detecting PostgreSQL columns having both a CHECK constraint and a UNIQUE constraint [wb, 2009-02-27]
+ * @changes    1.0.0b13  Fixed a bug with detecting PostgreSQL columns having both a CHECK constraint and a UNIQUE
+ * constraint [wb, 2009-02-27]
  * @changes    1.0.0b12  Fixed detection of multi-column primary keys in MySQL [wb, 2009-02-27]
  * @changes    1.0.0b11  Fixed an issue parsing MySQL tables with comments [wb, 2009-02-25]
  * @changes    1.0.0b10  Added the ::getDatabases() method [wb, 2009-02-24]
- * @changes    1.0.0b9   Now detects unsigned and zerofill MySQL data types that do not have a parenthetical part [wb, 2009-02-16]
- * @changes    1.0.0b8   Mapped the MySQL data type `'set'` to `'varchar'`, however valid values are not implemented yet [wb, 2009-02-01]
+ * @changes    1.0.0b9   Now detects unsigned and zerofill MySQL data types that do not have a parenthetical part [wb,
+ * 2009-02-16]
+ * @changes    1.0.0b8   Mapped the MySQL data type `'set'` to `'varchar'`, however valid values are not implemented yet
+ * [wb, 2009-02-01]
  * @changes    1.0.0b7   Fixed a bug with detecting MySQL timestamp columns [wb, 2009-01-28]
  * @changes    1.0.0b6   Fixed a bug with detecting MySQL columns that accept `NULL` [wb, 2009-01-19]
- * @changes    1.0.0b5   ::setColumnInfo(): fixed a bug with not grabbing the real database schema first, made general improvements [wb, 2009-01-19]
- * @changes    1.0.0b4   Added support for MySQL binary data types, numeric data type options unsigned and zerofill, and per-column character set definitions [wb, 2009-01-17]
- * @changes    1.0.0b3   Fixed detection of the data type of MySQL timestamp columns, added support for dynamic default date/time values [wb, 2009-01-11]
+ * @changes    1.0.0b5   ::setColumnInfo(): fixed a bug with not grabbing the real database schema first, made general
+ * improvements [wb, 2009-01-19]
+ * @changes    1.0.0b4   Added support for MySQL binary data types, numeric data type options unsigned and zerofill, and
+ * per-column character set definitions [wb, 2009-01-17]
+ * @changes    1.0.0b3   Fixed detection of the data type of MySQL timestamp columns, added support for dynamic default
+ * date/time values [wb, 2009-01-11]
  * @changes    1.0.0b2   Fixed a bug with detecting multi-column unique keys in MySQL [wb, 2009-01-03]
  * @changes    1.0.0b    The initial implementation [wb, 2007-09-25]
  *
  * @phpstan-type ColumnInfoRow   array<string, mixed>
  * @phpstan-type ColumnInfoArray array<string, array<string, ColumnInfoRow>>
- * @phpstan-type ForeignKey      array{column: string, foreign_table: string, foreign_column: string|null, on_delete: string, on_update: string}
+ * @phpstan-type ForeignKey      array{column: string, foreign_table: string, foreign_column: string|null, on_delete:
+ * string, on_update: string}
  * @phpstan-type KeyInfoRow      array{primary: list<string>, unique: list<list<string>>, foreign: list<ForeignKey>}
  * @phpstan-type TableKeyInfo    array<string, KeyInfoRow>
  */
@@ -106,11 +134,11 @@ class Schema
 	private array $column_info_override = array();
 
 	/**
-	 * A reference to an instance of the Database class
+	 * A reference to an instance of the Connection class
 	 *
-	 * @var Database
+	 * @var Connection
 	 */
-	private Database $database;
+	private Connection $database;
 
 	/**
 	 * The databases on the current database server
@@ -167,10 +195,10 @@ class Schema
 	/**
 	 * Sets the database
 	 *
-	 * @param  Database $database  The Database instance
+	 * @param  Connection $database  The Connection instance
 	 * @return Schema
 	 */
-	public function __construct(Database $database)
+	public function __construct(Connection $database)
 	{
 		$this->database = $database;
 	}
@@ -281,7 +309,13 @@ class Schema
 					$all_dependencies_met = true;
 					$found_dependencies   = 0;
 					foreach ($foreign_keys as $foreign_key) {
-						if ($table != $foreign_key['foreign_table'] && !in_array($foreign_key['foreign_table'], $found) && !in_array($foreign_key['foreign_table'], $ignored_found)) {
+						if (
+							$table != $foreign_key['foreign_table'] && !in_array($foreign_key['foreign_table'], $found)
+								&& !in_array(
+									$foreign_key['foreign_table'],
+									$ignored_found
+								)
+						) {
 							$all_dependencies_met = false;
 							break;
 						} elseif (in_array($foreign_key['foreign_table'], $found)) {
@@ -315,7 +349,8 @@ class Schema
 	 * Sets the schema to be cached to the Cache object specified
 	 *
 	 * @param  Cache $cache      The cache to cache to
-	 * @param  string $key_token  Internal use only! (this will be used in the cache key to uniquely identify the cache for this Schema object)
+	 * @param  string $key_token  Internal use only! (this will be used in the cache key to uniquely identify the cache
+	 * for this Schema object)
 	 * @return void
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -444,7 +479,8 @@ class Schema
 		$max_min_values = array(
 			'smallint'   => array('min' => new Number('-32768'),                 'max' => new Number('32767')),
 			'integer'    => array('min' => new Number('-2147483648'),            'max' => new Number('2147483647')),
-			'bigint'     => array('min' => new Number('-9223372036854775808'),  'max' => new Number('9223372036854775807'))
+			'bigint'     => array('min' => new Number('-9223372036854775808'),  'max' => new
+				Number('9223372036854775807'))
 		);
 
 		// Get the column info
@@ -455,7 +491,8 @@ class Schema
 					C.DEFAULT,
 					C.LENGTH AS MAX_LENGTH,
 					C.SCALE,
-					CASE WHEN C.IDENTITY = 'Y' AND (C.GENERATED = 'D' OR C.GENERATED = 'A') THEN '1' ELSE '0' END AS AUTO_INCREMENT,
+					CASE WHEN C.IDENTITY = 'Y' AND (C.GENERATED = 'D' OR C.GENERATED = 'A') THEN '1' ELSE '0' END AS
+					AUTO_INCREMENT,
 					CH.TEXT AS \"CONSTRAINT\",
 					C.REMARKS AS \"COMMENT\"
 				FROM
@@ -479,7 +516,11 @@ class Schema
 		$result = $this->database->query($sql, strtolower($schema), strtolower($table));
 
 		foreach ($result as $row) {
-			/** @var array{type: string, scale: string|int|null, max_length: string|int|null, constraint: string|resource|null, column: string, auto_increment: string|int|null, default: string|null, nullable: string, comment: string|null} $row */
+			/**
+			 * @var array{type: string, scale: string|int|null, max_length: string|int|null, constraint:
+			 * string|resource|null, column: string, auto_increment: string|int|null, default: string|null, nullable:
+			 * string, comment: string|null} $row
+			 */
 
 			$info = array();
 
@@ -520,8 +561,17 @@ class Schema
 			}
 
 			// The generally accepted practice for boolean on DB2 is a CHAR(1) with a CHECK constraint
-			if ($info['type'] == 'char' && isset($info['max_length']) && $info['max_length'] == 1 && !empty($constraint)) {
-				if (preg_match('/^\s*"?' . preg_quote($row['column'], '/') . '"?\s+in\s+\(\s*(\'0\',\s*\'1\'|\'1\',\s*\'0\')\s*\)\s*$/i', $constraint)) {
+			if (
+				$info['type'] == 'char' && isset($info['max_length']) && $info['max_length'] == 1 &&
+				!empty($constraint)
+			) {
+				if (
+					preg_match(
+						'/^\s*"?' . preg_quote($row['column'], '/') .
+							'"?\s+in\s+\(\s*(\'0\',\s*\'1\'|\'1\',\s*\'0\')\s*\)\s*$/i',
+						$constraint
+					)
+				) {
 					$info['type'] = 'boolean';
 					$info['max_length'] = null;
 				}
@@ -529,7 +579,13 @@ class Schema
 
 			// If the column has a constraint, look for valid values
 			if (in_array($info['type'], array('char', 'varchar')) && !empty($constraint)) {
-				if (preg_match('/^\s*"?' . preg_quote($row['column'], '/') . '"?\s+in\s+\((.*?)\)\s*$/i', $constraint, $match)) {
+				if (
+					preg_match(
+						'/^\s*"?' . preg_quote($row['column'], '/') . '"?\s+in\s+\((.*?)\)\s*$/i',
+						$constraint,
+						$match
+					)
+				) {
 					if (preg_match_all("/(?<!')'((''|[^']+)*)'/", $match[1], $matches, PREG_PATTERN_ORDER)) {
 						$info['valid_values'] = str_replace("''", "'", $matches[1]);
 					}
@@ -601,7 +657,8 @@ class Schema
 					LOWER(RTRIM(R.REFTABSCHEMA)) AS FOREIGN_SCHEMA,
 					LOWER(R.REFTABNAME) AS FOREIGN_TABLE,
 					LOWER(FK.COLNAME) AS FOREIGN_COLUMN,
-					CASE R.DELETERULE WHEN 'C' THEN 'cascade' WHEN 'A' THEN 'no_action' WHEN 'R' THEN 'restrict' ELSE 'set_null' END AS ON_DELETE,
+					CASE R.DELETERULE WHEN 'C' THEN 'cascade' WHEN 'A' THEN 'no_action' WHEN 'R' THEN 'restrict' ELSE
+					'set_null' END AS ON_DELETE,
 					CASE R.UPDATERULE WHEN 'A' THEN 'no_action' WHEN 'R' THEN 'restrict' END AS ON_UPDATE,
 					K.COLSEQ
 				FROM
@@ -673,7 +730,11 @@ class Schema
 		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
-			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null, on_update: string|null} $row */
+			/**
+			 * @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary',
+			 * column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null,
+			 * on_delete: string|null, on_update: string|null} $row
+			 */
 
 			if ($row['constraint_name'] != $last_name) {
 				if ($last_name) {
@@ -860,9 +921,11 @@ class Schema
 			'tinyint'    => array('min' => new Number(0),                       'max' => new Number(255)),
 			'smallint'   => array('min' => new Number(-32768),                  'max' => new Number(32767)),
 			'int'        => array('min' => new Number(-2147483648),             'max' => new Number(2147483647)),
-			'bigint'     => array('min' => new Number('-9223372036854775808'),  'max' => new Number('9223372036854775807')),
+			'bigint'     => array('min' => new Number('-9223372036854775808'),  'max' => new
+				Number('9223372036854775807')),
 			'smallmoney' => array('min' => new Number('-214748.3648'),          'max' => new Number('214748.3647')),
-			'money'      => array('min' => new Number('-922337203685477.5808'), 'max' => new Number('922337203685477.5807'))
+			'money'      => array('min' => new Number('-922337203685477.5808'), 'max' => new
+				Number('922337203685477.5807'))
 		);
 
 		// Get the column info
@@ -876,8 +939,10 @@ class Schema
 					c.numeric_scale            AS decimal_places,
 					CASE
 						WHEN
-							COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), c.column_name, 'IsIdentity') = 1 AND
-							OBJECTPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), 'IsMSShipped') = 0
+							COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)),
+							c.column_name, 'IsIdentity') = 1 AND
+							OBJECTPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)),
+							'IsMSShipped') = 0
 						THEN '1'
 						ELSE '0'
 					END AS auto_increment,
@@ -894,9 +959,19 @@ class Schema
 						ccu.constraint_catalog = cc.constraint_catalog";
 
 		if (version_compare($this->database->getVersion(), (string) 9, '<')) {
-			$sql .= " LEFT JOIN sysproperties AS ex ON ex.id = OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)) AND ex.smallid = COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), c.column_name, 'ColumnId') AND ex.name = 'MS_Description' AND OBJECTPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), 'IsMsShipped') = 0 ";
+			$sql .=
+				" LEFT JOIN sysproperties AS ex ON ex.id = OBJECT_ID(QUOTENAME(c.table_schema) + '.' + "
+					. "QUOTENAME(c.table_name)) AND ex.smallid = COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + "
+					. "'.' + QUOTENAME(c.table_name)), c.column_name, 'ColumnId') AND ex.name = 'MS_Description' AND "
+					. "OBJECTPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), "
+					. "'IsMsShipped') = 0 ";
 		} else {
-			$sql .= " LEFT JOIN SYS.EXTENDED_PROPERTIES AS ex ON ex.major_id = OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)) AND ex.minor_id = COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), c.column_name, 'ColumnId') AND ex.name = 'MS_Description' AND OBJECTPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), 'IsMsShipped') = 0 ";
+			$sql .=
+				" LEFT JOIN SYS.EXTENDED_PROPERTIES AS ex ON ex.major_id = OBJECT_ID(QUOTENAME(c.table_schema) + '.' + "
+					. "QUOTENAME(c.table_name)) AND ex.minor_id = COLUMNPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + "
+					. "'.' + QUOTENAME(c.table_name)), c.column_name, 'ColumnId') AND ex.name = 'MS_Description' AND "
+					. "OBJECTPROPERTY(OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name)), "
+					. "'IsMsShipped') = 0 ";
 		}
 
 		$sql .= "
@@ -908,7 +983,11 @@ class Schema
 		$result = $this->database->query($sql, strtolower($table), strtolower($schema));
 
 		foreach ($result as $row) {
-			/** @var array{type: string, decimal_places: string|int|null, precision: string|int|null, max_length: string|int|null, constraint: string|null, column: string, auto_increment: string|int|null, default: string|null, nullable: string, comment: string|null} $row */
+			/**
+			 * @var array{type: string, decimal_places: string|int|null, precision: string|int|null, max_length:
+			 * string|int|null, constraint: string|null, column: string, auto_increment: string|int|null, default:
+			 * string|null, nullable: string, comment: string|null} $row
+			 */
 
 			$info = array();
 
@@ -954,10 +1033,20 @@ class Schema
 
 			// If the column has a constraint, look for valid values
 			if (in_array($info['type'], array('char', 'varchar')) && !empty($row['constraint'])) {
-				if (preg_match('#^\(((?:(?: OR )?\[[^\]]+\]\s*=\s*\'(?:\'\'|[^\']+)*\')+)\)$#D', $row['constraint'], $matches)) {
+				if (
+					preg_match(
+						'#^\(((?:(?: OR )?\[[^\]]+\]\s*=\s*\'(?:\'\'|[^\']+)*\')+)\)$#D',
+						$row['constraint'],
+						$matches
+					)
+				) {
 					$valid_values = explode(' OR ', $matches[1]);
 					foreach ($valid_values as $key => $value) {
-						$value = preg_replace('#^\s*\[' . preg_quote($row['column'], '#') . '\]\s*=\s*\'(.*)\'\s*$#', '\1', $value) ?? $value;
+						$value = preg_replace(
+							'#^\s*\[' . preg_quote($row['column'], '#') . '\]\s*=\s*\'(.*)\'\s*$#',
+							'\1',
+							$value
+						) ?? $value;
 						$valid_values[$key] = str_replace("''", "'", $value);
 					}
 					// SQL Server turns CHECK constraint values into a reversed list, so we fix it here
@@ -1060,7 +1149,11 @@ class Schema
 		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
-			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null, on_update: string|null} $row */
+			/**
+			 * @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary',
+			 * column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null,
+			 * on_delete: string|null, on_update: string|null} $row
+			 */
 
 			if ($row['constraint_name'] != $last_name) {
 				if ($last_name) {
@@ -1195,10 +1288,16 @@ class Schema
 			'unsigned smallint'   => array('min' => new Number(0),                       'max' => new Number(65535)),
 			'mediumint'           => array('min' => new Number(-8388608),                'max' => new Number(8388607)),
 			'unsigned mediumint'  => array('min' => new Number(0),                       'max' => new Number(16777215)),
-			'int'                 => array('min' => new Number(-2147483648),             'max' => new Number(2147483647)),
-			'unsigned int'        => array('min' => new Number(0),                       'max' => new Number('4294967295')),
-			'bigint'              => array('min' => new Number('-9223372036854775808'),  'max' => new Number('9223372036854775807')),
-			'unsigned bigint'     => array('min' => new Number(0),                       'max' => new Number('18446744073709551615'))
+			'int'                 => array('min' => new Number(-2147483648),             'max' => new
+				Number(2147483647)),
+			'unsigned int'        => array('min' => new Number(0),                       'max' => new
+				Number('4294967295')),
+			'bigint'              => array('min' => new Number('-9223372036854775808'),  'max' => new Number(
+				'9223372036854775807'
+			)),
+			'unsigned bigint'     => array('min' => new Number(0),                       'max' => new Number(
+				'18446744073709551615'
+			))
 		);
 
 		$column_info = array();
@@ -1214,7 +1313,15 @@ class Schema
 			return array();
 		}
 
-		preg_match_all('#(?<=,|\()\s+(?:"|\`)(\w+)(?:"|\`)\s+(?:([a-z]+)(?:\(([^)]+)\))?( unsigned)?(?: zerofill)?)(?: character set [^ ]+)?(?: collate [^ ]+)?(?: NULL)?( NOT NULL)?(?: DEFAULT ((?:[^, \'\n]*|\'(?:\'\'|[^\']+)*\')))?( auto_increment)?( COMMENT \'(?:\'\'|[^\']+)*\')?( ON UPDATE CURRENT_TIMESTAMP)?\s*(?:,|\s*(?=\)))#mi', $create_sql, $matches, PREG_SET_ORDER);
+		preg_match_all(
+			'#(?<=,|\()\s+(?:"|\`)(\w+)(?:"|\`)\s+(?:([a-z]+)(?:\(([^)]+)\))?( unsigned)?(?: zerofill)?)(?: character '
+				. 'set [^ ]+)?(?: collate [^ ]+)?(?: NULL)?( NOT NULL)?(?: DEFAULT ((?:[^, '
+				. '\'\n]*|\'(?:\'\'|[^\']+)*\')))?( auto_increment)?( COMMENT \'(?:\'\'|[^\']+)*\')?( ON UPDATE '
+				. 'CURRENT_TIMESTAMP)?\s*(?:,|\s*(?=\)))#mi',
+			$create_sql,
+			$matches,
+			PREG_SET_ORDER
+		);
 
 		foreach ($matches as $match) {
 			$info = array();
@@ -1223,7 +1330,13 @@ class Schema
 				if (stripos($match[2], $data_type) === 0) {
 					if ($match[2] == 'tinyint' && ($match[3] ?? null) == 1) {
 						$mapped_data_type = 'boolean';
-					} elseif (preg_match('#((?:unsigned )?(?:tiny|small|medium|big)?int)#', (isset($match[4]) ? $match[4] . ' ' : '') . $data_type, $int_match)) {
+					} elseif (
+						preg_match(
+							'#((?:unsigned )?(?:tiny|small|medium|big)?int)#',
+							(isset($match[4]) ? $match[4] . ' ' : '') . $data_type,
+							$int_match
+						)
+					) {
 						if (isset($max_min_values[$int_match[1]])) {
 							$info['min_value'] = $max_min_values[$int_match[1]]['min'];
 							$info['max_value'] = $max_min_values[$int_match[1]]['max'];
@@ -1354,13 +1467,25 @@ class Schema
 			}
 
 			// Unique keys
-			preg_match_all('/UNIQUE KEY\s+"([^"]+)"\s+\("(.*?)"\),?\n/U', $row['Create Table'], $matches, PREG_SET_ORDER);
+			preg_match_all(
+				'/UNIQUE KEY\s+"([^"]+)"\s+\("(.*?)"\),?\n/U',
+				$row['Create Table'],
+				$matches,
+				PREG_SET_ORDER
+			);
 			foreach ($matches as $match) {
 				$info['unique'][] = explode('","', strtolower($match[2]));
 			}
 
 			// Foreign keys
-			preg_match_all('#FOREIGN KEY \("([^"]+)"\) REFERENCES "([^"]+)" \("([^"]+)"\)(?:\sON\sDELETE\s(SET\sNULL|SET\sDEFAULT|CASCADE|NO\sACTION|RESTRICT))?(?:\sON\sUPDATE\s(SET\sNULL|SET\sDEFAULT|CASCADE|NO\sACTION|RESTRICT))?#', $row['Create Table'], $matches, PREG_SET_ORDER);
+			preg_match_all(
+				'#FOREIGN KEY \("([^"]+)"\) REFERENCES "([^"]+)" '
+					. '\("([^"]+)"\)(?:\sON\sDELETE\s(SET\sNULL|SET\sDEFAULT|CASCADE|NO\sACTION|RESTRICT))?(?:\sON\sUPD'
+					. 'ATE\s(SET\sNULL|SET\sDEFAULT|CASCADE|NO\sACTION|RESTRICT))?#',
+				$row['Create Table'],
+				$matches,
+				PREG_SET_ORDER
+			);
 			foreach ($matches as $match) {
 				$temp = array(
 					'column'         => strtolower($match[1]),
@@ -1497,7 +1622,10 @@ class Schema
 		$result = $this->database->query($sql, $table, $schema);
 
 		foreach ($result as $row) {
-			/** @var array{column_name: string, data_type: string, precision: string|int|null, length: string|int|null, check_constraint: string|null, data_default: string|null, nullable: string, comments: string|null} $row */
+			/**
+			 * @var array{column_name: string, data_type: string, precision: string|int|null, length: string|int|null,
+			 * check_constraint: string|null, data_default: string|null, nullable: string, comments: string|null} $row
+			 */
 
 			$column = $row['column_name'];
 
@@ -1553,12 +1681,34 @@ class Schema
 
 			// Handle check constraints that are just simple lists
 			if (in_array($info['type'], array('varchar', 'char')) && $row['check_constraint']) {
-				if (preg_match('/^\s*"?' . preg_quote($column, '/') . '"?\s+in\s+\((.*?)\)\s*$/i', $row['check_constraint'], $match)) {
+				if (
+					preg_match(
+						'/^\s*"?' . preg_quote($column, '/') . '"?\s+in\s+\((.*?)\)\s*$/i',
+						$row['check_constraint'],
+						$match
+					)
+				) {
 					if (preg_match_all("/(?<!')'((''|[^']+)*)'/", $match[1], $matches, PREG_PATTERN_ORDER)) {
 						$info['valid_values'] = str_replace("''", "'", $matches[1]);
 					}
-				} elseif (preg_match('/^\s*"?' . preg_quote($column, '/') . '"?\s*=\s*\'((\'\'|[^\']+)*)\'(\s+OR\s+"?' . preg_quote($column, '/') . '"?\s*=\s*\'((\'\'|[^\']+)*)\')*\s*$/i', $row['check_constraint'], $match)) {
-					if (preg_match_all("/(?<!')'((''|[^']+)*)'/", $row['check_constraint'], $matches, PREG_PATTERN_ORDER)) {
+				} elseif (
+					preg_match(
+						'/^\s*"?' . preg_quote($column, '/') . '"?\s*=\s*\'((\'\'|[^\']+)*)\'(\s+OR\s+"?' . preg_quote(
+							$column,
+							'/'
+						) . '"?\s*=\s*\'((\'\'|[^\']+)*)\')*\s*$/i',
+						$row['check_constraint'],
+						$match
+					)
+				) {
+					if (
+						preg_match_all(
+							"/(?<!')'((''|[^']+)*)'/",
+							$row['check_constraint'],
+							$matches,
+							PREG_PATTERN_ORDER
+						)
+					) {
 						$info['valid_values'] = str_replace("''", "'", $matches[1]);
 					}
 				}
@@ -1568,7 +1718,8 @@ class Schema
 				// Handle default values
 				if ($row['data_default'] !== null && trim($row['data_default']) != 'NULL') {
 					if (in_array($info['type'], array('date', 'time', 'timestamp')) && $row['data_default'][0] != "'") {
-						$info['default'] = trim(preg_replace('#^SYS#', 'CURRENT_', $row['data_default']) ?? $row['data_default']);
+						$info['default'] = trim(preg_replace('#^SYS#', 'CURRENT_', $row['data_default']) ??
+							$row['data_default']);
 					} elseif (in_array($info['type'], array('char', 'varchar', 'text', 'date', 'time', 'timestamp'))) {
 						$info['default'] = str_replace("''", "'", substr(trim($row['data_default']), 1, -1));
 					} elseif ($info['type'] == 'boolean') {
@@ -1602,7 +1753,13 @@ class Schema
 
 		foreach ($this->database->query($sql, $table, $schema) as $row) {
 			/** @var array{trigger_body: string|null} $row */
-			if (preg_match('#SELECT\s+(["\w.]+).nextval\s+INTO\s+:new\.(\w+)\s+FROM\s+dual#i', (string) $row['trigger_body'], $matches)) {
+			if (
+				preg_match(
+					'#SELECT\s+(["\w.]+).nextval\s+INTO\s+:new\.(\w+)\s+FROM\s+dual#i',
+					(string) $row['trigger_body'],
+					$matches
+				)
+			) {
 				$column = strtolower($matches[2]);
 				$column_info[$column]['auto_increment'] = true;
 			}
@@ -1649,7 +1806,8 @@ class Schema
 					LOWER(FKC.OWNER) FOREIGN_SCHEMA,
 					LOWER(FKC.TABLE_NAME) FOREIGN_TABLE,
 					LOWER(FKC.COLUMN_NAME) FOREIGN_COLUMN,
-					CASE WHEN FKC.TABLE_NAME IS NOT NULL THEN REPLACE(LOWER(AC.DELETE_RULE), ' ', '_') ELSE NULL END ON_DELETE
+					CASE WHEN FKC.TABLE_NAME IS NOT NULL THEN REPLACE(LOWER(AC.DELETE_RULE), ' ', '_') ELSE NULL END
+					ON_DELETE
 				FROM
 					ALL_CONSTRAINTS AC INNER JOIN
 					ALL_CONS_COLUMNS ACC ON AC.CONSTRAINT_NAME = ACC.CONSTRAINT_NAME AND AC.OWNER = ACC.OWNER LEFT JOIN
@@ -1685,7 +1843,11 @@ class Schema
 		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
-			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null} $row */
+			/**
+			 * @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary',
+			 * column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null,
+			 * on_delete: string|null} $row
+			 */
 
 			if ($row['constraint_name'] != $last_name) {
 				if ($last_name) {
@@ -1815,9 +1977,11 @@ class Schema
 		$max_min_values = array(
 			'smallint'  => array('min' => new Number(-32768),                  'max' => new Number(32767)),
 			'int'       => array('min' => new Number(-2147483648),             'max' => new Number(2147483647)),
-			'bigint'    => array('min' => new Number('-9223372036854775808'),  'max' => new Number('9223372036854775807')),
+			'bigint'    => array('min' => new Number('-9223372036854775808'),  'max' => new
+				Number('9223372036854775807')),
 			'serial'    => array('min' => new Number(-2147483648),             'max' => new Number(2147483647)),
-			'bigserial' => array('min' => new Number('-9223372036854775808'),  'max' => new Number('9223372036854775807'))
+			'bigserial' => array('min' => new Number('-9223372036854775808'),  'max' => new
+				Number('9223372036854775807'))
 		);
 
 		// PgSQL required this complicated SQL to get the column info
@@ -1849,7 +2013,10 @@ class Schema
 		$result = $this->database->query($sql, strtolower($table), strtolower($schema));
 
 		foreach ($result as $row) {
-			/** @var array{data_type: string, column: string, constraint: string|null, default: string|null, not_null: string, comment: string|null} $row */
+			/**
+			 * @var array{data_type: string, column: string, constraint: string|null, default: string|null, not_null:
+			 * string, comment: string|null} $row
+			 */
 
 			$info = array();
 
@@ -1894,7 +2061,8 @@ class Schema
 				}
 			}
 
-			// In PostgreSQL, a UUID can be the 32 digits, 32 digits plus 4 hyphens or 32 digits plus 4 hyphens and 2 curly braces
+			// In PostgreSQL, a UUID can be the 32 digits, 32 digits plus 4 hyphens or 32 digits plus 4 hyphens and 2
+			// curly braces
 			if ($row['data_type'] == 'uuid') {
 				$info['max_length'] = 38;
 			}
@@ -1921,7 +2089,11 @@ class Schema
 				} elseif ($row['default'] == "('now'::text)::time with time zone") {
 					$info['default'] = 'CURRENT_TIME';
 				} else {
-					$info['default'] = str_replace("''", "'", preg_replace("/^'(.*)'::[a-z ]+\$/iD", '\1', $row['default']) ?? $row['default']);
+					$info['default'] = str_replace(
+						"''",
+						"'",
+						preg_replace("/^'(.*)'::[a-z ]+\$/iD", '\1', $row['default']) ?? $row['default']
+					);
 					if ($info['type'] == 'boolean') {
 						$info['default'] = ($info['default'] == 'false' || !$info['default']) ? false : true;
 					}
@@ -1988,7 +2160,8 @@ class Schema
 						WHEN 'n' THEN 'set_null'
 						WHEN 'd' THEN 'set_default'
 					END AS on_update,
-					CASE WHEN con.conkey IS NOT NULL THEN position('-'||col.attnum||'-' in '-'||array_to_string(con.conkey, '-')||'-') ELSE 0 END AS column_order
+					CASE WHEN con.conkey IS NOT NULL THEN position('-'||col.attnum||'-' in
+					'-'||array_to_string(con.conkey, '-')||'-') ELSE 0 END AS column_order
 				FROM
 					pg_attribute AS col INNER JOIN
 					pg_class AS t ON
@@ -2022,7 +2195,8 @@ class Schema
 					NULL AS foreign_column,
 					NULL AS on_delete,
 					NULL AS on_update,
-					CASE WHEN ind.indkey IS NOT NULL THEN position('-'||col.attnum||'-' in '-'||array_to_string(ind.indkey, '-')||'-') ELSE 0 END AS column_order
+					CASE WHEN ind.indkey IS NOT NULL THEN position('-'||col.attnum||'-' in
+					'-'||array_to_string(ind.indkey, '-')||'-') ELSE 0 END AS column_order
 				FROM
 					pg_class AS t INNER JOIN
 					pg_index AS ind ON
@@ -2054,7 +2228,11 @@ class Schema
 		$temp    = null;
 		$columns = array();
 		foreach ($result as $row) {
-			/** @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary', column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null, on_delete: string|null, on_update: string|null} $row */
+			/**
+			 * @var array{schema: string, table: string, constraint_name: string, type: 'foreign'|'unique'|'primary',
+			 * column: string, foreign_schema: string|null, foreign_table: string|null, foreign_column: string|null,
+			 * on_delete: string|null, on_update: string|null} $row
+			 */
 
 			if ($row['constraint_name'] != $last_name) {
 				if ($last_name) {
@@ -2172,7 +2350,10 @@ class Schema
 			'text'				=> 'text'
 		);
 
-		$result = $this->database->query("SELECT sql FROM sqlite_master WHERE type = 'table' AND LOWER(name) = %s", strtolower($table));
+		$result = $this->database->query(
+			"SELECT sql FROM sqlite_master WHERE type = 'table' AND LOWER(name) = %s",
+			strtolower($table)
+		);
 
 		try {
 			/** @var Result $result */
@@ -2183,7 +2364,19 @@ class Schema
 			return array();
 		}
 
-		preg_match_all('#(?<=,|\(|\*/|\n)\s*(?:`|"|\[)?(\w+)(?:`|"|\])?\s+([a-z]+)(?:\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\))?(?:(\s+NOT\s+NULL)|(?:\s+NULL)|(?:\s+DEFAULT\s+([^, \'\n]*|\'(?:\'\'|[^\']+)*\'))|(\s+UNIQUE)|(\s+PRIMARY\s+KEY(?:\s+AUTOINCREMENT)?)|(\s+CHECK\s*\("?\w+"?\s+IN\s+\(\s*(?:(?:[^, \'\n]+|\'(?:\'\'|[^\']+)*\')\s*,\s*)*\s*(?:[^, \'\n]+|\'(?:\'\'|[^\']+)*\')\)\)))*(\s+REFERENCES\s+["`\[]?\w+["`\]]?\s*\(\s*["`\[]?\w+["`\]]?\s*\)\s*(?:\s+(?:ON\s+DELETE|ON\s+UPDATE)\s+(?:CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))*(?:\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?)?([ \t]*(?:/\*(?:(?!\*/).)*\*/))?\s*(?:,([ \t]*--[^\n]*\n)?|(--[^\n]*\n)?\s*(?:/\*(?:(?!\*/).)*\*/)?\s*(?=\)))#msi', $create_sql, $matches, PREG_SET_ORDER);
+		preg_match_all(
+			'#(?<=,|\(|\*/|\n)\s*(?:`|"|\[)?(\w+)(?:`|"|\])?\s+([a-z]+)(?:\(\s*(\d+)(?:\s*,\s*(\d+))?\s*\))?(?:(\s+NOT'
+				. '\s+NULL)|(?:\s+NULL)|(?:\s+DEFAULT\s+([^, '
+				. '\'\n]*|\'(?:\'\'|[^\']+)*\'))|(\s+UNIQUE)|(\s+PRIMARY\s+KEY(?:\s+AUTOINCREMENT)?)|(\s+CHECK\s*\("?\w'
+				. '+"?\s+IN\s+\(\s*(?:(?:[^, \'\n]+|\'(?:\'\'|[^\']+)*\')\s*,\s*)*\s*(?:[^, '
+				. '\'\n]+|\'(?:\'\'|[^\']+)*\')\)\)))*(\s+REFERENCES\s+["`\[]?\w+["`\]]?\s*\(\s*["`\[]?\w+["`\]]?\s*\)'
+				. '\s*(?:\s+(?:ON\s+DELETE|ON\s+UPDATE)\s+(?:CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))*(?'
+				. ':\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?)?([ \t]*(?:/\*(?:(?!\*/).)*\*/))?\s*(?:,([ '
+				. '\t]*--[^\n]*\n)?|(--[^\n]*\n)?\s*(?:/\*(?:(?!\*/).)*\*/)?\s*(?=\)))#msi',
+			$create_sql,
+			$matches,
+			PREG_SET_ORDER
+		);
 
 		foreach ($matches as $match) {
 			$info = array();
@@ -2226,11 +2419,20 @@ class Schema
 				$info['default'] = preg_replace("/^'|'\$/D", '', $match[6]);
 			}
 			if (isset($info['type']) && $info['type'] == 'boolean' && isset($info['default'])) {
-				$info['default'] = ($info['default'] == 'f' || $info['default'] == 0 || $info['default'] == 'false') ? false : true;
+				$info['default'] = ($info['default'] == 'f' || $info['default'] == 0 || $info['default'] == 'false') ?
+					false : true;
 			}
 
 			// Check constraints
-			if (isset($match[9]) && preg_match('/CHECK\s*\(\s*"?' . $match[1] . '"?\s+IN\s+\(\s*((?:(?:[^, \']*|\'(?:\'\'|[^\']+)*\')\s*,\s*)*(?:[^, \']*|\'(?:\'\'|[^\']+)*\'))\s*\)/i', $match[9], $check_match)) {
+			if (
+				isset($match[9]) && preg_match(
+					'/CHECK\s*\(\s*"?' . $match[1] .
+						'"?\s+IN\s+\(\s*((?:(?:[^, \']*|\'(?:\'\'|[^\']+)*\')\s*,\s*)*(?:[^, '
+							. '\']*|\'(?:\'\'|[^\']+)*\'))\s*\)/i',
+					$match[9],
+					$check_match
+				)
+			) {
 				$check_values = preg_split("#\s*,\s*#", $check_match[1]);
 				if ($check_values !== false) {
 					$info['valid_values'] = str_replace("''", "'", preg_replace("/^'|'\$/D", '', $check_values));
@@ -2238,7 +2440,12 @@ class Schema
 			}
 
 			// Auto increment fields
-			if (!empty($match[8]) && (stripos($match[8], 'autoincrement') !== false || (isset($info['type']) && $info['type'] == 'integer'))) {
+			if (
+				!empty($match[8]) && (stripos(
+					$match[8],
+					'autoincrement'
+				) !== false || (isset($info['type']) && $info['type'] == 'integer'))
+			) {
 				$info['auto_increment'] = true;
 			}
 
@@ -2282,7 +2489,10 @@ class Schema
 		foreach ($tables as $table) {
 			$keys[$table] = array('primary' => array(), 'unique' => array(), 'foreign' => array());
 
-			$result     = $this->database->query("SELECT sql FROM sqlite_master WHERE type = 'table' AND LOWER(name) = %s", strtolower($table));
+			$result     = $this->database->query(
+				"SELECT sql FROM sqlite_master WHERE type = 'table' AND LOWER(name) = %s",
+				strtolower($table)
+			);
 			/** @var Result $result */
 			$row        = $result->fetchRow();
 			/** @var array{sql: string} $row */
@@ -2298,7 +2508,19 @@ class Schema
 			$create_sql = preg_replace('#/\*((?!\*/).)*\*/#', '', $create_sql) ?? $create_sql;
 
 			// Get column level key definitions
-			preg_match_all('#(?<=,|\()\s*["`\[]?(\w+)["`\]]?\s+(?:[a-z]+)(?:\((?:\d+)\))?(?:(?:\s+NOT\s+NULL)|(?:\s+DEFAULT\s+(?:[^, \']*|\'(?:\'\'|[^\']+)*\'))|(\s+UNIQUE)|(\s+PRIMARY\s+KEY(?:\s+AUTOINCREMENT)?)|(?:\s+CHECK\s*\("?\w+"?\s+IN\s+\(\s*(?:(?:[^, \']+|\'(?:\'\'|[^\']+)*\')\s*,\s*)*\s*(?:[^, \']+|\'(?:\'\'|[^\']+)*\')\)\)))*(\s+REFERENCES\s+["`\[]?(\w+)["`\]]?\s*\(\s*["`\[]?(\w+)["`\]]?\s*\)\s*(?:(?:\s+(?:ON\s+DELETE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT)))|(?:\s+(?:ON\s+UPDATE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))))*(?:\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?)?\s*(?:,|\s*(?=\)))#mi', $create_sql, $matches, PREG_SET_ORDER);
+			preg_match_all(
+				'#(?<=,|\()\s*["`\[]?(\w+)["`\]]?\s+(?:[a-z]+)(?:\((?:\d+)\))?(?:(?:\s+NOT\s+NULL)|(?:\s+DEFAULT\s+(?:['
+					. '^, '
+					. '\']*|\'(?:\'\'|[^\']+)*\'))|(\s+UNIQUE)|(\s+PRIMARY\s+KEY(?:\s+AUTOINCREMENT)?)|(?:\s+CHECK\s*\('
+					. '"?\w+"?\s+IN\s+\(\s*(?:(?:[^, \']+|\'(?:\'\'|[^\']+)*\')\s*,\s*)*\s*(?:[^, '
+					. '\']+|\'(?:\'\'|[^\']+)*\')\)\)))*(\s+REFERENCES\s+["`\[]?(\w+)["`\]]?\s*\(\s*["`\[]?(\w+)["`\]]?'
+					. '\s*\)\s*(?:(?:\s+(?:ON\s+DELETE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT)))|(?:'
+					. '\s+(?:ON\s+UPDATE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))))*(?:\s+(?:DEFERRAB'
+					. 'LE|NOT\s+DEFERRABLE))?)?\s*(?:,|\s*(?=\)))#mi',
+				$create_sql,
+				$matches,
+				PREG_SET_ORDER
+			);
 
 			foreach ($matches as $match) {
 				if (!empty($match[2])) {
@@ -2328,7 +2550,13 @@ class Schema
 			}
 
 			// Get table level primary key definitions
-			preg_match_all('#(?<=,|\()\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?PRIMARY\s+KEY\s*\(\s*((?:\s*["`\[]?\w+["`\]]?\s*,\s*)*["`\[]?\w+["`\]]?)\s*\)\s*(?:,|\s*(?=\)))#mi', $create_sql, $matches, PREG_SET_ORDER);
+			preg_match_all(
+				'#(?<=,|\()\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?PRIMARY\s+KEY\s*\(\s*((?:\s*["`\[]?\w+["`\]]?\s*,\s'
+					. '*)*["`\[]?\w+["`\]]?)\s*\)\s*(?:,|\s*(?=\)))#mi',
+				$create_sql,
+				$matches,
+				PREG_SET_ORDER
+			);
 
 			foreach ($matches as $match) {
 				$columns = preg_split('#\s*,\s*#', strtolower($match[1]));
@@ -2340,12 +2568,21 @@ class Schema
 			}
 
 			// Get table level foreign key definitions
-			preg_match_all('#(?<=,|\()\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?FOREIGN\s+KEY\s*(?:["`\[]?(\w+)["`\]]?|\(\s*["`\[]?(\w+)["`\]]?\s*\))\s+REFERENCES\s+["`\[]?(\w+)["`\]]?\s*\(\s*["`\[]?(\w+)["`\]]?\s*\)\s*(?:\s+(?:ON\s+DELETE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))|\s+(?:ON\s+UPDATE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT)))*(?:\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?\s*(?:,|\s*(?=\)))#mis', $create_sql, $matches, PREG_SET_ORDER);
+			preg_match_all(
+				'#(?<=,|\()\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?FOREIGN\s+KEY\s*(?:["`\[]?(\w+)["`\]]?|\(\s*["`\[]?'
+					. '(\w+)["`\]]?\s*\))\s+REFERENCES\s+["`\[]?(\w+)["`\]]?\s*\(\s*["`\[]?(\w+)["`\]]?\s*\)\s*(?:\s+(?'
+					. ':ON\s+DELETE\s+(CASCADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT))|\s+(?:ON\s+UPDATE\s+(CAS'
+					. 'CADE|NO\s+ACTION|RESTRICT|SET\s+NULL|SET\s+DEFAULT)))*(?:\s+(?:DEFERRABLE|NOT\s+DEFERRABLE))?\s*'
+					. '(?:,|\s*(?=\)))#mis',
+				$create_sql,
+				$matches,
+				PREG_SET_ORDER
+			);
 
 			foreach ($matches as $match) {
 				if (empty($match[1])) {
-                    $match[1] = $match[2];
-                }
+					$match[1] = $match[2];
+				}
 				$temp = array(
 					'column'         => strtolower($match[1]),
 					'foreign_table'  => strtolower($match[3]),
@@ -2363,7 +2600,13 @@ class Schema
 			}
 
 			// Get table level unique key definitions
-			preg_match_all('#(?<=,|\()\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?UNIQUE\s*\(\s*((?:\s*["`\[]?\w+["`\]]?\s*,\s*)*["`\[]?\w+["`\]]?)\s*\)\s*(?:,|\s*(?=\)))#mi', $create_sql, $matches, PREG_SET_ORDER);
+			preg_match_all(
+				'#(?<=,|\()\s*(?:CONSTRAINT\s+["`\[]?\w+["`\]]?\s+)?UNIQUE\s*\(\s*((?:\s*["`\[]?\w+["`\]]?\s*,\s*)*["`'
+					. '\[]?\w+["`\]]?)\s*\)\s*(?:,|\s*(?=\)))#mi',
+				$create_sql,
+				$matches,
+				PREG_SET_ORDER
+			);
 
 			foreach ($matches as $match) {
 				$columns = preg_split('#\s*,\s*#', strtolower($match[1]));
@@ -2377,11 +2620,21 @@ class Schema
 			}
 
 			// Get all CREATE UNIQUE INDEX statements
-			$result = $this->database->query("SELECT sql FROM sqlite_master WHERE type = 'index' AND sql <> '' AND LOWER(tbl_name) = %s", strtolower($table));
+			$result = $this->database->query(
+				"SELECT sql FROM sqlite_master WHERE type = 'index' AND sql <> '' AND LOWER(tbl_name) = %s",
+				strtolower($table)
+			);
 			foreach ($result as $row) {
 				/** @var array{sql: string} $row */
 				$create_sql = $row['sql'];
-				if (!preg_match('#^\s*CREATE\s+UNIQUE\s+INDEX\s+(?:["`\[]?\w+["`\]]?\.)?["`\[]?\w+["`\]]?\s+ON\s+[\'"`\[]?\w+[\'"`\]]?\s*\(\s*((?:\s*["`\[]?\w+["`\]]?\s*,\s*)*["`\[]?\w+["`\]]?)\s*\)\s*$#Di', $create_sql, $match)) {
+				if (
+					!preg_match(
+						'#^\s*CREATE\s+UNIQUE\s+INDEX\s+(?:["`\[]?\w+["`\]]?\.)?["`\[]?\w+["`\]]?\s+ON\s+[\'"`\[]?\w+['
+							. '\'"`\]]?\s*\(\s*((?:\s*["`\[]?\w+["`\]]?\s*,\s*)*["`\[]?\w+["`\]]?)\s*\)\s*$#Di',
+						$create_sql,
+						$match
+					)
+				) {
 					continue;
 				}
 				$columns = preg_split('#\s*,\s*#', strtolower($match[1]));
@@ -2538,7 +2791,7 @@ class Schema
 	 * array(
 	 *     (string) {column name} => array(
 	 *         'type'           => (string)  {data type},
-	 *         'placeholder'    => (string)  {Database::escape() placeholder for this data type},
+	 *         'placeholder'    => (string)  {Connection::escape() placeholder for this data type},
 	 *         'not_null'       => (bool) {if value can't be null},
 	 *         'default'        => (mixed)   {the default value},
 	 *         'valid_values'   => (array)   {the valid values for a varchar field},
@@ -2546,7 +2799,8 @@ class Schema
 	 *         'min_value'      => (numeric) {the minimum value for an integer/float field},
 	 *         'max_value'      => (numeric) {the maximum value for an integer/float field},
 	 *         'decimal_places' => (int) {the number of decimal places for a decimal/numeric/money/smallmoney field},
-	 *         'auto_increment' => (bool) {if the integer primary key column is a serial/autoincrement/auto_increment/indentity column},
+	 *         'auto_increment' => (bool) {if the integer primary key column is a
+	 * serial/autoincrement/auto_increment/indentity column},
 	 *         'comment'        => (string)  {the SQL comment/description for the column}
 	 *     ), ...
 	 * )
@@ -2557,15 +2811,17 @@ class Schema
 	 * {{{
 	 * array(
 	 *     'type'           => (string)  {data type},
-	 *     'placeholder'    => (string)  {Database::escape() placeholder for this data type},
+	 *     'placeholder'    => (string)  {Connection::escape() placeholder for this data type},
 	 *     'not_null'       => (bool) {if value can't be null},
-	 *     'default'        => (mixed)   {the default value-may contain special strings CURRENT_TIMESTAMP, CURRENT_TIME or CURRENT_DATE},
+	 *     'default'        => (mixed)   {the default value-may contain special strings CURRENT_TIMESTAMP, CURRENT_TIME
+	 * or CURRENT_DATE},
 	 *     'valid_values'   => (array)   {the valid values for a varchar field},
 	 *     'max_length'     => (int) {the maximum length in a char/varchar field},
 	 *     'min_value'      => (Number) {the minimum value for an integer/float field},
 	 *     'max_value'      => (Number) {the maximum value for an integer/float field},
 	 *     'decimal_places' => (int) {the number of decimal places for a decimal/numeric/money/smallmoney field},
-	 *     'auto_increment' => (bool) {if the integer primary key column is a serial/autoincrement/auto_increment/indentity column},
+	 *     'auto_increment' => (bool) {if the integer primary key column is a
+	 * serial/autoincrement/auto_increment/indentity column},
 	 *     'comment'        => (string)  {the SQL comment/description for the column}
 	 * )
 	 * }}}
@@ -2627,7 +2883,9 @@ class Schema
 	 *
 	 * @param  string $table    The table to get the column info for
 	 * @param  string $column   The column to get the info for
-	 * @param  string $element  The element to return: `'type'`, `'placeholder'`, `'not_null'`, `'default'`, `'valid_values'`, `'max_length'`, `'min_value'`, `'max_value'`, `'decimal_places'`, `'auto_increment'`, `'comment'`
+	 * @param  string $element  The element to return: `'type'`, `'placeholder'`, `'not_null'`, `'default'`,
+	 * `'valid_values'`, `'max_length'`, `'min_value'`, `'max_value'`, `'decimal_places'`, `'auto_increment'`,
+	 * `'comment'`
 	 * @return mixed  The column info for the table/column/element specified - see method description for format
 	 * @throws ValidationException
 	 * @throws NoRowsException
@@ -2648,11 +2906,20 @@ class Schema
 		}
 		if ($column && isset($this->merged_column_info[$table][$column])) {
 			if ($element !== null) {
-				if (!isset($this->merged_column_info[$table][$column][$element]) && !array_key_exists($element, $this->merged_column_info[$table][$column])) {
+				if (
+					!isset($this->merged_column_info[$table][$column][$element]) && !array_key_exists(
+						$element,
+						$this->merged_column_info[$table][$column]
+					)
+				) {
 					throw new ProgrammerException(
 						'The element specified, %1$s, is invalid. Must be one of: %2$s.',
 						$element,
-						join(', ', array('type', 'placeholder', 'not_null', 'default', 'valid_values', 'max_length', 'min_value', 'max_value', 'decimal_places', 'auto_increment'))
+						join(
+							', ',
+							array('type', 'placeholder', 'not_null', 'default', 'valid_values', 'max_length',
+								'min_value', 'max_value', 'decimal_places', 'auto_increment')
+						)
 					);
 				}
 				return $this->merged_column_info[$table][$column][$element];
@@ -2776,8 +3043,10 @@ class Schema
 	 *              'column'         => {column name},
 	 *              'foreign_table'  => {foreign table name},
 	 *              'foreign_column' => {foreign column name},
-	 *              'on_delete'      => {the ON DELETE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'},
-	 *              'on_update'      => {the ON UPDATE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'}
+	 *              'on_delete'      => {the ON DELETE action: 'no_action', 'restrict', 'cascade', 'set_null', or
+	 * 'set_default'},
+	 *              'on_update'      => {the ON UPDATE action: 'no_action', 'restrict', 'cascade', 'set_null', or
+	 * 'set_default'}
 	 *          ), ...
 	 *      )
 	 * )
@@ -2785,7 +3054,9 @@ class Schema
 	 *
 	 * @param  string $table     The table to return the keys for
 	 * @param  string $key_type  The type of key to return: `'primary'`, `'foreign'`, `'unique'`
-	 * @return ($key_type is 'primary' ? list<string> : ($key_type is 'unique' ? list<list<string>> : ($key_type is 'foreign' ? list<ForeignKey> : (list<string>|list<list<string>>|list<ForeignKey>|KeyInfoRow))))  An array of all keys, or just the type specified - see method description for format
+	 * @return ($key_type is 'primary' ? list<string> : ($key_type is 'unique' ? list<list<string>> : ($key_type is
+	 * 'foreign' ? list<ForeignKey> : (list<string>|list<list<string>>|list<ForeignKey>|KeyInfoRow))))  An array of all
+	 * keys, or just the type specified - see method description for format
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
@@ -2848,8 +3119,10 @@ class Schema
 	 *             'column'         => (string) {the column in the specified table},
 	 *             'related_table'  => (string) {the related table},
 	 *             'related_column' => (string) {the related column},
-	 *             'on_delete'      => (string) {the ON DELETE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'},
-	 *             'on_update'      => (string) {the ON UPDATE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'}
+	 *             'on_delete'      => (string) {the ON DELETE action: 'no_action', 'restrict', 'cascade', 'set_null',
+	 * or 'set_default'},
+	 *             'on_update'      => (string) {the ON UPDATE action: 'no_action', 'restrict', 'cascade', 'set_null',
+	 * or 'set_default'}
 	 *         ), ...
 	 *     ),
 	 *     'many-to-one' => array(
@@ -2866,8 +3139,10 @@ class Schema
 	 *             'column'         => (string) {the column in the specified table},
 	 *             'related_table'  => (string) {the related table},
 	 *             'related_column' => (string) {the related column},
-	 *             'on_delete'      => (string) {the ON DELETE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'},
-	 *             'on_update'      => (string) {the ON UPDATE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'}
+	 *             'on_delete'      => (string) {the ON DELETE action: 'no_action', 'restrict', 'cascade', 'set_null',
+	 * or 'set_default'},
+	 *             'on_update'      => (string) {the ON UPDATE action: 'no_action', 'restrict', 'cascade', 'set_null',
+	 * or 'set_default'}
 	 *         ), ...
 	 *     ),
 	 *     'many-to-many' => array(
@@ -2879,16 +3154,21 @@ class Schema
 	 *             'join_table'          => (string) {the table that joins the specified table to the related table},
 	 *             'join_column'         => (string) {the column in the join table that references 'column'},
 	 *             'join_related_column' => (string) {the column in the join table that references 'related_column'},
-	 *             'on_delete'           => (string) {the ON DELETE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'},
-	 *             'on_update'           => (string) {the ON UPDATE action: 'no_action', 'restrict', 'cascade', 'set_null', or 'set_default'}
+	 *             'on_delete'           => (string) {the ON DELETE action: 'no_action', 'restrict', 'cascade',
+	 * 'set_null', or 'set_default'},
+	 *             'on_update'           => (string) {the ON UPDATE action: 'no_action', 'restrict', 'cascade',
+	 * 'set_null', or 'set_default'}
 	 *         ), ...
 	 *     )
 	 * )
 	 * }}}
 	 *
 	 * @param  string $table              The table to return the relationships for
-	 * @param  string $relationship_type  The type of relationship to return: `'one-to-one'`, `'many-to-one'`, `'one-to-many'`, `'many-to-many'`
-	 * @return ($relationship_type is 'one-to-one'|'many-to-one'|'one-to-many'|'many-to-many' ? list<array<string, mixed>> : array<string, list<array<string, mixed>>>)  An array of all relationships, or just the type specified - see method description for format
+	 * @param  string $relationship_type  The type of relationship to return: `'one-to-one'`, `'many-to-one'`,
+	 * `'one-to-many'`, `'many-to-many'`
+	 * @return ($relationship_type is 'one-to-one'|'many-to-one'|'one-to-many'|'many-to-many' ? list<array<string,
+	 * mixed>> : array<string, list<array<string, mixed>>>)  An array of all relationships, or just the type specified -
+	 * see method description for format
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
@@ -2938,7 +3218,8 @@ class Schema
 	/**
 	 * Returns the tables in the current database
 	 *
-	 * @param  boolean|string  $creation_order  `TRUE` to return in a valid table creation order, or a table name to return that table and any tables that depend on it, in table creation order
+	 * @param  boolean|string  $creation_order  `TRUE` to return in a valid table creation order, or a table name to
+	 * return that table and any tables that depend on it, in table creation order
 	 * @return list<string>  The tables in the current database, all converted to lowercase
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -3200,7 +3481,10 @@ class Schema
 					$this->merged_column_info[$table][$column] = array();
 				}
 
-				$this->merged_column_info[$table][$column] = array_merge($this->merged_column_info[$table][$column], $info);
+				$this->merged_column_info[$table][$column] = array_merge(
+					$this->merged_column_info[$table][$column],
+					$info
+				);
 			}
 		}
 
@@ -3243,7 +3527,8 @@ class Schema
 
 				foreach ($optional_elements as $element) {
 					if (!isset($this->merged_column_info[$table][$column][$element])) {
-						$this->merged_column_info[$table][$column][$element] = ($element == 'auto_increment') ? false : null;
+						$this->merged_column_info[$table][$column][$element] = ($element == 'auto_increment') ? false :
+							null;
 					}
 				}
 			}
@@ -3333,7 +3618,8 @@ class Schema
 	 *  - `'timestamp'`
 	 *  - `'varchar'`
 	 *
-	 * @param  array<string, array<string, mixed>|null>  $column_info  The modified column info - see method description for format
+	 * @param  array<string, array<string, mixed>|null>  $column_info  The modified column info - see method description
+	 * for format
 	 * @param  string $table        The table to override
 	 * @param  string $column       The column to override
 	 * @return void
@@ -3366,7 +3652,8 @@ class Schema
 
 
 	/**
-	 * Allows overriding of key info. Replaces existing info, so be sure to provide full key info for type selected or all types.
+	 * Allows overriding of key info. Replaces existing info, so be sure to provide full key info for type selected or
+	 * all types.
 	 *
 	 * @param  array<string, KeyInfoRow>  $keys      The modified keys - see ::getKeys() for format
 	 * @param  string $table     The table to override

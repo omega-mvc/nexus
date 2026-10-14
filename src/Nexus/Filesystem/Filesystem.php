@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 /**
- * Handles filesystem-level tasks including filesystem transactions and the reference map to keep all File and Directory objects in sync
+ * Handles filesystem-level tasks including filesystem transactions and the reference map to keep all File and Directory
+ * objects in sync
  *
  * @copyright  Copyright (c) 2008-2010 Will Bond, others
  * @author     Will Bond [wb] <will@flourishlib.com>
@@ -12,28 +13,36 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Filesystem
  *
  * @version    1.0.0b17
- * @changes    1.0.0b17  Added an `isset()` guard around `$_SERVER['DOCUMENT_ROOT']` access in ::translateToWebPath() for PHP 8.1 undefined array key compatibility [wb, 2026-07-10]
- * @changes    1.0.0b16  Added a call to clearstatcache() to ::rollback() to prevent incorrect data from being returned by File::getMTime() and File::getSize() [wb, 2010-11-27]
+ * @changes    1.0.0b17  Added an `isset()` guard around `$_SERVER['DOCUMENT_ROOT']` access in ::translateToWebPath()
+ * for PHP 8.1 undefined array key compatibility [wb, 2026-07-10]
+ * @changes    1.0.0b16  Added a call to clearstatcache() to ::rollback() to prevent incorrect data from being returned
+ * by File::getMTime() and File::getSize() [wb, 2010-11-27]
  * @changes    1.0.0b15  Fixed ::translateToWebPath() to handle Windows \s [wb, 2010-04-09]
  * @changes    1.0.0b14  Added ::recordAppend() [wb, 2010-03-15]
- * @changes    1.0.0b13  Changed the way files/directories deleted in a filesystem transaction are handled, including improvements to the exception that is thrown [wb+wb-imarc, 2010-03-05]
- * @changes    1.0.0b12  Updated ::convertToBytes() to properly handle integers without a suffix and sizes with fractions [al+wb, 2009-11-14]
+ * @changes    1.0.0b13  Changed the way files/directories deleted in a filesystem transaction are handled, including
+ * improvements to the exception that is thrown [wb+wb-imarc, 2010-03-05]
+ * @changes    1.0.0b12  Updated ::convertToBytes() to properly handle integers without a suffix and sizes with
+ * fractions [al+wb, 2009-11-14]
  * @changes    1.0.0b11  Corrected the API documentation for ::getPathInfo() [wb, 2009-09-09]
- * @changes    1.0.0b10  Updated ::updateExceptionMap() to not contain the Exception class parameter hint, allowing NULL to be passed [wb, 2009-08-20]
+ * @changes    1.0.0b10  Updated ::updateExceptionMap() to not contain the Exception class parameter hint, allowing NULL
+ * to be passed [wb, 2009-08-20]
  * @changes    1.0.0b9   Added some performance tweaks to ::createObject() [wb, 2009-08-06]
- * @changes    1.0.0b8   Changed ::formatFilesize() to not use decimal places for bytes, add a space before and drop the `B` in suffixes [wb, 2009-07-12]
+ * @changes    1.0.0b8   Changed ::formatFilesize() to not use decimal places for bytes, add a space before and drop the
+ * `B` in suffixes [wb, 2009-07-12]
  * @changes    1.0.0b7   Fixed ::formatFilesize() to work when `$bytes` equals zero [wb, 2009-07-08]
  * @changes    1.0.0b6   Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
- * @changes    1.0.0b5   Changed ::formatFilesize() to use proper uppercase letters instead of lowercase [wb, 2009-06-02]
+ * @changes    1.0.0b5   Changed ::formatFilesize() to use proper uppercase letters instead of lowercase [wb,
+ * 2009-06-02]
  * @changes    1.0.0b4   Added the ::createObject() method [wb, 2009-01-21]
  * @changes    1.0.0b3   Removed some unnecessary error suppresion operators [wb, 2008-12-11]
- * @changes    1.0.0b2   Fixed a bug where the filepath and exception maps weren't being updated after a rollback [wb, 2008-12-11]
+ * @changes    1.0.0b2   Fixed a bug where the filepath and exception maps weren't being updated after a rollback [wb,
+ * 2008-12-11]
  * @changes    1.0.0b    The initial implementation [wb, 2008-03-24]
  *
- * @phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?: list<mixed>}
+ * @phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?:
+ * list<mixed>}
  */
 class Filesystem
 {
@@ -61,7 +70,9 @@ class Filesystem
 	/**
 	 * Stores the operations to perform if a rollback occurs
 	 *
-	 * @var list<array{action: 'append', filename: string, length: int}|array{action: 'delete', filename: string}|array{action: 'delete', object: File|Directory}|array{action: 'write', filename: string, old_data: string|false}|array{action: 'rename', old_name: string, new_name: string}>|null
+	 * @var list<array{action: 'append', filename: string, length: int}|array{action: 'delete', filename:
+	 * string}|array{action: 'delete', object: File|Directory}|array{action: 'write', filename: string, old_data:
+	 * string|false}|array{action: 'rename', old_name: string, new_name: string}>|null
 	 */
 	private static ?array $rollback_operations = null;
 
@@ -162,7 +173,13 @@ class Filesystem
 	 */
 	public static function convertToBytes(string $size): int
 	{
-		if (!preg_match('#^(\d+(?:\.\d+)?)\s*(k|m|g|t)?(ilo|ega|era|iga)?( )?b?(yte(s)?)?$#D', strtolower(trim($size)), $matches)) {
+		if (
+			!preg_match(
+				'#^(\d+(?:\.\d+)?)\s*(k|m|g|t)?(ilo|ega|era|iga)?( )?b?(yte(s)?)?$#D',
+				strtolower(trim($size)),
+				$matches
+			)
+		) {
 			throw new ProgrammerException(
 				'The size specified, %s, does not appears to be a valid size',
 				$size
@@ -246,8 +263,10 @@ class Filesystem
 	 * Returns info about a path including dirname, basename, extension and filename
 	 *
 	 * @param  string   $path     The file/directory path to retrieve information about
-	 * @param  ?string  $element  The piece of information to return: `'dirname'`, `'basename'`, `'extension'`, or `'filename'`
-	 * @return ($element is null ? array{dirname: string, basename: string, extension: string, filename: string} : string)
+	 * @param  ?string  $element  The piece of information to return: `'dirname'`, `'basename'`, `'extension'`, or
+	 * `'filename'`
+	 * @return ($element is null ? array{dirname: string, basename: string, extension: string, filename: string} :
+	 * string)
 	 */
 	public static function getPathInfo(string $path, ?string $element = null): string|array
 	{
@@ -331,7 +350,8 @@ class Filesystem
 
 
 	/**
-	 * Changes a filename to be safe for URLs by making it all lower case and changing everything but letters, numers, - and . to _
+	 * Changes a filename to be safe for URLs by making it all lower case and changing everything but letters, numers, -
+	 * and . to _
 	 *
 	 * @param  string $filename  The filename to clean up
 	 * @return string  The cleaned up filename
@@ -404,7 +424,8 @@ class Filesystem
 	 * @internal
 	 *
 	 * @param  string          $file       A file or directory name, directories should end in `/` or `\`
-	 * @param  list<TraceEntry>|null  $backtrace  The backtrace for this file/directory, `NULL` when no backtrace should be kept
+	 * @param  list<TraceEntry>|null  $backtrace  The backtrace for this file/directory, `NULL` when no backtrace should
+	 * be kept
 	 * @return void
 	 */
 	public static function updateDeletedMap(string $file, ?array $backtrace): void
@@ -658,12 +679,16 @@ class Filesystem
 							debug_backtrace()
 						);
 						unlink($operation['filename']);
-						Filesystem::updateFilenameMap($operation['filename'], '*DELETED at ' . time() . ' with token ' . uniqid('', true) . '* ' . $operation['filename']);
+						Filesystem::updateFilenameMap(
+							$operation['filename'],
+							'*DELETED at ' . time() . ' with token ' . uniqid('', true) . '* ' . $operation['filename']
+						);
 					}
 					break;
 
 				case 'write':
-					file_put_contents($operation['filename'], is_string($operation['old_data']) ? $operation['old_data'] : '');
+					file_put_contents($operation['filename'], is_string($operation['old_data']) ? $operation['old_data']
+						: '');
 					$clear_cache = true;
 					break;
 
@@ -702,7 +727,9 @@ class Filesystem
 	 */
 	public static function translateToWebPath(string $path): string
 	{
-		$document_root = isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
+		$document_root = isset($_SERVER['DOCUMENT_ROOT']) && is_string(
+			$_SERVER['DOCUMENT_ROOT']
+		) ? $_SERVER['DOCUMENT_ROOT'] : '';
 		$resolved      = realpath($document_root);
 		$translations  = array(($resolved === false ? '' : $resolved) => '') + self::$web_path_translations;
 
@@ -727,8 +754,8 @@ class Filesystem
 	 * @return Filesystem
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

@@ -11,15 +11,17 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMMoney
  *
  * @version    1.0.0b11
- * @changes    1.0.0b11  Fixed the generation of validation messages when a non-monetary value is supplied [wb, 2011-05-17]
+ * @changes    1.0.0b11  Fixed the generation of validation messages when a non-monetary value is supplied [wb,
+ * 2011-05-17]
  * @changes    1.0.0b10  Updated code to work with the new ORM API [wb, 2010-08-06]
  * @changes    1.0.0b9   Added the `$remove_zero_fraction` parameter to prepare methods [wb, 2010-06-09]
  * @changes    1.0.0b8   Changed validation messages array to use column name keys [wb, 2010-05-26]
- * @changes    1.0.0b7   Fixed the `set` methods to return the record object in order to be consistent with all other `set` methods [wb, 2010-03-15]
- * @changes    1.0.0b6   Fixed duplicate validation messages and ProgrammerException object being thrown when NULL is set [dc-imarc+wb, 2010-03-03]
+ * @changes    1.0.0b7   Fixed the `set` methods to return the record object in order to be consistent with all other
+ * `set` methods [wb, 2010-03-15]
+ * @changes    1.0.0b6   Fixed duplicate validation messages and ProgrammerException object being thrown when NULL is
+ * set [dc-imarc+wb, 2010-03-03]
  * @changes    1.0.0b5   Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
  * @changes    1.0.0b4   Updated to use new ORM::registerInspectCallback() method [wb, 2009-07-13]
  * @changes    1.0.0b3   Updated code to use new ValidationException::formatField() method [wb, 2009-06-04]
@@ -112,7 +114,8 @@ class ORMMoney
 			$valid_currency_column_data_types = array('varchar', 'char', 'text');
 			if (!in_array($currency_column_data_type, $valid_currency_column_data_types)) {
 				throw new ProgrammerException(
-					'The currency column specified, %1$s, is a %2$s column. Must be %3$s to be set as a currency column.',
+					'The currency column specified, %1$s, is a %2$s column. Must be %3$s to be set as a currency '
+						. 'column.',
 					$currency_column,
 					$currency_column_data_type,
 					join(', ', $valid_currency_column_data_types)
@@ -196,8 +199,15 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return string  The encoded monetary value
 	 */
-	public static function encodeMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
-	{
+	public static function encodeMoneyColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): string {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -250,8 +260,13 @@ class ORMMoney
 	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
 	 */
-	public static function makeMoneyObjects(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function makeMoneyObjects(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 
 		if (!isset(self::$currency_columns[$class])) {
@@ -312,8 +327,12 @@ class ORMMoney
 	 * @param  string                $currency_column  The column holding the currency code
 	 * @return void
 	 */
-	public static function objectifyMoneyWithCurrency(mixed &$values, mixed &$old_values, string $value_column, string $currency_column): void
-	{
+	public static function objectifyMoneyWithCurrency(
+		mixed &$values,
+		mixed &$old_values,
+		string $value_column,
+		string $currency_column
+	): void {
 		$raw_value = $values[$value_column];
 
 		if (is_object($raw_value)) {
@@ -341,7 +360,12 @@ class ORMMoney
 
 			$value = new Money($string_value, $currency);
 
-			if (ActiveRecord::hasOld($old_values, $currency_column) && !ActiveRecord::hasOld($old_values, $value_column)) {
+			if (
+				ActiveRecord::hasOld($old_values, $currency_column) && !ActiveRecord::hasOld(
+					$old_values,
+					$value_column
+				)
+			) {
 				ActiveRecord::assign($values, $old_values, $value_column, $value);
 			} else {
 				$values[$value_column] = $value;
@@ -353,7 +377,7 @@ class ORMMoney
 
 		// If there was some error creating the money object, we just leave all values alone
 		} catch (ExpectedException $e) {
-        }
+		}
 	}
 
 
@@ -371,8 +395,15 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return string  The formatted monetary value
 	 */
-	public static function prepareMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
-	{
+	public static function prepareMoneyColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): string {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -445,7 +476,8 @@ class ORMMoney
 				$signature .= "/**\n";
 				$signature .= " * Sets the value for " . $column . "\n";
 				$signature .= " * \n";
-				$signature .= " * @param  Money|string|integer \$" . $column . "  The new value - a string or integer will be converted to the default currency (if defined)\n";
+				$signature .= " * @param  Money|string|integer \$" . $column .
+					"  The new value - a string or integer will be converted to the default currency (if defined)\n";
 				$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
 				$signature .= " */\n";
 			}
@@ -478,7 +510,8 @@ class ORMMoney
 				$signature .= " * If the value is an Money object, the ->format() method will be called\n";
 				$signature .= " * resulting in the value including the currency symbol and thousands separators\n";
 				$signature .= " * \n";
-				$signature .= " * @param  boolean \$remove_zero_fraction  If a fraction of all zeros should be removed\n";
+				$signature .=
+					" * @param  boolean \$remove_zero_fraction  If a fraction of all zeros should be removed\n";
 				$signature .= " * @return string  The HTML-ready value\n";
 				$signature .= " */\n";
 			}
@@ -518,8 +551,15 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	public static function setCurrencyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
-	{
+	public static function setCurrencyColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): ActiveRecord {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -560,8 +600,15 @@ class ORMMoney
 	 * @param  array<array-key, mixed>     $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	public static function setMoneyColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
-	{
+	public static function setMoneyColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): ActiveRecord {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -613,8 +660,14 @@ class ORMMoney
 	 * @param  array<array-key, mixed>  &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	public static function validateMoneyColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function validateMoneyColumns(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = get_class($object);
 
 		if (empty(self::$money_columns[$class])) {
@@ -650,8 +703,8 @@ class ORMMoney
 	 * @return ORMMoney
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

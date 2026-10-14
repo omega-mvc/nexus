@@ -12,39 +12,52 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Image
  *
  * @version    1.0.0b35
  * @changes    1.0.0b35  Fixed an issue with ImageMagick 6.7.5+ and colorspace argument [jt, 2014-01-09]
  * @changes    1.0.0b34  Fixed a bug in getImageType() where the fread was not reading enough bytes [jt, 2012-06-05]
  * @changes    1.0.0b33  Fixed a method signature [wb, 2011-08-24]
- * @changes    1.0.0b32  Added a call to clearstatcache() to ::saveChanges() to solve a bug when File::output() is called in the same script execution [wb, 2011-05-23]
+ * @changes    1.0.0b32  Added a call to clearstatcache() to ::saveChanges() to solve a bug when File::output() is
+ * called in the same script execution [wb, 2011-05-23]
  * @changes    1.0.0b31  Fixed a bug in using ImageMagick to convert files with a colon in the filename [wb, 2011-03-20]
- * @changes    1.0.0b30  Added a check for systems using the GD extension and no memory limit, plus a check for ImageMagick's convert command failing [wb, 2011-03-20]
+ * @changes    1.0.0b30  Added a check for systems using the GD extension and no memory limit, plus a check for
+ * ImageMagick's convert command failing [wb, 2011-03-20]
  * @changes    1.0.0b29  Added checks for AIX [wb, 2011-01-19]
- * @changes    1.0.0b28  Added the ::rotate() method, added code to try and prevent fatal errors due to hitting the memory limit when using GD [wb, 2010-11-29]
- * @changes    1.0.0b27  Backwards Compatibility Break - changed the parameter order in ::crop() from `$crop_from_x`, `$crop_from_y`, `$new_width`, `$new_height` to `$new_width`, `$new_height`, `$crop_from_x`, `$crop_from_y` - added `$horizontal_position` and `$vertical_position` parameters to ::cropToRatio() [wb-imarc, 2010-11-09]
- * @changes    1.0.0b26  Fixed a bug where processing via ImageMagick was not properly setting the default RGB colorspace [wb, 2010-10-19]
- * @changes    1.0.0b25  Fixed the class to not generate multiple files when saving a JPG from an animated GIF or a TIF with a thumbnail [wb, 2010-09-12]
+ * @changes    1.0.0b28  Added the ::rotate() method, added code to try and prevent fatal errors due to hitting the
+ * memory limit when using GD [wb, 2010-11-29]
+ * @changes    1.0.0b27  Backwards Compatibility Break - changed the parameter order in ::crop() from `$crop_from_x`,
+ * `$crop_from_y`, `$new_width`, `$new_height` to `$new_width`, `$new_height`, `$crop_from_x`, `$crop_from_y` - added
+ * `$horizontal_position` and `$vertical_position` parameters to ::cropToRatio() [wb-imarc, 2010-11-09]
+ * @changes    1.0.0b26  Fixed a bug where processing via ImageMagick was not properly setting the default RGB
+ * colorspace [wb, 2010-10-19]
+ * @changes    1.0.0b25  Fixed the class to not generate multiple files when saving a JPG from an animated GIF or a TIF
+ * with a thumbnail [wb, 2010-09-12]
  * @changes    1.0.0b24  Updated class to use Core::startErrorCapture() instead of `error_reporting()` [wb, 2010-08-09]
- * @changes    1.0.0b23  Fixed the class to detect when exec() is disabled and the function has a space before or after in the list [wb, 2010-07-21]
+ * @changes    1.0.0b23  Fixed the class to detect when exec() is disabled and the function has a space before or after
+ * in the list [wb, 2010-07-21]
  * @changes    1.0.0b22  Fixed ::isImageCompatible() to handle certain JPGs created with Photoshop [wb, 2010-04-03]
- * @changes    1.0.0b21  Fixed ::resize() to allow dimensions to be numeric strings instead of just integers [wb, 2010-04-09]
+ * @changes    1.0.0b21  Fixed ::resize() to allow dimensions to be numeric strings instead of just integers [wb,
+ * 2010-04-09]
  * @changes    1.0.0b20  Added ::append() [wb, 2010-03-15]
  * @changes    1.0.0b19  Updated for the new File API [wb-imarc, 2010-03-05]
- * @changes    1.0.0b18  Fixed a bug in ::saveChanges() that would incorrectly cause new filenames to be created, added the $overwrite parameter to ::saveChanges(), added the $allow_upsizing parameter to ::resize() [wb, 2010-03-03]
+ * @changes    1.0.0b18  Fixed a bug in ::saveChanges() that would incorrectly cause new filenames to be created, added
+ * the $overwrite parameter to ::saveChanges(), added the $allow_upsizing parameter to ::resize() [wb, 2010-03-03]
  * @changes    1.0.0b17  Fixed a couple of bug with using ImageMagick on Windows and BSD machines [wb, 2010-03-02]
- * @changes    1.0.0b16  Fixed some bugs with GD not properly handling transparent backgrounds and desaturation of .gif files [wb, 2009-10-27]
+ * @changes    1.0.0b16  Fixed some bugs with GD not properly handling transparent backgrounds and desaturation of .gif
+ * files [wb, 2009-10-27]
  * @changes    1.0.0b15  Added ::getDimensions() [wb, 2009-08-07]
  * @changes    1.0.0b14  Performance updates for checking image type and compatiblity [wb, 2009-07-31]
- * @changes    1.0.0b13  Updated class to work even if the file extension is wrong or not present, ::saveChanges() detects files that aren't writable [wb, 2009-07-29]
- * @changes    1.0.0b12  Fixed a bug where calling ::saveChanges() after unserializing would throw an exception related to the image processor [wb, 2009-05-27]
+ * @changes    1.0.0b13  Updated class to work even if the file extension is wrong or not present, ::saveChanges()
+ * detects files that aren't writable [wb, 2009-07-29]
+ * @changes    1.0.0b12  Fixed a bug where calling ::saveChanges() after unserializing would throw an exception related
+ * to the image processor [wb, 2009-05-27]
  * @changes    1.0.0b11  Added a ::crop() method [wb, 2009-05-27]
  * @changes    1.0.0b10  Fixed a bug with GD not saving changes to files ending in .jpeg [wb, 2009-03-18]
  * @changes    1.0.0b9   Changed ::processWithGD() to explicitly free the image resource [wb, 2009-03-18]
  * @changes    1.0.0b8   Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b7   Changed @ error suppression operator to `error_reporting()` calls [wb, 2009-01-26]
- * @changes    1.0.0b6   Fixed ::cropToRatio() and ::resize() to always return the object even if nothing is to be done [wb, 2009-01-05]
+ * @changes    1.0.0b6   Fixed ::cropToRatio() and ::resize() to always return the object even if nothing is to be done
+ * [wb, 2009-01-05]
  * @changes    1.0.0b5   Added check to see if exec() is disabled, which causes ImageMagick to not work [wb, 2009-01-03]
  * @changes    1.0.0b4   Fixed ::saveChanges() to not delete the image if no changes have been made [wb, 2008-12-18]
  * @changes    1.0.0b3   Fixed a bug with $jpeg_quality in ::saveChanges() from 1.0.0b2 [wb, 2008-12-16]
@@ -52,9 +65,11 @@ declare(strict_types=1);
  * @changes    1.0.0b    The initial implementation [wb, 2007-12-19]
  *
  * @phpstan-type Modification array{operation: 'resize', width: int, height: int, old_width: int, old_height: int}
- *                        | array{operation: 'crop', width: int, height: int, old_width: int, old_height: int, start_x: int, start_y: int}
+ *                        | array{operation: 'crop', width: int, height: int, old_width: int, old_height: int, start_x:
+ * int, start_y: int}
  *                        | array{operation: 'desaturate', width: int, height: int, old_width: int, old_height: int}
- *                        | array{operation: 'rotate', width: int, height: int, old_width: int, old_height: int, degrees: int}
+ *                        | array{operation: 'rotate', width: int, height: int, old_width: int, old_height: int,
+ * degrees: int}
  */
 class Image extends File
 {
@@ -98,7 +113,9 @@ class Image extends File
 		// Make sure we can execute the convert binary
 		if (self::isSafeModeExecDirRestricted($path)) {
 			throw new EnvironmentException(
-				'Safe mode is turned on and the ImageMagick convert binary is not in the directory defined by the safe_mode_exec_dir ini setting or safe_mode_exec_dir is not set - safe_mode_exec_dir is currently %s.',
+				'Safe mode is turned on and the ImageMagick convert binary is not in the directory defined by the '
+					. 'safe_mode_exec_dir ini setting or safe_mode_exec_dir is not set - safe_mode_exec_dir is '
+					. 'currently %s.',
 				ini_get('safe_mode_exec_dir')
 			);
 		}
@@ -192,9 +209,9 @@ class Image extends File
 						exec($win_search, $win_output);
 						$win_output = trim(join("\n", $win_output));
 
-                    if (!$win_output || stripos($win_output, 'File not found') !== false) {
-                        throw new Exception();
-                    }
+					if (!$win_output || stripos($win_output, 'File not found') !== false) {
+						throw new Exception();
+					}
 
 						$path = 'C:\\Program Files\\' . $win_output . '\\';
 				} elseif (Core::checkOS('linux', 'bsd', 'solaris', 'osx', 'aix')) {
@@ -322,7 +339,8 @@ class Image extends File
 	 *
 	 * @param  string $image_path  The path to the image to get stats for
 	 * @param  string $element     The element to retrieve: `'type'`, `'width'`, `'height'`
-	 * @return array{type: string|null, width: int, height: int}|string|int|null  An associative array: `'type' => {string|null}, 'width' => {integer}, 'height' => {integer}`, or the element specified
+	 * @return array{type: string|null, width: int, height: int}|string|int|null  An associative array: `'type' =>
+	 * {string|null}, 'width' => {integer}, 'height' => {integer}`, or the element specified
 	 */
 	protected static function getInfo(string $image_path, ?string $element = null): mixed
 	{
@@ -515,7 +533,8 @@ class Image extends File
 
 
 	/**
-	 * Sets the directory the ImageMagick binary is installed in and tells the class to use ImageMagick even if GD is installed
+	 * Sets the directory the ImageMagick binary is installed in and tells the class to use ImageMagick even if GD is
+	 * installed
 	 *
 	 * @param  string $directory  The directory ImageMagick is installed in
 	 * @return void
@@ -562,10 +581,12 @@ class Image extends File
 	/**
 	 * Creates an object to represent an image on the filesystem
 	 *
-	 * @throws ValidationException  When no image was specified, when the image does not exist or when the path specified is not an image
+	 * @throws ValidationException  When no image was specified, when the image does not exist or when the path
+	 * specified is not an image
 	 *
 	 * @param  string  $file_path    The path to the image
-	 * @param  boolean $skip_checks  If file checks should be skipped, which improves performance, but may cause undefined behavior - only skip these if they are duplicated elsewhere
+	 * @param  boolean $skip_checks  If file checks should be skipped, which improves performance, but may cause
+	 * undefined behavior - only skip these if they are duplicated elsewhere
 	 * @return Image
 	 */
 	public function __construct(mixed $file_path, mixed $skip_checks = false)
@@ -607,8 +628,10 @@ class Image extends File
 	 *
 	 * @param  numeric        $new_width    The width in pixels to crop the image to
 	 * @param  numeric        $new_height   The height in pixels to crop the image to
-	 * @param  numeric|string $crop_from_x  The number of pixels from the left of the image to start the crop from, or a horizontal position of `'left'`, `'center'` or `'right'`
-	 * @param  numeric|string $crop_from_y  The number of pixels from the top of the image to start the crop from, or a vertical position of `'top'`, `'center'` or `'bottom'`
+	 * @param  numeric|string $crop_from_x  The number of pixels from the left of the image to start the crop from, or a
+	 * horizontal position of `'left'`, `'center'` or `'right'`
+	 * @param  numeric|string $crop_from_y  The number of pixels from the top of the image to start the crop from, or a
+	 * vertical position of `'top'`, `'center'` or `'bottom'`
 	 * @return Image  The image object, to allow for method chaining
 	 * @throws ValidationException
 	 */
@@ -664,27 +687,31 @@ class Image extends File
 		// Make sure the user input is valid
 		if ($crop_from_x < 0 || $crop_from_x > $orig_width - 1) {
 			throw new ProgrammerException(
-				'The crop-from x specified, %s, is not a number, is less than zero, or would result in a zero-width image',
+				'The crop-from x specified, %s, is not a number, is less than zero, or would result in a zero-width '
+					. 'image',
 				$crop_from_x
 			);
 		}
 		if ($crop_from_y < 0 || $crop_from_y > $orig_height - 1) {
 			throw new ProgrammerException(
-				'The crop-from y specified, %s, is not a number, is less than zero, or would result in a zero-height image',
+				'The crop-from y specified, %s, is not a number, is less than zero, or would result in a zero-height '
+					. 'image',
 				$crop_from_y
 			);
 		}
 
 		if ($new_width <= 0 || $crop_from_x + $new_width > $orig_width) {
 			throw new ProgrammerException(
-				'The new width specified, %1$s, is not a number, is less than or equal to zero, or is larger than can be cropped with the specified crop-from x of %2$s',
+				'The new width specified, %1$s, is not a number, is less than or equal to zero, or is larger than can '
+					. 'be cropped with the specified crop-from x of %2$s',
 				$new_width,
 				$crop_from_x
 			);
 		}
 		if ($new_height <= 0 || $crop_from_y + $new_height > $orig_height) {
 			throw new ProgrammerException(
-				'The new height specified, %1$s, is not a number, is less than or equal to zero, or is larger than can be cropped with the specified crop-from y of %2$s',
+				'The new height specified, %1$s, is not a number, is less than or equal to zero, or is larger than can '
+					. 'be cropped with the specified crop-from y of %2$s',
 				$new_height,
 				$crop_from_y
 			);
@@ -722,8 +749,12 @@ class Image extends File
 	 * @return Image  The image object, to allow for method chaining
 	 * @throws ValidationException
 	 */
-	public function cropToRatio(mixed $ratio_width, mixed $ratio_height, string $horizontal_position = 'center', string $vertical_position = 'center'): Image
-	{
+	public function cropToRatio(
+		mixed $ratio_width,
+		mixed $ratio_height,
+		string $horizontal_position = 'center',
+		string $vertical_position = 'center'
+	): Image {
 		$this->tossIfDeleted();
 
 		// Make sure the user input is valid
@@ -940,10 +971,12 @@ class Image extends File
 			$memory_limit_bytes = Filesystem::convertToBytes(ini_get('memory_limit'));
 
 			// Estimate the memory usage and throw an exception if we will run out
-			$load_byte_usage = $this->pending_modifications[0]['old_width'] * $this->pending_modifications[0]['old_height'] * 4;
+			$load_byte_usage = $this->pending_modifications[0]['old_width'] *
+				$this->pending_modifications[0]['old_height'] * 4;
 			if ($load_byte_usage + $beginning_memory_usage > $memory_limit_bytes) {
 				throw new EnvironmentException(
-					'The predicted memory usage to complete the image modifications using the GD extension, %1$s, will most likely exceed the memory limit of %2$s',
+					'The predicted memory usage to complete the image modifications using the GD extension, %1$s, will '
+						. 'most likely exceed the memory limit of %2$s',
 					$load_byte_usage + $beginning_memory_usage,
 					$memory_limit_bytes
 				);
@@ -972,11 +1005,14 @@ class Image extends File
 
 		foreach ($this->pending_modifications as $num => $mod) {
 			if (ini_get('memory_limit') != '-1') {
-				$old_byte_usage = $this->pending_modifications[0]['old_width'] * $this->pending_modifications[0]['old_height'] * 4;
-				$new_byte_usage = $this->pending_modifications[0]['width'] * $this->pending_modifications[0]['height'] * 4;
+				$old_byte_usage = $this->pending_modifications[0]['old_width'] *
+					$this->pending_modifications[0]['old_height'] * 4;
+				$new_byte_usage = $this->pending_modifications[0]['width'] * $this->pending_modifications[0]['height'] *
+					4;
 				if ($old_byte_usage + $new_byte_usage + $beginning_memory_usage > $memory_limit_bytes) {
 					throw new EnvironmentException(
-						'The predicted memory usage to complete the image modifications using the GD extension, %1$s, will most likely exceed the memory limit of %2$s',
+						'The predicted memory usage to complete the image modifications using the GD extension, %1$s, '
+							. 'will most likely exceed the memory limit of %2$s',
 						$old_byte_usage + $new_byte_usage + $beginning_memory_usage,
 						$memory_limit_bytes
 					);
@@ -1011,32 +1047,32 @@ class Image extends File
 			// Perform the resize operation
 			if ($mod['operation'] == 'resize') {
 				imagecopyresampled(
-                    $new_gd_res,
-                    $gd_res,
-                    0,
-                    0,
-                    0,
-                    0,
-                    $mod['width'],
-                    $mod['height'],
-                    $mod['old_width'],
-                    $mod['old_height']
-                );
+					$new_gd_res,
+					$gd_res,
+					0,
+					0,
+					0,
+					0,
+					$mod['width'],
+					$mod['height'],
+					$mod['old_width'],
+					$mod['old_height']
+				);
 
 			// Perform the crop operation
 			} elseif ($mod['operation'] == 'crop') {
 				imagecopyresampled(
-                    $new_gd_res,
-                    $gd_res,
-                    0,
-                    0,
-                    $mod['start_x'],
-                    $mod['start_y'],
-                    $mod['width'],
-                    $mod['height'],
-                    $mod['width'],
-                    $mod['height']
-                );
+					$new_gd_res,
+					$gd_res,
+					0,
+					0,
+					$mod['start_x'],
+					$mod['start_y'],
+					$mod['width'],
+					$mod['height'],
+					$mod['width'],
+					$mod['height']
+				);
 
 			// Perform the desaturate operation
 			} elseif ($mod['operation'] == 'desaturate') {
@@ -1086,7 +1122,10 @@ class Image extends File
 							} else {
 								$new_color = imagecolorallocatealpha($new_gd_res, $yiq, $yiq, $yiq, $alpha);
 								if (!is_int($new_color)) {
-									throw new EnvironmentException('The transparent gray color for the image could not be allocated');
+									throw new
+										EnvironmentException(
+											'The transparent gray color for the image could not be allocated'
+										);
 								}
 							}
 						} else {
@@ -1134,39 +1173,48 @@ class Image extends File
 				} else {
 					switch ($mod['degrees']) {
 						case 90:
-				            for ($x = 0; $x < $mod['width']; $x++) {
-				                for ($y = 0; $y < $mod['height']; $y++) {
-				                    imagecopy($new_gd_res, $gd_res, $mod['height'] - $y - 1, $x, $x, $y, 1, 1);
+							for ($x = 0; $x < $mod['width']; $x++) {
+								for ($y = 0; $y < $mod['height']; $y++) {
+									imagecopy($new_gd_res, $gd_res, $mod['height'] - $y - 1, $x, $x, $y, 1, 1);
 								}
 							}
-				            break;
+							break;
 
-				        case 180:
-				        	// Rather than copying one pixel at a time, like with 90
-				        	// and 270 degrees, for 180 degrees we can copy one rpw
-				        	// at a time for better performance
-				            for ($x = 0; $x < $mod['width']; $x++) {
-				                imagecopy($new_gd_res, $gd_res, $mod['width'] - $x - 1, 0, $x, 0, 1, $mod['height']);
+						case 180:
+							// Rather than copying one pixel at a time, like with 90
+							// and 270 degrees, for 180 degrees we can copy one rpw
+							// at a time for better performance
+							for ($x = 0; $x < $mod['width']; $x++) {
+								imagecopy($new_gd_res, $gd_res, $mod['width'] - $x - 1, 0, $x, 0, 1, $mod['height']);
 							}
-				            $row = imagecreatetruecolor($mod['width'], 1);
-				            if ($row === false) {
+							$row = imagecreatetruecolor($mod['width'], 1);
+							if ($row === false) {
 								throw new EnvironmentException('The temporary image row could not be allocated');
 							}
-				            for ($y = 0; $y < $mod['height'] / 2; $y++) {
-				                imagecopy($row, $new_gd_res, 0, 0, 0, $mod['height'] - $y - 1, $mod['width'], 1);
-				                imagecopy($new_gd_res, $new_gd_res, 0, $mod['height'] - $y - 1, 0, $y, $mod['width'], 1);
-				                imagecopy($new_gd_res, $row, 0, $y, 0, 0, $mod['width'], 1);
-				            }
-				            imagedestroy($row);
-				            break;
+							for ($y = 0; $y < $mod['height'] / 2; $y++) {
+								imagecopy($row, $new_gd_res, 0, 0, 0, $mod['height'] - $y - 1, $mod['width'], 1);
+								imagecopy(
+									$new_gd_res,
+									$new_gd_res,
+									0,
+									$mod['height'] - $y - 1,
+									0,
+									$y,
+									$mod['width'],
+									1
+								);
+								imagecopy($new_gd_res, $row, 0, $y, 0, 0, $mod['width'], 1);
+							}
+							imagedestroy($row);
+							break;
 
-				        case 270:
-				            for ($x = 0; $x < $mod['width']; $x++) {
-				                for ($y = 0; $y < $mod['height']; $y++) {
-				                    imagecopy($new_gd_res, $gd_res, $y, $mod['width'] - $x - 1, $x, $y, 1, 1);
+						case 270:
+							for ($x = 0; $x < $mod['width']; $x++) {
+								for ($y = 0; $y < $mod['height']; $y++) {
+									imagecopy($new_gd_res, $gd_res, $y, $mod['width'] - $x - 1, $x, $y, 1, 1);
 								}
 							}
-				            break;
+							break;
 					}
 				}
 			}
@@ -1304,7 +1352,8 @@ class Image extends File
 	 *
 	 * @param  integer $canvas_width    The width of the canvas to fit the image on, `0` for no constraint
 	 * @param  integer $canvas_height   The height of the canvas to fit the image on, `0` for no constraint
-	 * @param  boolean $allow_upsizing  If the image is smaller than the desired canvas, the image will be increased in size
+	 * @param  boolean $allow_upsizing  If the image is smaller than the desired canvas, the image will be increased in
+	 * size
 	 * @return Image  The image object, to allow for method chaining
 	 * @throws ValidationException
 	 */
@@ -1457,14 +1506,16 @@ class Image extends File
 
 		if (self::$processor == 'none') {
 			throw new EnvironmentException(
-				"The changes to the image can't be saved because neither the GD extension or ImageMagick appears to be installed on the server"
+				"The changes to the image can't be saved because neither the GD extension or ImageMagick appears to be "
+					. "installed on the server"
 			);
 		}
 
 		$type = self::getImageType($this->file);
 		if ($type == 'tif' && self::$processor == 'gd') {
 			throw new EnvironmentException(
-				'The image specified, %s, is a TIFF file and the GD extension can not handle TIFF files. Please install ImageMagick if you wish to manipulate TIFF files.',
+				'The image specified, %s, is a TIFF file and the GD extension can not handle TIFF files. Please '
+					. 'install ImageMagick if you wish to manipulate TIFF files.',
 				$this->file
 			);
 		}
@@ -1506,7 +1557,8 @@ class Image extends File
 				$output_dir = dirname($output_file);
 				if (!is_writable($output_dir)) {
 					throw new EnvironmentException(
-						'Changes to the image can not be saved because the directory to save the new file, %s, is not writable',
+						'Changes to the image can not be saved because the directory to save the new file, %s, is not '
+							. 'writable',
 						$output_dir
 					);
 				}

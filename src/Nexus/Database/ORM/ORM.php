@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORM
  *
  * @version    1.0.0b29
  * @changes    1.0.0b29  Added ::registerActiveRecordStaticMethod() for static hooks in PHP 5.3 [jt, 2012-07-25]
@@ -19,29 +18,41 @@ declare(strict_types=1);
  * @changes    1.0.0b27  Added links to the detailed documentation for the parameters passed to hooks [wb, 2010-11-27]
  * @changes    1.0.0b26  Added ::getRelatedClass() for handling related classes in PHP 5.3 namespaces [wb, 2010-11-17]
  * @changes    1.0.0b25  Added support for PHP 5.3 namespaced ActiveRecord classes [wb, 2010-11-11]
- * @changes    1.0.0b24  Backwards Compatibility Break - Callbacks registered via ::registerRecordSetMethod() should now accept the `$method_name` in the position where the `$pointer` parameter used to be passed [wb, 2010-09-28]
- * @changes    1.0.0b23  Added the `'pre::replicate()'`, `'post::replicate()'` and `'cloned::replicate()'` hooks [wb, 2010-09-07]
- * @changes    1.0.0b22  Internal Backwards Compatibility Break - changed ::parseMethod() to not underscorize the subject of the method [wb, 2010-08-06]
+ * @changes    1.0.0b24  Backwards Compatibility Break - Callbacks registered via ::registerRecordSetMethod() should now
+ * accept the `$method_name` in the position where the `$pointer` parameter used to be passed [wb, 2010-09-28]
+ * @changes    1.0.0b23  Added the `'pre::replicate()'`, `'post::replicate()'` and `'cloned::replicate()'` hooks [wb,
+ * 2010-09-07]
+ * @changes    1.0.0b22  Internal Backwards Compatibility Break - changed ::parseMethod() to not underscorize the
+ * subject of the method [wb, 2010-08-06]
  * @changes    1.0.0b21  Fixed some documentation to reflect the API changes from v1.0.0b9 [wb, 2010-07-14]
  * @changes    1.0.0b20  Added the ability to register a wildcard active record method for all classes [wb, 2010-04-22]
  * @changes    1.0.0b19  Added the method ::isClassMappedToTable() [wb, 2010-03-30]
  * @changes    1.0.0b18  Added the `post::loadFromIdentityMap()` hook [wb, 2010-03-14]
- * @changes    1.0.0b17  Changed ::enableSchemaCaching() to rely on Database::clearCache() instead of explicitly calling SQLTranslation::clearCache() [wb, 2010-03-09]
- * @changes    1.0.0b16  Backwards Compatibility Break - renamed ::addCustomClassToTableMapping() to ::mapClassToTable(). Added ::getDatabaseName() and ::mapClassToDatabase(). Updated code for new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
+ * @changes    1.0.0b17  Changed ::enableSchemaCaching() to rely on Connection::clearCache() instead of explicitly
+ * calling SQLTranslation::clearCache() [wb, 2010-03-09]
+ * @changes    1.0.0b16  Backwards Compatibility Break - renamed ::addCustomClassToTableMapping() to
+ * ::mapClassToTable(). Added ::getDatabaseName() and ::mapClassToDatabase(). Updated code for new ORMDatabase and
+ * ORMSchema APIs [wb, 2009-10-28]
  * @changes    1.0.0b15  Added support for ActiveRecord to ::getRecordName() [wb, 2009-10-06]
- * @changes    1.0.0b14  Updated documentation for ::registerActiveRecordMethod() to include info about prefix method matches [wb, 2009-08-07]
+ * @changes    1.0.0b14  Updated documentation for ::registerActiveRecordMethod() to include info about prefix method
+ * matches [wb, 2009-08-07]
  * @changes    1.0.0b13  Updated documentation for ::registerRecordSetMethod() [wb, 2009-07-14]
  * @changes    1.0.0b12  Updated ::callReflectCallbacks() to accept a class name instead of an object [wb, 2009-07-13]
  * @changes    1.0.0b11  Added ::registerInspectCallback() and ::callInspectCallbacks() [wb, 2009-07-13]
- * @changes    1.0.0b10  Fixed a bug with ::objectify() caching during NULL date/time/timestamp values and breaking further objectification [wb, 2009-06-18]
- * @changes    1.0.0b9   Added caching for performance and changed some method APIs to only allow class names instead of instances [wb, 2009-06-15]
- * @changes    1.0.0b8   Updated documentation to reflect removal of `$associate` parameter for callbacks passed to ::registerRecordSetMethod() [wb, 2009-06-02]
+ * @changes    1.0.0b10  Fixed a bug with ::objectify() caching during NULL date/time/timestamp values and breaking
+ * further objectification [wb, 2009-06-18]
+ * @changes    1.0.0b9   Added caching for performance and changed some method APIs to only allow class names instead of
+ * instances [wb, 2009-06-15]
+ * @changes    1.0.0b8   Updated documentation to reflect removal of `$associate` parameter for callbacks passed to
+ * ::registerRecordSetMethod() [wb, 2009-06-02]
  * @changes    1.0.0b7   Added ::enableSchemaCaching() to replace ORMSchema::enableSmartCaching() [wb, 2009-05-04]
  * @changes    1.0.0b6   Added the ability to pass a class instance to ::addCustomClassTableMapping() [wb, 2009-02-23]
- * @changes    1.0.0b5   Backwards compatibility break - renamed ::addCustomTableClassMapping() to ::addCustomClassTableMapping() and swapped the parameters [wb, 2009-01-26]
+ * @changes    1.0.0b5   Backwards compatibility break - renamed ::addCustomTableClassMapping() to
+ * ::addCustomClassTableMapping() and swapped the parameters [wb, 2009-01-26]
  * @changes    1.0.0b4   Fixed a bug with retrieving ActiveRecord methods registered for all classes [wb, 2009-01-14]
  * @changes    1.0.0b3   Fixed a static method callback constant [wb, 2008-12-17]
- * @changes    1.0.0b2   Added ::replicate() and ::registerReplicateCallback() for ActiveRecord::replicate() [wb, 2008-12-12]
+ * @changes    1.0.0b2   Added ::replicate() and ::registerReplicateCallback() for ActiveRecord::replicate() [wb,
+ * 2008-12-12]
  * @changes    1.0.0b    The initial implementation [wb, 2007-08-04]
  *
  * @phpstan-import-type RelatedRecords from Related
@@ -97,7 +108,9 @@ class ORM
 	/**
 	 * Cache for repetitive computation
 	 *
-	 * @var array{parseMethod: array<string, array{0: string, 1: string}>, getActiveRecordMethod: array<string, callable(mixed ...): mixed|false>, getActiveRecordStaticMethod: array<string, callable(mixed ...): mixed|false>, objectify: array<string, bool>}
+	 * @var array{parseMethod: array<string, array{0: string, 1: string}>, getActiveRecordMethod: array<string,
+	 * callable(mixed ...): mixed|false>, getActiveRecordStaticMethod: array<string, callable(mixed ...): mixed|false>,
+	 * objectify: array<string, bool>}
 	 */
 	private static array $cache = array(
 		'parseMethod'                   => array(),
@@ -209,8 +222,15 @@ class ORM
 	 * @param  mixed         &$parameter        The parameter to send the callback
 	 * @return void
 	 */
-	public static function callHookCallbacks(ActiveRecord $object, string $hook, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$parameter = null): void
-	{
+	public static function callHookCallbacks(
+		ActiveRecord $object,
+		string $hook,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$parameter = null
+	): void {
 		$class = get_class($object);
 
 		if (empty(self::$hook_callbacks[$class][$hook]) && empty(self::$hook_callbacks['*'][$hook])) {
@@ -407,10 +427,10 @@ class ORM
 
 
 	/**
-	 * Enables caching on the Database, SQLTranslation and Schema objects used for the ORM
+	 * Enables caching on the Connection, SQLTranslation and Schema objects used for the ORM
 	 *
 	 * This method will cache database schema information to the three objects
-	 * that use it during normal ORM operation: Database, SQLTranslation and
+	 * that use it during normal ORM operation: Connection, SQLTranslation and
 	 * Schema. To allow for schema changes without having to manually clear
 	 * the cache, all cached information will be cleared if any
 	 * UnexpectedException objects are thrown.
@@ -419,15 +439,19 @@ class ORM
 	 *
 	 * @param  Cache $cache          The object to cache schema information to
 	 * @param  string $database_name  The database to enable caching for
-	 * @param  string $key_token      This is a token that is used in cache keys to prevent conflicts for server-wide caches - when non-NULL the document root is used
+	 * @param  string $key_token      This is a token that is used in cache keys to prevent conflicts for server-wide
+	 * caches - when non-NULL the document root is used
 	 * @return void
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	public static function enableSchemaCaching(Cache $cache, string $database_name = 'default', ?string $key_token = null): void
-	{
+	public static function enableSchemaCaching(
+		Cache $cache,
+		string $database_name = 'default',
+		?string $key_token = null
+	): void {
 		if ($key_token === null) {
 			$document_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
 			$key_token = is_string($document_root) ? $document_root : '';
@@ -460,7 +484,8 @@ class ORM
 	 *
 	 * @param  string $class   The name of the class
 	 * @param  string $method  The method to get the callback for
-	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method description for details
+	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method
+	 * description for details
 	 */
 	public static function getActiveRecordMethod(string $class, string $method): mixed
 	{
@@ -503,7 +528,8 @@ class ORM
 	 *
 	 * @param  string $class   The name of the class
 	 * @param  string $method  The method to get the callback for
-	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method description for details
+	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method
+	 * description for details
 	 */
 	public static function getActiveRecordStaticMethod(string $class, string $method): mixed
 	{
@@ -545,11 +571,11 @@ class ORM
 	public static function getClass(mixed $class): string
 	{
 		if (is_object($class)) {
-            return get_class($class);
-        }
+			return get_class($class);
+		}
 		if (is_string($class)) {
-            return $class;
-        }
+			return $class;
+		}
 		throw new ProgrammerException('The class specified is not a valid class name or object');
 	}
 
@@ -654,7 +680,8 @@ class ORM
 	 * @internal
 	 *
 	 * @param  string $method  The method to get the callback for
-	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method description for details
+	 * @return callable(mixed ...): mixed|null  The callback for the method or `NULL` if none exists - see method
+	 * description for details
 	 */
 	public static function getRecordSetMethod(string $method): mixed
 	{
@@ -694,7 +721,7 @@ class ORM
 				throw new ProgrammerException('The class, %s, could not be found', $class);
 			}
 			$reflection = new ReflectionClass($class);
-	        $related_class = $reflection->getNamespaceName() . '\\' . $related_class;
+			$related_class = $reflection->getNamespaceName() . '\\' . $related_class;
 		}
 		self::$related_class_names[$class][$original_related_class] = $related_class;
 
@@ -802,14 +829,14 @@ class ORM
 				// Explicit calls to the constructors are used for dependency detection
 				switch ($column_type) {
 					case 'date':
-                        $value = new Date($value);
-                        break;
+						$value = new Date($value);
+						break;
 					case 'time':
-                        $value = new Time($value);
-                        break;
+						$value = new Time($value);
+						break;
 					case 'timestamp':
-                        $value = new Timestamp($value);
-                        break;
+						$value = new Timestamp($value);
+						break;
 				}
 			} catch (ValidationException $e) {
 				// Validation exception results in the raw value being saved
@@ -888,7 +915,8 @@ class ORM
 
 
 	/**
-	 * Registers a callback for an ActiveRecord method that falls through to ActiveRecord::__call() or hits a predefined method hook
+	 * Registers a callback for an ActiveRecord method that falls through to ActiveRecord::__call() or hits a predefined
+	 * method hook
 	 *
 	 * The callback should accept the following parameters:
 	 *
@@ -900,13 +928,19 @@ class ORM
 	 *  - **`$method_name`**:      The method that was called
 	 *  - **`&$parameters`**:      The parameters passed to the method
 	 *
-	 * @param  mixed    $class     The class name or instance of the class to register for, `'*'` will register for all classes
-	 * @param  string   $method    The method to hook for - this can be a complete method name or `{prefix}*` where `*` will match any column name
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method description for parameter list
+	 * @param  mixed    $class     The class name or instance of the class to register for, `'*'` will register for all
+	 * classes
+	 * @param  string   $method    The method to hook for - this can be a complete method name or `{prefix}*` where `*`
+	 * will match any column name
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method
+	 * description for parameter list
 	 * @return void
 	 */
-	public static function registerActiveRecordMethod(mixed $class, string $method, callable|array|string $callback): void
-	{
+	public static function registerActiveRecordMethod(
+		mixed $class,
+		string $method,
+		callable|array|string $callback
+	): void {
 		$class = self::getClass($class);
 
 		if (!isset(self::$active_record_method_callbacks[$class])) {
@@ -927,7 +961,8 @@ class ORM
 
 
 	/**
-	 * Registers a callback for an ActiveRecord method that falls through to ActiveRecord::__callStatic() or hits a predefined method hook
+	 * Registers a callback for an ActiveRecord method that falls through to ActiveRecord::__callStatic() or hits a
+	 * predefined method hook
 	 *
 	 * Only available to PHP 5.3+ which supports the __callStatic magic method.
 	 *
@@ -939,13 +974,19 @@ class ORM
 	 *
 	 * @throws ProgrammerException  When the PHP version less than 5.3
 	 *
-	 * @param  mixed    $class     The class name or instance of the class to register for, `'*'` will register for all classes
-	 * @param  string   $method    The method to hook for - this can be a complete method name or `{prefix}*` where `*` will match any column name
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method description for parameter list
+	 * @param  mixed    $class     The class name or instance of the class to register for, `'*'` will register for all
+	 * classes
+	 * @param  string   $method    The method to hook for - this can be a complete method name or `{prefix}*` where `*`
+	 * will match any column name
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method
+	 * description for parameter list
 	 * @return void
 	 */
-	public static function registerActiveRecordStaticMethod(mixed $class, string $method, callable|array|string $callback): void
-	{
+	public static function registerActiveRecordStaticMethod(
+		mixed $class,
+		string $method,
+		callable|array|string $callback
+	): void {
 
 		$class = self::getClass($class);
 
@@ -966,25 +1007,29 @@ class ORM
 
 
 	/**
-	 * Registers a callback for one of the various ActiveRecord hooks - multiple callbacks can be registered for each hook
+	 * Registers a callback for one of the various ActiveRecord hooks - multiple callbacks can be registered for each
+	 * hook
 	 *
 	 * The method signature should include the follow parameters:
 	 *
 	 *  - **`$object`**:           The ActiveRecord instance
-	 *  - **`&$values`**:          The values array for the record - see the [http://flourishlib.com/docs/ORM#values $values] documentation for details
-	 *  - **`&$old_values`**:      The old values array for the record - see the [http://flourishlib.com/docs/ORM#old_values $old_values] documentation for details
-	 *  - **`&$related_records`**: The related records array for the record - see the [http://flourishlib.com/docs/ORM#related_records $related_records] documentation for details
-	 *  - **`&$cache`**:           The cache array for the record - see the [http://flourishlib.com/docs/ORM#cache $cache] documentation for details
+	 *  - **`&$values`**:          The values array for the record - see the $values documentation for details
+	 *  - **`&$old_values`**:      The old values array for the record - see the $old_values documentation for details
+	 *  - **`&$related_records`**: The related records array for the record - see the $related_records documentation for
+	 * details
+	 *  - **`&$cache`**:           The cache array for the record - see the $cache documentation for details
 	 *
 	 * The `'pre::validate()'` and `'post::validate()'` hooks have an extra
 	 * parameter:
 	 *
-	 *  - **`&$validation_messages`**: An ordered array of validation errors that will be returned or tossed as an ValidationException - see the [http://flourishlib.com/docs/ORM#validation_messages $validation_messages] documentation for details
+	 *  - **`&$validation_messages`**: An ordered array of validation errors that will be returned or tossed as an
+	 * ValidationException - see the $validation_messages documentation for details
 	 *
 	 * The `'pre::replicate()'`, `'post::replicate()'` and
 	 * `'cloned::replicate()'` hooks have an extra parameter:
 	 *
-	 *  - **`$replication_level`**: An integer representing the level of recursion - the object being replicated will be `0`, children will be `1`, grandchildren `2` and so on.
+	 *  - **`$replication_level`**: An integer representing the level of recursion - the object being replicated will be
+	 * `0`, children will be `1`, grandchildren `2` and so on.
 	 *
 	 * Below is a list of all valid hooks:
 	 *
@@ -1014,7 +1059,8 @@ class ORM
 	 *
 	 * @param  mixed    $class     The class name or instance of the class to hook, `'*'` will hook all classes
 	 * @param  string   $hook      The hook to register for
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register - see the method description for details about the method signature
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register - see the
+	 * method description for details about the method signature
 	 * @return void
 	 */
 	public static function registerHookCallback(mixed $class, string $hook, callable|array|string $callback): void
@@ -1053,7 +1099,8 @@ class ORM
 	 *
 	 * @param  mixed    $class     The class name or instance of the class to register for
 	 * @param  string   $column    The column to register for
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter by reference, an associative array of the various metadata about a column.
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback
+	 * should accept a single parameter by reference, an associative array of the various metadata about a column.
 	 * @return void
 	 */
 	public static function registerInspectCallback(mixed $class, string $column, callable|array|string $callback): void
@@ -1083,11 +1130,15 @@ class ORM
 	 *
 	 * @param  mixed    $class     The class name or instance of the class to register for
 	 * @param  string   $column    The column to register for
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter, the value to objectify and should return the objectified value.
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback
+	 * should accept a single parameter, the value to objectify and should return the objectified value.
 	 * @return void
 	 */
-	public static function registerObjectifyCallback(mixed $class, string $column, callable|array|string $callback): void
-	{
+	public static function registerObjectifyCallback(
+		mixed $class,
+		string $column,
+		callable|array|string $callback
+	): void {
 		$class = self::getClass($class);
 
 		if (!isset(self::$objectify_callbacks[$class])) {
@@ -1119,7 +1170,8 @@ class ORM
 	 *  - **`$parameters`**:  Any parameters passed to the method
 	 *
 	 * @param  string   $method    The method to hook for
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method description for parameter list
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to execute - see method
+	 * description for parameter list
 	 * @return void
 	 */
 	public static function registerRecordSetMethod(string $method, callable|array|string $callback): void
@@ -1145,10 +1197,13 @@ class ORM
 	 *
 	 *  - **`$class`**: the class name
 	 *  - **`&$signatures`**: an associative array of `{method_name} => {signature}`
-	 *  - **`$include_doc_comments`**: a boolean indicating if the signature should include the doc comment for the method, or just the signature
+	 *  - **`$include_doc_comments`**: a boolean indicating if the signature should include the doc comment for the
+	 * method, or just the signature
 	 *
-	 * @param  mixed    $class     The class name or instance of the class to register for, `'*'` will register for all classes
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a three parameters - see method description for details.
+	 * @param  mixed    $class     The class name or instance of the class to register for, `'*'` will register for all
+	 * classes
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback
+	 * should accept a three parameters - see method description for details.
 	 * @return void
 	 */
 	public static function registerReflectCallback(mixed $class, callable|array|string $callback): void
@@ -1177,11 +1232,15 @@ class ORM
 	 *
 	 * @param  mixed    $class     The class name or instance of the class to register for
 	 * @param  string   $column    The column to register for
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter, the value to replicate and should return the replicated value.
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback
+	 * should accept a single parameter, the value to replicate and should return the replicated value.
 	 * @return void
 	 */
-	public static function registerReplicateCallback(mixed $class, string $column, callable|array|string $callback): void
-	{
+	public static function registerReplicateCallback(
+		mixed $class,
+		string $column,
+		callable|array|string $callback
+	): void {
 		$class = self::getClass($class);
 
 		if (!isset(self::$replicate_callbacks[$class])) {
@@ -1204,11 +1263,15 @@ class ORM
 	 *
 	 * @param  mixed    $class     The class name or instance of the class to register for
 	 * @param  string   $column    The column to register for
-	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback should accept a single parameter, the value to scalarize and should return the scalarized value.
+	 * @param  callable(mixed ...): mixed|array<string|object>|string $callback  The callback to register. Callback
+	 * should accept a single parameter, the value to scalarize and should return the scalarized value.
 	 * @return void
 	 */
-	public static function registerScalarizeCallback(mixed $class, string $column, callable|array|string $callback): void
-	{
+	public static function registerScalarizeCallback(
+		mixed $class,
+		string $column,
+		callable|array|string $callback
+	): void {
 		$class = self::getClass($class);
 
 		if (!isset(self::$scalarize_callbacks[$class])) {
@@ -1308,7 +1371,10 @@ class ORM
 		if (is_object($value) && is_callable(array($value, '__toString'))) {
 			return $value->__toString();
 		} elseif (is_object($value)) {
-			throw new ProgrammerException('The object of class %s could not be converted to a string', get_class($value));
+			throw new ProgrammerException(
+				'The object of class %s could not be converted to a string',
+				get_class($value)
+			);
 		}
 
 		return $value;
@@ -1347,8 +1413,8 @@ class ORM
 	 * @return ORM
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

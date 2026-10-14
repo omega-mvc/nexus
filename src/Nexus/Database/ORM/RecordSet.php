@@ -10,37 +10,55 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/RecordSet
  *
  * @version    1.0.0b47
- * @changes    1.0.0b47  Fixed the new version of ::precount() to work with tables having an explicit schema [wb, 2012-09-21]
+ * @changes    1.0.0b47  Fixed the new version of ::precount() to work with tables having an explicit schema [wb,
+ * 2012-09-21]
  * @changes    1.0.0b46  Fixed a bug with ::precount() not working for self-joining tables [wb, 2012-09-16]
- * @changes    1.0.0b45  Added support for the starts with like, `^~`, and ends with like, `$~`, operators to both ::build() and ::filter() [wb, 2011-06-20]
- * @changes    1.0.0b44  Backwards Compatibility Break - ::sort() and ::sortByCallback() now return a new RecordSet instead of sorting the record set in place [wb, 2011-06-20]
- * @changes    1.0.0b43  Added the ability to pass SQL and values to ::buildFromSQL(), added the ability to manually pass the `$limit` and `$page` to ::buildFromArray() and ::buildFromSQL(), changed ::slice() to remember `$limit` and `$page` if possible when `$remember_original_count` is `TRUE` [wb, 2011-01-11]
+ * @changes    1.0.0b45  Added support for the starts with like, `^~`, and ends with like, `$~`, operators to both
+ * ::build() and ::filter() [wb, 2011-06-20]
+ * @changes    1.0.0b44  Backwards Compatibility Break - ::sort() and ::sortByCallback() now return a new RecordSet
+ * instead of sorting the record set in place [wb, 2011-06-20]
+ * @changes    1.0.0b43  Added the ability to pass SQL and values to ::buildFromSQL(), added the ability to manually
+ * pass the `$limit` and `$page` to ::buildFromArray() and ::buildFromSQL(), changed ::slice() to remember `$limit` and
+ * `$page` if possible when `$remember_original_count` is `TRUE` [wb, 2011-01-11]
  * @changes    1.0.0b42  Updated class to use ORM::getRelatedClass() [wb, 2010-11-24]
  * @changes    1.0.0b41  Added support for PHP 5.3 namespaced ActiveRecord classes [wb, 2010-11-11]
  * @changes    1.0.0b40  Added the ::tally() method [wb, 2010-09-28]
- * @changes    1.0.0b39  Backwards Compatibility Break - removed the methods ::fetchRecord(), ::current(), ::key(), ::next(), ::rewind() and ::valid() and the Iterator interface - and the `$pointer` parameter for callbacks registered via ORM::registerRecordSetMethod() was replaced with the `$method_name` parameter - added the methods ::getIterator(), ::getLimit(), ::getPage(), ::getPages(), ::getRecord(), ::offsetExists(), ::offsetGet(), ::offsetSet() and ::offsetUnset() and the IteratorAggregate and ArrayAccess interfaces [wb, 2010-09-28]
+ * @changes    1.0.0b39  Backwards Compatibility Break - removed the methods ::fetchRecord(), ::current(), ::key(),
+ * ::next(), ::rewind() and ::valid() and the Iterator interface - and the `$pointer` parameter for callbacks registered
+ * via ORM::registerRecordSetMethod() was replaced with the `$method_name` parameter - added the methods
+ * ::getIterator(), ::getLimit(), ::getPage(), ::getPages(), ::getRecord(), ::offsetExists(), ::offsetGet(),
+ * ::offsetSet() and ::offsetUnset() and the IteratorAggregate and ArrayAccess interfaces [wb, 2010-09-28]
  * @changes    1.0.0b38  Updated code to work with the new ORM API [wb, 2010-08-06]
  * @changes    1.0.0b37  Fixed a typo/bug in ::reduce() [wb, 2010-06-30]
  * @changes    1.0.0b36  Replaced create_function() with a private method call [wb, 2010-06-08]
  * @changes    1.0.0b35  Added the ::chunk() and ::split() methods [wb, 2010-05-20]
  * @changes    1.0.0b34  Added an integer cast to ::count() to fix issues with the dblib MSSQL driver [wb, 2010-04-09]
- * @changes    1.0.0b33  Updated the class to force configure classes before peforming actions with them [wb, 2010-03-30]
+ * @changes    1.0.0b33  Updated the class to force configure classes before peforming actions with them [wb,
+ * 2010-03-30]
  * @changes    1.0.0b32  Fixed a column aliasing issue with SQLite [wb, 2010-01-25]
- * @changes    1.0.0b31  Added the ability to compare columns in ::build() with the `=:`, `!:`, `<:`, `<=:`, `>:` and `>=:` operators [wb, 2009-12-08]
- * @changes    1.0.0b30  Fixed a bug affecting where conditions with columns that are not null but have a default value [wb, 2009-11-03]
+ * @changes    1.0.0b31  Added the ability to compare columns in ::build() with the `=:`, `!:`, `<:`, `<=:`, `>:` and
+ * `>=:` operators [wb, 2009-12-08]
+ * @changes    1.0.0b30  Fixed a bug affecting where conditions with columns that are not null but have a default value
+ * [wb, 2009-11-03]
  * @changes    1.0.0b29  Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
- * @changes    1.0.0b28  Fixed ::prebuild() and ::precount() to work across all databases, changed SQL statements to use value placeholders, identifier escaping and schema support [wb, 2009-10-22]
- * @changes    1.0.0b27  Changed RecordSet::build() to fix bad $page numbers instead of throwing an ProgrammerException [wb, 2009-10-05]
- * @changes    1.0.0b26  Updated the documentation for ::build() and ::filter() to reflect new functionality [wb, 2009-09-21]
+ * @changes    1.0.0b28  Fixed ::prebuild() and ::precount() to work across all databases, changed SQL statements to use
+ * value placeholders, identifier escaping and schema support [wb, 2009-10-22]
+ * @changes    1.0.0b27  Changed RecordSet::build() to fix bad $page numbers instead of throwing an ProgrammerException
+ * [wb, 2009-10-05]
+ * @changes    1.0.0b26  Updated the documentation for ::build() and ::filter() to reflect new functionality [wb,
+ * 2009-09-21]
  * @changes    1.0.0b25  Fixed ::map() to work with string-style static method callbacks in PHP 5.1 [wb, 2009-09-18]
- * @changes    1.0.0b24  Backwards Compatibility Break - renamed ::buildFromRecords() to ::buildFromArray(). Added ::buildFromCall(), ::buildFromMap() and `::build{RelatedRecords}()` [wb, 2009-09-16]
- * @changes    1.0.0b23  Added an extra parameter to ::diff(), ::filter(), ::intersect(), ::slice() and ::unique() to save the number of records in the current set as the non-limited count for the new set [wb, 2009-09-15]
- * @changes    1.0.0b22  Changed ::__construct() to accept any Iterator instead of just an Result object [wb, 2009-08-12]
+ * @changes    1.0.0b24  Backwards Compatibility Break - renamed ::buildFromRecords() to ::buildFromArray(). Added
+ * ::buildFromCall(), ::buildFromMap() and `::build{RelatedRecords}()` [wb, 2009-09-16]
+ * @changes    1.0.0b23  Added an extra parameter to ::diff(), ::filter(), ::intersect(), ::slice() and ::unique() to
+ * save the number of records in the current set as the non-limited count for the new set [wb, 2009-09-15]
+ * @changes    1.0.0b22  Changed ::__construct() to accept any Iterator instead of just an Result object [wb,
+ * 2009-08-12]
  * @changes    1.0.0b21  Added performance tweaks to ::prebuild() and ::precreate() [wb, 2009-07-31]
- * @changes    1.0.0b20  Changed the class to implement Countable, making the [http://php.net/count `count()`] function work [wb, 2009-07-29]
+ * @changes    1.0.0b20  Changed the class to implement Countable, making the [http://php.net/count `count()`] function
+ * work [wb, 2009-07-29]
  * @changes    1.0.0b19  Fixed bugs with ::diff() and ::intersect() and empty record sets [wb, 2009-07-29]
  * @changes    1.0.0b18  Added method chaining support to prebuild, precount and precreate methods [wb, 2009-07-15]
  * @changes    1.0.0b17  Changed ::__call() to pass the parameters to the callback [wb, 2009-07-14]
@@ -50,14 +68,20 @@ declare(strict_types=1);
  * @changes    1.0.0b13  Added documentation to ::build() about the intersection operator `><` [wb, 2009-07-09]
  * @changes    1.0.0b12  Added documentation to ::build() about the `AND LIKE` operator `&~` [wb, 2009-07-09]
  * @changes    1.0.0b11  Added documentation to ::build() about the `NOT LIKE` operator `!~` [wb, 2009-07-08]
- * @changes    1.0.0b10  Moved the private method ::checkConditions() to ActiveRecord::checkConditions() [wb, 2009-07-08]
+ * @changes    1.0.0b10  Moved the private method ::checkConditions() to ActiveRecord::checkConditions() [wb,
+ * 2009-07-08]
  * @changes    1.0.0b9   Changed ::build() to only fall back to ordering by primary keys if one exists [wb, 2009-06-26]
- * @changes    1.0.0b8   Updated ::merge() to accept arrays of ActiveRecords or a single ActiveRecord in addition to an RecordSet [wb, 2009-06-02]
- * @changes    1.0.0b7   Backwards Compatibility Break - Removed ::flagAssociate() and ::isFlaggedForAssociation(), callbacks registered via ORM::registerRecordSetMethod() no longer receive the `$associate` parameter [wb, 2009-06-02]
+ * @changes    1.0.0b8   Updated ::merge() to accept arrays of ActiveRecords or a single ActiveRecord in addition to an
+ * RecordSet [wb, 2009-06-02]
+ * @changes    1.0.0b7   Backwards Compatibility Break - Removed ::flagAssociate() and ::isFlaggedForAssociation(),
+ * callbacks registered via ORM::registerRecordSetMethod() no longer receive the `$associate` parameter [wb, 2009-06-02]
  * @changes    1.0.0b6   Changed ::tossIfEmpty() to return the record set to allow for method chaining [wb, 2009-05-18]
- * @changes    1.0.0b5   ::build() now allows NULL for `$where_conditions` and `$order_bys`, added a check to the SQL passed to ::buildFromSQL() [wb, 2009-05-03]
- * @changes    1.0.0b4   ::__call() was changed to prevent exceptions coming from Grammar when an unknown method is called [wb, 2009-03-27]
- * @changes    1.0.0b3   ::sort() and ::sortByCallback() now return the record set to allow for method chaining [wb, 2009-03-23]
+ * @changes    1.0.0b5   ::build() now allows NULL for `$where_conditions` and `$order_bys`, added a check to the SQL
+ * passed to ::buildFromSQL() [wb, 2009-05-03]
+ * @changes    1.0.0b4   ::__call() was changed to prevent exceptions coming from Grammar when an unknown method is
+ * called [wb, 2009-03-27]
+ * @changes    1.0.0b3   ::sort() and ::sortByCallback() now return the record set to allow for method chaining [wb,
+ * 2009-03-23]
  * @changes    1.0.0b2   Added support for != and <> to ::build() and ::filter() [wb, 2008-12-04]
  * @changes    1.0.0b    The initial implementation [wb, 2007-08-04]
  *
@@ -97,16 +121,27 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * 'column!'                    => array(VALUE, VALUE2, ... )   // column NOT IN (VALUE, VALUE2, ... )
 	 * 'column!='                   => array(VALUE, VALUE2, ... )   // column NOT IN (VALUE, VALUE2, ... )
 	 * 'column<>'                   => array(VALUE, VALUE2, ... )   // column NOT IN (VALUE, VALUE2, ... )
-	 * 'column~'                    => array(VALUE, VALUE2, ... )   // (column LIKE '%VALUE%' OR column LIKE '%VALUE2%' OR column ... )
-	 * 'column^~'                   => array(VALUE, VALUE2, ... )   // (column LIKE 'VALUE%' OR column LIKE 'VALUE2%' OR column ... )
-	 * 'column$~'                   => array(VALUE, VALUE2, ... )   // (column LIKE '%VALUE' OR column LIKE '%VALUE2' OR column ... )
-	 * 'column&~'                   => array(VALUE, VALUE2, ... )   // (column LIKE '%VALUE%' AND column LIKE '%VALUE2%' AND column ... )
-	 * 'column!~'                   => array(VALUE, VALUE2, ... )   // (column NOT LIKE '%VALUE%' AND column NOT LIKE '%VALUE2%' AND column ... )
-	 * 'column!|column2<|column3='  => array(VALUE, VALUE2, VALUE3) // (column <> '%VALUE%' OR column2 < '%VALUE2%' OR column3 = '%VALUE3%')
-	 * 'column|column2><'           => array(VALUE, VALUE2)         // WHEN VALUE === NULL: ((column2 IS NULL AND column = VALUE) OR (column2 IS NOT NULL AND column <= VALUE AND column2 >= VALUE))
-	 *                                                              // WHEN VALUE !== NULL: ((column <= VALUE AND column2 >= VALUE) OR (column >= VALUE AND column <= VALUE2))
-	 * 'column|column2|column3~'    => VALUE                        // (column LIKE '%VALUE%' OR column2 LIKE '%VALUE%' OR column3 LIKE '%VALUE%')
-	 * 'column|column2|column3~'    => array(VALUE, VALUE2, ... )   // ((column LIKE '%VALUE%' OR column2 LIKE '%VALUE%' OR column3 LIKE '%VALUE%') AND (column LIKE '%VALUE2%' OR column2 LIKE '%VALUE2%' OR column3 LIKE '%VALUE2%') AND ... )
+	 * 'column~'                    => array(VALUE, VALUE2, ... )   // (column LIKE '%VALUE%' OR column LIKE '%VALUE2%'
+	 * OR column ... )
+	 * 'column^~'                   => array(VALUE, VALUE2, ... )   // (column LIKE 'VALUE%' OR column LIKE 'VALUE2%' OR
+	 * column ... )
+	 * 'column$~'                   => array(VALUE, VALUE2, ... )   // (column LIKE '%VALUE' OR column LIKE '%VALUE2' OR
+	 * column ... )
+	 * 'column&~'                   => array(VALUE, VALUE2, ... )   // (column LIKE '%VALUE%' AND column LIKE '%VALUE2%'
+	 * AND column ... )
+	 * 'column!~'                   => array(VALUE, VALUE2, ... )   // (column NOT LIKE '%VALUE%' AND column NOT LIKE
+	 * '%VALUE2%' AND column ... )
+	 * 'column!|column2<|column3='  => array(VALUE, VALUE2, VALUE3) // (column <> '%VALUE%' OR column2 < '%VALUE2%' OR
+	 * column3 = '%VALUE3%')
+	 * 'column|column2><'           => array(VALUE, VALUE2)         // WHEN VALUE === NULL: ((column2 IS NULL AND column
+	 * = VALUE) OR (column2 IS NOT NULL AND column <= VALUE AND column2 >= VALUE))
+	 *                                                              // WHEN VALUE !== NULL: ((column <= VALUE AND
+	 * column2 >= VALUE) OR (column >= VALUE AND column <= VALUE2))
+	 * 'column|column2|column3~'    => VALUE                        // (column LIKE '%VALUE%' OR column2 LIKE '%VALUE%'
+	 * OR column3 LIKE '%VALUE%')
+	 * 'column|column2|column3~'    => array(VALUE, VALUE2, ... )   // ((column LIKE '%VALUE%' OR column2 LIKE '%VALUE%'
+	 * OR column3 LIKE '%VALUE%') AND (column LIKE '%VALUE2%' OR column2 LIKE '%VALUE2%' OR column3 LIKE '%VALUE2%') AND
+	 * ... )
 	 * }}}
 	 *
 	 * When creating a condition in the form `column|column2|column3~`, if the
@@ -134,10 +169,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * 'related_table.column'                                           // e.g. 'user_groups.name'
 	 * 'related_table{route}.column'                                    // e.g. 'user_groups{user_group_id}.name'
 	 * 'related_table=>once_removed_related_table.column'               // e.g. 'user_groups=>permissions.level'
-	 * 'related_table{route}=>once_removed_related_table.column'        // e.g. 'user_groups{user_group_id}=>permissions.level'
+	 * 'related_table{route}=>once_removed_related_table.column'        // e.g.
+	 * 'user_groups{user_group_id}=>permissions.level'
 	 * 'related_table=>once_removed_related_table{route}.column'        // e.g. 'user_groups=>permissions{read}.level'
-	 * 'related_table{route}=>once_removed_related_table{route}.column' // e.g. 'user_groups{user_group_id}=>permissions{read}.level'
-	 * 'column||other_column'                                           // e.g. 'first_name||last_name' - this concatenates the column values
+	 * 'related_table{route}=>once_removed_related_table{route}.column' // e.g.
+	 * 'user_groups{user_group_id}=>permissions{read}.level'
+	 * 'column||other_column'                                           // e.g. 'first_name||last_name' - this
+	 * concatenates the column values
 	 * }}}
 	 *
 	 * In addition to using plain column names for where conditions, it is also
@@ -197,7 +235,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * @param  string  $class             The class to create the RecordSet of
 	 * @param  array<string, mixed>  $where_conditions  The `column => value` comparisons for the `WHERE` clause
-	 * @param  array<string, mixed>  $order_bys         The `column => direction` values to use for the `ORDER BY` clause
+	 * @param  array<string, mixed>  $order_bys         The `column => direction` values to use for the `ORDER BY`
+	 * clause
 	 * @param  integer $limit             The number of records to fetch
 	 * @param  integer $page              The page offset to use when limiting records
 	 * @return RecordSet  A set of ActiveRecord objects
@@ -207,8 +246,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @throws AuthorizationException
 	 * @throws ValidationException
 	 */
-	public static function build(string $class, array $where_conditions = array(), array $order_bys = array(), ?int $limit = null, ?int $page = null): RecordSet
-	{
+	public static function build(
+		string $class,
+		array $where_conditions = array(),
+		array $order_bys = array(),
+		?int $limit = null,
+		?int $page = null
+	): RecordSet {
 		ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
 
@@ -267,7 +311,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$non_limited_count_sql = str_replace($count_search, $count_replace, $count_subject);
 			$stripped_count_sql    = preg_replace('#\s+ORDER BY.*$#', '', $non_limited_count_sql);
 			$stripped_count_sql    = is_string($stripped_count_sql) ? $stripped_count_sql : '';
-			$count_sql             = $db->escape('SELECT count(*) FROM (' . $stripped_count_sql . ') subquery', array_slice($params, 1));
+			$count_sql             = $db->escape(
+				'SELECT count(*) FROM (' . $stripped_count_sql . ') subquery',
+				array_slice($params, 1)
+			);
 			$non_limited_count_sql = is_string($count_sql) ? $count_sql : null;
 
 			$params[0] = (is_string($params[0]) ? $params[0] : '') . ' LIMIT ' . $limit;
@@ -293,10 +340,14 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @internal
 	 *
 	 * @param  string|array<string> $class          The class or classes of the records
-	 * @param  array<array-key, mixed> $records  The records to create the set from, the order of the record set will be the same as the order of the array.
-	 * @param  integer      $total_records  The total number of records - this should only be provided if the array is a segment of a larger array - this is informational only and does not affect the array
-	 * @param  integer      $limit          The maximum number of records the array was limited to - this is informational only and does not affect the array
-	 * @param  integer      $page           The page of records the array is from - this is informational only and does not affect the array
+	 * @param  array<array-key, mixed> $records  The records to create the set from, the order of the record set will be
+	 * the same as the order of the array.
+	 * @param  integer      $total_records  The total number of records - this should only be provided if the array is a
+	 * segment of a larger array - this is informational only and does not affect the array
+	 * @param  integer      $limit          The maximum number of records the array was limited to - this is
+	 * informational only and does not affect the array
+	 * @param  integer      $page           The page of records the array is from - this is informational only and does
+	 * not affect the array
 	 * @return RecordSet  A set of ActiveRecord objects
 	 * @throws NotFoundException
 	 * @throws ValidationException
@@ -304,8 +355,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	public static function buildFromArray(mixed $class, array $records, ?int $total_records = null, ?int $limit = null, int $page = 1): RecordSet
-	{
+	public static function buildFromArray(
+		mixed $class,
+		array $records,
+		?int $total_records = null,
+		?int $limit = null,
+		int $page = 1
+	): RecordSet {
 		if (is_array($class)) {
 			foreach ($class as $_class) {
 				ActiveRecord::validateClass($_class);
@@ -365,7 +421,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 *
 	 * {{{
 	 * #!sql
-	 * SELECT users.*, groups.name FROM users INNER JOIN groups ON users.group_id = groups.group_id WHERE groups.group_id = 2
+	 * SELECT users.*, groups.name FROM users INNER JOIN groups ON users.group_id = groups.group_id WHERE
+	 * groups.group_id = 2
 	 * }}}
 	 *
 	 * The `$non_limited_count_sql` should only be passed when the `$sql`
@@ -399,10 +456,15 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * }}}
 	 *
 	 * @param  string        $class                  The class to create the RecordSet of
-	 * @param  string|array<mixed>  $sql             The SQL to create the set from, or an array of the SQL statement plus values to escape
-	 * @param  string|array<mixed>|null  $non_limited_count_sql  An SQL statement, or an array of the SQL statement plus values to escape, to get the total number of rows that would have been returned if a `LIMIT` clause had not been used. Should only be passed if a `LIMIT` clause is used in `$sql`.
-	 * @param  integer       $limit                  The number of records the SQL statement was limited to - this is information only and does not affect the SQL
-	 * @param  integer       $page                   The page of records the SQL statement returned - this is information only and does not affect the SQL
+	 * @param  string|array<mixed>  $sql             The SQL to create the set from, or an array of the SQL statement
+	 * plus values to escape
+	 * @param  string|array<mixed>|null  $non_limited_count_sql  An SQL statement, or an array of the SQL statement plus
+	 * values to escape, to get the total number of rows that would have been returned if a `LIMIT` clause had not been
+	 * used. Should only be passed if a `LIMIT` clause is used in `$sql`.
+	 * @param  integer       $limit                  The number of records the SQL statement was limited to - this is
+	 * information only and does not affect the SQL
+	 * @param  integer       $page                   The page of records the SQL statement returned - this is
+	 * information only and does not affect the SQL
 	 * @return RecordSet  A set of ActiveRecord objects
 	 * @throws NotFoundException
 	 * @throws AuthorizationException
@@ -410,15 +472,27 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 */
-	public static function buildFromSQL(string $class, mixed $sql, mixed $non_limited_count_sql = null, ?int $limit = null, int $page = 1): RecordSet
-	{
+	public static function buildFromSQL(
+		string $class,
+		mixed $sql,
+		mixed $non_limited_count_sql = null,
+		?int $limit = null,
+		int $page = 1
+	): RecordSet {
 		ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
 
 		$sql_statement = is_array($sql) ? ($sql[0] ?? null) : $sql;
-		$sql_display   = is_string($sql_statement) ? $sql_statement : (is_scalar($sql_statement) ? (string) $sql_statement : '');
+		$sql_display   = is_string($sql_statement) ? $sql_statement : (is_scalar(
+			$sql_statement
+		) ? (string) $sql_statement : '');
 
-		if (!is_string($sql_statement) || !preg_match('#^\s*SELECT\s*(DISTINCT|ALL)?\s*(("?\w+"?\.)?"?\w+"?\.)?\*\s*FROM#i', $sql_statement)) {
+		if (
+			!is_string($sql_statement) || !preg_match(
+				'#^\s*SELECT\s*(DISTINCT|ALL)?\s*(("?\w+"?\.)?"?\w+"?\.)?\*\s*FROM#i',
+				$sql_statement
+			)
+		) {
 			throw new ProgrammerException(
 				'The SQL statement specified, %s, does not appear to be in the form SELECT * FROM table',
 				$sql_display
@@ -485,7 +559,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Runs a single query and returns the Result object
 	 *
-	 * @param  Database                $db      The database to run the query on
+	 * @param  Connection                $db      The database to run the query on
 	 * @param  array<array-key, mixed> $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 * @throws AuthorizationException
@@ -493,7 +567,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 */
-	private static function runQuery(Database $db, array $params): Result
+	private static function runQuery(Connection $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -531,20 +605,20 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 
 	/**
-     * Counts the number of records that match the conditions specified
-     *
-     * @param  string  $class             The class of records to count
-     * @param  mixed   $where_conditions  An array of where clause parameters in the same format as ::build()
-     * @return integer  The number of records
-     * @throws NoRowsException
-     * @throws NoRemainingException
-     * @throws AuthorizationException
-     * @throws ValidationException
-     * @throws NotFoundException
-     */
-    public static function tally(string $class, mixed $where_conditions = array()): int
-    {
-        ActiveRecord::validateClass($class);
+	 * Counts the number of records that match the conditions specified
+	 *
+	 * @param  string  $class             The class of records to count
+	 * @param  mixed   $where_conditions  An array of where clause parameters in the same format as ::build()
+	 * @return integer  The number of records
+	 * @throws NoRowsException
+	 * @throws NoRemainingException
+	 * @throws AuthorizationException
+	 * @throws ValidationException
+	 * @throws NotFoundException
+	 */
+	public static function tally(string $class, mixed $where_conditions = array()): int
+	{
+		ActiveRecord::validateClass($class);
 		ActiveRecord::forceConfigure($class);
 
 		$where_conditions = is_array($where_conditions) ? $where_conditions : array();
@@ -554,11 +628,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$table  = ORM::tablize($class);
 
 		$pk_columns = array();
-        foreach ($schema->getKeys($table, 'primary') as $pk_column) {
-            $pk_columns[] = $table . '.' . $pk_column;
-        }
+		foreach ($schema->getKeys($table, 'primary') as $pk_column) {
+			$pk_columns[] = $table . '.' . $pk_column;
+		}
 
-        $params = array($db->escape("SELECT COUNT(*) FROM (SELECT %r FROM :from_clause", $pk_columns));
+		$params = array($db->escape("SELECT COUNT(*) FROM (SELECT %r FROM :from_clause", $pk_columns));
 
 		if ($where_conditions) {
 			$having_conditions = ORMDatabase::splitHavingConditions($where_conditions);
@@ -578,12 +652,12 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 			$params = ORMDatabase::addHavingClause($db, $schema, $params, $table, $having_conditions);
 		}
 
-        $params[0] = (is_string($params[0]) ? $params[0] : '') . ') subquery';
+		$params[0] = (is_string($params[0]) ? $params[0] : '') . ') subquery';
 
 		$params = ORMDatabase::injectFromAndGroupByClauses($db, $schema, $params, $table);
 
 		return (int) self::runQuery($db, $params)->fetchScalar();
-    }
+	}
 
 
 	/**
@@ -608,7 +682,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	private int $page = 1;
 
 	/**
-	 * The number of rows that would have been returned if a `LIMIT` clause had not been used, or the SQL to get that number
+	 * The number of rows that would have been returned if a `LIMIT` clause had not been used, or the SQL to get that
+	 * number
 	 *
 	 * @var integer|string|null
 	 */
@@ -637,7 +712,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 
 	/**
-	 * Allows for preloading various data related to the record set in single database queries, as opposed to one query per record
+	 * Allows for preloading various data related to the record set in single database queries, as opposed to one query
+	 * per record
 	 *
 	 * This method will handle methods in the format `verbRelatedRecords()` for
 	 * the verbs `build`, `prebuild`, `precount` and `precreate`.
@@ -724,8 +800,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * Sets the contents of the set
 	 *
 	 * @param  string|array<string> $class              The type(s) of records the object will contain
-	 * @param  Iterator|array<int, ActiveRecord> $records  The Iterator object of the records to create or an array of records
-	 * @param  string|integer $non_limited_count  An SQL statement to get the total number of records sans a `LIMIT` clause or a integer of the total number of records
+	 * @param  Iterator|array<int, ActiveRecord> $records  The Iterator object of the records to create or an array of
+	 * records
+	 * @param  string|integer $non_limited_count  An SQL statement to get the total number of records sans a `LIMIT`
+	 * clause or a integer of the total number of records
 	 * @param  integer        $limit              The number of records the set was limited to
 	 * @param  integer        $page               The page of records that was built
 	 * @return RecordSet
@@ -735,8 +813,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	protected function __construct(mixed $class, mixed $records = null, mixed $non_limited_count = null, mixed $limit = null, mixed $page = 1)
-	{
+	protected function __construct(
+		mixed $class,
+		mixed $records = null,
+		mixed $non_limited_count = null,
+		mixed $limit = null,
+		mixed $page = 1
+	) {
 		$this->class = (is_array($class) && count($class) == 1) ? current($class) : $class;
 
 		if ($non_limited_count !== null) {
@@ -745,7 +828,12 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		if ($records && $records instanceof Iterator) {
 			if (!is_string($class)) {
-				throw new ProgrammerException('Unable to build a record set from an iterator without a single class name, %1$s given', get_debug_type($class));
+				throw new ProgrammerException(
+					'Unable to build a record set from an iterator without a single class name, %1$s given',
+					get_debug_type(
+						$class
+					)
+				);
 			}
 			ActiveRecord::validateClass($class);
 			while ($records->valid()) {
@@ -798,9 +886,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Adds an `ORDER BY` clause to the SQL for the primary keys of this record set
 	 *
-	 * @param  Database $db             The database the query will be executed on
+	 * @param  Connection $db             The database the query will be executed on
 	 * @param  Schema   $schema         The schema for the database
-	 * @param  array<array-key, mixed>  $params  The parameters for the Database::query() call
+	 * @param  array<array-key, mixed>  $params  The parameters for the Connection::query() call
 	 * @param  string    $related_class  The related class to add the order bys for
 	 * @param  string|null  $route       The route to this table from another table
 	 * @return array<array-key, mixed>  The params with the `ORDER BY` clause added
@@ -810,8 +898,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	private function addOrderByParams(Database $db, Schema $schema, array $params, string $related_class, ?string $route = null): array
-	{
+	private function addOrderByParams(
+		Connection $db,
+		Schema $schema,
+		array $params,
+		string $related_class,
+		?string $route = null
+	): array {
 		$table = ORM::tablize($this->getSingleClass());
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
 
@@ -839,7 +932,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 					// This makes sure the query performs the way an insert will
 					$pk_info = $column_info[$pk_column] ?? null;
-					if ($value === null && is_array($pk_info) && ($pk_info['not_null'] ?? null) && ($pk_info['default'] ?? null) !== null) {
+					if (
+						$value === null && is_array(
+							$pk_info
+						) && ($pk_info['not_null'] ?? null) && ($pk_info['default'] ?? null) !== null
+					) {
 						$value = $pk_info['default'];
 					}
 
@@ -869,7 +966,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 		if ($related_order_bys = Related::getOrderBys($this->getSingleClass(), $related_class, $route ?? '')) {
 			$params[0] .= ', ';
-			$params = ORMDatabase::addOrderByClause($db, $schema, $params, ORM::tablize($related_class), $related_order_bys);
+			$params = ORMDatabase::addOrderByClause(
+				$db,
+				$schema,
+				$params,
+				ORM::tablize($related_class),
+				$related_order_bys
+			);
 		}
 
 		return $params;
@@ -879,9 +982,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Adds `WHERE` params to the SQL for the primary keys of this record set
 	 *
-	 * @param  Database $db      The database the query will be executed on
+	 * @param  Connection $db      The database the query will be executed on
 	 * @param  Schema   $schema  The schema for the database
-	 * @param  array<array-key, mixed> $params  The parameters for the Database::query() call
+	 * @param  array<array-key, mixed> $params  The parameters for the Connection::query() call
 	 * @param  string   $route   The route to this table from another table
 	 * @return array<array-key, mixed>  The params with the `WHERE` clause added
 	 * @throws ValidationException
@@ -890,7 +993,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	private function addWhereParams(Database $db, Schema $schema, array $params, ?string $route = null): array
+	private function addWhereParams(Connection $db, Schema $schema, array $params, ?string $route = null): array
 	{
 		$table = ORM::tablize($this->getSingleClass());
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
@@ -916,7 +1019,12 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 					$value   = is_array($primary_key) ? ($primary_key[$pk_column] ?? null) : null;
 
 					// This makes sure the query performs the way an insert will
-					if ($value === null && !empty($pk_info['not_null']) && array_key_exists('default', $pk_info) && $pk_info['default'] !== null) {
+					if (
+						$value === null && !empty($pk_info['not_null']) && array_key_exists(
+							'default',
+							$pk_info
+						) && $pk_info['default'] !== null
+					) {
 						$value = $pk_info['default'];
 					}
 
@@ -1127,7 +1235,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Returns the number of records in the set
 	 *
-	 * @param  boolean $ignore_limit  If set to `TRUE`, this method will return the number of records that would be in the set if there was no `LIMIT` clause
+	 * @param  boolean $ignore_limit  If set to `TRUE`, this method will return the number of records that would be in
+	 * the set if there was no `LIMIT` clause
 	 * @return integer  The number of records in the set
 	 */
 	public function count(mixed $ignore_limit = false): int
@@ -1154,8 +1263,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Removes all passed records from the current record set
 	 *
-	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of records, or record to remove from the current record set, all instances will be removed
-	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
+	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of
+	 * records, or record to remove from the current record set, all instances will be removed
+	 * @param  boolean                        $remember_original_count  If the number of records in the current set
+	 * should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records not present in the passed records
 	 * @throws NotFoundException
 	 * @throws ValidationException
@@ -1214,7 +1325,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * the records in the set:
 	 *
 	 *  - A callback that accepts a single record and returns `FALSE` if it should be removed
-	 *  - A psuedo-callback in the form `'{record}::methodName'` to filter out any records where the output of `$record->methodName()` is equivalent to `FALSE`
+	 *  - A psuedo-callback in the form `'{record}::methodName'` to filter out any records where the output of
+	 * `$record->methodName()` is equivalent to `FALSE`
 	 *  - A conditions array that will remove any records that don't meet all of the conditions
 	 *
 	 * The conditions array can use one or more of the following `key => value`
@@ -1234,30 +1346,42 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * 'methodName~'                           => $value  // If the output contains the $value (case insensitive)
 	 * 'methodName^~'                          => $value  // If the output starts with the $value (case insensitive)
 	 * 'methodName$~'                          => $value  // If the output ends with the $value (case insensitive)
-	 * 'methodName!~'                          => $value  // If the output does not contain the $value (case insensitive)
-	 * 'methodName|methodName2|methodName3~'   => $value  // Parses $value as a search string and make sure each term is present in at least one output (case insensitive)
+	 * 'methodName!~'                          => $value  // If the output does not contain the $value (case
+	 * insensitive)
+	 * 'methodName|methodName2|methodName3~'   => $value  // Parses $value as a search string and make sure each term is
+	 * present in at least one output (case insensitive)
 	 *
 	 * // The following forms work for any $array that is an array
 	 * 'methodName='                           => $array  // If the output is equal to at least one value in $array
 	 * 'methodName!'                           => $array  // If the output is not equal to any value in $array
 	 * 'methodName!='                          => $array  // If the output is not equal to any value in $array
 	 * 'methodName<>'                          => $array  // If the output is not equal to any value in $array
-	 * 'methodName~'                           => $array  // If the output contains one of the strings in $array (case insensitive)
-	 * 'methodName^~'                          => $array  // If the output starts with one of the strings in $array (case insensitive)
-	 * 'methodName$~'                          => $array  // If the output ends with one of the strings in $array (case insensitive)
-	 * 'methodName!~'                          => $array  // If the output contains none of the strings in $array (case insensitive)
-	 * 'methodName&~'                          => $array  // If the output contains all of the strings in $array (case insensitive)
-	 * 'methodName|methodName2|methodName3~'   => $array  // If each value in the array is present in the output of at least one method (case insensitive)
+	 * 'methodName~'                           => $array  // If the output contains one of the strings in $array (case
+	 * insensitive)
+	 * 'methodName^~'                          => $array  // If the output starts with one of the strings in $array
+	 * (case insensitive)
+	 * 'methodName$~'                          => $array  // If the output ends with one of the strings in $array (case
+	 * insensitive)
+	 * 'methodName!~'                          => $array  // If the output contains none of the strings in $array (case
+	 * insensitive)
+	 * 'methodName&~'                          => $array  // If the output contains all of the strings in $array (case
+	 * insensitive)
+	 * 'methodName|methodName2|methodName3~'   => $array  // If each value in the array is present in the output of at
+	 * least one method (case insensitive)
 	 *
 	 * // The following works for an equal number of methods and values in the array
-	 * 'methodName!|methodName2<|methodName3=' => array($value, $value2, $value3) // An OR statement - one of the method to value comparisons must be TRUE
+	 * 'methodName!|methodName2<|methodName3=' => array($value, $value2, $value3) // An OR statement - one of the method
+	 * to value comparisons must be TRUE
 	 *
 	 * // The following accepts exactly two methods and two values, although the second value may be NULL
-	 * 'methodName|methodName2><'              => array($value, $value2) // If the range of values from the methods intersects the range of $value and $value2 - should be dates, times, timestamps or numbers
+	 * 'methodName|methodName2><'              => array($value, $value2) // If the range of values from the methods
+	 * intersects the range of $value and $value2 - should be dates, times, timestamps or numbers
 	 * }}}
 	 *
-	 * @param  callable(mixed...):mixed|string|array<array-key, mixed> $procedure                The way in which to filter the records - see method description for possible forms
-	 * @param  boolean               $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
+	 * @param  callable(mixed...):mixed|string|array<array-key, mixed> $procedure                The way in which to
+	 * filter the records - see method description for possible forms
+	 * @param  boolean               $remember_original_count  If the number of records in the current set should be
+	 * saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  A new RecordSet with the filtered records
 	 * @throws NotFoundException
 	 * @throws ValidationException
@@ -1457,8 +1581,10 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Returns all records in the current record set that are also present in the passed records
 	 *
-	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of records, or record to create an intersection of with the current record set
-	 * @param  boolean                        $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
+	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records                  The record set, array of
+	 * records, or record to create an intersection of with the current record set
+	 * @param  boolean                        $remember_original_count  If the number of records in the current set
+	 * should be saved as the non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The records present in the current record set that are also present in the passed records
 	 * @throws NotFoundException
 	 * @throws ValidationException
@@ -1520,7 +1646,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * different ways:
 	 *
 	 *  - Passing a non-array value will cause it to be passed to the callback
-	 *  - Passing an array value will cause the array values to be passed to the callback with their corresponding record
+	 *  - Passing an array value will cause the array values to be passed to the callback with their corresponding
+	 * record
 	 *
 	 * If an array parameter is too long (more items than records in the set)
 	 * it will be truncated. If an array parameter is too short (less items
@@ -1590,7 +1717,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Merges the record set with more records
 	 *
-	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records  The record set, array of records, or record to merge with the current record set, duplicates will **not** be removed
+	 * @param  RecordSet|array<array-key, mixed>|ActiveRecord $records  The record set, array of records, or record to
+	 * merge with the current record set, duplicates will **not** be removed
 	 * @return RecordSet  The merged record sets
 	 * @throws NotFoundException
 	 * @throws ValidationException
@@ -1737,7 +1865,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * Builds the related records for all records in this set in one DB query
 	 *
 	 * @param  string $related_class  This should be the name of a related class
-	 * @param  string $route          This should be a column name or a join table name and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
+	 * @param  string $route          This should be a column name or a join table name and is only required when there
+	 * are multiple routes to a related table. If there are multiple routes and this is not specified, an
+	 * ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
 	 * @throws NotFoundException
 	 * @throws AuthorizationException
@@ -1771,7 +1901,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$relationship = ORMSchema::getRoute($schema, $table, $related_table, $route, '*-to-many');
 
 		$relationship_column         = is_string($relationship['column'] ?? null) ? $relationship['column'] : '';
-		$relationship_related_column = is_string($relationship['related_column'] ?? null) ? $relationship['related_column'] : '';
+		$relationship_related_column = is_string(
+			$relationship['related_column'] ?? null
+		) ? $relationship['related_column'] : '';
 		$has_join_table              = isset($relationship['join_table']);
 
 		$table_with_route = ($route) ? $table . '{' . $route . '}' : $table;
@@ -1824,7 +1956,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 						$keys[$relationship_column] = $current_row[$relationship_column] ?? null;
 					}
 				} catch (ExpectedException $e) {
-                }
+				}
 
 			// If it is a straight join, keep track of the value by the related column value
 			} else {
@@ -1838,10 +1970,16 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 			try {
 				$current = $result->current();
-				while (is_array($current) && !array_diff_assoc(self::stringifyValues($keys), self::stringifyValues($current))) {
+				while (
+					is_array($current) && !array_diff_assoc(
+						self::stringifyValues($keys),
+						self::stringifyValues($current)
+					)
+				) {
 					$row = $result->fetchRow();
 
-					// If we are going through a join table we need to remove the related primary key that was used for matching
+					// If we are going through a join table we need to remove the related primary key that was used for
+					// matching
 					if ($has_join_table && is_array($row)) {
 						unset($row[$relationship_column]);
 					}
@@ -1851,7 +1989,7 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 					$current = $result->current();
 				}
 			} catch (ExpectedException $e) {
-            }
+			}
 
 
 			// Set up the result object for the new record set
@@ -1870,7 +2008,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * Counts the related records for all records in this set in one DB query
 	 *
 	 * @param  string $related_class  This should be the name of a related class
-	 * @param  string $route          This should be a column name or a join table name and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
+	 * @param  string $route          This should be a column name or a join table name and is only required when there
+	 * are multiple routes to a related table. If there are multiple routes and this is not specified, an
+	 * ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
 	 * @throws AuthorizationException
 	 * @throws ValidationException
@@ -1977,10 +2117,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 
 
 	/**
-	 * Creates the objects for related records that are in a one-to-one or many-to-one relationship with the current class in a single DB query
+	 * Creates the objects for related records that are in a one-to-one or many-to-one relationship with the current
+	 * class in a single DB query
 	 *
 	 * @param  string $related_class  This should be the name of a related class
-	 * @param  string $route          This should be the column name of the foreign key and is only required when there are multiple routes to a related table. If there are multiple routes and this is not specified, an ProgrammerException will be thrown.
+	 * @param  string $route          This should be the column name of the foreign key and is only required when there
+	 * are multiple routes to a related table. If there are multiple routes and this is not specified, an
+	 * ProgrammerException will be thrown.
 	 * @return RecordSet  The record set object, to allow for method chaining
 	 * @throws NotFoundException
 	 * @throws NoRowsException
@@ -2013,7 +2156,9 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		);
 
 		$relationship_column         = is_string($relationship['column'] ?? null) ? $relationship['column'] : '';
-		$relationship_related_column = is_string($relationship['related_column'] ?? null) ? $relationship['related_column'] : '';
+		$relationship_related_column = is_string(
+			$relationship['related_column'] ?? null
+		) ? $relationship['related_column'] : '';
 
 		$values = $this->call('get' . Grammar::camelize($relationship_column, true));
 		$values = array_unique(self::stringifyValues($values));
@@ -2048,7 +2193,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	 * $total_quantity = $record_set->reduce('my_reduce', 0.0);
 	 * }}}
 	 *
-	 * @param  callable(mixed...):mixed $callback       The callback to pass the records to - see method description for details
+	 * @param  callable(mixed...):mixed $callback       The callback to pass the records to - see method description for
+	 * details
 	 * @param  mixed    $initial_value  The initial value to seed reduce with
 	 * @return mixed  The result of the reduce operation
 	 */
@@ -2080,9 +2226,13 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Slices a section of records from the set and returns a new set containing those
 	 *
-	 * @param  integer $offset                   The index to start at, negative indexes will slice that many records from the end
-	 * @param  integer $length                   The number of records to return, negative values will stop that many records before the end, `NULL` will return all records to the end of the set - if there are not enough records, less than `$length` will be returned
-	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
+	 * @param  integer $offset                   The index to start at, negative indexes will slice that many records
+	 * from the end
+	 * @param  integer $length                   The number of records to return, negative values will stop that many
+	 * records before the end, `NULL` will return all records to the end of the set - if there are not enough records,
+	 * less than `$length` will be returned
+	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the
+	 * non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The new slice of records
 	 * @throws NotFoundException
 	 * @throws ValidationException
@@ -2230,7 +2380,11 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 		$output = array();
 		$records_per_set = (int) ceil($this->count() / $number);
 		for ($i = 0; $i < $number; $i++) {
-			$output[] = new RecordSet($this->class, array_slice($this->records, $i * $records_per_set, $records_per_set));
+			$output[] = new RecordSet($this->class, array_slice(
+				$this->records,
+				$i * $records_per_set,
+				$records_per_set
+			));
 		}
 		return $output;
 	}
@@ -2272,7 +2426,8 @@ class RecordSet implements IteratorAggregate, ArrayAccess, Countable
 	/**
 	 * Returns a new RecordSet containing only unique records in the record set
 	 *
-	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the non-limited count for the new set - the page will be reset to `1` either way
+	 * @param  boolean $remember_original_count  If the number of records in the current set should be saved as the
+	 * non-limited count for the new set - the page will be reset to `1` either way
 	 * @return RecordSet  The new record set with only unique records
 	 * @throws NotFoundException
 	 * @throws ValidationException

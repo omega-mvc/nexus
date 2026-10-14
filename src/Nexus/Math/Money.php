@@ -10,11 +10,11 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Money
  *
  * @version    1.0.0b3
  * @changes    1.0.0b3  Added the `$remove_zero_fraction` parameter to ::format() [wb, 2010-06-09]
- * @changes    1.0.0b2  Fixed a bug with calling ::format() when a format callback is set, fixed `NULL` `$element` handling in ::getCurrencyInfo() [wb, 2009-03-24]
+ * @changes    1.0.0b2  Fixed a bug with calling ::format() when a format callback is set, fixed `NULL` `$element`
+ * handling in ::getCurrencyInfo() [wb, 2009-03-24]
  * @changes    1.0.0b   The initial implementation [wb, 2008-08-10]
  *
  * @phpstan-type MoneyCurrency array<string, int|string>
@@ -67,8 +67,13 @@ class Money
 	 * @param string  $value      The value of the currency relative to some common standard between all currencies
 	 * @return void
 	 */
-	public static function defineCurrency(string $iso_code, string $name, string $symbol, int $precision, string $value): void
-	{
+	public static function defineCurrency(
+		string $iso_code,
+		string $name,
+		string $symbol,
+		int $precision,
+		string $value
+	): void {
 		self::$currencies[$iso_code] = array(
 			'name'      => $name,
 			'symbol'    => $symbol,
@@ -94,7 +99,8 @@ class Money
 	 *
 	 * @param string  $iso_code  The ISO code (three letters, e.g. `'USD'`) for the currency
 	 * @param string  $element   The element to retrieve: `'name'`, `'symbol'`, `'precision'`, `'value'`
-	 * @return ($element is null ? MoneyCurrency : ($element is 'precision' ? int : string))  An associative array of the currency info, or the element specified
+	 * @return ($element is null ? MoneyCurrency : ($element is 'precision' ? int : string))  An associative array of
+	 * the currency info, or the element specified
 	 */
 	public static function getCurrencyInfo(string $iso_code, ?string $element = null): mixed
 	{
@@ -144,7 +150,9 @@ class Money
 	/**
 	 * Allows setting a callback to translate or modify any return values from ::format()
 	 *
-	 * @param  callable(mixed...):mixed $callback  The callback to pass all Number objects to. Should accept an Number object, a string currency abbreviation and a boolean indicating if a zero-fraction should be removed - it should return a formatted string.
+	 * @param  callable(mixed...):mixed $callback  The callback to pass all Number objects to. Should accept an Number
+	 * object, a string currency abbreviation and a boolean indicating if a zero-fraction should be removed - it should
+	 * return a formatted string.
 	 * @return void
 	 */
 	public static function registerFormatCallback(callable $callback): void
@@ -159,7 +167,8 @@ class Money
 	/**
 	 * Allows setting a callback to clean any formatted values so they can be passed to Number
 	 *
-	 * @param  callable(mixed...):mixed $callback  The callback to pass formatted strings to. Should accept a formatted string and a currency code and return a string suitable to passing to the Number constructor.
+	 * @param  callable(mixed...):mixed $callback  The callback to pass formatted strings to. Should accept a formatted
+	 * string and a currency code and return a string suitable to passing to the Number constructor.
 	 * @return void
 	 */
 	public static function registerUnformatCallback(callable $callback): void
@@ -234,7 +243,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$amount` is not a valid number/monetary value
 	 *
-	 * @param  \Number|string $amount    The monetary value to represent, should never be a float since those are imprecise
+	 * @param  \Number|string $amount    The monetary value to represent, should never be a float since those are
+	 * imprecise
 	 * @param  string|null    $currency  The currency ISO code (three letters, e.g. `'USD'`) for this value
 	 * @return Money
 	 */
@@ -313,7 +323,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$addend` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $addend  The money object to add - a string or integer will be converted to the default currency (if defined)
+	 * @param  Money|string|integer $addend  The money object to add - a string or integer will be converted to the
+	 * default currency (if defined)
 	 * @return Money  The sum of the monetary values in this currency
 	 */
 	public function add(mixed $addend): Money
@@ -419,7 +430,9 @@ class Money
 		$new_currency_value = self::getCurrencyInfo($new_currency, 'value');
 		$new_precision      = self::getCurrencyInfo($new_currency, 'precision');
 
-		$new_amount = $this->amount->mul($currency_value, 8)->div($new_currency_value, $new_precision + 1)->round($new_precision);
+		$new_amount = $this->amount->mul($currency_value, 8)->div($new_currency_value, $new_precision + 1)->round(
+			$new_precision
+		);
 
 		return new Money($new_amount, $new_currency);
 	}
@@ -430,7 +443,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$money` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to the default currency (if defined)
+	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to
+	 * the default currency (if defined)
 	 * @return boolean  If the monetary values are equal
 	 */
 	public function eq(mixed $money): bool
@@ -443,13 +457,16 @@ class Money
 	/**
 	 * Formats the amount by preceeding the amount with the currency symbol and adding thousands separators
 	 *
-	 * @param  boolean $remove_zero_fraction  If `TRUE` and all digits after the decimal place are `0`, the decimal place and all zeros are removed
+	 * @param  boolean $remove_zero_fraction  If `TRUE` and all digits after the decimal place are `0`, the decimal
+	 * place and all zeros are removed
 	 * @return string  The formatted (and possibly converted) value
 	 */
 	public function format(bool $remove_zero_fraction = false): string
 	{
 		if (self::$format_callback !== null) {
-			return self::stringify(call_user_func(self::$format_callback, $this->amount, $this->currency, $remove_zero_fraction));
+			return self::stringify(
+				call_user_func(self::$format_callback, $this->amount, $this->currency, $remove_zero_fraction)
+			);
 		}
 
 		// We can't use number_format() since it takes a float and we have a
@@ -511,7 +528,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$money` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to the default currency (if defined)
+	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to
+	 * the default currency (if defined)
 	 * @return boolean  If this value is greater than the one passed
 	 */
 	public function gt(mixed $money): bool
@@ -526,7 +544,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$money` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to the default currency (if defined)
+	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to
+	 * the default currency (if defined)
 	 * @return boolean  If this value is greater than or equal to the one passed
 	 */
 	public function gte(mixed $money): bool
@@ -541,7 +560,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$money` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to the default currency (if defined)
+	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to
+	 * the default currency (if defined)
 	 * @return boolean  If this value is less than the one passed
 	 */
 	public function lt(mixed $money): bool
@@ -556,7 +576,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$money` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to the default currency (if defined)
+	 * @param  Money|string|integer $money  The money object to compare to - a string or integer will be converted to
+	 * the default currency (if defined)
 	 * @return boolean  If this value is less than or equal to the one passed
 	 */
 	public function lte(mixed $money): bool
@@ -583,7 +604,8 @@ class Money
 		if (is_object($money)) {
 			if (!is_callable(array($money, '__toString'))) {
 				throw new ProgrammerException(
-					'The money value specified, %s, is not an Money object, integer or string and is thus is invalid for this operation',
+					'The money value specified, %s, is not an Money object, integer or string and is thus is invalid '
+						. 'for this operation',
 					get_debug_type($money)
 				);
 			}
@@ -594,7 +616,8 @@ class Money
 
 		if (!is_string($money)) {
 			throw new ProgrammerException(
-				'The money value specified, %s, is not an Money object, integer or string and is thus is invalid for this operation',
+				'The money value specified, %s, is not an Money object, integer or string and is thus is invalid for '
+					. 'this operation',
 				get_debug_type($money)
 			);
 		}
@@ -614,7 +637,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$multiplicand` is not a valid number
 	 *
-	 * @param  \Number|string|integer $multiplicand  The number of times to multiply this ammount - don't use a float since they are imprecise
+	 * @param  \Number|string|integer $multiplicand  The number of times to multiply this ammount - don't use a float
+	 * since they are imprecise
 	 * @return Money  The product of the monetary value and the multiplicand passed
 	 */
 	public function mul(mixed $multiplicand): Money
@@ -630,7 +654,8 @@ class Money
 	 *
 	 * @throws ValidationException  When `$subtrahend` is not a valid number/monetary value
 	 *
-	 * @param  Money|string|integer $subtrahend  The money object to subtract - a string or integer will be converted to the default currency (if defined)
+	 * @param  Money|string|integer $subtrahend  The money object to subtract - a string or integer will be converted to
+	 * the default currency (if defined)
 	 * @return Money  The difference of the monetary values in this currency
 	 */
 	public function sub(mixed $subtrahend): Money

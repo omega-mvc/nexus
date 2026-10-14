@@ -17,89 +17,128 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ActiveRecord
  *
  * @version    1.0.0b85
- * @changes    1.0.0b85  Updated ::reflect() to use ReflectionParameter::getType() on PHP 8.0+ since ::getClass() and ::isArray() were removed in PHP 8.1 [wb, 2026-07-10]
+ * @changes    1.0.0b85  Updated ::reflect() to use ReflectionParameter::getType() on PHP 8.0+ since ::getClass() and
+ * ::isArray() were removed in PHP 8.1 [wb, 2026-07-10]
  * @changes    1.0.0b84  Fixed a typo in an ProgrammerException [wb, 2016-10-15]
  * @changes    1.0.0b83  Added the `$recursive` parameter to ::populate() [wb, 2011-09-16]
  * @changes    1.0.0b82  Added support for registering methods for __callStatic() [jt, 2011-07-25]
- * @changes    1.0.0b81  Fixed a bug with updating a record that contains only an auto-incrementing primary key [wb, 2011-09-06]
+ * @changes    1.0.0b81  Fixed a bug with updating a record that contains only an auto-incrementing primary key [wb,
+ * 2011-09-06]
  * @changes    1.0.0b80  Added support to ::checkCondition() for the `^~` and `$~` operators [wb, 2011-06-20]
  * @changes    1.0.0b79  Fixed some bugs in handling relationships between PHP 5.3 namespaced classes [wb, 2011-05-26]
- * @changes    1.0.0b78  Backwards Compatibility Break - ::reflect() now returns an associative array instead of a string [wb, 2011-05-10]
- * @changes    1.0.0b77  Fixed ::inspect() to not throw an ProgrammerException when a valid element has a `NULL` value [wb, 2011-05-10]
+ * @changes    1.0.0b78  Backwards Compatibility Break - ::reflect() now returns an associative array instead of a
+ * string [wb, 2011-05-10]
+ * @changes    1.0.0b77  Fixed ::inspect() to not throw an ProgrammerException when a valid element has a `NULL` value
+ * [wb, 2011-05-10]
  * @changes    1.0.0b76  Added ::clearIdentityMap() [wb, 2011-05-09]
- * @changes    1.0.0b75  Fixed a bug where child records of a record with a non-auto-incrementing primary key would not be saved properly for a new record [wb, 2010-12-06]
+ * @changes    1.0.0b75  Fixed a bug where child records of a record with a non-auto-incrementing primary key would not
+ * be saved properly for a new record [wb, 2010-12-06]
  * @changes    1.0.0b74  Updated ::populate() to use the `binary` type for Request::get() [wb, 2010-11-30]
- * @changes    1.0.0b73  Backwards Compatibility Break - changed column set methods to treat strings of all whitespace the same as empty string and convert them to `NULL` [wb, 2010-11-29]
- * @changes    1.0.0b72  Added the new `comment` element to the reflection signature for `inspect` methods [wb, 2010-11-28]
+ * @changes    1.0.0b73  Backwards Compatibility Break - changed column set methods to treat strings of all whitespace
+ * the same as empty string and convert them to `NULL` [wb, 2010-11-29]
+ * @changes    1.0.0b72  Added the new `comment` element to the reflection signature for `inspect` methods [wb,
+ * 2010-11-28]
  * @changes    1.0.0b71  Updated class to use ORM::getRelatedClass() [wb, 2010-11-24]
  * @changes    1.0.0b70  Added support for PHP 5.3 namespaced ActiveRecord classes [wb, 2010-11-11]
- * @changes    1.0.0b69  Backwards Compatibility Break - changed ::validate() to return a nested array of validation messages when there are validation errors on child records [wb-imarc+wb, 2010-10-03]
+ * @changes    1.0.0b69  Backwards Compatibility Break - changed ::validate() to return a nested array of validation
+ * messages when there are validation errors on child records [wb-imarc+wb, 2010-10-03]
  * @changes    1.0.0b68  Added hooks to ::replicate() [wb, 2010-09-07]
  * @changes    1.0.0b67  Updated code to work with the new ORM API [wb, 2010-08-06]
  * @changes    1.0.0b66  Fixed a bug with ::store() and non-primary key auto-incrementing columns [wb, 2010-07-05]
- * @changes    1.0.0b65  Fixed bugs with ::inspect() making some `min_value` and `max_value` elements available for non-numeric types, fixed ::reflect() to list the `min_value` and `max_value` elements [wb, 2010-06-08]
- * @changes    1.0.0b64  BackwardsCompatibilityBreak - changed ::validate()'s returned messages array to have field name keys - added the option to ::validate() to remove field names from messages [wb, 2010-05-26]
+ * @changes    1.0.0b65  Fixed bugs with ::inspect() making some `min_value` and `max_value` elements available for
+ * non-numeric types, fixed ::reflect() to list the `min_value` and `max_value` elements [wb, 2010-06-08]
+ * @changes    1.0.0b64  BackwardsCompatibilityBreak - changed ::validate()'s returned messages array to have field name
+ * keys - added the option to ::validate() to remove field names from messages [wb, 2010-05-26]
  * @changes    1.0.0b63  Changed how is_subclass_of() is used to work around a bug in 5.2.x [wb, 2010-04-06]
  * @changes    1.0.0b62  Fixed a bug that could cause infinite recursion starting in v1.0.0b60 [wb, 2010-04-02]
  * @changes    1.0.0b61  Fixed issues with handling `populate` actions when working with mapped classes [wb, 2010-03-31]
- * @changes    1.0.0b60  Fixed issues with handling `associate` and `has` actions when working with mapped classes, added ::validateClass() [wb, 2010-03-30]
+ * @changes    1.0.0b60  Fixed issues with handling `associate` and `has` actions when working with mapped classes,
+ * added ::validateClass() [wb, 2010-03-30]
  * @changes    1.0.0b59  Changed an extended UTF-8 arrow character into the correct `->` [wb, 2010-03-29]
  * @changes    1.0.0b58  Fixed ::reflect() to specify the value returned from `set` methods [wb, 2010-03-15]
- * @changes    1.0.0b57  Added the `post::loadFromIdentityMap()` hook and fixed ::__construct() to always call the `post::__construct()` hook [wb, 2010-03-14]
- * @changes    1.0.0b56  Fixed `$force_cascade` in ::delete() to work even when the restricted relationship is once-removed through an unrestricted relationship [wb, 2010-03-09]
- * @changes    1.0.0b55  Fixed ::load() to that related records are cleared, requiring them to be loaded from the database [wb, 2010-03-04]
+ * @changes    1.0.0b57  Added the `post::loadFromIdentityMap()` hook and fixed ::__construct() to always call the
+ * `post::__construct()` hook [wb, 2010-03-14]
+ * @changes    1.0.0b56  Fixed `$force_cascade` in ::delete() to work even when the restricted relationship is
+ * once-removed through an unrestricted relationship [wb, 2010-03-09]
+ * @changes    1.0.0b55  Fixed ::load() to that related records are cleared, requiring them to be loaded from the
+ * database [wb, 2010-03-04]
  * @changes    1.0.0b54  Fixed detection of route name for one-to-one relationships in ::delete() [wb, 2010-03-03]
- * @changes    1.0.0b53  Fixed a bug where related records with a primary key that contained a foreign key with an on update cascade clause would be deleted when changing the value of the column referenced by the foreign key [wb, 2009-12-17]
- * @changes    1.0.0b52  Backwards Compatibility Break - Added the $force_cascade parameter to ::delete() and ::store() - enabled calling ::prepare() and ::encode() for non-column get methods, added `::has{RelatedRecords}()` methods [wb, 2009-12-16]
- * @changes    1.0.0b51  Made ::changed() properly recognize that a blank string and NULL are equivalent due to the way that ::set() casts values [wb, 2009-11-14]
- * @changes    1.0.0b50  Fixed a bug with trying to load by a multi-column primary key where one of the columns was not specified [wb, 2009-11-13]
- * @changes    1.0.0b49  Fixed a bug affecting where conditions with columns that are not null but have a default value [wb, 2009-11-03]
+ * @changes    1.0.0b53  Fixed a bug where related records with a primary key that contained a foreign key with an on
+ * update cascade clause would be deleted when changing the value of the column referenced by the foreign key [wb,
+ * 2009-12-17]
+ * @changes    1.0.0b52  Backwards Compatibility Break - Added the $force_cascade parameter to ::delete() and ::store()
+ * - enabled calling ::prepare() and ::encode() for non-column get methods, added `::has{RelatedRecords}()` methods [wb,
+ * 2009-12-16]
+ * @changes    1.0.0b51  Made ::changed() properly recognize that a blank string and NULL are equivalent due to the way
+ * that ::set() casts values [wb, 2009-11-14]
+ * @changes    1.0.0b50  Fixed a bug with trying to load by a multi-column primary key where one of the columns was not
+ * specified [wb, 2009-11-13]
+ * @changes    1.0.0b49  Fixed a bug affecting where conditions with columns that are not null but have a default value
+ * [wb, 2009-11-03]
  * @changes    1.0.0b48  Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
- * @changes    1.0.0b47  Changed `::associate{RelatedRecords}()`, `::link{RelatedRecords}()` and `::populate{RelatedRecords}()` to allow for method chaining [wb, 2009-10-22]
+ * @changes    1.0.0b47  Changed `::associate{RelatedRecords}()`, `::link{RelatedRecords}()` and
+ * `::populate{RelatedRecords}()` to allow for method chaining [wb, 2009-10-22]
  * @changes    1.0.0b46  Changed SQL statements to use value placeholders and identifier escaping [wb, 2009-10-22]
- * @changes    1.0.0b45  Added support for `!~`, `&~`, `><` and OR comparisons to ::checkConditions(), made object handling in ::checkConditions() more robust [wb, 2009-09-21]
+ * @changes    1.0.0b45  Added support for `!~`, `&~`, `><` and OR comparisons to ::checkConditions(), made object
+ * handling in ::checkConditions() more robust [wb, 2009-09-21]
  * @changes    1.0.0b44  Updated code for new ValidationException API [wb, 2009-09-18]
  * @changes    1.0.0b43  Updated code for new RecordSet API [wb, 2009-09-16]
  * @changes    1.0.0b42  Corrected a grammar bug in ::hash() [wb, 2009-09-09]
- * @changes    1.0.0b41  Fixed a bug in the last version that would cause issues with classes containing a custom class to table mapping [wb, 2009-09-01]
- * @changes    1.0.0b40  Added a check to the configuration part of ::__construct() to ensure modelled tables have primary keys [wb, 2009-08-26]
- * @changes    1.0.0b39  Changed `set{ColumnName}()` methods to return the record for method chaining, fixed a bug with loading by multi-column unique constraints, fixed a bug with ::load() [wb, 2009-08-26]
+ * @changes    1.0.0b41  Fixed a bug in the last version that would cause issues with classes containing a custom class
+ * to table mapping [wb, 2009-09-01]
+ * @changes    1.0.0b40  Added a check to the configuration part of ::__construct() to ensure modelled tables have
+ * primary keys [wb, 2009-08-26]
+ * @changes    1.0.0b39  Changed `set{ColumnName}()` methods to return the record for method chaining, fixed a bug with
+ * loading by multi-column unique constraints, fixed a bug with ::load() [wb, 2009-08-26]
  * @changes    1.0.0b38  Updated ::changed() to do a strict comparison when at least one value is NULL [wb, 2009-08-17]
  * @changes    1.0.0b37  Changed ::__construct() to allow any Iterator object instead of just Result [wb, 2009-08-12]
  * @changes    1.0.0b36  Fixed a bug with setting NULL values from v1.0.0b33 [wb, 2009-08-10]
  * @changes    1.0.0b35  Fixed a bug with unescaping data in ::loadFromResult() from v1.0.0b33 [wb, 2009-08-10]
  * @changes    1.0.0b34  Added the ability to compare ActiveRecord objects in ::checkConditions() [wb, 2009-08-07]
  * @changes    1.0.0b33  Performance enhancements to ::__call() and ::__construct() [wb, 2009-08-07]
- * @changes    1.0.0b32  Changed ::delete() to remove auto-incrementing primary keys after the post::delete() hook [wb, 2009-07-29]
- * @changes    1.0.0b31  Fixed a bug with loading a record by a multi-column primary key, fixed one-to-one relationship API [wb, 2009-07-21]
+ * @changes    1.0.0b32  Changed ::delete() to remove auto-incrementing primary keys after the post::delete() hook [wb,
+ * 2009-07-29]
+ * @changes    1.0.0b31  Fixed a bug with loading a record by a multi-column primary key, fixed one-to-one relationship
+ * API [wb, 2009-07-21]
  * @changes    1.0.0b30  Updated ::reflect() for new ORM::callReflectCallbacks() API [wb, 2009-07-13]
  * @changes    1.0.0b29  Updated to use new ORM::callInspectCallbacks() method [wb, 2009-07-13]
  * @changes    1.0.0b28  Fixed a bug where records would break the identity map at the end of ::store() [wb, 2009-07-09]
- * @changes    1.0.0b27  Changed ::hash() from a protected method to a static public/internal method that requires the class name for non-ActiveRecord values [wb, 2009-07-09]
+ * @changes    1.0.0b27  Changed ::hash() from a protected method to a static public/internal method that requires the
+ * class name for non-ActiveRecord values [wb, 2009-07-09]
  * @changes    1.0.0b26  Added ::checkConditions() from RecordSet [wb, 2009-07-08]
- * @changes    1.0.0b25  Updated ::validate() to use new ORMValidation API, including new message search/replace functionality [wb, 2009-07-01]
+ * @changes    1.0.0b25  Updated ::validate() to use new ORMValidation API, including new message search/replace
+ * functionality [wb, 2009-07-01]
  * @changes    1.0.0b24  Changed ::validate() to remove duplicate validation messages [wb, 2009-06-30]
  * @changes    1.0.0b23  Updated code for new ORMValidation::validateRelated() API [wb, 2009-06-26]
- * @changes    1.0.0b22  Added support for the $formatting parameter to encode methods on char, text and varchar columns [wb, 2009-06-19]
+ * @changes    1.0.0b22  Added support for the $formatting parameter to encode methods on char, text and varchar columns
+ * [wb, 2009-06-19]
  * @changes    1.0.0b21  Performance tweaks and updates for ORM and Related API changes [wb, 2009-06-15]
  * @changes    1.0.0b20  Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
  * @changes    1.0.0b19  Added `list{RelatedRecords}()` methods, updated code for new Related API [wb, 2009-06-02]
  * @changes    1.0.0b18  Changed ::store() to use new Related::store() method [wb, 2009-06-02]
  * @changes    1.0.0b17  Added some missing parameter information to ::reflect() [wb, 2009-06-01]
- * @changes    1.0.0b16  Fixed bugs in ::__clone() and ::replicate() related to recursive relationships [wb-imarc, 2009-05-20]
+ * @changes    1.0.0b16  Fixed bugs in ::__clone() and ::replicate() related to recursive relationships [wb-imarc,
+ * 2009-05-20]
  * @changes    1.0.0b15  Fixed an incorrect variable reference in ::store() [wb, 2009-05-06]
- * @changes    1.0.0b14  ::store() no longer tries to get an auto-incrementing ID from the database if a value was set [wb, 2009-05-02]
- * @changes    1.0.0b13  ::delete(), ::load(), ::populate() and ::store() now return the record to allow for method chaining [wb, 2009-03-23]
- * @changes    1.0.0b12  ::set() now removes commas from integers and floats to prevent validation issues [wb, 2009-03-22]
+ * @changes    1.0.0b14  ::store() no longer tries to get an auto-incrementing ID from the database if a value was set
+ * [wb, 2009-05-02]
+ * @changes    1.0.0b13  ::delete(), ::load(), ::populate() and ::store() now return the record to allow for method
+ * chaining [wb, 2009-03-23]
+ * @changes    1.0.0b12  ::set() now removes commas from integers and floats to prevent validation issues [wb,
+ * 2009-03-22]
  * @changes    1.0.0b11  ::encode() no longer adds commas to floats [wb, 2009-03-22]
- * @changes    1.0.0b10  ::__wakeup() no longer registers the record as the definitive copy in the identity map [wb, 2009-03-22]
- * @changes    1.0.0b9   Changed ::__construct() to populate database default values when a non-existing record is instantiated [wb, 2009-01-12]
- * @changes    1.0.0b8   Fixed ::exists() to properly detect cases when an existing record has one or more NULL values in the primary key [wb, 2009-01-11]
- * @changes    1.0.0b7   Fixed ::__construct() to not trigger the post::__construct() hook when force-configured [wb, 2008-12-30]
- * @changes    1.0.0b6   ::__construct() now accepts an associative array matching any unique key or primary key, fixed the post::__construct() hook to be called once for each record [wb, 2008-12-26]
+ * @changes    1.0.0b10  ::__wakeup() no longer registers the record as the definitive copy in the identity map [wb,
+ * 2009-03-22]
+ * @changes    1.0.0b9   Changed ::__construct() to populate database default values when a non-existing record is
+ * instantiated [wb, 2009-01-12]
+ * @changes    1.0.0b8   Fixed ::exists() to properly detect cases when an existing record has one or more NULL values
+ * in the primary key [wb, 2009-01-11]
+ * @changes    1.0.0b7   Fixed ::__construct() to not trigger the post::__construct() hook when force-configured [wb,
+ * 2008-12-30]
+ * @changes    1.0.0b6   ::__construct() now accepts an associative array matching any unique key or primary key, fixed
+ * the post::__construct() hook to be called once for each record [wb, 2008-12-26]
  * @changes    1.0.0b5   Fixed ::replicate() to use plural record names for related records [wb, 2008-12-12]
  * @changes    1.0.0b4   Added ::replicate() to allow cloning along with related records [wb, 2008-12-12]
  * @changes    1.0.0b3   Changed ::__clone() to clone objects contains in the values and cache arrays [wb, 2008-12-11]
@@ -411,7 +450,14 @@ abstract class ActiveRecord
 
 			case '=':
 				if ($value instanceof ActiveRecord && $result instanceof ActiveRecord) {
-					if (get_class($value) != get_class($result) || !$value->exists() || !$result->exists() || self::hash($value) != self::hash($result)) {
+					if (
+						get_class($value) != get_class($result) || !$value->exists() || !$result->exists() ||
+							self::hash(
+								$value
+							) != self::hash(
+								$result
+							)
+					) {
 						return false;
 					}
 				} elseif (is_array($value) && !in_array($result, $value)) {
@@ -423,7 +469,13 @@ abstract class ActiveRecord
 
 			case '!':
 				if ($value instanceof ActiveRecord && $result instanceof ActiveRecord) {
-					if (get_class($value) == get_class($result) && $value->exists() && $result->exists() && self::hash($value) == self::hash($result)) {
+					if (
+						get_class($value) == get_class($result) && $value->exists() && $result->exists() && self::hash(
+							$value
+						) == self::hash(
+							$result
+						)
+					) {
 						return false;
 					}
 				} elseif (is_array($value) && in_array($result, $value)) {
@@ -575,7 +627,8 @@ abstract class ActiveRecord
 				} else {
 					if (sizeof($methods) != sizeof($values)) {
 						throw new ProgrammerException(
-							'When performing an %1$s comparison there must be an equal number of methods and values, however there are not',
+							'When performing an %1$s comparison there must be an equal number of methods and values, '
+								. 'however there are not',
 							'OR',
 							sizeof($methods),
 							sizeof($values)
@@ -584,7 +637,8 @@ abstract class ActiveRecord
 
 					if (sizeof($methods) != sizeof($operators)) {
 						throw new ProgrammerException(
-							'When performing an %s comparison there must be a comparison operator for each column, however one or more is missing',
+							'When performing an %s comparison there must be a comparison operator for each column, '
+								. 'however one or more is missing',
 							'OR'
 						);
 					}
@@ -661,7 +715,8 @@ abstract class ActiveRecord
 	 * @param string $class    The class the method was called on
 	 * @param string $subject  An underscore_notation subject - either a singular or plural class name
 	 * @param string|NULL $route  The route to the subject
-	 * @return array{0: string, 1: string, 2: bool}  An array with the structure: array(0 => $subject, 1 => $route, 2 => $plural)
+	 * @return array{0: string, 1: string, 2: bool}  An array with the structure: array(0 => $subject, 1 => $route, 2 =>
+	 * $plural)
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
@@ -680,7 +735,12 @@ abstract class ActiveRecord
 		if ($singular_form && ORM::isClassMappedToTable($singular_form)) {
 			$subject = $singular_form;
 			$plural  = true;
-		} elseif (!ORM::isClassMappedToTable($subject) && in_array(Grammar::underscorize($subject), $schema->getTables())) {
+		} elseif (
+			!ORM::isClassMappedToTable($subject) && in_array(
+				Grammar::underscorize($subject),
+				$schema->getTables()
+			)
+		) {
 			$singular_subject = Grammar::singularize($subject);
 			if ($singular_subject !== false) {
 				$subject = $singular_subject;
@@ -730,7 +790,8 @@ abstract class ActiveRecord
 	 *
 	 * @internal
 	 *
-	 * @param  ActiveRecord|array<array-key, mixed>|bool|float|int|string $record   An ActiveRecord object, an array of the records data, an array of primary key data or a scalar primary key value
+	 * @param  ActiveRecord|array<array-key, mixed>|bool|float|int|string $record   An ActiveRecord object, an array of
+	 * the records data, an array of primary key data or a scalar primary key value
 	 * @param  string                         $class    The class name, if $record isn't an ActiveRecord
 	 * @return string|NULL  A hash of the record's primary key value or NULL if the record doesn't exist yet
 	 * @throws ValidationException
@@ -748,7 +809,8 @@ abstract class ActiveRecord
 		if ($class === null) {
 			if (!$record instanceof ActiveRecord) {
 				throw new ProgrammerException(
-					'The class of the record must be provided if the record specified is not an instance of ActiveRecord'
+					'The class of the record must be provided if the record specified is not an instance of '
+						. 'ActiveRecord'
 				);
 			}
 			$class = get_class($record);
@@ -762,7 +824,10 @@ abstract class ActiveRecord
 		$pk_data = array();
 		foreach ($pk_columns as $pk_column) {
 			if ($record instanceof ActiveRecord) {
-				$value = (self::hasOld($record->old_values, $pk_column)) ? self::retrieveOld($record->old_values, $pk_column) : $record->values[$pk_column];
+				$value = (self::hasOld($record->old_values, $pk_column)) ? self::retrieveOld(
+					$record->old_values,
+					$pk_column
+				) : $record->values[$pk_column];
 			} elseif (is_array($record)) {
 				$value = $record[$pk_column];
 			} else {
@@ -775,7 +840,10 @@ abstract class ActiveRecord
 				$value
 			);
 
-			if (is_numeric($pk_data[$pk_column]) || (is_object($pk_data[$pk_column]) && is_callable(array($pk_data[$pk_column], '__toString')))) {
+			if (
+				is_numeric($pk_data[$pk_column]) || (is_object($pk_data[$pk_column]) && is_callable(array
+				($pk_data[$pk_column], '__toString')))
+			) {
 				$pk_data[$pk_column] = (string) $pk_data[$pk_column];
 			}
 		}
@@ -827,8 +895,12 @@ abstract class ActiveRecord
 	 * @param  boolean $return_all   Return the array of all old values for this column instead of just the oldest
 	 * @return mixed  The old value for the column
 	 */
-	public static function retrieveOld(mixed &$old_values, string $column, mixed $default = null, bool $return_all = false): mixed
-	{
+	public static function retrieveOld(
+		mixed &$old_values,
+		string $column,
+		mixed $default = null,
+		bool $return_all = false
+	): mixed {
 		if (!isset($old_values[$column])) {
 			return $default;
 		}
@@ -1019,7 +1091,7 @@ abstract class ActiveRecord
 	/**
 	 * Runs a single query and returns the Result object
 	 *
-	 * @param  Database                $db      The database to run the query on
+	 * @param  Connection                $db      The database to run the query on
 	 * @param  array<array-key, mixed> $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 * @throws AuthorizationException
@@ -1027,7 +1099,7 @@ abstract class ActiveRecord
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 */
-	private static function runQuery(Database $db, array $params): Result
+	private static function runQuery(Connection $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -1138,7 +1210,8 @@ abstract class ActiveRecord
 
 
 	/**
-	 * A data store for caching data related to a record, the structure of this is completely up to the developer using it
+	 * A data store for caching data related to a record, the structure of this is completely up to the developer using
+	 * it
 	 *
 	 * @var array<mixed>
 	 */
@@ -1303,7 +1376,13 @@ abstract class ActiveRecord
 				list ($subject, $route, $plural) = self::determineSubject($class, $subject, $route);
 
 				if ($plural) {
-					Related::associateRecords($class, $this->related_records, $subject, self::recordsValue($records), $route);
+					Related::associateRecords(
+						$class,
+						$this->related_records,
+						$subject,
+						self::recordsValue($records),
+						$route
+					);
 				} else {
 					Related::associateRecord($class, $this->related_records, $subject, $records, $route);
 				}
@@ -1311,19 +1390,37 @@ abstract class ActiveRecord
 
 			case 'build':
 				if (isset($parameters[0])) {
-					return Related::buildRecords($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::buildRecords(
+						$class,
+						$this->values,
+						$this->related_records,
+						$subject,
+						self::routeValue($parameters[0])
+					);
 				}
 				return Related::buildRecords($class, $this->values, $this->related_records, $subject);
 
 			case 'count':
 				if (isset($parameters[0])) {
-					return Related::countRecords($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::countRecords(
+						$class,
+						$this->values,
+						$this->related_records,
+						$subject,
+						self::routeValue($parameters[0])
+					);
 				}
 				return Related::countRecords($class, $this->values, $this->related_records, $subject);
 
 			case 'create':
 				if (isset($parameters[0])) {
-					return Related::createRecord($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::createRecord(
+						$class,
+						$this->values,
+						$this->related_records,
+						$subject,
+						self::routeValue($parameters[0])
+					);
 				}
 				return Related::createRecord($class, $this->values, $this->related_records, $subject);
 
@@ -1343,9 +1440,18 @@ abstract class ActiveRecord
 				}
 
 				if (isset($parameters[1])) {
-					Related::setRecordSet($class, $this->related_records, $subject, self::recordSetValue($parameters[0], $subject), self::routeValue($parameters[1]));
+					Related::setRecordSet(
+						$class,
+						$this->related_records,
+						$subject,
+						self::recordSetValue($parameters[0], $subject),
+						self::routeValue($parameters[1])
+					);
 				} else {
-					Related::setRecordSet($class, $this->related_records, $subject, self::recordSetValue($parameters[0], $subject));
+					Related::setRecordSet($class, $this->related_records, $subject, self::recordSetValue(
+						$parameters[0],
+						$subject
+					));
 				}
 				return null;
 
@@ -1359,7 +1465,13 @@ abstract class ActiveRecord
 
 			case 'list':
 				if (isset($parameters[0])) {
-					return Related::getPrimaryKeys($class, $this->values, $this->related_records, $subject, self::routeValue($parameters[0]));
+					return Related::getPrimaryKeys(
+						$class,
+						$this->values,
+						$this->related_records,
+						$subject,
+						self::routeValue($parameters[0])
+					);
 				}
 				return Related::getPrimaryKeys($class, $this->values, $this->related_records, $subject);
 
@@ -1386,7 +1498,13 @@ abstract class ActiveRecord
 				}
 
 				if (isset($parameters[1])) {
-					Related::setCount($class, $this->related_records, $subject, self::intValue($parameters[0]), self::routeValue($parameters[1]));
+					Related::setCount(
+						$class,
+						$this->related_records,
+						$subject,
+						self::intValue($parameters[0]),
+						self::routeValue($parameters[1])
+					);
 				} else {
 					Related::setCount($class, $this->related_records, $subject, self::intValue($parameters[0]));
 				}
@@ -1471,11 +1589,13 @@ abstract class ActiveRecord
 
 
 	/**
-	 * Creates a new record or loads one from the database - if a primary key or unique key is provided the record will be loaded
+	 * Creates a new record or loads one from the database - if a primary key or unique key is provided the record will
+	 * be loaded
 	 *
 	 * @throws NotFoundException  When the record specified by `$key` can not be found in the database
 	 *
-	 * @param  mixed $key  The primary key or unique key value(s) - single column primary keys will accept a scalar value, all others must be an associative array of `(string) {column} => (mixed) {value}`
+	 * @param  mixed $key  The primary key or unique key value(s) - single column primary keys will accept a scalar
+	 * value, all others must be an associative array of `(string) {column} => (mixed) {value}`
 	 * @return ActiveRecord
 	 * @throws ValidationException
 	 * @throws NoRowsException
@@ -1495,7 +1615,8 @@ abstract class ActiveRecord
 			$table = ORM::tablize($class);
 			if (!$schema->getKeys($table, 'primary')) {
 				throw new ProgrammerException(
-					'The database table %1$s (being modelled by the class %2$s) does not appear to have a primary key defined. %3$s and %4$s will not work properly without a primary key.',
+					'The database table %1$s (being modelled by the class %2$s) does not appear to have a primary key '
+						. 'defined. %3$s and %4$s will not work properly without a primary key.',
 					$table,
 					$class,
 					'ActiveRecord',
@@ -1550,7 +1671,10 @@ abstract class ActiveRecord
 				}
 			}
 
-			$wrong_keys = is_array($key) && (count($key) != count($pk_columns) || array_diff(array_keys($key), $pk_columns));
+			$wrong_keys = is_array($key) && (count($key) != count($pk_columns) || array_diff(
+				array_keys($key),
+				$pk_columns
+			));
 			$wrong_type = !is_array($key) && (sizeof($pk_columns) != 1 || !is_scalar($key));
 
 			// If we didn't find a UNIQUE key and primary key doesn't look right we fail
@@ -1667,9 +1791,9 @@ abstract class ActiveRecord
 
 
 	/**
-	 * Creates the Database::translatedQuery() insert statement params
+	 * Creates the Connection::translatedQuery() insert statement params
 	 *
-	 * @return array<int, mixed>  The parameters for an Database::translatedQuery() SQL insert statement
+	 * @return array<int, mixed>  The parameters for an Connection::translatedQuery() SQL insert statement
 	 * @throws ValidationException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -1689,7 +1813,13 @@ abstract class ActiveRecord
 		$table       = ORM::tablize($class);
 		$column_info = self::getColumnInfo($schema, $table);
 		foreach ($column_info as $column => $info) {
-			if ($schema->getColumnInfo($table, $column, 'auto_increment') && $schema->getColumnInfo($table, $column, 'not_null') && $this->values[$column] === null) {
+			if (
+				$schema->getColumnInfo($table, $column, 'auto_increment') && $schema->getColumnInfo(
+					$table,
+					$column,
+					'not_null'
+				) && $this->values[$column] === null
+			) {
 				continue;
 			}
 
@@ -1706,7 +1836,10 @@ abstract class ActiveRecord
 			$value_placeholders[]  = is_string($placeholder) ? $placeholder : '';
 		}
 
-		$sql    = 'INSERT INTO %r (' . join(', ', $column_placeholders) . ') VALUES (' . join(', ', $value_placeholders) . ')';
+		$sql    = 'INSERT INTO %r (' . join(', ', $column_placeholders) . ') VALUES (' . join(
+			', ',
+			$value_placeholders
+		) . ')';
 		$params = array($sql, $table);
 		$params = array_merge($params, $columns);
 		$params = array_merge($params, $values);
@@ -1716,9 +1849,9 @@ abstract class ActiveRecord
 
 
 	/**
-	 * Creates the Database::translatedQuery() update statement params
+	 * Creates the Connection::translatedQuery() update statement params
 	 *
-	 * @return array<array-key, mixed>  The parameters for an Database::translatedQuery() SQL update statement
+	 * @return array<array-key, mixed>  The parameters for an Connection::translatedQuery() SQL update statement
 	 * @throws ValidationException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -1737,7 +1870,11 @@ abstract class ActiveRecord
 		$params      = array($table);
 
 		foreach ($column_info as $column => $info) {
-			if ($info['auto_increment'] && !ActiveRecord::changed($this->values, $this->old_values, $column) && count($column_info) > 1) {
+			if (
+				$info['auto_increment'] && !ActiveRecord::changed($this->values, $this->old_values, $column) && count(
+					$column_info
+				) > 1
+			) {
 				continue;
 			}
 
@@ -1755,7 +1892,14 @@ abstract class ActiveRecord
 		$sql = 'UPDATE %r SET ' . join(', ', $assignments) . ' WHERE ';
 		array_unshift($params, $sql);
 
-		return ORMDatabase::addPrimaryKeyWhereParams($schema, $params, $table, $table, $this->values, $this->old_values);
+		return ORMDatabase::addPrimaryKeyWhereParams(
+			$schema,
+			$params,
+			$table,
+			$table,
+			$this->values,
+			$this->old_values
+		);
 	}
 
 
@@ -1764,7 +1908,8 @@ abstract class ActiveRecord
 	 *
 	 * This method will start a database transaction if one is not already active.
 	 *
-	 * @param  boolean $force_cascade  When TRUE, this will cause all child objects to be deleted, even if the ON DELETE clause is RESTRICT or NO ACTION
+	 * @param  boolean $force_cascade  When TRUE, this will cause all child objects to be deleted, even if the ON DELETE
+	 * clause is RESTRICT or NO ACTION
 	 * @return ActiveRecord|null  The record object, to allow for method chaining
 	 * @throws ValidationException
 	 * @throws NotFoundException
@@ -1829,7 +1974,11 @@ abstract class ActiveRecord
 			$one_to_many_relationships  = $schema->getRelationships($table, 'one-to-many');
 			$many_to_many_relationships = $schema->getRelationships($table, 'many-to-many');
 
-			$relationships = array_merge($one_to_one_relationships, $one_to_many_relationships, $many_to_many_relationships);
+			$relationships = array_merge(
+				$one_to_one_relationships,
+				$one_to_many_relationships,
+				$many_to_many_relationships
+			);
 			$records_sets_to_delete = array();
 
 			$restriction_messages = array();
@@ -1865,7 +2014,8 @@ abstract class ActiveRecord
 					}
 				}
 
-				// If we are focing the cascade we have to delete child records and join table entries before this record
+				// If we are focing the cascade we have to delete child records and join table entries before this
+				// record
 				if ($force_cascade) {
 					if ($type == 'one-to-one') {
 						$related_record->delete($force_cascade);
@@ -1883,7 +2033,10 @@ abstract class ActiveRecord
 						$join_table  = self::relationshipString($relationship, 'join_table');
 						$join_column = self::relationshipString($relationship, 'join_column');
 						$join_column_placeholder = $schema->getColumnInfo($join_table, $join_column, 'placeholder');
-						$column_get_method       = 'get' . Grammar::camelize(self::relationshipString($relationship, 'column'), true);
+						$column_get_method       = 'get' . Grammar::camelize(self::relationshipString(
+							$relationship,
+							'column'
+						), true);
 
 						$sql = $db->escape(
 							'DELETE FROM %r WHERE %r = ',
@@ -1921,7 +2074,14 @@ abstract class ActiveRecord
 
 			// Delete this record
 			$params = array('DELETE FROM %r WHERE ', $table);
-			$params = ORMDatabase::addPrimaryKeyWhereParams($schema, $params, $table, $table, $this->values, $this->old_values);
+			$params = ORMDatabase::addPrimaryKeyWhereParams(
+				$schema,
+				$params,
+				$table,
+				$table,
+				$this->values,
+				$this->old_values
+			);
 
 			$result = self::runQuery($db, $params);
 
@@ -1979,17 +2139,26 @@ abstract class ActiveRecord
 				if (stripos($message, $search) === false) {
 					$regex       = self::compose('This %s can not be deleted because:', '__');
 					$regex_parts = explode('__', $regex);
-					$regex       = '#(' . preg_quote($regex_parts[0], '#') . ').*?(' . preg_quote($regex_parts[0], '#') . ')#';
+					$regex       = '#(' . preg_quote($regex_parts[0], '#') . ').*?(' . preg_quote($regex_parts[0], '#')
+						. ')#';
 
-					$message = preg_replace($regex, '\1' . strtr(ORM::getRecordName($class), array('\\' => '\\\\', '$' => '\\$')) . '\2', $message);
+					$message = preg_replace(
+						$regex,
+						'\1' . strtr(ORM::getRecordName($class), array('\\' => '\\\\', '$' => '\\$')) . '\2',
+						$message
+					);
 
 					$find          = self::compose("One or more %s references it", '__');
 					$find_parts    = explode('__', $find);
-					$find_regex    = '#' . preg_quote($find_parts[0], '#') . '(.*?)' . preg_quote($find_parts[1], '#') . '#';
+					$find_regex    = '#' . preg_quote($find_parts[0], '#') . '(.*?)' . preg_quote($find_parts[1], '#') .
+						'#';
 
 					$replace       = self::compose("One or more %s indirectly references it", '__');
 					$replace_parts = explode('__', $replace);
-					$replace_regex = strtr($replace_parts[0], array('\\' => '\\\\', '$' => '\\$')) . '\1' . strtr($replace_parts[1], array('\\' => '\\\\', '$' => '\\$'));
+					$replace_regex = strtr($replace_parts[0], array('\\' => '\\\\', '$' => '\\$')) . '\1' . strtr(
+						$replace_parts[1],
+						array('\\' => '\\\\', '$' => '\\$')
+					);
 
 					$message = preg_replace($find_regex, $replace_regex, $regex);
 					throw new ValidationException(is_string($message) ? $message : '');
@@ -2025,10 +2194,13 @@ abstract class ActiveRecord
 	 *
 	 * Below are the transformations performed:
 	 *
-	 *  - **varchar, char, text**: will run through HTML::encode(), if `TRUE` is passed the text will be run through HTML::convertNewLinks() and HTML::makeLinks()
+	 *  - **varchar, char, text**: will run through HTML::encode(), if `TRUE` is passed the text will be run through
+	 * HTML::convertNewLinks() and HTML::makeLinks()
 	 *  - **float**: takes 1 parameter to specify the number of decimal places
-	 *  - **date, time, timestamp**: `format()` will be called on the Date/Time/Timestamp object with the 1 parameter specified
-	 *  - **objects**: the object will be converted to a string by `__toString()` or a `(string)` cast and then will be run through HTML::encode()
+	 *  - **date, time, timestamp**: `format()` will be called on the Date/Time/Timestamp object with the 1 parameter
+	 * specified
+	 *  - **objects**: the object will be converted to a string by `__toString()` or a `(string)` cast and then will be
+	 * run through HTML::encode()
 	 *  - **all other data types**: the value will be run through HTML::encode()
 	 *
 	 * @param  string $column      The name of the column to retrieve
@@ -2085,7 +2257,12 @@ abstract class ActiveRecord
 		$value = $this->$method_name();
 
 		// Date/time objects
-		if (in_array($column_type, array('date', 'time', 'timestamp')) && ($value instanceof Date || $value instanceof Time || $value instanceof Timestamp)) {
+		if (
+			in_array(
+				$column_type,
+				array('date', 'time', 'timestamp')
+			) && ($value instanceof Date || $value instanceof Time || $value instanceof Timestamp)
+		) {
 			if ($formatting === null) {
 				throw new ProgrammerException(
 					'The column specified, %s, requires one formatting parameter, a valid date() formatting string',
@@ -2121,7 +2298,8 @@ abstract class ActiveRecord
 			return HTML::makeLinks(HTML::convertNewlines(HTML::encode(self::toString($value))));
 		}
 
-		// Anything that has gotten to here is a string value or is not the proper data type for the column that contains it
+		// Anything that has gotten to here is a string value or is not the proper data type for the column that
+		// contains it
 		return HTML::encode(self::toString($value));
 	}
 
@@ -2151,7 +2329,12 @@ abstract class ActiveRecord
 
 		foreach ($pk_columns as $pk_column) {
 			$has_old = self::hasOld($this->old_values, $pk_column);
-			if (($has_old && self::retrieveOld($this->old_values, $pk_column) !== null) || (!$has_old && $this->values[$pk_column] !== null)) {
+			if (
+				($has_old && self::retrieveOld(
+					$this->old_values,
+					$pk_column
+				) !== null) || (!$has_old && $this->values[$pk_column] !== null)
+			) {
 				$exists = true;
 			}
 		}
@@ -2320,7 +2503,14 @@ abstract class ActiveRecord
 		try {
 			$table = ORM::tablize($class);
 			$params = array('SELECT * FROM %r WHERE ', $table);
-			$params = ORMDatabase::addPrimaryKeyWhereParams($schema, $params, $table, $table, $this->values, $this->old_values);
+			$params = ORMDatabase::addPrimaryKeyWhereParams(
+				$schema,
+				$params,
+				$table,
+				$table,
+				$this->values,
+				$this->old_values
+			);
 
 			$result = self::runQuery($db, $params);
 			$result->tossIfNoRows();
@@ -2372,7 +2562,10 @@ abstract class ActiveRecord
 			$column_info                = self::getColumnInfo($schema, $table);
 
 			foreach ($column_info as $column => $info) {
-				if (in_array($info['type'], array('blob', 'boolean', 'date', 'time', 'timestamp')) && is_string($info['type'])) {
+				if (
+					in_array($info['type'], array('blob', 'boolean', 'date', 'time', 'timestamp')) &&
+					is_string($info['type'])
+				) {
 					self::$unescape_map[$class][$column] = $info['type'];
 				}
 			}
@@ -2552,12 +2745,16 @@ abstract class ActiveRecord
 	 *
 	 * Below are the transformations performed:
 	 *
-	 *  - **varchar, char, text**: will run through HTML::prepare(), if `TRUE` is passed the text will be run through HTML::convertNewLinks() and HTML::makeLinks()
+	 *  - **varchar, char, text**: will run through HTML::prepare(), if `TRUE` is passed the text will be run through
+	 * HTML::convertNewLinks() and HTML::makeLinks()
 	 *  - **boolean**: will return `'Yes'` or `'No'`
 	 *  - **integer**: will add thousands/millions/etc. separators
-	 *  - **float**: will add thousands/millions/etc. separators and takes 1 parameter to specify the number of decimal places
-	 *  - **date, time, timestamp**: `format()` will be called on the Date/Time/Timestamp object with the 1 parameter specified
-	 *  - **objects**: the object will be converted to a string by `__toString()` or a `(string)` cast and then will be run through HTML::prepare()
+	 *  - **float**: will add thousands/millions/etc. separators and takes 1 parameter to specify the number of decimal
+	 * places
+	 *  - **date, time, timestamp**: `format()` will be called on the Date/Time/Timestamp object with the 1 parameter
+	 * specified
+	 *  - **objects**: the object will be converted to a string by `__toString()` or a `(string)` cast and then will be
+	 * run through HTML::prepare()
 	 *
 	 * @param  string $column      The name of the column to retrieve
 	 * @param  mixed  $formatting  The formatting parameter, if applicable
@@ -2615,7 +2812,12 @@ abstract class ActiveRecord
 		$value = $this->$method_name();
 
 		// Date/time objects
-		if (in_array($column_type, array('date', 'time', 'timestamp')) && ($value instanceof Date || $value instanceof Time || $value instanceof Timestamp)) {
+		if (
+			in_array(
+				$column_type,
+				array('date', 'time', 'timestamp')
+			) && ($value instanceof Date || $value instanceof Time || $value instanceof Timestamp)
+		) {
 			if ($formatting === null) {
 				throw new ProgrammerException(
 					'The column specified, %s, requires one formatting parameter, a valid date() formatting string',
@@ -2762,7 +2964,9 @@ abstract class ActiveRecord
 					$signature .= " * @param  string \$date_formatting_string  A date() compatible formatting string\n";
 				}
 				if (in_array($column_info['type'], array('float'))) {
-					$signature .= " * @param  integer \$decimal_places  The number of decimal places to include - if not specified will default to the precision of the column or the current value\n";
+					$signature .=
+						" * @param  integer \$decimal_places  The number of decimal places to include - if not "
+							. "specified will default to the precision of the column or the current value\n";
 				}
 
 				$signature .= " * @return string  The HTML form-ready value\n";
@@ -2792,10 +2996,14 @@ abstract class ActiveRecord
 					$signature .= " * @param  string \$date_formatting_string  A date() compatible formatting string\n";
 				}
 				if (in_array($column_info['type'], array('float'))) {
-					$signature .= " * @param  integer \$decimal_places  The number of decimal places to include - if not specified will default to the precision of the column or the current value\n";
+					$signature .=
+						" * @param  integer \$decimal_places  The number of decimal places to include - if not "
+							. "specified will default to the precision of the column or the current value\n";
 				}
 				if (in_array($column_info['type'], array('varchar', 'char', 'text'))) {
-					$signature .= " * @param  boolean \$create_links_and_line_breaks  Will cause links to be automatically converted into [a] tags and line breaks into [br] tags \n";
+					$signature .=
+						" * @param  boolean \$create_links_and_line_breaks  Will cause links to be automatically "
+							. "converted into [a] tags and line breaks into [br] tags \n";
 				}
 
 				$signature .= " * @return string  The HTML-ready value\n";
@@ -2836,7 +3044,10 @@ abstract class ActiveRecord
 					$elements[] = 'min_value';
 					$elements[] = 'max_value';
 				}
-				$signature .= " * @param  string \$element  The element to return. Must be one of: '" . join("', '", $elements) . "'.\n";
+				$signature .= " * @param  string \$element  The element to return. Must be one of: '" . join(
+					"', '",
+					$elements
+				) . "'.\n";
 				$signature .= " * @return mixed  The metadata array or a single element\n";
 				$signature .= " */\n";
 			}
@@ -2944,13 +3155,16 @@ abstract class ActiveRecord
 
 
 	/**
-	 * Generates a clone of the current record, removing any auto incremented primary key value and allowing for replicating related records
+	 * Generates a clone of the current record, removing any auto incremented primary key value and allowing for
+	 * replicating related records
 	 *
 	 * This method will accept three different sets of parameters:
 	 *
 	 *  - No parameters: this object will be cloned
-	 *  - A single `TRUE` value: this object plus all many-to-many associations and all child records (recursively) will be cloned
-	 *  - Any number of plural related record class names: the many-to-many associations or child records that correspond to the classes specified will be cloned
+	 *  - A single `TRUE` value: this object plus all many-to-many associations and all child records (recursively) will
+	 * be cloned
+	 *  - Any number of plural related record class names: the many-to-many associations or child records that
+	 * correspond to the classes specified will be cloned
 	 *
 	 * The class names specified can be a simple class name if there is only a
 	 * single route between the two corresponding database tables. If there is
@@ -3021,10 +3235,20 @@ abstract class ActiveRecord
 			$recursive  = true;
 
 			foreach ($many_to_many_relationships as $relationship) {
-				$parameters[] = Grammar::pluralize(ORM::classize(self::relationshipString($relationship, 'related_table'))) . '{' . self::relationshipString($relationship, 'join_table') . '}';
+				$parameters[] = Grammar::pluralize(
+					ORM::classize(self::relationshipString($relationship, 'related_table'))
+				) . '{' . self::relationshipString(
+					$relationship,
+					'join_table'
+				) . '}';
 			}
 			foreach ($one_to_many_relationships as $relationship) {
-				$parameters[] = Grammar::pluralize(ORM::classize(self::relationshipString($relationship, 'related_table'))) . '{' . self::relationshipString($relationship, 'related_column') . '}';
+				$parameters[] = Grammar::pluralize(
+					ORM::classize(self::relationshipString($relationship, 'related_table'))
+				) . '{' . self::relationshipString(
+					$relationship,
+					'related_column'
+				) . '}';
 			}
 		}
 
@@ -3081,7 +3305,8 @@ abstract class ActiveRecord
 
 			if (!$many_to_many && !$one_to_many) {
 				throw new ProgrammerException(
-					'The related class specified, %1$s, does not appear to be in a many-to-many or one-to-many relationship with %$2s',
+					'The related class specified, %1$s, does not appear to be in a many-to-many or one-to-many '
+						. 'relationship with %$2s',
 					$parameter,
 					get_class($this)
 				);
@@ -3209,7 +3434,8 @@ abstract class ActiveRecord
 	 *
 	 * @throws ValidationException  When ::validate() throws an exception
 	 *
-	 * @param  boolean $force_cascade  When storing related records, this will force deleting child records even if they have their own children in a relationship with an RESTRICT or NO ACTION for the ON DELETE clause
+	 * @param  boolean $force_cascade  When storing related records, this will force deleting child records even if they
+	 * have their own children in a relationship with an RESTRICT or NO ACTION for the ON DELETE clause
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 * @throws NotFoundException
 	 * @throws NoRowsException
@@ -3435,10 +3661,13 @@ abstract class ActiveRecord
 	/**
 	 * Validates the values of the record against the database and any additional validation rules
 	 *
-	 * @throws ValidationException  When the record, or one of the associated records, violates one of the validation rules for the class or can not be properly stored in the database
+	 * @throws ValidationException  When the record, or one of the associated records, violates one of the validation
+	 * rules for the class or can not be properly stored in the database
 	 *
-	 * @param  boolean $return_messages      If an array of validation messages should be returned instead of an exception being thrown
-	 * @param  boolean $remove_column_names  If column names should be removed from the returned messages, leaving just the message itself
+	 * @param  boolean $return_messages      If an array of validation messages should be returned instead of an
+	 * exception being thrown
+	 * @param  boolean $remove_column_names  If column names should be removed from the returned messages, leaving just
+	 * the message itself
 	 * @return array<mixed>|void  If $return_messages is TRUE, an array of validation messages will be returned
 	 * @throws NotFoundException
 	 * @throws NoRowsException
@@ -3476,7 +3705,11 @@ abstract class ActiveRecord
 		// Validate related records
 		$related_validation_messages = ORMValidation::validateRelated($this, $this->values, $this->related_records);
 
-		$validation_messages = array_merge($validation_messages, $local_validation_messages, $related_validation_messages);
+		$validation_messages = array_merge(
+			$validation_messages,
+			$local_validation_messages,
+			$related_validation_messages
+		);
 
 		ORM::callHookCallbacks(
 			$this,

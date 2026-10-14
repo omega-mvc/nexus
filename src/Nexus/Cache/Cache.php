@@ -10,14 +10,17 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Cache
  *
  * @version    1.0.0b6
- * @changes    1.0.0b6  Fixed a bug with ::add() setting a value when it shouldn't if no ttl was given for the file backend [wb, 2012-01-12]
+ * @changes    1.0.0b6  Fixed a bug with ::add() setting a value when it shouldn't if no ttl was given for the file
+ * backend [wb, 2012-01-12]
  * @changes    1.0.0b5  Added missing documentation for using Redis as a backend [wb, 2011-08-25]
- * @changes    1.0.0b4  Added the `database`, `directory` and `redis` types, added support for the memcached extention and support for custom serialization callbacks [wb, 2011-06-21]
- * @changes    1.0.0b3  Added `0` to the memcache delete method call since otherwise the method triggers notices on some installs [wb, 2011-05-10]
- * @changes    1.0.0b2  Fixed API calls to the memcache extension to pass the TTL as the correct parameter [wb, 2011-02-01]
+ * @changes    1.0.0b4  Added the `database`, `directory` and `redis` types, added support for the memcached extention
+ * and support for custom serialization callbacks [wb, 2011-06-21]
+ * @changes    1.0.0b3  Added `0` to the memcache delete method call since otherwise the method triggers notices on some
+ * installs [wb, 2011-05-10]
+ * @changes    1.0.0b2  Fixed API calls to the memcache extension to pass the TTL as the correct parameter [wb,
+ * 2011-02-01]
  * @changes    1.0.0b   The initial implementation [wb, 2009-04-28]
  */
 /**
@@ -32,7 +35,8 @@ class Cache
 	 * {{{
 	 * array(
 	 *     'table'        => (string) {the database table to use},
-	 *     'key_column'   => (string) {the varchar column to store the key in, should be able to handle at least 250 characters},
+	 *     'key_column'   => (string) {the varchar column to store the key in, should be able to handle at least 250
+	 * characters},
 	 *     'value_column' => (string) {the text/varchar column to store the value in},
 	 *     'ttl_column'   => (string) {the integer column to store the expiration time in}
 	 * )
@@ -63,12 +67,12 @@ class Cache
 	 * Either the:
 	 *  - array structure for file cache
 	 *  - Memcached object for memcached
-	 *  - Database object for database
+	 *  - Connection object for database
 	 *  - Redis object for redis
 	 *
 	 * Not used for apcu or directory
 	 *
-	 * @var FileCacheStore|Database|Memcached|Redis|null
+	 * @var FileCacheStore|Connection|Memcached|Redis|null
 	 */
 	protected mixed $data_store = null;
 
@@ -104,8 +108,10 @@ class Cache
 	 *
 	 *  - `table`: The database table to use for caching
 	 *  - `key_column`: The column to store the cache key in - must support at least 250 character strings
-	 *  - `value_column`: The column to store the serialized value in - this should probably be a `TEXT` column to support large values, or `BLOB` if binary serialization is used
-	 *  - `value_data_type`: If a `BLOB` column is being used for the `value_column`, this should be set to 'blob', otherwise `string`
+	 *  - `value_column`: The column to store the serialized value in - this should probably be a `TEXT` column to
+	 * support large values, or `BLOB` if binary serialization is used
+	 *  - `value_data_type`: If a `BLOB` column is being used for the `value_column`, this should be set to 'blob',
+	 * otherwise `string`
 	 *  - `ttl_column`: The column to store the expiration timestamp of the cached entry - this should be an integer
 	 *
 	 * The following `$config` for the following items can be set for all backends:
@@ -125,8 +131,10 @@ class Cache
 	 * all values to a string when storing, instead of serializing them. If a
 	 * `__toString()` method is provided for objects, it will be called.
 	 *
-	 * @param  string $type        The type of caching to use: `'apcu'`, `'database'`, `'directory'`, `'file'`, `'memcached'`, `'redis'`
-	 * @param  mixed  $data_store  The path for a `file` or `directory` cache, a `Memcached` object for a `memcached` cache, an Database object for a `database` cache or a `Redis` object for a `redis` cache - not used for `apcu`
+	 * @param  string $type        The type of caching to use: `'apcu'`, `'database'`, `'directory'`, `'file'`,
+	 * `'memcached'`, `'redis'`
+	 * @param  mixed  $data_store  The path for a `file` or `directory` cache, a `Memcached` object for a `memcached`
+	 * cache, an Connection object for a `database` cache or a `Redis` object for a `redis` cache - not used for `apcu`
 	 * @param  array<string, mixed>  $config      Configuration options - see method description for details
 	 * @return Cache
 	 */
@@ -146,10 +154,10 @@ class Cache
 				if (!isset($this->config['value_data_type'])) {
 					$this->config['value_data_type'] = 'string';
 				}
-				if (!$data_store instanceof Database) {
+				if (!$data_store instanceof Connection) {
 					throw new ProgrammerException(
 						'The data store provided is not a valid %s object',
-						'Database'
+						'Connection'
 					);
 				}
 				$this->data_store = $data_store;
@@ -335,7 +343,10 @@ class Cache
 
 			case 'file':
 				$store = $this->getFileStore();
-				if (isset($store[$key]) && (($store[$key]['expire'] && $store[$key]['expire'] >= time()) || !$store[$key]['expire'])) {
+				if (
+					isset($store[$key]) && (($store[$key]['expire'] && $store[$key]['expire'] >= time()) ||
+					!$store[$key]['expire'])
+				) {
 					return false;
 				}
 				$store[$key] = array(
@@ -604,8 +615,8 @@ class Cache
 			case 'apcu':
 				$value = apcu_fetch($key);
 				if ($value === false) {
-                    return $default;
-                }
+					return $default;
+				}
 				break;
 
 			case 'database':
@@ -620,8 +631,8 @@ class Cache
 					time()
 				);
 				if (!$res->countReturnedRows()) {
-                    return $default;
-                }
+					return $default;
+				}
 				$value = $res->fetchScalar();
 				break;
 
@@ -674,15 +685,15 @@ class Cache
 			case 'memcached':
 				$value = $this->getMemcached()->get($key);
 				if ($value === false) {
-                    return $default;
-                }
+					return $default;
+				}
 				break;
 
 			case 'redis':
 				$value = $this->getRedis()->get($key);
 				if ($value === false) {
-                    return $default;
-                }
+					return $default;
+				}
 				break;
 		}
 
@@ -871,15 +882,15 @@ class Cache
 
 
 	/**
-	 * Returns the database data store, verifying it is a Database object
+	 * Returns the database data store, verifying it is a Connection object
 	 *
-	 * @return Database  The database data store
+	 * @return Connection  The database data store
 	 */
-	private function getDatabase(): Database
+	private function getDatabase(): Connection
 	{
-		if (!$this->data_store instanceof Database) {
+		if (!$this->data_store instanceof Connection) {
 			throw new ProgrammerException(
-				'The data store for the database cache is not a Database object'
+				'The data store for the database cache is not a Connection object'
 			);
 		}
 		return $this->data_store;

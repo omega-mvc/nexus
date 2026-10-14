@@ -3,19 +3,22 @@
 declare(strict_types=1);
 
 /**
- * Provides miscellaneous functionality for [http://en.wikipedia.org/wiki/Create,_read,_update_and_delete CRUD-like] pages
+ * Provides miscellaneous functionality for [http://en.wikipedia.org/wiki/Create,_read,_update_and_delete CRUD-like]
+ * pages
  *
  * @copyright  Copyright (c) 2007-2009 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/CRUD
  *
  * @version    1.0.0b5
  * @changes    1.0.0b5  Updated class to use new Session API [wb, 2009-10-23]
  * @changes    1.0.0b4  Updated class to use new Session API [wb, 2009-05-08]
- * @changes    1.0.0b3  Backwards Compatiblity Break - moved ::printOption() to HTML::printOption(), ::showChecked() to HTML::showChecked(), ::removeListItems() and ::reorderListItems() to FlourishException::splitMessage(), ::generateRequestToken() to Request::generateCSRFToken(), and ::validateRequestToken() to Request::validateCSRFToken() [wb, 2009-05-08]
+ * @changes    1.0.0b3  Backwards Compatiblity Break - moved ::printOption() to HTML::printOption(), ::showChecked() to
+ * HTML::showChecked(), ::removeListItems() and ::reorderListItems() to FlourishException::splitMessage(),
+ * ::generateRequestToken() to Request::generateCSRFToken(), and ::validateRequestToken() to
+ * Request::validateCSRFToken() [wb, 2009-05-08]
  * @changes    1.0.0b2  Fixed a bug preventing loaded search values from being included in redirects [wb, 2009-03-18]
  * @changes    1.0.0b   The initial implementation [wb, 2007-06-14]
  */
@@ -248,7 +251,10 @@ class CRUD
 			self::$sort_direction           = $previous_sort_direction;
 			self::$loaded_values['dir']     = $previous_sort_direction;
 		} else {
-			$valid_sort_direction = Request::getValid('dir', array($default_direction, ($default_direction == 'asc') ? 'desc' : 'asc'));
+			$valid_sort_direction = Request::getValid(
+				'dir',
+				array($default_direction, ($default_direction == 'asc') ? 'desc' : 'asc')
+			);
 			self::$sort_direction = is_string($valid_sort_direction) ? $valid_sort_direction : null;
 			self::setPreviousSortDirection(self::$sort_direction);
 		}
@@ -308,7 +314,8 @@ class CRUD
 
 
 	/**
-	 * Checks to see if any values (search or sort) were loaded from the session, and if so redirects the user to the current URL with those values added
+	 * Checks to see if any values (search or sort) were loaded from the session, and if so redirects the user to the
+	 * current URL with those values added
 	 *
 	 * @return void
 	 */
@@ -418,8 +425,8 @@ class CRUD
 	 * @return CRUD
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

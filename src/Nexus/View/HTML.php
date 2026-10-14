@@ -5,8 +5,7 @@ declare(strict_types=1);
 /**
  * Provides HTML-related methods
  *
- * This class is implemented to use the UTF-8 character encoding. Please see
- * http://flourishlib.com/docs/UTF-8 for more information.
+ * This class is implemented to use the UTF-8 character encoding.
  *
  * @copyright  Copyright (c) 2007-2010 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
@@ -14,12 +13,12 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/HTML
  *
  * @version    1.0.0b9
  * @changes    1.0.0b9  Added force div argument to HTML::show() [jt, 2013-04-09]
  * @changes    1.0.0b8  Changed ::encode() and ::prepare() to handle arrays of strings [wb, 2010-05-19]
- * @changes    1.0.0b7  Fixed a bug where some conditional comments were causing the regex in ::prepare() to break [wb, 2009-11-04]
+ * @changes    1.0.0b7  Fixed a bug where some conditional comments were causing the regex in ::prepare() to break [wb,
+ * 2009-11-04]
  * @changes    1.0.0b6  Updated ::showChecked() to require strict equality if one parameter is `NULL` [wb, 2009-06-02]
  * @changes    1.0.0b5  Fixed ::prepare() so it does not encode multi-line HTML comments [wb, 2009-05-09]
  * @changes    1.0.0b4  Added methods ::printOption() and ::showChecked() that were in CRUD [wb, 2009-05-08]
@@ -32,12 +31,16 @@ class HTML
 	/**
 	 * Inline-level tags allowed when checking for block-level HTML
 	 */
-	private const string INLINE_TAGS = '<a><abbr><acronym><b><big><br><button><cite><code><del><dfn><em><font><i><img><input><ins><kbd><label><q><s><samp><select><small><span><strike><strong><sub><sup><textarea><tt><u><var>';
+	private const string INLINE_TAGS =
+		'<a><abbr><acronym><b><big><br><button><cite><code><del><dfn><em><font><i><img><input><ins><kbd><label><q><s><s'
+			. 'amp><select><small><span><strike><strong><sub><sup><textarea><tt><u><var>';
 
 	/**
 	 * Inline-level tags allowed when converting newlines (`<br>` intentionally excluded)
 	 */
-	private const string INLINE_TAGS_NO_BR = '<a><abbr><acronym><b><big><button><cite><code><del><dfn><em><font><i><img><input><ins><kbd><label><q><s><samp><select><small><span><strike><strong><sub><sup><textarea><tt><u><var>';
+	private const string INLINE_TAGS_NO_BR =
+		'<a><abbr><acronym><b><big><button><cite><code><del><dfn><em><font><i><img><input><ins><kbd><label><q><s><samp>'
+			. '<select><small><span><strike><strong><sub><sup><textarea><tt><u><var>';
 
 	/**
 	 * Checks a string of HTML for block level elements
@@ -118,7 +121,9 @@ class HTML
 	public static function makeLinks(string $content, int $link_text_length = 0): string
 	{
 		// Find all a tags with contents, individual HTML tags and HTML comments
-		$reg_exp = "/<\s*a(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*>.*?<\s*\/\s*a\s*>|<\s*\/?\s*[\w:]+(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*\/?\s*>|<\!--.*?-->/s";
+		$reg_exp =
+			"/<\s*a(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*>.*?<\s*\/\s*a\s*>|<\s*\/?\s*[\w:]+("
+				. "?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*\/?\s*>|<\!--.*?-->/s";
 		preg_match_all($reg_exp, $content, $html_matches, PREG_SET_ORDER);
 
 		// Find all text
@@ -132,9 +137,13 @@ class HTML
 		foreach ($text_matches as $key => $text) {
 			preg_match_all(
 				'~
-				  \b([a-z]{3,}://[a-z0-9%\$\-_.+!*;/?:@=&\'\#,]+[a-z0-9\$\-_+!*;/?:@=&\'\#,])\b                           | # Fully URLs
-				  \b(www\.(?:[a-z0-9\-]+\.)+[a-z]{2,}(?:/[a-z0-9%\$\-_.+!*;/?:@=&\'\#,]+[a-z0-9\$\-_+!*;/?:@=&\'\#,])?)\b | # www. domains
-				  \b([a-z0-9\\.+\'_\\-]+@(?:[a-z0-9\\-]+\.)+[a-z]{2,})\b                                                    # email addresses
+				  \b([a-z]{3,}://[a-z0-9%\$\-_.+!*;/?:@=&\'\#,]+[a-z0-9\$\-_+!*;/?:@=&\'\#,])\b |
+				  # Fully URLs
+				  \b(www\.(?:[a-z0-9\-]+\.)+[a-z]{2,}(?:
+				  	/[a-z0-9%\$\-_.+!*;/?:@=&\'\#,]+[a-z0-9\$\-_+!*;/?:@=&\'\#,])?)\b |
+				  # www. domains
+				  \b([a-z0-9\\.+\'_\\-]+@(?:[a-z0-9\\-]+\.)+[a-z]{2,})\b
+				  # email addresses
 				 ~ix',
 				$text,
 				$matches,
@@ -161,7 +170,11 @@ class HTML
 				}
 
 				$replacement  = '<a href="' . $prefix . $match[0] . '">';
-				$replacement .= ($link_text_length && strlen($match[0]) > $link_text_length) ? substr($match[0], 0, $link_text_length) . "…" : $match[0];
+				$replacement .= ($link_text_length && strlen($match[0]) > $link_text_length) ? substr(
+					$match[0],
+					0,
+					$link_text_length
+				) . "…" : $match[0];
 				$replacement .= '</a>';
 
 				$text = substr_replace(
@@ -217,7 +230,9 @@ class HTML
 		}
 
 		// Find all html tags, entities and comments
-		$reg_exp = "/<\s*\/?\s*[\w:]+(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*\/?\s*>|&(?:#\d+|\w+);|<\!--.*?-->/s";
+		$reg_exp =
+			"/<\s*\/?\s*[\w:]+(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*\/?\s*>|&(?:#\d+|\w+);|<"
+				. "\!--.*?-->/s";
 		preg_match_all($reg_exp, $content, $html_matches, PREG_SET_ORDER);
 
 		// Find all text
@@ -242,11 +257,13 @@ class HTML
 
 
 	/**
-	 * Prints an `option` tag with the provided value, using the selected value to determine if the option should be marked as selected
+	 * Prints an `option` tag with the provided value, using the selected value to determine if the option should be
+	 * marked as selected
 	 *
 	 * @param  string $text            The text to display in the option tag
 	 * @param  string $value           The value for the option
-	 * @param  string|array<array-key, string>|null $selected_value  If the value is the same as this, the option will be marked as selected
+	 * @param  string|array<array-key, string>|null $selected_value  If the value is the same as this, the option will
+	 * be marked as selected
 	 * @return void
 	 */
 	public static function printOption(string $text, string $value, string|array|null $selected_value = null): void
@@ -276,7 +293,8 @@ class HTML
 
 
 	/**
-	 * Prints a `p` (or `div` if the content has block-level HTML) tag with the contents and the class specified - will not print if no content
+	 * Prints a `p` (or `div` if the content has block-level HTML) tag with the contents and the class specified - will
+	 * not print if no content
 	 *
 	 * @param  string $content    The content to display
 	 * @param  string $css_class  The CSS class to apply
@@ -301,7 +319,8 @@ class HTML
 
 
 	/**
-	 * Prints a `checked="checked"` HTML input attribute if `$value` equals `$checked_value`, or if `$value` is in `$checked_value`
+	 * Prints a `checked="checked"` HTML input attribute if `$value` equals `$checked_value`, or if `$value` is in
+	 * `$checked_value`
 	 *
 	 * Please note that if either `$value` or `$checked_value` is `NULL`, a
 	 * strict comparison will be performed, whereas normally a non-strict
@@ -339,8 +358,8 @@ class HTML
 	 * @return HTML
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

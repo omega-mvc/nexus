@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ValidationException
  *
  * @version    1.0.0b4
  * @changes    1.0.0b4  Added support for nested error arrays [wb-imarc, 2010-10-03]

@@ -10,21 +10,26 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Timestamp
  *
  * @version    1.0.0b13
  * @changes    1.0.0b13  Fixed a method signature [wb, 2011-08-24]
- * @changes    1.0.0b12  Fixed a bug with the constructor not properly handling unix timestamps that are negative integers [wb, 2011-06-02]
+ * @changes    1.0.0b12  Fixed a bug with the constructor not properly handling unix timestamps that are negative
+ * integers [wb, 2011-06-02]
  * @changes    1.0.0b11  Changed the `$timestamp` and `$timezone` attributes to be protected [wb, 2011-03-20]
- * @changes    1.0.0b10  Fixed a bug in ::__construct() with specifying a timezone other than the default for a relative time string such as "now" or "+2 hours" [wb, 2010-07-05]
+ * @changes    1.0.0b10  Fixed a bug in ::__construct() with specifying a timezone other than the default for a relative
+ * time string such as "now" or "+2 hours" [wb, 2010-07-05]
  * @changes    1.0.0b9   Added the `$simple` parameter to ::getFuzzyDifference() [wb, 2010-03-15]
  * @changes    1.0.0b8   Fixed a bug with ::fixISOWeek() not properly parsing some ISO week dates [wb, 2009-10-06]
  * @changes    1.0.0b7   Fixed a translation bug with ::getFuzzyDifference() [wb, 2009-07-11]
- * @changes    1.0.0b6   Added ::registerUnformatCallback() and ::callUnformatCallback() to allow for localization of date/time parsing [wb, 2009-06-01]
- * @changes    1.0.0b5   Backwards compatibility break - Removed ::getSecondsDifference() and ::getSeconds(), added ::eq(), ::gt(), ::gte(), ::lt(), ::lte() [wb, 2009-03-05]
+ * @changes    1.0.0b6   Added ::registerUnformatCallback() and ::callUnformatCallback() to allow for localization of
+ * date/time parsing [wb, 2009-06-01]
+ * @changes    1.0.0b5   Backwards compatibility break - Removed ::getSecondsDifference() and ::getSeconds(), added
+ * ::eq(), ::gt(), ::gte(), ::lt(), ::lte() [wb, 2009-03-05]
  * @changes    1.0.0b4   Updated for new Core API [wb, 2009-02-16]
- * @changes    1.0.0b3   Removed a useless double check of the strtotime() return value in ::__construct() [wb, 2009-01-21]
- * @changes    1.0.0b2   Added support for CURRENT_TIMESTAMP, CURRENT_DATE and CURRENT_TIME SQL keywords [wb, 2009-01-11]
+ * @changes    1.0.0b3   Removed a useless double check of the strtotime() return value in ::__construct() [wb,
+ * 2009-01-21]
+ * @changes    1.0.0b2   Added support for CURRENT_TIMESTAMP, CURRENT_DATE and CURRENT_TIME SQL keywords [wb,
+ * 2009-01-11]
  * @changes    1.0.0b    The initial implementation [wb, 2008-02-12]
  */
 class Timestamp
@@ -601,14 +606,20 @@ class Timestamp
 
 			$first_of_year  = strtotime($year . '-01-01');
 			if ($first_of_year === false) {
-				throw new ProgrammerException('The ISO week year specified, %s, could not be converted to a timestamp', $year);
+				throw new ProgrammerException(
+					'The ISO week year specified, %s, could not be converted to a timestamp',
+					$year
+				);
 			}
 			$first_thursday = strtotime('thursday', $first_of_year);
 			$iso_year_start = strtotime('last monday', $first_thursday);
 
 			$next_date = strtotime('+' . ($week - 1) . ' weeks +' . ($day - 1) . ' days', $iso_year_start);
 			if ($next_date === false) {
-				throw new ProgrammerException('The ISO week date specified, %s, could not be converted to a timestamp', $date);
+				throw new ProgrammerException(
+					'The ISO week date specified, %s, could not be converted to a timestamp',
+					$date
+				);
 			}
 
 			$ymd = date('Y-m-d', $next_date);
@@ -620,7 +631,8 @@ class Timestamp
 
 
 	/**
-	 * Provides a consistent interface to getting the default timezone. Wraps the [http://php.net/date_default_timezone_get date_default_timezone_get()] function.
+	 * Provides a consistent interface to getting the default timezone. Wraps the
+	 * [http://php.net/date_default_timezone_get date_default_timezone_get()] function.
 	 *
 	 * @return string  The default timezone used for all date/time calculations
 	 */
@@ -645,9 +657,11 @@ class Timestamp
 
 
 	/**
-	 * Allows setting a callback to translate or modify any return values from ::format(), Date::format() and Time::format()
+	 * Allows setting a callback to translate or modify any return values from ::format(), Date::format() and
+	 * Time::format()
 	 *
-	 * @param  callable(mixed...):mixed $callback  The callback to pass all formatted dates/times/timestamps through. Should accept a single string and return a single string.
+	 * @param  callable(mixed...):mixed $callback  The callback to pass all formatted dates/times/timestamps through.
+	 * Should accept a single string and return a single string.
 	 * @return void
 	 */
 	public static function registerFormatCallback(callable $callback): void
@@ -657,9 +671,11 @@ class Timestamp
 
 
 	/**
-	 * Allows setting a callback to parse any date strings passed into ::__construct(), Date::__construct() and Time::__construct()
+	 * Allows setting a callback to parse any date strings passed into ::__construct(), Date::__construct() and
+	 * Time::__construct()
 	 *
-	 * @param  callable(mixed...):mixed $callback  The callback to pass all date/time/timestamp strings through. Should accept a single string and return a single string that is parsable by [http://php.net/strtotime `strtotime()`].
+	 * @param  callable(mixed...):mixed $callback  The callback to pass all date/time/timestamp strings through. Should
+	 * accept a single string and return a single string that is parsable by [http://php.net/strtotime `strtotime()`].
 	 * @return void
 	 */
 	public static function registerUnformatCallback(callable $callback): void
@@ -683,7 +699,8 @@ class Timestamp
 
 
 	/**
-	 * Provides a consistent interface to setting the default timezone. Wraps the [http://php.net/date_default_timezone_set date_default_timezone_set()] function.
+	 * Provides a consistent interface to setting the default timezone. Wraps the
+	 * [http://php.net/date_default_timezone_set date_default_timezone_set()] function.
 	 *
 	 * @param  string $timezone  The default timezone to use for all date/time calculations
 	 * @return void
@@ -701,12 +718,14 @@ class Timestamp
 
 
 	/**
-	 * Takes a format name set via ::defineFormat() and returns the [http://php.net/date date()] function formatting string
+	 * Takes a format name set via ::defineFormat() and returns the [http://php.net/date date()] function formatting
+	 * string
 	 *
 	 * @internal
 	 *
 	 * @param  string $format  The format to translate
-	 * @return string  The formatting string. If no matching format was found, this will be the same as the `$format` parameter.
+	 * @return string  The formatting string. If no matching format was found, this will be the same as the `$format`
+	 * parameter.
 	 */
 	public static function translateFormat(string $format): string
 	{
@@ -738,7 +757,8 @@ class Timestamp
 	 * @throws ValidationException  When `$datetime` is not a valid date/time, date or time value
 	 *
 	 * @param  Timestamp|object|string|integer $datetime  The date/time to represent, `NULL` is interpreted as now
-	 * @param  string $timezone  The timezone for the date/time. This causes the date/time to be interpretted as being in the specified timezone. If not specified, will default to timezone set by ::setDefaultTimezone().
+	 * @param  string $timezone  The timezone for the date/time. This causes the date/time to be interpretted as being
+	 * in the specified timezone. If not specified, will default to timezone set by ::setDefaultTimezone().
 	 * @return Timestamp
 	 */
 	public function __construct(mixed $datetime = null, mixed $timezone = null)
@@ -776,7 +796,12 @@ class Timestamp
 			}
 
 			if (!is_string($datetime)) {
-				throw new ProgrammerException('The date/time specified, %s, can not be converted to a string', get_debug_type($datetime));
+				throw new ProgrammerException(
+					'The date/time specified, %s, can not be converted to a string',
+					get_debug_type(
+						$datetime
+					)
+				);
 			}
 
 			$datetime = self::callUnformatCallback($datetime);
@@ -858,7 +883,8 @@ class Timestamp
 	/**
 	 * If this timestamp is equal to the timestamp passed
 	 *
-	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as today
+	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as
+	 * today
 	 * @return boolean  If this timestamp is equal to the one passed
 	 * @throws ValidationException
 	 */
@@ -872,7 +898,8 @@ class Timestamp
 	/**
 	 * Formats the date/time
 	 *
-	 * @param  string $format  The [http://php.net/date date()] function compatible formatting string, or a format name from ::defineFormat()
+	 * @param  string $format  The [http://php.net/date date()] function compatible formatting string, or a format name
+	 * from ::defineFormat()
 	 * @return string  The formatted date/time
 	 */
 	public function format(string $format): string
@@ -923,8 +950,10 @@ class Timestamp
 	 *  - `'55 minutes'` would be represented as `'1 hour'`, however `'45 minutes'` would not
 	 *  - `'29 days'` would be represented as `'1 month'`, but `'21 days'` would be shown as `'3 weeks'`
 	 *
-	 * @param  boolean|Timestamp|object|string|integer $other_timestamp  The timestamp to create the difference with, `NULL` is interpreted as now
-	 * @param  boolean                          $simple           When `TRUE`, the returned value will only include the difference in the two timestamps, but not `from now`, `ago`, `after` or `before`
+	 * @param  boolean|Timestamp|object|string|integer $other_timestamp  The timestamp to create the difference with,
+	 * `NULL` is interpreted as now
+	 * @param  boolean                          $simple           When `TRUE`, the returned value will only include the
+	 * difference in the two timestamps, but not `from now`, `ago`, `after` or `before`
 	 * @param  boolean                           $simple
 	 * @return string  The fuzzy difference in time between the this timestamp and the one provided
 	 * @throws ValidationException
@@ -972,8 +1001,8 @@ class Timestamp
 		$units     = '';
 		foreach ($break_points as $break_point => $unit_info) {
 			if (abs($diff) > $break_point) {
-                continue;
-            }
+				continue;
+			}
 
 			$unit_diff = round(abs($diff) / $unit_info[0]);
 			$units     = Grammar::inflectOnQuantity($unit_diff, $unit_info[1], $unit_info[2]);
@@ -1003,7 +1032,8 @@ class Timestamp
 	/**
 	 * If this timestamp is greater than the timestamp passed
 	 *
-	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as now
+	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as
+	 * now
 	 * @return boolean  If this timestamp is greater than the one passed
 	 * @throws ValidationException
 	 */
@@ -1017,7 +1047,8 @@ class Timestamp
 	/**
 	 * If this timestamp is greater than or equal to the timestamp passed
 	 *
-	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as now
+	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as
+	 * now
 	 * @return boolean  If this timestamp is greater than or equal to the one passed
 	 * @throws ValidationException
 	 */
@@ -1031,7 +1062,8 @@ class Timestamp
 	/**
 	 * If this timestamp is less than the timestamp passed
 	 *
-	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as today
+	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as
+	 * today
 	 * @return boolean  If this timestamp is less than the one passed
 	 * @throws ValidationException
 	 */
@@ -1045,7 +1077,8 @@ class Timestamp
 	/**
 	 * If this timestamp is less than or equal to the timestamp passed
 	 *
-	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as today
+	 * @param  Timestamp|object|string|integer $other_timestamp  The timestamp to compare with, `NULL` is interpreted as
+	 * today
 	 * @return boolean  If this timestamp is less than or equal to the one passed
 	 * @throws ValidationException
 	 */
@@ -1067,7 +1100,8 @@ class Timestamp
 	 *  - `'Y-m-t H:i:s'` to change the date of the timestamp to the last of the month:
 	 *  - `'Y-m-d 17:i:s'` to set the hour of the timestamp to 5 PM:
 	 *
-	 * @param  string $format    The current timestamp will be formatted with this string, and the output used to create a new object. The format should **not** include the timezone (character `e`).
+	 * @param  string $format    The current timestamp will be formatted with this string, and the output used to create
+	 * a new object. The format should **not** include the timezone (character `e`).
 	 * @param  string $timezone  The timezone for the new object if different from the current timezone
 	 * @return Timestamp  The new timestamp
 	 * @throws ValidationException

@@ -10,7 +10,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/SQLException
  *
  * @version    1.0.0b
  * @changes    1.0.0b  The initial implementation [wb, 2007-06-14]

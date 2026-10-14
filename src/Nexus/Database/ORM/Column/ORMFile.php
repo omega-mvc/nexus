@@ -10,36 +10,50 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMFile
  *
  * @version    1.0.0b31
- * @changes    1.0.0b31  Added an `isset()` guard around `$_SERVER['DOCUMENT_ROOT']` access for PHP 8.1 undefined array key compatibility [wb, 2026-07-10]
+ * @changes    1.0.0b31  Added an `isset()` guard around `$_SERVER['DOCUMENT_ROOT']` access for PHP 8.1 undefined array
+ * key compatibility [wb, 2026-07-10]
  * @changes    1.0.0b30  Updated code for the new Upload API [wb, 2011-08-24]
- * @changes    1.0.0b29  Fixed a bug when uploading a new file to a column with an existing file that was not found on the filesystem [wb, 2011-05-10]
- * @changes    1.0.0b28  Backwards Compatibility Break - ::configureImageUploadColumn() no longer accepts the optional `$image_type` as the fourth parameter, instead ::addFImageMethodCall() must be called with `saveChanges` as the `$method` and the image type as the first parameter [wb, 2010-11-30]
- * @changes    1.0.0b27  Fixed column inheritance to properly handle non-images and inheriting into image upload columns [wb, 2010-09-18]
- * @changes    1.0.0b26  Enhanced ::configureColumnInheritance() to ensure both columns specified have been set up as file upload columns [wb, 2010-08-18]
+ * @changes    1.0.0b29  Fixed a bug when uploading a new file to a column with an existing file that was not found on
+ * the filesystem [wb, 2011-05-10]
+ * @changes    1.0.0b28  Backwards Compatibility Break - ::configureImageUploadColumn() no longer accepts the optional
+ * `$image_type` as the fourth parameter, instead ::addFImageMethodCall() must be called with `saveChanges` as the
+ * `$method` and the image type as the first parameter [wb, 2010-11-30]
+ * @changes    1.0.0b27  Fixed column inheritance to properly handle non-images and inheriting into image upload columns
+ * [wb, 2010-09-18]
+ * @changes    1.0.0b26  Enhanced ::configureColumnInheritance() to ensure both columns specified have been set up as
+ * file upload columns [wb, 2010-08-18]
  * @changes    1.0.0b25  Updated code to work with the new ORM API [wb, 2010-08-06]
  * @changes    1.0.0b24  Changed validation messages array to use column name keys [wb, 2010-05-26]
- * @changes    1.0.0b23  Fixed a bug with ::upload() that could cause a method called on a non-object error in relation to the upload directory not being defined [wb, 2010-05-10]
- * @changes    1.0.0b22  Updated the TEMP_DIRECTORY constant to not include the trailing slash, code now uses DIRECTORY_SEPARATOR to fix issues on Windows [wb, 2010-04-28]
+ * @changes    1.0.0b23  Fixed a bug with ::upload() that could cause a method called on a non-object error in relation
+ * to the upload directory not being defined [wb, 2010-05-10]
+ * @changes    1.0.0b22  Updated the TEMP_DIRECTORY constant to not include the trailing slash, code now uses
+ * DIRECTORY_SEPARATOR to fix issues on Windows [wb, 2010-04-28]
  * @changes    1.0.0b21  Fixed ::set() to perform column inheritance, just like ::upload() does [wb, 2010-03-15]
- * @changes    1.0.0b20  Fixed the `set` and `process` methods to return the record instance, changed `upload` methods to return the File object, updated ::reflect() with new return values [wb, 2010-03-15]
+ * @changes    1.0.0b20  Fixed the `set` and `process` methods to return the record instance, changed `upload` methods
+ * to return the File object, updated ::reflect() with new return values [wb, 2010-03-15]
  * @changes    1.0.0b19  Fixed a few missed instances of old File method names [wb, 2009-12-16]
  * @changes    1.0.0b18  Updated code for the new File API [wb, 2009-12-16]
  * @changes    1.0.0b17  Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
- * @changes    1.0.0b16  Image method calls for file upload columns will no longer cause notices due to a missing image type [wb, 2009-09-09]
- * @changes    1.0.0b15  ::addFImageMethodCall() no longer requires column be an image upload column, inheritance to an image column now only happens for Image objects [wb, 2009-07-29]
+ * @changes    1.0.0b16  Image method calls for file upload columns will no longer cause notices due to a missing image
+ * type [wb, 2009-09-09]
+ * @changes    1.0.0b15  ::addFImageMethodCall() no longer requires column be an image upload column, inheritance to an
+ * image column now only happens for Image objects [wb, 2009-07-29]
  * @changes    1.0.0b14  Updated to use new ORM::registerInspectCallback() method [wb, 2009-07-13]
  * @changes    1.0.0b13  Updated code for new ORM API [wb, 2009-06-15]
  * @changes    1.0.0b12  Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
  * @changes    1.0.0b11  Updated code to use new ValidationException::formatField() method [wb, 2009-06-04]
- * @changes    1.0.0b10  Fixed a bug where an inherited file upload column would not be properly re-set with an `existing-` input [wb, 2009-05-26]
- * @changes    1.0.0b9   ::upload() and ::set() now set the `$values` entry to `NULL` for filenames that are empty [wb, 2009-03-02]
+ * @changes    1.0.0b10  Fixed a bug where an inherited file upload column would not be properly re-set with an
+ * `existing-` input [wb, 2009-05-26]
+ * @changes    1.0.0b9   ::upload() and ::set() now set the `$values` entry to `NULL` for filenames that are empty [wb,
+ * 2009-03-02]
  * @changes    1.0.0b8   Changed ::set() to accept objects and reject directories [wb, 2009-01-21]
  * @changes    1.0.0b7   Changed the class to use the new Filesystem::createObject() method [wb, 2009-01-21]
- * @changes    1.0.0b6   Old files are now checked against the current file to prevent removal of an in-use file [wb, 2008-12-23]
- * @changes    1.0.0b5   Fixed ::replicate() to ensure the temp directory exists and ::set() to use the temp directory [wb, 2008-12-23]
+ * @changes    1.0.0b6   Old files are now checked against the current file to prevent removal of an in-use file [wb,
+ * 2008-12-23]
+ * @changes    1.0.0b5   Fixed ::replicate() to ensure the temp directory exists and ::set() to use the temp directory
+ * [wb, 2008-12-23]
  * @changes    1.0.0b4   ::objectify() no longer throws an exception when a file can't be found [wb, 2008-12-18]
  * @changes    1.0.0b3   Added ::replicate() so that replicated files get pu in the temp directory [wb, 2008-12-12]
  * @changes    1.0.0b2   Fixed a bug with objectifying file columns [wb, 2008-11-24]
@@ -113,8 +127,12 @@ class ORMFile
 	 * @param  array<array-key, mixed>  $parameters  The parameters to pass to the method
 	 * @return void
 	 */
-	public static function addFImageMethodCall(mixed $class, string $column, string $method, array $parameters = array()): void
-	{
+	public static function addFImageMethodCall(
+		mixed $class,
+		string $column,
+		string $method,
+		array $parameters = array()
+	): void {
 		$class = ORM::getClass($class);
 
 		if (empty(self::$file_upload_columns[$class][$column])) {
@@ -147,8 +165,12 @@ class ORMFile
 	 * @param  array<array-key, mixed>  $parameters  The parameters to pass to the method
 	 * @return void
 	 */
-	public static function addFUploadMethodCall(mixed $class, string $column, string $method, array $parameters = array()): void
-	{
+	public static function addFUploadMethodCall(
+		mixed $class,
+		string $column,
+		string $method,
+		array $parameters = array()
+	): void {
 		if ($method == 'enableOverwrite') {
 			throw new ProgrammerException(
 				'The method specified, %1$s, is not compatible with how %2$s stores and associates files with records',
@@ -471,8 +493,13 @@ class ORMFile
 	 * @return void
 	 * @throws ValidationException
 	 */
-	public static function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function delete(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
@@ -505,8 +532,13 @@ class ORMFile
 	 * @return void
 	 * @throws ValidationException
 	 */
-	public static function deleteOld(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function deleteOld(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 
 		// Remove the old files for the column
@@ -514,7 +546,10 @@ class ORMFile
 			$current_file = $values[$column];
 			$old_files = ActiveRecord::retrieveOld($old_values, $column, array(), true);
 			foreach ((is_array($old_files) ? $old_files : array()) as $file) {
-				if ($file instanceof File && (!$current_file instanceof File || $current_file->getPath() != $file->getPath())) {
+				if (
+					$file instanceof File && (!$current_file instanceof File || $current_file->getPath() !=
+					$file->getPath())
+				) {
 					$file->delete();
 				}
 			}
@@ -536,13 +571,25 @@ class ORMFile
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return string  The HTML form-ready filename
 	 */
-	public static function encode(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
-	{
+	public static function encode(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): mixed {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column   = Grammar::underscorize($subject);
 		$filename = ($values[$column] instanceof File) ? $values[$column]->getName() : '';
-		if ($filename && strpos($values[$column]->getPath(), self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename) !== false) {
+		if (
+			$filename && strpos(
+				$values[$column]->getPath(),
+				self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename
+			) !== false
+		) {
 			$filename = self::TEMP_DIRECTORY . DIRECTORY_SEPARATOR . $filename;
 		}
 
@@ -585,8 +632,13 @@ class ORMFile
 	 * @return void
 	 * @throws ValidationException
 	 */
-	public static function moveFromTemp(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function moveFromTemp(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		foreach ($values as $column => $value) {
 			if (!$value instanceof File) {
 				continue;
@@ -653,12 +705,20 @@ class ORMFile
 	 * @return void
 	 * @throws ValidationException
 	 */
-	public static function populate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function populate(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
-			if (Upload::check($column, false) || Request::check('existing-' . $column) || Request::check('delete-' . $column)) {
+			if (
+				Upload::check($column, false) || Request::check('existing-' . $column) || Request::check('delete-' .
+				$column)
+			) {
 				$method = 'upload' . Grammar::camelize($column, true);
 				$object->$method();
 			}
@@ -680,8 +740,15 @@ class ORMFile
 	 * @param  array<array-key, mixed>         $parameters        The parameters passed to the method
 	 * @return string  The HTML-ready value for the file
 	 */
-	public static function prepare(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
-	{
+	public static function prepare(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): mixed {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 		$column = Grammar::underscorize($subject);
 
@@ -706,7 +773,8 @@ class ORMFile
 
 
 	/**
-	 * Takes a directory and creates a temporary directory inside of it - if the temporary folder exists, all files older than 6 hours will be deleted
+	 * Takes a directory and creates a temporary directory inside of it - if the temporary folder exists, all files
+	 * older than 6 hours will be deleted
 	 *
 	 * @param  Directory $folder  The folder to create a temporary directory inside of
 	 * @return Directory  The temporary directory for the folder specified
@@ -747,8 +815,15 @@ class ORMFile
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 * @throws ValidationException
 	 */
-	public static function process(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
-	{
+	public static function process(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): ActiveRecord {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -818,8 +893,12 @@ class ORMFile
 	 */
 	public static function reflect(string $class, mixed &$signatures, bool $include_doc_comments): void
 	{
-		$image_columns = (isset(self::$image_upload_columns[$class])) ? array_keys(self::$image_upload_columns[$class]) : array();
-		$file_columns  = (isset(self::$file_upload_columns[$class]))  ? array_keys(self::$file_upload_columns[$class])  : array();
+		$image_columns = (isset(self::$image_upload_columns[$class])) ? array_keys(
+			self::$image_upload_columns[$class]
+		) : array();
+		$file_columns  = (isset(self::$file_upload_columns[$class]))  ? array_keys(
+			self::$file_upload_columns[$class]
+		)  : array();
 
 		foreach ($file_columns as $column) {
 			$camelized_column = Grammar::camelize($column, true);
@@ -867,7 +946,8 @@ class ORMFile
 				$signature .= " * By default only the filename will be returned and any directory will be stripped.\n";
 				$signature .= " * The \$include_web_path parameter changes this behaviour.\n";
 				$signature .= " * \n";
-				$signature .= " * @param  boolean \$include_web_path  If the full web path to the " . $noun . " should be included\n";
+				$signature .= " * @param  boolean \$include_web_path  If the full web path to the " . $noun .
+					" should be included\n";
 				$signature .= " * @return string  The HTML-ready value\n";
 				$signature .= " */\n";
 			}
@@ -879,13 +959,15 @@ class ORMFile
 			$signature = '';
 			if ($include_doc_comments) {
 				$signature .= "/**\n";
-				$signature .= " * Takes a file uploaded through an HTML form for " . $column . " and moves it into the specified directory\n";
+				$signature .= " * Takes a file uploaded through an HTML form for " . $column .
+					" and moves it into the specified directory\n";
 				$signature .= " * \n";
 				$signature .= " * Any columns that were designated as inheriting from this column will get a copy\n";
 				$signature .= " * of the uploaded file.\n";
 				$signature .= " * \n";
 				if ($noun == 'image') {
-					$signature .= " * Any Image calls that were added to the column will be processed on the uploaded image.\n";
+					$signature .=
+						" * Any Image calls that were added to the column will be processed on the uploaded image.\n";
 					$signature .= " * \n";
 				}
 				$signature .= " * @return File  The uploaded file\n";
@@ -899,10 +981,13 @@ class ORMFile
 			$signature = '';
 			if ($include_doc_comments) {
 				$signature .= "/**\n";
-				$signature .= " * Takes a file that exists on the filesystem and copies it into the specified directory for " . $column . "\n";
+				$signature .=
+					" * Takes a file that exists on the filesystem and copies it into the specified directory for " .
+					$column . "\n";
 				$signature .= " * \n";
 				if ($noun == 'image') {
-					$signature .= " * Any Image calls that were added to the column will be processed on the copied image.\n";
+					$signature .=
+						" * Any Image calls that were added to the column will be processed on the copied image.\n";
 					$signature .= " * \n";
 				}
 				$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
@@ -918,7 +1003,9 @@ class ORMFile
 				$signature .= "/**\n";
 				$signature .= " * Returns metadata about " . $column . "\n";
 				$signature .= " * \n";
-				$signature .= " * @param  string \$element  The element to return. Must be one of: 'type', 'not_null', 'default', 'valid_values', 'max_length', 'feature', 'directory'.\n";
+				$signature .=
+					" * @param  string \$element  The element to return. Must be one of: 'type', 'not_null', "
+						. "'default', 'valid_values', 'max_length', 'feature', 'directory'.\n";
 				$signature .= " * @return mixed  The metadata array or a single element\n";
 				$signature .= " */\n";
 			}
@@ -1025,14 +1112,23 @@ class ORMFile
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 * @throws ValidationException
 	 */
-	public static function set(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
-	{
+	public static function set(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): ActiveRecord {
 		$class = get_class($object);
 
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column   = Grammar::underscorize($subject);
-		$doc_root = realpath(isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '');
+		$doc_root = realpath(
+			isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : ''
+		);
 
 		if (!array_key_exists(0, $parameters)) {
 			throw new ProgrammerException(
@@ -1069,7 +1165,8 @@ class ORMFile
 
 			if (!$file_path || (!file_exists($file_path) && !file_exists($doc_root . $file_path))) {
 				throw new EnvironmentException(
-					'The file specified, %s, does not exist. This may indicate a missing enctype="multipart/form-data" attribute in form tag.',
+					'The file specified, %s, does not exist. This may indicate a missing enctype="multipart/form-data" '
+						. 'attribute in form tag.',
 					$file_path
 				);
 			}
@@ -1110,7 +1207,15 @@ class ORMFile
 		// Perform column inheritance
 		if (!empty(self::$column_inheritence[$class][$column])) {
 			foreach (self::$column_inheritence[$class][$column] as $other_column) {
-				self::set($object, $values, $old_values, $related_records, $cache, 'set' . Grammar::camelize($other_column, true), array($file));
+				self::set(
+					$object,
+					$values,
+					$old_values,
+					$related_records,
+					$cache,
+					'set' . Grammar::camelize($other_column, true),
+					array($file)
+				);
 			}
 		}
 
@@ -1165,8 +1270,15 @@ class ORMFile
 	 * @return File|Directory|null  The uploaded file, or NULL if no new file was set
 	 * @throws ValidationException
 	 */
-	public static function upload(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
-	{
+	public static function upload(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): mixed {
 		$class = get_class($object);
 
 		list ($action, $subject) = ORM::parseMethod($method_name);
@@ -1221,7 +1333,12 @@ class ORMFile
 			foreach (self::$column_inheritence[$class][$column] as $other_column) {
 				if ($file) {
 					// Image columns will only inherit if it is an Image object
-					if (!$file instanceof Image && isset(self::$image_upload_columns[$class]) && array_key_exists($other_column, self::$image_upload_columns[$class])) {
+					if (
+						!$file instanceof Image && isset(self::$image_upload_columns[$class]) && array_key_exists(
+							$other_column,
+							self::$image_upload_columns[$class]
+						)
+					) {
 						continue;
 					}
 
@@ -1272,17 +1389,33 @@ class ORMFile
 	 * @param  array<array-key, mixed> &$validation_messages  The existing validation messages
 	 * @return void
 	 */
-	public static function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function validate(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = get_class($object);
 
 		foreach (self::$file_upload_columns[$class] as $column => $directory) {
 			$column_name = ORM::getColumnName($class, $column);
 
 			if (isset($validation_messages[$column]) && is_string($validation_messages[$column])) {
-				$search_message  = self::compose('%sPlease enter a value', ValidationException::formatField($column_name));
-				$replace_message = self::compose('%sPlease upload a file', ValidationException::formatField($column_name));
-				$validation_messages[$column] = str_replace($search_message, $replace_message, $validation_messages[$column]);
+				$search_message  = self::compose(
+					'%sPlease enter a value',
+					ValidationException::formatField($column_name)
+				);
+				$replace_message = self::compose(
+					'%sPlease upload a file',
+					ValidationException::formatField($column_name)
+				);
+				$validation_messages[$column] = str_replace(
+					$search_message,
+					$replace_message,
+					$validation_messages[$column]
+				);
 			}
 
 			// Grab the error that occured
@@ -1306,8 +1439,8 @@ class ORMFile
 	 * @return ORMFile
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

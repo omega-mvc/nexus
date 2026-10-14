@@ -10,7 +10,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/NoRemainingException
  *
  * @version    1.0.0b2
  * @changes    1.0.0b2  Fixed a typo in the documentation [wb, 2010-07-14]

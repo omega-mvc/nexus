@@ -30,7 +30,8 @@
         "squizlabs/php_codesniffer": "^3.10",
         "phpstan/phpstan": "^2.1",
         "tomasvotruba/type-coverage": "^2.0",
-        "phpunit/phpunit": "^11.5"
+        "phpunit/phpunit": "^11.5",
+        "symplify/easy-coding-standard": "^13.3"
     },
     "suggest": {
         "ext-apcu": "Required to use the 'apcu' cache backend of the Cache class",

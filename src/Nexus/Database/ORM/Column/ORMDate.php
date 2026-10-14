@@ -10,12 +10,12 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMDate
  *
  * @version    1.0.0b9
  * @changes    1.0.0b9  Updated code to work with the new ORM API [wb, 2010-08-06]
  * @changes    1.0.0b8  Changed validation messages array to use column name keys [wb, 2010-05-26]
- * @changes    1.0.0b7  Fixed the `set` methods to return the record object in order to be consistent with all other `set` methods [wb, 2010-03-15]
+ * @changes    1.0.0b7  Fixed the `set` methods to return the record object in order to be consistent with all other
+ * `set` methods [wb, 2010-03-15]
  * @changes    1.0.0b6  Fixed an issue with calling a non-existent method on Timestamp instances [wb, 2009-11-03]
  * @changes    1.0.0b5  Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
  * @changes    1.0.0b4  Fixed setting up the inspect callback in ::configureTimezoneColumn() [wb, 2009-10-11]
@@ -63,7 +63,13 @@ class ORMDate
 	private static function compose(string $message): string
 	{
 		$args = array_slice(func_get_args(), 1);
-		$args = array_map(static fn(mixed $arg): bool|float|int|string|null => ($arg === null || is_scalar($arg)) ? $arg : get_debug_type($arg), $args);
+		$args = array_map(
+			static fn(mixed $arg): bool|float|int|string|null => ($arg === null || is_scalar($arg)) ? $arg :
+				get_debug_type(
+					$arg
+				),
+			$args
+		);
 
 		if (class_exists('Text', false)) {
 			return call_user_func_array(
@@ -182,8 +188,11 @@ class ORMDate
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	public static function configureTimezoneColumn(mixed $class, string $timestamp_column, string $timezone_column): void
-	{
+	public static function configureTimezoneColumn(
+		mixed $class,
+		string $timestamp_column,
+		string $timezone_column
+	): void {
 		$class               = ORM::getClass($class);
 		$table               = ORM::tablize($class);
 		$schema              = ORMSchema::retrieve($class);
@@ -191,7 +200,8 @@ class ORMDate
 
 		if ($timestamp_data_type != 'timestamp') {
 			throw new ProgrammerException(
-				'The timestamp column specified, %1$s, is a %2$s column. Must be a %3$s to have a related timezone column.',
+				'The timestamp column specified, %1$s, is a %2$s column. Must be a %3$s to have a related timezone '
+					. 'column.',
 				$timestamp_column,
 				$timestamp_data_type,
 				'timestamp'
@@ -285,8 +295,13 @@ class ORMDate
 	 * @param  array<array-key, mixed>  &$cache            The cache array for the record
 	 * @return void
 	 */
-	public static function makeTimestampObjects(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function makeTimestampObjects(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 
 		if (!isset(self::$timezone_columns[$class])) {
@@ -310,8 +325,12 @@ class ORMDate
 	 * @param  string $timezone_column   The column holding the timezone
 	 * @return void
 	 */
-	public static function objectifyTimestampWithTimezone(mixed &$values, mixed &$old_values, string $timestamp_column, string $timezone_column): void
-	{
+	public static function objectifyTimestampWithTimezone(
+		mixed &$values,
+		mixed &$old_values,
+		string $timestamp_column,
+		string $timezone_column
+	): void {
 		$value = $values[$timestamp_column];
 		if (is_object($value)) {
 			if (!$value instanceof Stringable) {
@@ -338,7 +357,12 @@ class ORMDate
 
 			$value = new Timestamp($value, $timezone);
 
-			if (ActiveRecord::hasOld($old_values, $timezone_column) && !ActiveRecord::hasOld($old_values, $timestamp_column)) {
+			if (
+				ActiveRecord::hasOld($old_values, $timezone_column) && !ActiveRecord::hasOld(
+					$old_values,
+					$timestamp_column
+				)
+			) {
 				ActiveRecord::assign($values, $old_values, $timestamp_column, $value);
 			} else {
 				$values[$timestamp_column] = $value;
@@ -350,7 +374,7 @@ class ORMDate
 
 		// If there was some error creating the timestamp object, we just leave all values alone
 		} catch (ExpectedException $e) {
-        }
+		}
 	}
 
 
@@ -387,8 +411,13 @@ class ORMDate
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	public static function setDateCreated(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function setDateCreated(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		if ($object->exists()) {
 			return;
 		}
@@ -432,8 +461,13 @@ class ORMDate
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	public static function setDateUpdated(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function setDateUpdated(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 
 		foreach (self::$date_updated_columns[$class] as $column => $enabled) {
@@ -470,8 +504,15 @@ class ORMDate
 	 * @param  array<array-key, mixed>  $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	public static function setTimestampColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
-	{
+	public static function setTimestampColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): ActiveRecord {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -515,8 +556,15 @@ class ORMDate
 	 * @param  array<array-key, mixed>  $parameters        The parameters passed to the method
 	 * @return ActiveRecord  The record object, to allow for method chaining
 	 */
-	public static function setTimezoneColumn(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): ActiveRecord
-	{
+	public static function setTimezoneColumn(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): ActiveRecord {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -556,8 +604,14 @@ class ORMDate
 	 * @param  array<array-key, mixed>  &$validation_messages  An array of ordered validation messages
 	 * @return void
 	 */
-	public static function validateTimezoneColumns(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function validateTimezoneColumns(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = get_class($object);
 
 		if (empty(self::$timezone_columns[$class])) {
@@ -590,8 +644,8 @@ class ORMDate
 	 * @return ORMDate
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

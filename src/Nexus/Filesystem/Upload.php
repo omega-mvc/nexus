@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Upload
  * @phpstan-type UploadFileEntry array{name: string, type: string, tmp_name: string, error: int, size: int}
  * @phpstan-type UploadImageDimensions array{min_width: int, min_height: int, max_width: int, max_height: int}
  * @phpstan-type UploadImageRatio array{width: float, height: float, allow_excess_dimension: string}
@@ -19,16 +18,24 @@ declare(strict_types=1);
  * @version    1.0.0b15
  * @changes    1.0.0b15  Fixed an undefined variable error in ::setMaxSize() [wb, 2012-09-16]
  * @changes    1.0.0b14  Fixed some method signatures [wb, 2011-08-24]
- * @changes    1.0.0b13  Changed the class to throw ValidationException objects instead of ProgrammerException objects when the form is improperly configured - this is to prevent error logs when bad requests are sent by scanners/hackers [wb, 2011-08-24]
+ * @changes    1.0.0b13  Changed the class to throw ValidationException objects instead of ProgrammerException objects
+ * when the form is improperly configured - this is to prevent error logs when bad requests are sent by scanners/hackers
+ * [wb, 2011-08-24]
  * @changes    1.0.0b12  Fixed the ::filter() callback constant [wb, 2010-11-24]
  * @changes    1.0.0b11  Added ::setImageDimensions() and ::setImageRatio() [wb-imarc, 2010-11-11]
- * @changes    1.0.0b10  BackwardsCompatibilityBreak - renamed ::setMaxFilesize() to ::setMaxSize() to be consistent with File::getSize() [wb, 2010-05-30]
- * @changes    1.0.0b9   BackwardsCompatibilityBreak - the class no longer accepts uploaded files that start with a `.` unless ::allowDotFiles() is called - added ::setOptional() [wb, 2010-05-30]
- * @changes    1.0.0b8   BackwardsCompatibilityBreak - ::validate() no longer returns the `$_FILES` array for the file being validated - added `$return_message` parameter to ::validate(), fixed a bug with detection of mime type for text files [wb, 2010-05-26]
- * @changes    1.0.0b7   Added ::filter() to allow for ignoring array file upload field entries that did not have a file uploaded [wb, 2009-10-06]
+ * @changes    1.0.0b10  BackwardsCompatibilityBreak - renamed ::setMaxFilesize() to ::setMaxSize() to be consistent
+ * with File::getSize() [wb, 2010-05-30]
+ * @changes    1.0.0b9   BackwardsCompatibilityBreak - the class no longer accepts uploaded files that start with a `.`
+ * unless ::allowDotFiles() is called - added ::setOptional() [wb, 2010-05-30]
+ * @changes    1.0.0b8   BackwardsCompatibilityBreak - ::validate() no longer returns the `$_FILES` array for the file
+ * being validated - added `$return_message` parameter to ::validate(), fixed a bug with detection of mime type for text
+ * files [wb, 2010-05-26]
+ * @changes    1.0.0b7   Added ::filter() to allow for ignoring array file upload field entries that did not have a file
+ * uploaded [wb, 2009-10-06]
  * @changes    1.0.0b6   Updated ::move() to use the new Filesystem::createObject() method [wb, 2009-01-21]
  * @changes    1.0.0b5   Removed some unnecessary error suppression operators from ::move() [wb, 2009-01-05]
- * @changes    1.0.0b4   Updated ::validate() so it properly handles upload max filesize specified in human-readable notation [wb, 2009-01-05]
+ * @changes    1.0.0b4   Updated ::validate() so it properly handles upload max filesize specified in human-readable
+ * notation [wb, 2009-01-05]
  * @changes    1.0.0b3   Removed the dependency on Request [wb, 2009-01-05]
  * @changes    1.0.0b2   Fixed a bug with validating filesizes [wb, 2008-11-25]
  * @changes    1.0.0b    The initial implementation [wb, 2007-06-14]
@@ -44,7 +51,8 @@ class Upload
 	/**
 	 * Checks to see if the field specified is a valid file upload field
 	 *
-	 * @throws ValidationException  If `$throw_exception` is `TRUE` and the request was not a POST or the content type is not multipart/form-data
+	 * @throws ValidationException  If `$throw_exception` is `TRUE` and the request was not a POST or the content type
+	 * is not multipart/form-data
 	 *
 	 * @param  string  $field            The field to check
 	 * @param  boolean $throw_exception  If an exception should be thrown when there are issues with the form
@@ -123,7 +131,10 @@ class Upload
 	{
 		$args = array_slice(func_get_args(), 1);
 		$args = array_map(
-			static fn(mixed $arg): bool|float|int|string|null => ($arg === null || is_scalar($arg)) ? $arg : get_debug_type($arg),
+			static fn(mixed $arg): bool|float|int|string|null => ($arg === null || is_scalar($arg)) ? $arg :
+				get_debug_type(
+					$arg
+				),
 			$args
 		);
 
@@ -144,7 +155,8 @@ class Upload
 	 * @throws ValidationException  If the form is not properly configured for file uploads
 	 *
 	 * @param  string  $field  The field to filter
-	 * @return array<int, int|string>|NULL  The indexes of the files that were uploaded, or `NULL` if no file was uploaded
+	 * @return array<int, int|string>|NULL  The indexes of the files that were uploaded, or `NULL` if no file was
+	 * uploaded
 	 */
 	public static function filter(string $field): mixed
 	{
@@ -359,7 +371,8 @@ class Upload
 	 * Returns the `$_FILES` array for the field specified.
 	 *
 	 * @param  string $field  The field to get the file array for
-	 * @param  mixed  $index  If the field is an array file upload field, use this to specify which array index to return
+	 * @param  mixed  $index  If the field is an array file upload field, use this to specify which array index to
+	 * return
 	 * @return UploadFileEntry  The file info array from `$_FILES`
 	 * @throws ValidationException
 	 */
@@ -422,11 +435,13 @@ class Upload
 	/**
 	 * Moves an uploaded file from the temp directory to a permanent location
 	 *
-	 * @throws ValidationException  When the form is not setup for file uploads, the `$directory` is somehow invalid or ::validate() thows an exception
+	 * @throws ValidationException  When the form is not setup for file uploads, the `$directory` is somehow invalid or
+	 * ::validate() thows an exception
 	 *
 	 * @param  string|Directory $directory  The directory to upload the file to
 	 * @param  string            $field      The file upload field to get the file from
-	 * @param  mixed             $index      If the field was an array file upload field, upload the file corresponding to this index
+	 * @param  mixed             $index      If the field was an array file upload field, upload the file corresponding
+	 * to this index
 	 * @return File|Image|NULL  A File (or Image) object, or `NULL` if no file was uploaded
 	 */
 	public function move(mixed $directory, string $field, mixed $index = null): mixed
@@ -615,7 +630,8 @@ class Upload
 
 		if ($size && $size > $ini_max_size) {
 			throw new EnvironmentException(
-				'The requested max file upload size, %1$s, is larger than the %2$s ini setting, which is currently set at %3$s. The ini setting must be increased to allow files of this size.',
+				'The requested max file upload size, %1$s, is larger than the %2$s ini setting, which is currently set '
+					. 'at %3$s. The ini setting must be increased to allow files of this size.',
 				$size,
 				'upload_max_filesize',
 				$ini_max_size
@@ -630,7 +646,8 @@ class Upload
 	 * Sets the file mime types accepted
 	 *
 	 * @param  array<int, string>  $mime_types  The mime types to accept
-	 * @param  string             $message     The message to display if the uploaded file is not one of the mime type specified
+	 * @param  string             $message     The message to display if the uploaded file is not one of the mime type
+	 * specified
 	 * @return void
 	 */
 	public function setMIMETypes(array $mime_types, string $message): void
@@ -652,14 +669,18 @@ class Upload
 
 
 	/**
-	 * Validates the uploaded file, ensuring a file was actually uploaded and that is matched the restrictions put in place
+	 * Validates the uploaded file, ensuring a file was actually uploaded and that is matched the restrictions put in
+	 * place
 	 *
-	 * @throws ValidationException  When the form is not configured for file uploads, no file is uploaded or the uploaded file violates the options set for this object
+	 * @throws ValidationException  When the form is not configured for file uploads, no file is uploaded or the
+	 * uploaded file violates the options set for this object
 	 *
 	 * @param  string  $field           The field the file was uploaded through
 	 * @param  mixed   $index           If the field was an array of file uploads, this specifies which one to validate
-	 * @param  boolean $return_message  If any validation error should be returned as a string instead of being thrown as an ValidationException
-	 * @return NULL|string  If `$return_message` is not `TRUE` or if no error occurs, `NULL`, otherwise a string error message
+	 * @param  boolean $return_message  If any validation error should be returned as a string instead of being thrown
+	 * as an ValidationException
+	 * @return NULL|string  If `$return_message` is not `TRUE` or if no error occurs, `NULL`, otherwise a string error
+	 * message
 	 */
 	public function validate(string $field, mixed $index = null, ?bool $return_message = null): mixed
 	{
@@ -800,7 +821,10 @@ class Upload
 				$width  = (int) $image_info[0];
 				$height = (int) $image_info[1];
 
-				if ($this->image_ratio['allow_excess_dimension'] == 'width' && $width / $height < $this->image_ratio['width'] / $this->image_ratio['height']) {
+				if (
+					$this->image_ratio['allow_excess_dimension'] == 'width' && $width / $height <
+					$this->image_ratio['width'] / $this->image_ratio['height']
+				) {
 					return self::compose(
 						'The uploaded image is too narrow for its height. The required ratio is %1$sx%2$s or wider.',
 						$this->image_ratio['width'],
@@ -808,7 +832,10 @@ class Upload
 					);
 				}
 
-				if ($this->image_ratio['allow_excess_dimension'] == 'height' && $width / $height > $this->image_ratio['width'] / $this->image_ratio['height']) {
+				if (
+					$this->image_ratio['allow_excess_dimension'] == 'height' && $width / $height >
+					$this->image_ratio['width'] / $this->image_ratio['height']
+				) {
 					return self::compose(
 						'The uploaded image is too short for its width. The required ratio is %1$sx%2$s or taller.',
 						$this->image_ratio['width'],

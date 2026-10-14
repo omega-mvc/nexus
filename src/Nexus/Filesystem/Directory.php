@@ -11,24 +11,33 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Directory
  *
  * @version    1.0.0b14
- * @changes    1.0.0b14  Fixed a bug in ::delete() where a non-existent method was being called on Filesystem, added a permission check to ::delete() [wb, 2011-08-23]
+ * @changes    1.0.0b14  Fixed a bug in ::delete() where a non-existent method was being called on Filesystem, added a
+ * permission check to ::delete() [wb, 2011-08-23]
  * @changes    1.0.0b13  Added the ::clear() method [wb, 2011-01-10]
- * @changes    1.0.0b12  Fixed ::scanRecursive() to not add duplicate entries for certain nested directory structures [wb, 2010-08-10]
+ * @changes    1.0.0b12  Fixed ::scanRecursive() to not add duplicate entries for certain nested directory structures
+ * [wb, 2010-08-10]
  * @changes    1.0.0b11  Fixed ::scan() to properly add trailing /s for directories [wb, 2010-03-16]
- * @changes    1.0.0b10  BackwardsCompatibilityBreak - Fixed ::scan() and ::scanRecursive() to strip the current directory's path before matching, added support for glob style matching [wb, 2010-03-05]
- * @changes    1.0.0b9   Changed the way directories deleted in a filesystem transaction are handled, including improvements to the exception that is thrown [wb+wb-imarc, 2010-03-05]
- * @changes    1.0.0b8   Backwards Compatibility Break - renamed ::getFilesize() to ::getSize(), added ::move() [wb, 2009-12-16]
- * @changes    1.0.0b7   Fixed ::__construct() to throw an ValidationException when the directory does not exist [wb, 2009-08-21]
- * @changes    1.0.0b6   Fixed a bug where deleting a directory would prevent any future operations in the same script execution on a file or directory with the same path [wb, 2009-08-20]
- * @changes    1.0.0b5   Added the ability to skip checks in ::__construct() for better performance in conjunction with Filesystem::createObject() [wb, 2009-08-06]
+ * @changes    1.0.0b10  BackwardsCompatibilityBreak - Fixed ::scan() and ::scanRecursive() to strip the current
+ * directory's path before matching, added support for glob style matching [wb, 2010-03-05]
+ * @changes    1.0.0b9   Changed the way directories deleted in a filesystem transaction are handled, including
+ * improvements to the exception that is thrown [wb+wb-imarc, 2010-03-05]
+ * @changes    1.0.0b8   Backwards Compatibility Break - renamed ::getFilesize() to ::getSize(), added ::move() [wb,
+ * 2009-12-16]
+ * @changes    1.0.0b7   Fixed ::__construct() to throw an ValidationException when the directory does not exist [wb,
+ * 2009-08-21]
+ * @changes    1.0.0b6   Fixed a bug where deleting a directory would prevent any future operations in the same script
+ * execution on a file or directory with the same path [wb, 2009-08-20]
+ * @changes    1.0.0b5   Added the ability to skip checks in ::__construct() for better performance in conjunction with
+ * Filesystem::createObject() [wb, 2009-08-06]
  * @changes    1.0.0b4   Refactored ::scan() to use the new Filesystem::createObject() method [wb, 2009-01-21]
- * @changes    1.0.0b3   Added the $regex_filter parameter to ::scan() and ::scanRecursive(), fixed bug in ::scanRecursive() [wb, 2009-01-05]
+ * @changes    1.0.0b3   Added the $regex_filter parameter to ::scan() and ::scanRecursive(), fixed bug in
+ * ::scanRecursive() [wb, 2009-01-05]
  * @changes    1.0.0b2   Removed some unnecessary error suppresion operators [wb, 2008-12-11]
  * @changes    1.0.0b    The initial implementation [wb, 2007-12-21]
- * @phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?: list<mixed>}
+ * @phpstan-type TraceEntry array{file?: string, line?: int, class?: string, type?: string, function?: string, args?:
+ * list<mixed>}
  */
 class Directory
 {
@@ -43,7 +52,8 @@ class Directory
 	 * @throws ValidationException  When no directory was specified, or the directory already exists
 	 *
 	 * @param  string  $directory  The path to the new directory
-	 * @param  numeric $mode       The mode (permissions) to use when creating the directory. This should be an octal number (requires a leading zero). This has no effect on the Windows platform.
+	 * @param  numeric $mode       The mode (permissions) to use when creating the directory. This should be an octal
+	 * number (requires a leading zero). This has no effect on the Windows platform.
 	 * @return Directory
 	 */
 	public static function create(string $directory, mixed $mode = 0777): Directory
@@ -118,10 +128,12 @@ class Directory
 	 * they will reflect changes in each other including rename and delete
 	 * actions.
 	 *
-	 * @throws ValidationException  When no directory was specified, when the directory does not exist or when the path specified is not a directory
+	 * @throws ValidationException  When no directory was specified, when the directory does not exist or when the path
+	 * specified is not a directory
 	 *
 	 * @param  string  $directory    The path to the directory
-	 * @param  boolean $skip_checks  If file checks should be skipped, which improves performance, but may cause undefined behavior - only skip these if they are duplicated elsewhere
+	 * @param  boolean $skip_checks  If file checks should be skipped, which improves performance, but may cause
+	 * undefined behavior - only skip these if they are duplicated elsewhere
 	 * @return Directory
 	 */
 	public function __construct(mixed $directory, mixed $skip_checks = false)
@@ -244,7 +256,10 @@ class Directory
 		rmdir($this->directory);
 
 		Filesystem::updateDeletedMap($this->directory, debug_backtrace());
-		Filesystem::updateFilenameMapForDirectory($this->directory, '*DELETED at ' . time() . ' with token ' . uniqid('', true) . '* ' . $this->directory);
+		Filesystem::updateFilenameMapForDirectory(
+			$this->directory,
+			'*DELETED at ' . time() . ' with token ' . uniqid('', true) . '* ' . $this->directory
+		);
 	}
 
 
@@ -376,10 +391,12 @@ class Directory
 	 * This operation will be reverted if a filesystem transaction is in
 	 * progress and is later rolled back.
 	 *
-	 * @throws ValidationException  When the new parent directory passed is not a directory, is not readable or is a sub-directory of this directory
+	 * @throws ValidationException  When the new parent directory passed is not a directory, is not readable or is a
+	 * sub-directory of this directory
 	 *
 	 * @param  Directory|string $new_parent_directory  The directory to move this directory into
-	 * @param  boolean           $overwrite             If the current filename already exists in the new directory, `TRUE` will cause the file to be overwritten, `FALSE` will cause the new filename to change
+	 * @param  boolean           $overwrite             If the current filename already exists in the new directory,
+	 * `TRUE` will cause the file to be overwritten, `FALSE` will cause the new filename to change
 	 * @return Directory  The directory object, to allow for method chaining
 	 */
 	public function move(mixed $new_parent_directory, bool $overwrite): Directory
@@ -407,7 +424,8 @@ class Directory
 	 * files/dirs) as existing with the old paths until that point.
 	 *
 	 * @param  string  $new_dirname  The new full path to the directory or a new name in the current parent directory
-	 * @param  boolean $overwrite    If the new dirname already exists, TRUE will cause the file to be overwritten, FALSE will cause the new filename to change
+	 * @param  boolean $overwrite    If the new dirname already exists, TRUE will cause the file to be overwritten,
+	 * FALSE will cause the new filename to change
 	 * @return void
 	 * @throws ValidationException
 	 */
@@ -489,8 +507,10 @@ class Directory
 	 * On all OSes (even Windows), directories will be separated by `/`s when
 	 * comparing with the `$filter`.
 	 *
-	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - directories can be detected by checking for a trailing / (even on Windows)
-	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories in this directory
+	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - directories can be detected
+	 * by checking for a trailing / (even on Windows)
+	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories in this
+	 * directory
 	 * @throws ValidationException
 	 */
 	public function scan(?string $filter = null): array
@@ -535,7 +555,8 @@ class Directory
 	 * Performs a **recursive** [http://php.net/scandir scandir()] on a directory, removing the `.` and `..` entries
 	 *
 	 * @param  string $filter  A PCRE or glob pattern to filter files/directories by path - see ::scan() for details
-	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories (listed recursively) in this directory
+	 * @return list<Directory|File>  The File (or Image) and Directory objects for the files/directories (listed
+	 * recursively) in this directory
 	 * @throws ValidationException
 	 */
 	public function scanRecursive(?string $filter = null): array
@@ -587,7 +608,8 @@ class Directory
 	{
 		if ($this->deleted) {
 			throw new ProgrammerException(
-				"The action requested can not be performed because the directory has been deleted\n\nBacktrace for Directory::delete() call:\n%s",
+				"The action requested can not be performed because the directory has been deleted\n\nBacktrace for "
+					. "Directory::delete() call:\n%s",
 				Core::backtrace(0, $this->deleted)
 			);
 		}

@@ -6,37 +6,47 @@ declare(strict_types=1);
  * Retrieves and deletes messages from a email account via IMAP or POP3
  *
  * All headers, text and html content returned by this class are encoded in
- * UTF-8. Please see http://flourishlib.com/docs/UTF-8 for more information.
+ * UTF-8.
  *
  * @copyright  Copyright (c) 2010-2012 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Mailbox
  *
  * @version    1.0.0b18
- * @changes    1.0.0b18  Fixed a bug in ::fetchMessageSource() where IMAP connections would add an extra `\r\n` to the end of the source [wb, 2012-09-16]
- * @changes    1.0.0b17  Updated the class to be more forgiving when parsing the response for `STATUS` and `FETCH` IMAP commands [wb, 2012-09-15]
+ * @changes    1.0.0b18  Fixed a bug in ::fetchMessageSource() where IMAP connections would add an extra `\r\n` to the
+ * end of the source [wb, 2012-09-16]
+ * @changes    1.0.0b17  Updated the class to be more forgiving when parsing the response for `STATUS` and `FETCH` IMAP
+ * commands [wb, 2012-09-15]
  * @changes    1.0.0b16  Added method ::fetchMessageSource() [wb, 2012-09-15]
  * @changes    1.0.0b15  Fixed handling of bounces with no headers [wb, 2012-09-15]
  * @changes    1.0.0b14  Added a workaround for iconv having issues in MAMP 1.9.4+ [wb, 2011-07-26]
- * @changes    1.0.0b13  Fixed handling of headers in relation to encoded-words being embedded inside of quoted strings [wb, 2011-07-26]
+ * @changes    1.0.0b13  Fixed handling of headers in relation to encoded-words being embedded inside of quoted strings
+ * [wb, 2011-07-26]
  * @changes    1.0.0b12  Enhanced the error checking in ::write() [wb, 2011-06-03]
- * @changes    1.0.0b11  Added code to work around PHP bug #42682 (http://bugs.php.net/bug.php?id=42682) where `stream_select()` doesn't work on 64bit machines from PHP 5.2.0 to 5.2.5, improved connectivity error handling and timeouts while reading data [wb, 2011-01-10]
- * @changes    1.0.0b10  Fixed ::parseMessage() to properly handle a header format edge case and properly set the `text` and `html` keys even when the email has an explicit `Content-disposition: inline` header [wb, 2010-11-25]
- * @changes    1.0.0b9   Fixed a bug in ::parseMessage() that could cause HTML alternate content to be included in the `inline` content array instead of the `html` element [wb, 2010-09-20]
- * @changes    1.0.0b8   Fixed ::parseMessage() to be able to handle non-text/non-html multipart parts that do not have a `Content-disposition` header [wb, 2010-09-18]
+ * @changes    1.0.0b11  Added code to work around PHP bug #42682 (http://bugs.php.net/bug.php?id=42682) where
+ * `stream_select()` doesn't work on 64bit machines from PHP 5.2.0 to 5.2.5, improved connectivity error handling and
+ * timeouts while reading data [wb, 2011-01-10]
+ * @changes    1.0.0b10  Fixed ::parseMessage() to properly handle a header format edge case and properly set the `text`
+ * and `html` keys even when the email has an explicit `Content-disposition: inline` header [wb, 2010-11-25]
+ * @changes    1.0.0b9   Fixed a bug in ::parseMessage() that could cause HTML alternate content to be included in the
+ * `inline` content array instead of the `html` element [wb, 2010-09-20]
+ * @changes    1.0.0b8   Fixed ::parseMessage() to be able to handle non-text/non-html multipart parts that do not have
+ * a `Content-disposition` header [wb, 2010-09-18]
  * @changes    1.0.0b7   Fixed a typo in ::read() [wb, 2010-09-07]
  * @changes    1.0.0b6   Fixed a typo from 1.0.0b4 [wb, 2010-07-21]
- * @changes    1.0.0b5   Fixes for increased compatibility with various IMAP and POP3 servers, hacked around a bug in PHP 5.3 on Windows [wb, 2010-06-22]
+ * @changes    1.0.0b5   Fixes for increased compatibility with various IMAP and POP3 servers, hacked around a bug in
+ * PHP 5.3 on Windows [wb, 2010-06-22]
  * @changes    1.0.0b4   Added code to handle emails without an explicit `Content-type` header [wb, 2010-06-04]
  * @changes    1.0.0b3   Added missing static method callback constants [wb, 2010-05-11]
  * @changes    1.0.0b2   Added the missing ::enableDebugging() [wb, 2010-05-05]
  * @changes    1.0.0b    The initial implementation [wb, 2010-05-05]
  *
  * @phpstan-type MailboxAddress array{personal?: string, mailbox: string, host?: string}
- * @phpstan-type MailboxStructure array{type: string, subtype: string, encoding: string, data: string, content_id: string|null, disposition: string|null, disposition_fields: array<string, string>, type_fields: array<string, string>, parts: list<array<string, mixed>>|null}
+ * @phpstan-type MailboxStructure array{type: string, subtype: string, encoding: string, data: string, content_id:
+ * string|null, disposition: string|null, disposition_fields: array<string, string>, type_fields: array<string, string>,
+ * parts: list<array<string, mixed>>|null}
  */
 class Mailbox
 {
@@ -52,14 +62,20 @@ class Mailbox
 	 * Adds an S/MIME certificate, or certificate + private key pair for verification and decryption of S/MIME messages
 	 *
 	 * @param string       $email_address         The email address the certificate or private key is for
-	 * @param File|string $certificate_file      The file the S/MIME certificate is stored in - required for verification and decryption
-	 * @param File        $private_key_file      The file the S/MIME private key is stored in - required for decryption only
+	 * @param File|string $certificate_file      The file the S/MIME certificate is stored in - required for
+	 * verification and decryption
+	 * @param File        $private_key_file      The file the S/MIME private key is stored in - required for decryption
+	 * only
 	 * @param string       $private_key_password  The password for the private key
 	 * @return void
 	 * @throws ValidationException
 	 */
-	public static function addSMIMEPair(string $email_address, mixed $certificate_file, ?File $private_key_file = null, ?string $private_key_password = null): void
-	{
+	public static function addSMIMEPair(
+		string $email_address,
+		mixed $certificate_file,
+		?File $private_key_file = null,
+		?string $private_key_password = null
+	): void {
 		if (!$certificate_file instanceof File) {
 			$certificate_file = new File($certificate_file);
 		}
@@ -122,7 +138,10 @@ class Mailbox
 					}
 					$lower_encoding = strtolower($match[1]);
 					$last_key = count($part_with_encoding) - 1;
-					if (isset($part_with_encoding[$last_key]) && $part_with_encoding[$last_key]['encoding'] == $lower_encoding) {
+					if (
+						isset($part_with_encoding[$last_key]) && $part_with_encoding[$last_key]['encoding'] ==
+						$lower_encoding
+					) {
 						$part_with_encoding[$last_key]['string'] .= $part_string;
 					} else {
 						$part_with_encoding[] = array('encoding' => $lower_encoding, 'string' => $part_string);
@@ -130,7 +149,10 @@ class Mailbox
 				}
 			} else {
 				$last_key = count($part_with_encoding) - 1;
-				if (isset($part_with_encoding[$last_key]) && $part_with_encoding[$last_key]['encoding'] == 'iso-8859-1') {
+				if (
+					isset($part_with_encoding[$last_key])
+					&& $part_with_encoding[$last_key]['encoding'] == 'iso-8859-1'
+				) {
 					$part_with_encoding[$last_key]['string'] .= $part;
 				} else {
 					$part_with_encoding[] = array('encoding' => 'iso-8859-1', 'string' => $part);
@@ -186,7 +208,13 @@ class Mailbox
 			}
 			if (is_string($to)) {
 				$smime_pair = self::$smime_pairs[$to] ?? null;
-				if ($smime_pair !== null && $smime_pair['private_key'] !== null && self::handleSMIMEDecryption($info, $structure, $smime_pair)) {
+				if (
+					$smime_pair !== null && $smime_pair['private_key'] !== null && self::handleSMIMEDecryption(
+						$info,
+						$structure,
+						$smime_pair
+					)
+				) {
 					return $info;
 				}
 			}
@@ -241,7 +269,11 @@ class Mailbox
 			}
 			$content = self::iconv($charset, 'UTF-8', $content);
 			if ($subtype == 'html') {
-				$content = preg_replace('#(content=(["\'])text/html\s*;\s*charset=(["\']?))' . preg_quote($charset, '#') . '(\3\2)#i', '\1utf-8\4', $content) ?? $content;
+				$content = preg_replace(
+					'#(content=(["\'])text/html\s*;\s*charset=(["\']?))' . preg_quote($charset, '#') . '(\3\2)#i',
+					'\1utf-8\4',
+					$content
+				) ?? $content;
 			}
 		}
 
@@ -252,7 +284,8 @@ class Mailbox
 			if (is_string($content_id)) {
 				$cid = substr($content_id, 0, 1) == '<' ? substr($content_id, 1, -1) : $content_id;
 				$related['cid:' . $cid] = array(
-					'mimetype' => (is_string($structure_type) ? $structure_type : '') . '/' . (is_string($subtype) ? $subtype : ''),
+					'mimetype' => (is_string($structure_type) ? $structure_type : '') . '/' . (is_string($subtype) ?
+						$subtype : ''),
 					'data'     => $content
 				);
 			}
@@ -312,7 +345,8 @@ class Mailbox
 			$attachments = isset($info[$disposition]) && is_array($info[$disposition]) ? $info[$disposition] : array();
 			$attachments[] = array(
 				'filename' => $filename,
-				'mimetype' => (is_string($structure_type) ? $structure_type : '') . '/' . (is_string($subtype) ? $subtype : ''),
+				'mimetype' => (is_string($structure_type) ? $structure_type : '') . '/' . (is_string($subtype) ?
+					$subtype : ''),
 				'data'     => $content
 			);
 			$info[$disposition] = $attachments;
@@ -338,7 +372,8 @@ class Mailbox
 	 *
 	 * @param  array<string, mixed>       &$info       The array of information about a message
 	 * @param  array<array-key, mixed>    $structure   The structure of this part
-	 * @param  array{certificate: File, private_key: File|null, password: string|null}  $smime_pair  An associative array containing an S/MIME certificate, private key and password
+	 * @param  array{certificate: File, private_key: File|null, password: string|null}  $smime_pair  An associative
+	 * array containing an S/MIME certificate, private key and password
 	 * @return boolean  If the message was decrypted
 	 */
 	private static function handleSMIMEDecryption(array &$info, array $structure, array $smime_pair): bool
@@ -355,7 +390,9 @@ class Mailbox
 		$data           = $structure['data'] ?? null;
 
 		$headers   = array();
-		$headers[] = "Content-Type: " . (is_string($structure_type) ? $structure_type : '') . '/' . (is_string($subtype) ? $subtype : '');
+		$headers[] = "Content-Type: " . (is_string($structure_type) ? $structure_type : '') . '/' . (is_string(
+			$subtype
+		) ? $subtype : '');
 		$headers[] = "Content-Transfer-Encoding: " . (is_string($encoding) ? $encoding : '');
 		$disposition = $structure['disposition'] ?? null;
 		$header    = "Content-Disposition: " . (is_string($disposition) ? $disposition : '');
@@ -414,7 +451,8 @@ class Mailbox
 	 *
 	 * @param array<string, mixed>       &$info       The array of information about a message
 	 * @param array<array-key, mixed>    $structure   The structure of this part
-	 * @param array{certificate: File, private_key: File|null, password: string|null}  $smime_pair  An associative array containing an S/MIME certificate file
+	 * @param array{certificate: File, private_key: File|null, password: string|null}  $smime_pair  An associative array
+	 * containing an S/MIME certificate file
 	 * @return boolean  If the message was verified
 	 */
 	private static function handleSMIMEVerification(array &$info, array $structure, array $smime_pair): bool
@@ -479,8 +517,8 @@ class Mailbox
 				continue;
 			}
 			if ($output) {
-                $output .= ', ';
-            }
+				$output .= ', ';
+			}
 
 			if (!array_key_exists(0, $email)) {
 				$email[0] = isset($email['personal']) && is_string($email['personal']) ? $email['personal'] : '';
@@ -507,10 +545,22 @@ class Mailbox
 	 */
 	private static function parseEmail(string $string): array
 	{
-		$email_regex = '((?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")(?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*)@((?:[a-z0-9\\-]+\.)+[a-z]{2,}|\[(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])\])';
-		$name_regex  = '((?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*)(?:\.?[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*))*)';
+		$email_regex =
+			'((?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")(?:\.[ '
+				. '\t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ '
+				. '\t]*))*)@((?:[a-z0-9\\-]+\.)+[a-z]{2,}|\[(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4'
+				. ']\d|25[0-5])\])';
+		$name_regex  =
+			'((?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*)(?:\.?[ '
+				. '\t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*))*)';
 
-		if (preg_match('~^[ \t]*' . $name_regex . '[ \t]*<[ \t]*' . $email_regex . '[ \t]*>[ \t]*$~ixD', $string, $match)) {
+		if (
+			preg_match(
+				'~^[ \t]*' . $name_regex . '[ \t]*<[ \t]*' . $email_regex . '[ \t]*>[ \t]*$~ixD',
+				$string,
+				$match
+			)
+		) {
 			$match[1] = trim($match[1]);
 			if ($match[1][0] == '"' && substr($match[1], -1) == '"') {
 				$match[1] = substr($match[1], 1, -1);
@@ -528,7 +578,13 @@ class Mailbox
 
 		// This handles the outdated practice of including the personal
 		// part of the email in a comment after the email address
-		} elseif (preg_match('~^[ \t]*(?:<[ \t]*)?' . $email_regex . '(?:[ \t]*>)?[ \t]*\(([^)]+)\)[ \t]*$~ixD', $string, $match)) {
+		} elseif (
+			preg_match(
+				'~^[ \t]*(?:<[ \t]*)?' . $email_regex . '(?:[ \t]*>)?[ \t]*\(([^)]+)\)[ \t]*$~ixD',
+				$string,
+				$match
+			)
+		) {
 			$match[3] = trim($match[1]);
 			if ($match[3][0] == '"' && substr($match[3], -1) == '"') {
 				$match[3] = substr($match[3], 1, -1);
@@ -622,12 +678,22 @@ class Mailbox
 				preg_match_all('#"[^"]+?"#', $value, $matches, PREG_SET_ORDER);
 				foreach ($matches as $i => $match) {
 					$strings[] = $match[0];
-					$value = preg_replace('#' . preg_quote($match[0], '#') . '#', ':string' . sizeof($strings), $value, 1) ?? $value;
+					$value = preg_replace(
+						'#' . preg_quote($match[0], '#') . '#',
+						':string' . sizeof($strings),
+						$value,
+						1
+					) ?? $value;
 				}
 				preg_match_all('#\([^)]+?\)#', $value, $matches, PREG_SET_ORDER);
 				foreach ($matches as $i => $match) {
 					$strings[] = $match[0];
-					$value = preg_replace('#' . preg_quote($match[0], '#') . '#', ':string' . sizeof($strings), $value, 1) ?? $value;
+					$value = preg_replace(
+						'#' . preg_quote($match[0], '#') . '#',
+						':string' . sizeof($strings),
+						$value,
+						1
+					) ?? $value;
 				}
 
 				$emails = explode(',', $value);
@@ -685,18 +751,22 @@ class Mailbox
 	 *   - `'filename'`: The name of the file
 	 *   - `'mimetype'`: The mimetype of the file
 	 *   - `'data'`: The raw contents of the file
-	 *  - `'related'`: An associative array of related files, such as embedded images, with the key `'cid:{content-id}'` and an array value containing:
+	 *  - `'related'`: An associative array of related files, such as embedded images, with the key `'cid:{content-id}'`
+	 * and an array value containing:
 	 *   - `'mimetype'`: The mimetype of the file
 	 *   - `'data'`: The raw contents of the file
-	 *  - `'verified'`: If the message contents were verified via an S/MIME certificate - if not verified the smime.p7s will be listed as an attachment
-	 *  - `'decrypted'`: If the message contents were decrypted via an S/MIME private key - if not decrypted the smime.p7m will be listed as an attachment
+	 *  - `'verified'`: If the message contents were verified via an S/MIME certificate - if not verified the smime.p7s
+	 * will be listed as an attachment
+	 *  - `'decrypted'`: If the message contents were decrypted via an S/MIME private key - if not decrypted the
+	 * smime.p7m will be listed as an attachment
 	 *
 	 * All values in `headers`, `text` and `body` will have been decoded to
 	 * UTF-8. Files in the `attachment`, `inline` and `related` array will all
 	 * retain their original encodings.
 	 *
 	 * @param string  $message           The full source of the email message
-	 * @param boolean $convert_newlines  If `\r\n` should be converted to `\n` in the `text` and `html` parts the message
+	 * @param boolean $convert_newlines  If `\r\n` should be converted to `\n` in the `text` and `html` parts the
+	 * message
 	 * @return array<string, mixed>  The parsed email message - see method description for details
 	 */
 	public static function parseMessage(string $message, bool $convert_newlines = false): array
@@ -797,7 +867,8 @@ class Mailbox
 	 * describes the structure of the message
 	 *
 	 * @param string $data     The contents to get the structure of
-	 * @param array<string, mixed>|string|null $headers  The parsed headers for the message - if not present they will be extracted from the `$data`
+	 * @param array<string, mixed>|string|null $headers  The parsed headers for the message - if not present they will
+	 * be extracted from the `$data`
 	 * @return MailboxStructure  The multi-dimensional, associative array containing the message structure
 	 */
 	private static function parseStructure(string $data, array|string|null $headers = null): array
@@ -805,7 +876,9 @@ class Mailbox
 		if ($headers === null) {
 			$split = preg_split("#^\r\n|\r\n\r\n#", $data, 2);
 			if (!is_array($split) || sizeof($split) != 2) {
-				throw new ProgrammerException('An invalid email message was passed to parseStructure(), the header and body could not be split');
+				throw new ProgrammerException(
+					'An invalid email message was passed to parseStructure(), the header and body could not be split'
+				);
 			}
 			list ($headers, $data) = $split;
 			$headers = self::parseHeaders($headers);
@@ -818,7 +891,8 @@ class Mailbox
 		if (!is_array($content_type_info)) {
 			$content_type_info = array('value' => 'text/plain', 'fields' => array());
 		}
-		$content_type_value  = is_string($content_type_info['value'] ?? null) ? $content_type_info['value'] : 'text/plain';
+		$content_type_value  = is_string($content_type_info['value'] ?? null) ? $content_type_info['value'] :
+			'text/plain';
 		$content_type_fields = is_array($content_type_info['fields'] ?? null) ? $content_type_info['fields'] : array();
 		list ($type, $subtype) = array_pad(explode('/', strtolower($content_type_value), 2), 2, '');
 
@@ -871,7 +945,8 @@ class Mailbox
 			} else {
 				$disposition        = null;
 			}
-			$content_id = isset($headers['content-id']) && is_string($headers['content-id']) ? $headers['content-id'] : null;
+			$content_id = isset($headers['content-id']) && is_string($headers['content-id']) ? $headers['content-id'] :
+				null;
 			$structure  = array(
 				'type'               => $type,
 				'type_fields'        => $type_fields,
@@ -990,8 +1065,15 @@ class Mailbox
 	 * @param  integer $timeout   The timeout to use when connecting
 	 * @return Mailbox
 	 */
-	public function __construct(mixed $type, mixed $host, mixed $username, mixed $password, mixed $port = null, mixed $secure = false, mixed $timeout = null)
-	{
+	public function __construct(
+		mixed $type,
+		mixed $host,
+		mixed $username,
+		mixed $password,
+		mixed $port = null,
+		mixed $secure = false,
+		mixed $timeout = null
+	) {
 		if ($timeout === null) {
 			$timeout = ini_get('default_socket_timeout');
 		}
@@ -1085,7 +1167,10 @@ class Mailbox
 		);
 
 		foreach (Core::stopErrorCapture('#ssl#i') as $error) {
-			throw new ConnectivityException('There was an error connecting to the server. A secure connection was requested, but was not available. Try a non-secure connection instead.');
+			throw new ConnectivityException(
+				'There was an error connecting to the server. A secure connection was requested, but was not '
+					. 'available. Try a non-secure connection instead.'
+			);
 		}
 
 		if (!$connection) {
@@ -1255,18 +1340,22 @@ class Mailbox
 	 *   - `'filename'`: The name of the file
 	 *   - `'mimetype'`: The mimetype of the file
 	 *   - `'data'`: The raw contents of the file
-	 *  - `'related'`: An associative array of related files, such as embedded images, with the key `'cid:{content-id}'` and an array value containing:
+	 *  - `'related'`: An associative array of related files, such as embedded images, with the key `'cid:{content-id}'`
+	 * and an array value containing:
 	 *   - `'mimetype'`: The mimetype of the file
 	 *   - `'data'`: The raw contents of the file
-	 *  - `'verified'`: If the message contents were verified via an S/MIME certificate - if not verified the smime.p7s will be listed as an attachment
-	 *  - `'decrypted'`: If the message contents were decrypted via an S/MIME private key - if not decrypted the smime.p7m will be listed as an attachment
+	 *  - `'verified'`: If the message contents were verified via an S/MIME certificate - if not verified the smime.p7s
+	 * will be listed as an attachment
+	 *  - `'decrypted'`: If the message contents were decrypted via an S/MIME private key - if not decrypted the
+	 * smime.p7m will be listed as an attachment
 	 *
 	 * All values in `headers`, `text` and `body` will have been decoded to
 	 * UTF-8. Files in the `attachment`, `inline` and `related` array will all
 	 * retain their original encodings.
 	 *
 	 * @param  integer $uid               The UID of the message to retrieve
-	 * @param  boolean $convert_newlines  If `\r\n` should be converted to `\n` in the `text` and `html` parts the message
+	 * @param  boolean $convert_newlines  If `\r\n` should be converted to `\n` in the `text` and `html` parts the
+	 * message
 	 * @return array<string, mixed>  The parsed email message - see method description for details
 	 * @throws ValidationException
 	 */
@@ -1309,8 +1398,8 @@ class Mailbox
 			$message = '';
 			foreach ($response as $i => $line) {
 				if (!$i) {
-                    continue;
-                }
+					continue;
+				}
 				if (strlen($message) + strlen($line) + 2 > $byte_count) {
 					$message .= substr($line . "\r\n", 0, $byte_count - strlen($message));
 				} else {
@@ -1423,7 +1512,8 @@ class Mailbox
 					if (preg_match('#=\?[^\?]+\?[QB]\?[^\?]+\?=#', $subject)) {
 						do {
 							$last_subject = $subject;
-							$subject = preg_replace('#(=\?([^\?]+)\?[QB]\?[^\?]+\?=) (\s*=\?\2)#', '\1\3', $subject) ?? $subject;
+							$subject = preg_replace('#(=\?([^\?]+)\?[QB]\?[^\?]+\?=) (\s*=\?\2)#', '\1\3', $subject) ??
+								$subject;
 						} while ($subject != $last_subject);
 						$info['subject'] = self::decodeHeader($subject);
 					} else {
@@ -1492,7 +1582,8 @@ class Mailbox
 
 				$received_header = $headers['received'] ?? null;
 				if (is_array($received_header)) {
-					$received_value = isset($received_header[0]) && is_string($received_header[0]) ? $received_header[0] : '';
+					$received_value = isset($received_header[0]) && is_string($received_header[0]) ? $received_header[0]
+						: '';
 				} else {
 					$received_value = is_string($received_header) ? $received_header : '';
 				}
@@ -1505,7 +1596,8 @@ class Mailbox
 					'size'     => isset($sizes[$i]) ? $sizes[$i] : 0,
 					'date'     => isset($headers['date']) && is_string($headers['date']) ? $headers['date'] : '',
 					'from'     => is_array($from_header) ? self::joinEmails(array($from_header)) : '',
-					'subject'  => isset($headers['subject']) && is_string($headers['subject']) ? $headers['subject'] : ''
+					'subject'  => isset($headers['subject']) && is_string($headers['subject']) ? $headers['subject'] :
+						''
 				);
 				if (isset($headers['message-id']) && is_string($headers['message-id'])) {
 					$output[$i]['message_id'] = $headers['message-id'];

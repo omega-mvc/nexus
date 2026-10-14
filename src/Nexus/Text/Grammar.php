@@ -10,13 +10,15 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Grammar
  *
  * @version    1.0.0b15
- * @changes    1.0.0b15  Added length checking to ensure blank strings are not being passed to various methods [wb, 2011-06-20]
- * @changes    1.0.0b14  Fixed a bug in singularization that would affect words containing the substring `mice` or `lice` [wb, 2011-02-24]
+ * @changes    1.0.0b15  Added length checking to ensure blank strings are not being passed to various methods [wb,
+ * 2011-06-20]
+ * @changes    1.0.0b14  Fixed a bug in singularization that would affect words containing the substring `mice` or
+ * `lice` [wb, 2011-02-24]
  * @changes    1.0.0b13  Fixed the pluralization of video [wb, 2010-08-10]
- * @changes    1.0.0b12  Updated ::singularize() and ::pluralize() to be able to handle underscore_CamelCase [wb, 2010-08-06]
+ * @changes    1.0.0b12  Updated ::singularize() and ::pluralize() to be able to handle underscore_CamelCase [wb,
+ * 2010-08-06]
  * @changes    1.0.0b11  Fixed custom camelCase to underscore_notation rules [wb, 2010-06-23]
  * @changes    1.0.0b10  Removed `e` flag from preg_replace() calls [wb, 2010-06-08]
  * @changes    1.0.0b9   Fixed a bug with ::camelize() and human-friendly strings [wb, 2010-06-08]
@@ -24,9 +26,11 @@ declare(strict_types=1);
  * @changes    1.0.0b7   Added the `$return_error` parameter to ::pluralize() and ::singularize() [wb, 2010-03-30]
  * @changes    1.0.0b6   Added missing ::compose() method [wb, 2010-03-03]
  * @changes    1.0.0b5   Fixed ::reset() to properly reset the singularization and pluralization rules [wb, 2009-10-28]
- * @changes    1.0.0b4   Added caching for various methods - provided significant performance boost to ORM [wb, 2009-06-15]
+ * @changes    1.0.0b4   Added caching for various methods - provided significant performance boost to ORM [wb,
+ * 2009-06-15]
  * @changes    1.0.0b3   Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
- * @changes    1.0.0b2   Fixed a bug where some words would lose capitalization with ::pluralize() and ::singularize() [wb, 2009-01-25]
+ * @changes    1.0.0b2   Fixed a bug where some words would lose capitalization with ::pluralize() and ::singularize()
+ * [wb, 2009-01-25]
  * @changes    1.0.0b    The initial implementation [wb, 2007-09-25]
  */
 class Grammar
@@ -248,7 +252,8 @@ class Grammar
 				if ($upper) {
 					$string = ucfirst($string);
 				}
-				$string = preg_replace_callback('#_([a-z0-9])#i', array(self::class, 'camelizeCallback'), $string) ?? $string;
+				$string = preg_replace_callback('#_([a-z0-9])#i', array(self::class, 'camelizeCallback'), $string) ??
+					$string;
 			}
 		}
 
@@ -351,12 +356,17 @@ class Grammar
 	 *
 	 * @param  mixed   $quantity                     The quantity (int) or an array of objects to count
 	 * @param  string  $singular_form                The string to be returned for when `$quantity = 1`
-	 * @param  string  $plural_form                  The string to be returned for when `$quantity != 1`, use `%d` to place the quantity in the string
+	 * @param  string  $plural_form                  The string to be returned for when `$quantity != 1`, use `%d` to
+	 * place the quantity in the string
 	 * @param  boolean $use_words_for_single_digits  If the numbers 0 to 9 should be written out as words
 	 * @return string
 	 */
-	public static function inflectOnQuantity(mixed $quantity, string $singular_form, ?string $plural_form = null, bool $use_words_for_single_digits = false): string
-	{
+	public static function inflectOnQuantity(
+		mixed $quantity,
+		string $singular_form,
+		?string $plural_form = null,
+		bool $use_words_for_single_digits = false
+	): string {
 		if ($plural_form === null) {
 			$plural_form = self::pluralize($singular_form);
 			if ($plural_form === false) {
@@ -464,7 +474,8 @@ class Grammar
 	 * Returns the plural version of a singular noun
 	 *
 	 * @param  string  $singular_noun  The singular noun to pluralize
-	 * @param  boolean $return_error   If this is `TRUE` and the noun can't be pluralized, `FALSE` will be returned instead
+	 * @param  boolean $return_error   If this is `TRUE` and the noun can't be pluralized, `FALSE` will be returned
+	 * instead
 	 * @return string|false  The pluralized noun, or `FALSE` when `$return_error` is `TRUE` and no rule matched
 	 */
 	public static function pluralize(string $singular_noun, bool $return_error = false): string|false
@@ -511,7 +522,8 @@ class Grammar
 	 * This would be most useful for changing ::joinArray() to work with
 	 * languages other than English.
 	 *
-	 * @param  callable(mixed...):mixed $callback  The function to replace ::joinArray() with - should accept the same parameters and return the same type
+	 * @param  callable(mixed...):mixed $callback  The function to replace ::joinArray() with - should accept the same
+	 * parameters and return the same type
 	 * @return void
 	 */
 	public static function registerJoinArrayCallback(callable $callback): void
@@ -587,7 +599,8 @@ class Grammar
 	 * Returns the singular version of a plural noun
 	 *
 	 * @param  string  $plural_noun   The plural noun to singularize
-	 * @param  boolean $return_error  If this is `TRUE` and the noun can't be pluralized, `FALSE` will be returned instead
+	 * @param  boolean $return_error  If this is `TRUE` and the noun can't be pluralized, `FALSE` will be returned
+	 * instead
 	 * @return string|false  The singularized noun, or `FALSE` when `$return_error` is `TRUE` and no rule matched
 	 */
 	public static function singularize(string $plural_noun, bool $return_error = false): string|false
@@ -632,7 +645,8 @@ class Grammar
 	 * Splits the last word off of a `camelCase` or `underscore_notation` string
 	 *
 	 * @param  string $string  The string to split the word from
-	 * @return array{0: string, 1: string}  The first element is the beginning part of the string, the second element is the last word
+	 * @return array{0: string, 1: string}  The first element is the beginning part of the string, the second element is
+	 * the last word
 	 */
 	private static function splitLastWord(string $string): array
 	{
@@ -644,13 +658,19 @@ class Grammar
 		// Handle underscore notation
 		if ($string == self::underscorize($string)) {
 			if (strpos($string, '_') === false) {
-                return array('', $string);
-            }
+				return array('', $string);
+			}
 			return array(substr($string, 0, strrpos($string, '_') + 1), substr($string, strrpos($string, '_') + 1));
 		}
 
 		// Handle camel case
-		if (preg_match('#(.*)((?<=[a-zA-Z_]|^)(?:[0-9]+|[A-Z][a-z]*)|(?<=[0-9A-Z_]|^)(?:[A-Z][a-z]*))$#D', $string, $match)) {
+		if (
+			preg_match(
+				'#(.*)((?<=[a-zA-Z_]|^)(?:[0-9]+|[A-Z][a-z]*)|(?<=[0-9A-Z_]|^)(?:[A-Z][a-z]*))$#D',
+				$string,
+				$match
+			)
+		) {
 			return array($match[1], $match[2]);
 		}
 
@@ -718,7 +738,14 @@ class Grammar
 		}
 
 		// Step 2
-		if (preg_match('#^(.+?)(ational|tional|enci|anci|izer|bli|alli|entli|eli|ousli|ization|ation|ator|alism|iveness|fulness|ousness|aliti|iviti|biliti|logi)$#', $word, $match)) {
+		if (
+			preg_match(
+				'#^(.+?)(ational|tional|enci|anci|izer|bli|alli|entli|eli|ousli|ization|ation|ator|alism|iveness|fulnes'
+					. 's|ousness|aliti|iviti|biliti|logi)$#',
+				$word,
+				$match
+			)
+		) {
 			if (preg_match($mgr0_regex, $match[1])) {
 				$word = $match[1] . strtr(
 					$match[2],
@@ -749,7 +776,16 @@ class Grammar
 		}
 
 		// Step 4
-		if (preg_match('#^(.+?)(al|ance|ence|er|ic|able|ible|ant|ement|ment|ent|ou|ism|ate|iti|ous|ive|ize|(?<=[st])ion)$#', $word, $match) && preg_match($mgr1_regex, $match[1])) {
+		if (
+			preg_match(
+				'#^(.+?)(al|ance|ence|er|ic|able|ible|ant|ement|ment|ent|ou|ism|ate|iti|ous|ive|ize|(?<=[st])ion)$#',
+				$word,
+				$match
+			) && preg_match(
+				$mgr1_regex,
+				$match[1]
+			)
+		) {
 			$word = $match[1];
 		}
 
@@ -758,7 +794,10 @@ class Grammar
 			$stem = substr($word, 0, -1);
 			if (preg_match($mgr1_regex, $stem)) {
 				$word = $stem;
-			} elseif (preg_match($meq1_regex, $stem) && !preg_match('#^[^aeiou][^aeiouy]*[aeiouy][^aeiouwxy]$#', $stem)) {
+			} elseif (
+				preg_match($meq1_regex, $stem)
+				&& !preg_match('#^[^aeiou][^aeiouy]*[aeiouy][^aeiouwxy]$#', $stem)
+			) {
 				$word = $stem;
 			}
 		}
@@ -828,8 +867,8 @@ class Grammar
 	 * @return Grammar
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

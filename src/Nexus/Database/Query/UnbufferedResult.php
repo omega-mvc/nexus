@@ -3,25 +3,27 @@
 declare(strict_types=1);
 
 /**
- * Representation of an unbuffered result from a query against the Database class
+ * Representation of an unbuffered result from a query against the Connection class
  *
  * @copyright  Copyright (c) 2007-2011 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/UnbufferedResult
  *
  * @version    1.0.0b13
  * @changes    1.0.0b13  Added a workaround for iconv having issues in MAMP 1.9.4+ [wb, 2011-07-26]
- * @changes    1.0.0b12  Fixed MSSQL to have a properly reset row array, added ::silenceNotices(), fixed pdo_dblib on Windows when using the Microsoft DBLib driver [wb, 2011-05-09]
+ * @changes    1.0.0b12  Fixed MSSQL to have a properly reset row array, added ::silenceNotices(), fixed pdo_dblib on
+ * Windows when using the Microsoft DBLib driver [wb, 2011-05-09]
  * @changes    1.0.0b11  Fixed some bugs with the mysqli extension and prepared statements [wb, 2010-08-28]
  * @changes    1.0.0b10  Backwards Compatibility Break - removed ODBC support [wb, 2010-07-31]
  * @changes    1.0.0b9   Added IBM DB2 support [wb, 2010-04-13]
  * @changes    1.0.0b8   Added support for prepared statements [wb, 2010-03-02]
  * @changes    1.0.0b7   Fixed a bug with decoding MSSQL national column when using an ODBC connection [wb, 2009-09-18]
- * @changes    1.0.0b6   Added the method ::unescape(), changed ::tossIfNoRows() to return the object for chaining [wb, 2009-08-12]
- * @changes    1.0.0b5   Added the method ::asObjects() to allow for returning objects instead of associative arrays [wb, 2009-06-23]
+ * @changes    1.0.0b6   Added the method ::unescape(), changed ::tossIfNoRows() to return the object for chaining [wb,
+ * 2009-08-12]
+ * @changes    1.0.0b5   Added the method ::asObjects() to allow for returning objects instead of associative arrays
+ * [wb, 2009-06-23]
  * @changes    1.0.0b4   Fixed a bug with not properly converting SQL Server text to UTF-8 [wb, 2009-06-18]
  * @changes    1.0.0b3   Added support for Oracle, various bug fixes [wb, 2009-05-04]
  * @changes    1.0.0b2   Updated for new Core API [wb, 2009-02-16]
@@ -48,7 +50,8 @@ class UnbufferedResult implements Iterator
 	protected static function compose(string $message): string
 	{
 		$args = array_map(
-			fn(mixed $arg): bool|float|int|string|null => $arg === null || is_scalar($arg) ? $arg : get_debug_type($arg),
+			fn(mixed $arg): bool|float|int|string|null => $arg === null || is_scalar($arg) ? $arg :
+				get_debug_type($arg),
 			array_slice(func_get_args(), 1)
 		);
 
@@ -106,9 +109,9 @@ class UnbufferedResult implements Iterator
 	/**
 	 * The database object the result was created from
 	 *
-	 * @var Database
+	 * @var Connection
 	 */
-	private Database $database;
+	private Connection $database;
 
 	/**
 	 * The database extension
@@ -171,9 +174,9 @@ class UnbufferedResult implements Iterator
 	 */
 	public function __construct(mixed $database, mixed $character_set = null)
 	{
-		if (!$database instanceof Database) {
+		if (!$database instanceof Connection) {
 			throw new ProgrammerException(
-				'The database object provided does not appear to be a descendant of Database'
+				'The database object provided does not appear to be a descendant of Connection'
 			);
 		}
 
@@ -368,7 +371,15 @@ class UnbufferedResult implements Iterator
 		if ($row !== array() && $type == 'mssql') {
 			if ($this->character_set) {
 				foreach ($row as $key => $value) {
-					if (!is_string($key) || !is_string($value) || strpos($key, '__flourish_mssqln_') === 0 || isset($row['fmssqln__' . $key]) || preg_match('#[\x0-\x8\xB\xC\xE-\x1F]#', $value)) {
+					if (
+						!is_string($key) || !is_string($value) || strpos(
+							$key,
+							'__flourish_mssqln_'
+						) === 0 || isset($row['fmssqln__' . $key]) || preg_match(
+							'#[\x0-\x8\xB\xC\xE-\x1F]#',
+							$value
+						)
+					) {
 						continue;
 					}
 					$row[$key] = self::iconv($this->character_set, 'UTF-8', $value);
@@ -383,8 +394,8 @@ class UnbufferedResult implements Iterator
 		if ($this->unescape_map) {
 			foreach ($this->unescape_map as $column => $column_data_type) {
 				if (!isset($row[$column])) {
-                    continue;
-                }
+					continue;
+				}
 				$row[$column] = $this->database->unescape($column_data_type, $row[$column]);
 			}
 		}
@@ -532,7 +543,8 @@ class UnbufferedResult implements Iterator
 				if (!self::$silence_notices) {
 					trigger_error(
 						self::compose(
-							'A single space was detected coming out of the database and was converted into an empty string - see %s for more information',
+							'A single space was detected coming out of the database and was converted into an empty '
+								. 'string - see %s for more information',
 							'http://bugs.php.net/bug.php?id=26315'
 						),
 						E_USER_NOTICE
@@ -542,7 +554,8 @@ class UnbufferedResult implements Iterator
 			if (!self::$silence_notices && is_string($key) && strlen($key) == 30) {
 				trigger_error(
 					self::compose(
-						'A column name exactly 30 characters in length was detected coming out of the database - this column name may be truncated, see %s for more information.',
+						'A column name exactly 30 characters in length was detected coming out of the database - this '
+							. 'column name may be truncated, see %s for more information.',
 						'http://bugs.php.net/bug.php?id=23990'
 					),
 					E_USER_NOTICE
@@ -551,7 +564,8 @@ class UnbufferedResult implements Iterator
 			if (!self::$silence_notices && is_string($value) && strlen($value) == 256) {
 				trigger_error(
 					self::compose(
-						'A value exactly 255 characters in length was detected coming out of the database - this value may be truncated, see %s for more information.',
+						'A value exactly 255 characters in length was detected coming out of the database - this value '
+							. 'may be truncated, see %s for more information.',
 						'http://bugs.php.net/bug.php?id=37757'
 					),
 					E_USER_NOTICE
@@ -732,9 +746,10 @@ class UnbufferedResult implements Iterator
 	 * Sets the result object to unescape all values as they are retrieved from the object
 	 *
 	 * The data types should be from the list of types supported by
-	 * Database::unescape().
+	 * Connection::unescape().
 	 *
-	 * @param  array<string, string> $column_data_type_map  An associative array with column names as the keys and the data types as the values
+	 * @param  array<string, string> $column_data_type_map  An associative array with column names as the keys and the
+	 * data types as the values
 	 * @return UnbufferedResult  The result object, to allow for method chaining
 	 */
 	public function unescape(array $column_data_type_map): UnbufferedResult
@@ -771,7 +786,8 @@ class UnbufferedResult implements Iterator
 	private function validateState(): void
 	{
 		if ($this->result === null) {
-			throw new ProgrammerException('This unbuffered result has been fully fetched, or replaced by a newer result');
+			throw new
+				ProgrammerException('This unbuffered result has been fully fetched, or replaced by a newer result');
 		}
 	}
 }

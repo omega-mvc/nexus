@@ -10,17 +10,20 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMSchema
  *
  * @version    1.0.0b9
  * @changes    1.0.0b9  Enhanced various exception messages [wb, 2010-09-19]
- * @changes    1.0.0b8  Added 'one-to-one' support to ::getRouteNameFromRelationship(), '!many-to-one' to ::getRoute() [wb, 2010-03-03]
+ * @changes    1.0.0b8  Added 'one-to-one' support to ::getRouteNameFromRelationship(), '!many-to-one' to ::getRoute()
+ * [wb, 2010-03-03]
  * @changes    1.0.0b7  Added support for multiple databases [wb, 2009-10-28]
- * @changes    1.0.0b6  Internal Backwards Compatibility Break - Added the `$schema` parameter to the beginning of ::getRoute(), ::getRouteName(), ::getRoutes() and ::isOneToOne() - added '!many-to-one' relationship type handling [wb, 2009-10-22]
+ * @changes    1.0.0b6  Internal Backwards Compatibility Break - Added the `$schema` parameter to the beginning of
+ * ::getRoute(), ::getRouteName(), ::getRoutes() and ::isOneToOne() - added '!many-to-one' relationship type handling
+ * [wb, 2009-10-22]
  * @changes    1.0.0b5  Fixed some error messaging to not include {empty_string} in some situations [wb, 2009-07-31]
  * @changes    1.0.0b4  Added ::isOneToOne() [wb, 2009-07-21]
  * @changes    1.0.0b3  Added routes caching for performance [wb, 2009-06-15]
- * @changes    1.0.0b2  Backwards Compatiblity Break - removed ::enableSmartCaching(), ORM::enableSchemaCaching() now provides equivalent functionality [wb, 2009-05-04]
+ * @changes    1.0.0b2  Backwards Compatiblity Break - removed ::enableSmartCaching(), ORM::enableSchemaCaching() now
+ * provides equivalent functionality [wb, 2009-05-04]
  * @changes    1.0.0b   The initial implementation [wb, 2007-06-14]
  */
 class ORMSchema
@@ -65,7 +68,8 @@ class ORMSchema
 	 * @param  string  $table              The main table we are searching on behalf of
 	 * @param  string  $related_table      The related table we are searching under
 	 * @param  ?string $route              The route to get info about, or NULL to auto-determine it
-	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-meny'`, `'many-to-one'`, `'many-to-many'`
+	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`,
+	 * `'one-to-one'`, `'one-to-meny'`, `'many-to-one'`, `'many-to-many'`
 	 * @return array<string, mixed>  The relationship information for the route specified
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -73,8 +77,13 @@ class ORMSchema
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function getRoute(Schema $schema, string $table, string $related_table, ?string $route = null, ?string $relationship_type = null): array
-	{
+	public static function getRoute(
+		Schema $schema,
+		string $table,
+		string $related_table,
+		?string $route = null,
+		?string $relationship_type = null
+	): array {
 		$valid_relationship_types = array(
 			null,
 			'*-to-many',
@@ -102,7 +111,8 @@ class ORMSchema
 
 		if (!isset($routes[$route])) {
 			throw new ProgrammerException(
-				'The route specified, %1$s, for the%2$srelationship between %3$s and %4$s does not exist. Must be one of: %5$s.',
+				'The route specified, %1$s, for the%2$srelationship between %3$s and %4$s does not exist. Must be one '
+					. 'of: %5$s.',
 				$route,
 				($relationship_type) ? ' ' . $relationship_type . ' ' : ' ',
 				$table,
@@ -124,7 +134,8 @@ class ORMSchema
 	 * @param  string  $table              The main table we are searching on behalf of
 	 * @param  string  $related_table      The related table we are trying to find the routes for
 	 * @param  string  $route              The route that was preselected, will be verified if present
-	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
+	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`,
+	 * `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
 	 * @return string  The only route from the main table to the related table
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -132,8 +143,13 @@ class ORMSchema
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function getRouteName(Schema $schema, string $table, string $related_table, ?string $route = null, ?string $relationship_type = null): string
-	{
+	public static function getRouteName(
+		Schema $schema,
+		string $table,
+		string $related_table,
+		?string $route = null,
+		?string $relationship_type = null
+	): string {
 		$valid_relationship_types = array(
 			null,
 			'*-to-many',
@@ -172,7 +188,8 @@ class ORMSchema
 
 		if (sizeof($keys) > 1) {
 			throw new ProgrammerException(
-				'There is more than one route for the%1$srelationship between %2$s and %3$s. Please specify one of the following: %4$s.',
+				'There is more than one route for the%1$srelationship between %2$s and %3$s. Please specify one of the '
+					. 'following: %4$s.',
 				($relationship_type) ? ' ' . $relationship_type . ' ' : ' ',
 				$table,
 				$related_table,
@@ -197,7 +214,8 @@ class ORMSchema
 	 *
 	 * @internal
 	 *
-	 * @param  string $type          The type of relationship: `'*-to-one'`, `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
+	 * @param  string $type          The type of relationship: `'*-to-one'`, `'one-to-one'`, `'one-to-many'`,
+	 * `'many-to-one'`, `'many-to-many'`
 	 * @param  array<string, mixed>  $relationship  The relationship array from Schema::getKeys()
 	 * @return string  The name of the route
 	 */
@@ -239,16 +257,22 @@ class ORMSchema
 	 * @param  Schema $schema             The schema object to get the routes for
 	 * @param  string  $table              The main table we are searching on behalf of
 	 * @param  string  $related_table      The related table we are trying to find the routes for
-	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`, `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
-	 * @return array<string, array<string, mixed>>  All of the routes from the main table to the related table, keyed by the route name
+	 * @param  string  $relationship_type  The relationship type: `NULL`, `'*-to-many'`, `'*-to-one'`, `'!many-to-one'`,
+	 * `'one-to-one'`, `'one-to-many'`, `'many-to-one'`, `'many-to-many'`
+	 * @return array<string, array<string, mixed>>  All of the routes from the main table to the related table, keyed by
+	 * the route name
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function getRoutes(Schema $schema, string $table, string $related_table, ?string $relationship_type = null): array
-	{
+	public static function getRoutes(
+		Schema $schema,
+		string $table,
+		string $related_table,
+		?string $relationship_type = null
+	): array {
 		$key = $table . '::' . $related_table . '::' . $relationship_type;
 		if (isset(self::$cache['getRoutes'][$key])) {
 			return self::$cache['getRoutes'][$key];
@@ -313,7 +337,8 @@ class ORMSchema
 
 				if (!is_string($route_name)) {
 					throw new ProgrammerException(
-						'The %1$s relationship between %2$s and %3$s is missing the column name needed to determine its route name',
+						'The %1$s relationship between %2$s and %3$s is missing the column name needed to determine '
+							. 'its route name',
 						$type,
 						$table,
 						$related_table
@@ -352,7 +377,8 @@ class ORMSchema
 
 		if ($route === null && sizeof($relationships) > 1) {
 			throw new ProgrammerException(
-				'There is more than one route for the%1$srelationship between %2$s and %3$s. Please specify one of the following: %4$s.',
+				'There is more than one route for the%1$srelationship between %2$s and %3$s. Please specify one of the '
+					. 'following: %4$s.',
 				' one-to-one ',
 				$table,
 				$related_table,
@@ -414,8 +440,8 @@ class ORMSchema
 	 * @return ORMSchema
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

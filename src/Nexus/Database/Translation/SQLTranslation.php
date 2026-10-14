@@ -3,29 +3,39 @@
 declare(strict_types=1);
 
 /**
- * Takes a subset of SQL from IBM DB2, MySQL, PostgreSQL, Oracle, SQLite and MSSQL and translates into the various dialects allowing for cross-database code
+ * Takes a subset of SQL from IBM DB2, MySQL, PostgreSQL, Oracle, SQLite and MSSQL and translates into the various
+ * dialects allowing for cross-database code
  *
  * @copyright  Copyright (c) 2007-2011 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/SQLTranslation
  *
  * @version    1.0.0b20
- * @changes    1.0.0b20  Added fix for PostgreSQL to handle `INSERT` statements that don't specify any columns or values [wb, 2011-09-06]
- * @changes    1.0.0b19  Removed the stray method ::removeSQLiteIndexes() that was left over from moving code into SQLSchemaTranslation [wb, 2011-05-17]
- * @changes    1.0.0b18  Fixed `LENGTH()` and `SUBSTR()` functions for non-ascii characters being stored in MySQL, SQLite and DB2, moved `CREATE TABLE` support to SQLSchemaTranslation [wb, 2011-05-09]
- * @changes    1.0.0b17  Internal Backwards Compatiblity Break - changed the array keys for translated queries returned from ::translate() to include a number plus `:` before the original SQL, preventing duplicate keys [wb, 2010-07-14]
+ * @changes    1.0.0b20  Added fix for PostgreSQL to handle `INSERT` statements that don't specify any columns or values
+ * [wb, 2011-09-06]
+ * @changes    1.0.0b19  Removed the stray method ::removeSQLiteIndexes() that was left over from moving code into
+ * SQLSchemaTranslation [wb, 2011-05-17]
+ * @changes    1.0.0b18  Fixed `LENGTH()` and `SUBSTR()` functions for non-ascii characters being stored in MySQL,
+ * SQLite and DB2, moved `CREATE TABLE` support to SQLSchemaTranslation [wb, 2011-05-09]
+ * @changes    1.0.0b17  Internal Backwards Compatiblity Break - changed the array keys for translated queries returned
+ * from ::translate() to include a number plus `:` before the original SQL, preventing duplicate keys [wb, 2010-07-14]
  * @changes    1.0.0b16  Added IBM DB2 support [wb, 2010-04-13]
- * @changes    1.0.0b15  Fixed a bug with MSSQL national character conversion when running a SQL statement with a sub-select containing joins [wb, 2009-12-18]
- * @changes    1.0.0b14  Changed PostgreSQL to cast columns in LOWER() calls to VARCHAR to allow UUID columns (which are treated as a VARCHAR by Schema) to work with default primary key ordering in RecordSet [wb, 2009-12-16]
- * @changes    1.0.0b13  Added a parameter to ::enableCaching() to provide a key token that will allow cached values to be shared between multiple databases with the same schema [wb, 2009-10-28]
- * @changes    1.0.0b12  Backwards Compatibility Break - Removed date translation functionality, changed the signature of ::translate(), updated to support quoted identifiers, added support for PostgreSQL, MSSQL and Oracle schemas [wb, 2009-10-22]
+ * @changes    1.0.0b15  Fixed a bug with MSSQL national character conversion when running a SQL statement with a
+ * sub-select containing joins [wb, 2009-12-18]
+ * @changes    1.0.0b14  Changed PostgreSQL to cast columns in LOWER() calls to VARCHAR to allow UUID columns (which are
+ * treated as a VARCHAR by Schema) to work with default primary key ordering in RecordSet [wb, 2009-12-16]
+ * @changes    1.0.0b13  Added a parameter to ::enableCaching() to provide a key token that will allow cached values to
+ * be shared between multiple databases with the same schema [wb, 2009-10-28]
+ * @changes    1.0.0b12  Backwards Compatibility Break - Removed date translation functionality, changed the signature
+ * of ::translate(), updated to support quoted identifiers, added support for PostgreSQL, MSSQL and Oracle schemas [wb,
+ * 2009-10-22]
  * @changes    1.0.0b11  Fixed a bug with translating MSSQL national columns over an ODBC connection [wb, 2009-09-18]
  * @changes    1.0.0b10  Changed last bug fix to support PHP 5.1.6 [wb, 2009-09-18]
  * @changes    1.0.0b9   Fixed another bug with parsing table aliases for MSSQL national columns [wb, 2009-09-18]
- * @changes    1.0.0b8   Fixed a bug with parsing table aliases that occurs when handling MSSQL national columns [wb, 2009-09-09]
+ * @changes    1.0.0b8   Fixed a bug with parsing table aliases that occurs when handling MSSQL national columns [wb,
+ * 2009-09-09]
  * @changes    1.0.0b7   Fixed a bug with translating `NOT LIKE` operators in PostgreSQL [wb, 2009-07-15]
  * @changes    1.0.0b6   Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
  * @changes    1.0.0b5   Update code to only translate data types inside of `CREATE TABLE` queries [wb, 2009-05-22]
@@ -76,7 +86,12 @@ class SQLTranslation
 		$aliases = array();
 
 		// Turn comma joins into cross joins
-		if (preg_match('#^(?:"?:?\w+"?(?:\s+(?:as\s+)?(?:"?\w+"?))?)(?:\s*,\s*(?:"?\w+"?(?:\s+(?:as\s+)?(?:"?\w+"?))?))*$#isD', $sql)) {
+		if (
+			preg_match(
+				'#^(?:"?:?\w+"?(?:\s+(?:as\s+)?(?:"?\w+"?))?)(?:\s*,\s*(?:"?\w+"?(?:\s+(?:as\s+)?(?:"?\w+"?))?))*$#isD',
+				$sql
+			)
+		) {
 			$sql = str_replace(',', ' CROSS JOIN ', $sql);
 		}
 
@@ -90,7 +105,12 @@ class SQLTranslation
 
 		foreach ($tables as $table) {
 			// This grabs the table name and alias (if there is one)
-			preg_match('#^\s*([":\w.]+|\(((?:[^()]+|\((?2)\))*)\))(?:\s+(?:as\s+)?((?!ON|USING)["\w.]+))?\s*(?:(?:ON|USING)\s+(.*))?\s*$#im', $table, $parts);
+			preg_match(
+				'#^\s*([":\w.]+|\(((?:[^()]+|\((?2)\))*)\))(?:\s+(?:as\s+)?((?!ON|USING)["\w.]+))?\s*(?:(?:ON|USING)\s+'
+					. '(.*))?\s*$#im',
+				$table,
+				$parts
+			);
 
 			$table_name  = $parts[1];
 			$table_alias = (!empty($parts[3])) ? $parts[3] : $parts[1];
@@ -169,11 +189,11 @@ class SQLTranslation
 	private ?string $cache_prefix = null;
 
 	/**
-	 * The Database instance
+	 * The Connection instance
 	 *
-	 * @var Database
+	 * @var Connection
 	 */
-	private Database $database;
+	private Connection $database;
 
 	/**
 	 * If debugging is enabled
@@ -183,7 +203,7 @@ class SQLTranslation
 	private ?bool $debug = null;
 
 	/**
-	 * Database-specific schema information needed for translation
+	 * Connection-specific schema information needed for translation
 	 *
 	 * @var array{national_columns?: array<string, list<string>>, national_types?: array<string, array<string, string>>}
 	 */
@@ -202,14 +222,14 @@ class SQLTranslation
 	/**
 	 * Sets up the class and creates functions for SQLite databases
 	 *
-	 * @param  Database $database    The database being translated for
+	 * @param  Connection $database    The database being translated for
 	 * @return SQLTranslation
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 */
-	public function __construct(Database $database)
+	public function __construct(Connection $database)
 	{
 		$this->database = $database;
 		$this->database->inject($this);
@@ -357,7 +377,16 @@ class SQLTranslation
 	 */
 	private function fixMSSQLNationalColumns(string $sql): string
 	{
-		if (!preg_match_all('#select((?:(?:(?!\sfrom\s)[^()])+|\(((?:[^()]+|\((?2)\))*)\))*\s)from((?:(?:(?!\sunion\s|\swhere\s|\sgroup by\s|\slimit\s|\sorder by\s)[^()])+|\(((?:[^()]+|\((?4)\))*)\))*)(?=\swhere\s|\sgroup by\s|\slimit\s|\sorder by\s|\sunion\s|\)|$)#i', $sql, $matches, PREG_SET_ORDER)) {
+		if (
+			!preg_match_all(
+				'#select((?:(?:(?!\sfrom\s)[^()])+|\(((?:[^()]+|\((?2)\))*)\))*\s)from((?:(?:(?!\sunion\s|\swhere\s|\sg'
+					. 'roup by\s|\slimit\s|\sorder by\s)[^()])+|\(((?:[^()]+|\((?4)\))*)\))*)(?=\swhere\s|\sgroup '
+					. 'by\s|\slimit\s|\sorder by\s|\sunion\s|\)|$)#i',
+				$sql,
+				$matches,
+				PREG_SET_ORDER
+			)
+		) {
 			return $sql;
 		}
 
@@ -436,7 +465,12 @@ class SQLTranslation
 			if (preg_match_all('#\((\s*SELECT\s+((?:[^()]+|\((?2)\))*))\)#i', $from_clause, $from_matches)) {
 				$sub_selects = $from_matches[0];
 				foreach ($sub_selects as $i => $sub_select) {
-					$from_clause = preg_replace('#' . preg_quote($sub_select, '#') . '#', ':sub_select_' . $i, $from_clause, 1) ?? $from_clause;
+					$from_clause = preg_replace(
+						'#' . preg_quote($sub_select, '#') . '#',
+						':sub_select_' . $i,
+						$from_clause,
+						1
+					) ?? $from_clause;
 				}
 			}
 
@@ -472,7 +506,14 @@ class SQLTranslation
 						}
 						$to_fix[$table] = array_merge($to_fix[$table], $national_columns[$table]);
 					}
-				} elseif (preg_match('#^(?:((?:"?\w+"?\.)?"?\w+"?)\.("?\w+"?)|((?:min|max|trim|rtrim|ltrim|substring|replace)\(((?:"?\w+"?\.)"?\w+"?)\.("?\w+"?).*?\)))(?:\s+as\s+("?\w+"?))?$#iD', $selection, $match)) {
+				} elseif (
+					preg_match(
+						'#^(?:((?:"?\w+"?\.)?"?\w+"?)\.("?\w+"?)|((?:min|max|trim|rtrim|ltrim|substring|replace)\(((?:"'
+							. '?\w+"?\.)"?\w+"?)\.("?\w+"?).*?\)))(?:\s+as\s+("?\w+"?))?$#iD',
+						$selection,
+						$match
+					)
+				) {
 					$table = ($match[1] ?? '') . ((isset($match[4])) ? $match[4] : '');
 
 					$column = ($match[2] ?? '') . ((isset($match[5])) ? $match[5] : '');
@@ -483,7 +524,12 @@ class SQLTranslation
 
 					$table = $table_aliases[$table] ?? null;
 
-					if ($table === null || empty($national_columns[$table]) || !in_array($column, $national_columns[$table])) {
+					if (
+						$table === null || empty($national_columns[$table]) || !in_array(
+							$column,
+							$national_columns[$table]
+						)
+					) {
 						continue;
 					}
 
@@ -508,7 +554,14 @@ class SQLTranslation
 					$to_fix[$table][] = $column_value;
 
 				// Match unqualified column names
-				} elseif (preg_match('#^(?:("?\w+"?)|((?:min|max|trim|rtrim|ltrim|substring|replace)\(("?\w+"?).*?\)))(?:\s+as\s+("?\w+"?))?$#iD', $selection, $match)) {
+				} elseif (
+					preg_match(
+						'#^(?:("?\w+"?)|((?:min|max|trim|rtrim|ltrim|substring|replace)\(("?\w+"?).*?\)))(?:\s+as\s+("?'
+							. '\w+"?))?$#iD',
+						$selection,
+						$match
+					)
+				) {
 					$column = ($match[1] ?? '') . ((isset($match[3])) ? $match[3] : '');
 
 					// Unquote the identifiers
@@ -613,7 +666,14 @@ class SQLTranslation
 	 */
 	private function fixOracleEmptyStrings(string $sql): string
 	{
-		if (preg_match('#^(UPDATE\s+(?:(?:"?\w+"?\.)?"?\w+"?\.)?"?\w+"?\s+)(SET((?:(?:(?!\bwhere\b|\breturning\b)[^()])+|\(((?:[^()]+|\((?3)\))*)\))*))(.*)$#i', $sql, $set_match)) {
+		if (
+			preg_match(
+				'#^(UPDATE\s+(?:(?:"?\w+"?\.)?"?\w+"?\.)?"?\w+"?\s+)(SET((?:(?:(?!\bwhere\b|\breturning\b)[^()])+|\(((?'
+					. ':[^()]+|\((?3)\))*)\))*))(.*)$#i',
+				$sql,
+				$set_match
+			)
+		) {
 			$sql        = $set_match[1] . ':set_clause ' . $set_match[5];
 			$set_clause = $set_match[2];
 		} else {
@@ -624,7 +684,8 @@ class SQLTranslation
 		$sql = preg_replace('#(?<=[\sa-z"])(!=|<>)\s*\'\'(?=[^\']|$)#', 'IS NOT NULL', $sql) ?? $sql;
 
 		if ($set_clause) {
-			$sql = preg_replace('#:set_clause\b#', strtr($set_clause, array('\\' => '\\\\', '$' => '\\$')), $sql, 1) ?? $sql;
+			$sql = preg_replace('#:set_clause\b#', strtr($set_clause, array('\\' => '\\\\', '$' => '\\$')), $sql, 1) ??
+				$sql;
 		}
 
 		return $sql;
@@ -663,8 +724,10 @@ class SQLTranslation
 	 * @internal
 	 *
 	 * @param  array<int|string, string> $statements            The SQL statements to translate
-	 * @param  array<int, string>|null &$rollback_statements  SQL statements to rollback the returned SQL statements if something goes wrong - only applicable for MySQL `ALTER TABLE` statements
-	 * @return array<int|string, string>  The translated SQL statements all ready for execution. Statements that have been translated will have string key of the number, `:` and the original SQL, all other will have a numeric key.
+	 * @param  array<int, string>|null &$rollback_statements  SQL statements to rollback the returned SQL statements if
+	 * something goes wrong - only applicable for MySQL `ALTER TABLE` statements
+	 * @return array<int|string, string>  The translated SQL statements all ready for execution. Statements that have
+	 * been translated will have string key of the number, `:` and the original SQL, all other will have a numeric key.
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
@@ -702,7 +765,10 @@ class SQLTranslation
 				if (!isset($this->schema_translation)) {
 					$this->schema_translation = new SQLSchemaTranslation($this->database);
 				}
-				list($new_sql, $extra_statements) = $this->schema_translation->translate($new_sql, $rollback_statements);
+				list($new_sql, $extra_statements) = $this->schema_translation->translate(
+					$new_sql,
+					$rollback_statements
+				);
 			}
 
 			if ($sql != $new_sql || $extra_statements) {
@@ -755,11 +821,19 @@ class SQLTranslation
 				'#\bfalse\b#i'          => "'0'",
 				'#\bpi\(\)#i'           => '3.14159265358979',
 				'#\bcot\(\s*((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*\)#i' => '(1/TAN(\1))',
-				'#\blength\(\s*((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*\)#i' => 'CHARACTER_LENGTH(\1, CODEUNITS32)',
-				'#\bsubstr\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?3)(?:,(?3))?\)|\(\))+)\s*\)#i' => 'SUBSTRING(\1, \2, \3, CODEUNITS32)',
-				'#(?:\b|^)((?>[^()%\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*%(?!\d+\$[lbdfristp]\b)\s*((?>[^()\s]+|\(((?:[^()]+|\((?4)\))*)\))+)(?:\b|$)#i' => 'MOD(\1, \3)',
-				'#(?<!["\w.])((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+(NOT\s+)?LIKE\s+((?>[^()\s]+|\(((?:[^()]+|\((?4)\))*)\))+)(?:\b|$)#i'    => 'LOWER(\1) \3LIKE LOWER(\4)',
-				'#\blog\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*\)#i'                            => '(LN(\2)/LN(\1))'
+				'#\blength\(\s*((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*\)#i' =>
+					'CHARACTER_LENGTH(\1, CODEUNITS32)',
+				'#\bsubstr\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*,'
+					. '\s*((?>[^(),]+|\((?3)(?:,(?3))?\)|\(\))+)\s*\)#i' =>
+					'SUBSTRING(\1, \2, \3, CODEUNITS32)',
+				'#(?:\b|^)((?>[^()%\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*%(?!\d+\$[lbdfristp]\b)\s*((?>[^()\s]+|\(((?:[^'
+					. '()]+|\((?4)\))*)\))+)(?:\b|$)#i' =>
+					'MOD(\1, \3)',
+				'#(?<!["\w.])((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+(NOT\s+)?LIKE\s+((?>[^()\s]+|\(((?:[^()]+|\(('
+					. '?4)\))*)\))+)(?:\b|$)#i'    =>
+					'LOWER(\1) \3LIKE LOWER(\4)',
+				'#\blog\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*\)#i'
+					=> '(LN(\2)/LN(\1))'
 			);
 		} elseif ($this->database->getType() == 'mssql') {
 			$regex = array(
@@ -775,7 +849,8 @@ class SQLTranslation
 				'#\|\|#i'               => '+',
 				'#\btrim\(\s*((?>[^(),]+|\((?1)\)|\(\))+)\s*\)#i'  => 'RTRIM(LTRIM(\1))',
 				'#\bround\(\s*((?>[^(),]+|\((?1)\)|\(\))+)\s*\)#i' => 'round(\1, 0)',
-				'#\blog\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*\)#i' => '(LOG(\2)/LOG(\1))'
+				'#\blog\(\s*((?>[^(),]+|\((?1)(?:,(?1))?\)|\(\))+)\s*,\s*((?>[^(),]+|\((?2)(?:,(?2))?\)|\(\))+)\s*\)#i'
+					=> '(LOG(\2)/LOG(\1))'
 			);
 		} elseif ($this->database->getType() == 'mysql') {
 			$regex = array(
@@ -793,8 +868,12 @@ class SQLTranslation
 				'#\bcot\(\s*((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*\)#i'     => '(1/TAN(\1))',
 				'#\bdegrees\(\s*((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*\)#i' => '(\1 * 57.295779513083)',
 				'#\bradians\(\s*((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*\)#i' => '(\1 * 0.017453292519943)',
-				'#(?:\b|^)((?>[^()%\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*%(?!\d+\$[lbdfristp]\b)\s*((?>[^()\s]+|\(((?:[^()]+|\((?4)\))*)\))+)(?:\b|$)#i' => 'MOD(\1, \3)',
-				'#(?<!["\w.])((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+(NOT\s+)?LIKE\s+((?>[^()\s]+|\(((?:[^()]+|\((?4)\))*)\))+)(?:\b|$)#i'    => 'LOWER(\1) \3LIKE LOWER(\4)'
+				'#(?:\b|^)((?>[^()%\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s*%(?!\d+\$[lbdfristp]\b)\s*((?>[^()\s]+|\(((?:[^'
+					. '()]+|\((?4)\))*)\))+)(?:\b|$)#i' =>
+					'MOD(\1, \3)',
+				'#(?<!["\w.])((?>[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+(NOT\s+)?LIKE\s+((?>[^()\s]+|\(((?:[^()]+|\(('
+					. '?4)\))*)\))+)(?:\b|$)#i'    =>
+					'LOWER(\1) \3LIKE LOWER(\4)'
 			);
 		} elseif ($this->database->getType() == 'postgresql') {
 			$regex = array(
@@ -820,7 +899,9 @@ class SQLTranslation
 					'#\bfalse\b#i'             => "'0'",
 					'#\brandom\(\)#i'          => '(ABS(RANDOM())/9223372036854775807)',
 					// SQLite 2 doesn't support CAST, but is also type-less, so we remove it
-					'#\bcast\(\s*((?:[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+as\s+(?:[^()\s]+|\(((?:[^()]+|\((?3)\))*)\))+\s*\)#i'	=> '\1'
+					'#\bcast\(\s*((?:[^()\s]+|\(((?:[^()]+|\((?2)\))*)\))+)\s+as\s+(?:[^()\s]+|\(((?:[^()]+|\((?3)\))*)'
+						. '\))+\s*\)#i'	=>
+						'\1'
 				);
 			}
 		}
@@ -929,7 +1010,9 @@ class SQLTranslation
 		// 7 - LIMIT number
 		// 8 - OFFSET number
 		preg_match_all(
-			'#select((?:(?:(?!\sfrom\s)[^()])+|\(((?:[^()]+|\((?2)\))*)\))*\s)(from(?:(?:(?!\slimit\s|\sorder by\s)[^()])+|\(((?:[^()]+|\((?4)\))*)\))*\s)(order by(?:(?:(?!\slimit\s)[^()])+|\(((?:[^()]+|\((?6)\))*)\))*\s)?limit\s+(\d+)(?:\s+offset\s+(\d+))?#i',
+			'#select((?:(?:(?!\sfrom\s)[^()])+|\(((?:[^()]+|\((?2)\))*)\))*\s)(from(?:(?:(?!\slimit\s|\sorder '
+				. 'by\s)[^()])+|\(((?:[^()]+|\((?4)\))*)\))*\s)(order '
+				. 'by(?:(?:(?!\slimit\s)[^()])+|\(((?:[^()]+|\((?6)\))*)\))*\s)?limit\s+(\d+)(?:\s+offset\s+(\d+))?#i',
 			$sql,
 			$matches,
 			PREG_SET_ORDER
@@ -951,7 +1034,11 @@ class SQLTranslation
 					$select .= ') AS flourish__row__num ';
 					$select .= $match[3];
 
-					$replacement = 'SELECT * FROM (SELECT ' . trim($match[1]) . ', ROW_NUMBER() OVER (' . $match[5] . ') AS flourish__row__num ' . $match[3] . ') AS original_query WHERE flourish__row__num > ' . $offset . ' AND flourish__row__num <= ' . ($limit + $offset) . ' ORDER BY flourish__row__num';
+					$replacement = 'SELECT * FROM (SELECT ' . trim(
+						$match[1]
+					) . ', ROW_NUMBER() OVER (' . $match[5] . ') AS flourish__row__num ' . $match[3] .
+						') AS original_query WHERE flourish__row__num > ' . $offset . ' AND flourish__row__num <= ' .
+						($limit + $offset) . ' ORDER BY flourish__row__num';
 
 				// Otherwise we just have a limit
 				} else {
@@ -962,11 +1049,14 @@ class SQLTranslation
 			} elseif ($this->database->getType() == 'oracle') {
 				 // This means we have an offset clause
 				if ($offset > 0) {
-					$replacement = 'SELECT * FROM (SELECT flourish__sq.*, rownum flourish__row__num FROM (SELECT' . $match[1] . $match[3] . $match[5] . ') flourish__sq WHERE rownum <= ' . ($limit + $offset) . ') WHERE flourish__row__num > ' . $offset;
+					$replacement = 'SELECT * FROM (SELECT flourish__sq.*, rownum flourish__row__num FROM (SELECT' .
+						$match[1] . $match[3] . $match[5] . ') flourish__sq WHERE rownum <= ' . ($limit + $offset) .
+						') WHERE flourish__row__num > ' . $offset;
 
 				// Otherwise we just have a limit
 				} else {
-					$replacement = 'SELECT * FROM (SELECT' . $match[1] . $match[3] . $match[5] . ') WHERE rownum <= ' . $limit;
+					$replacement = 'SELECT * FROM (SELECT' . $match[1] . $match[3] . $match[5] . ') WHERE rownum <= ' .
+						$limit;
 				}
 			} elseif ($this->database->getType() == 'db2') {
 				// This means we have an offset clause
@@ -980,11 +1070,16 @@ class SQLTranslation
 					$select .= ') AS flourish__row__num ';
 					$select .= $match[3];
 
-					$replacement = 'SELECT * FROM (SELECT ' . trim($match[1]) . ', ROW_NUMBER() OVER (' . $match[5] . ') AS flourish__row__num ' . $match[3] . ') AS original_query WHERE flourish__row__num > ' . $offset . ' AND flourish__row__num <= ' . ($limit + $offset) . ' ORDER BY flourish__row__num';
+					$replacement = 'SELECT * FROM (SELECT ' . trim(
+						$match[1]
+					) . ', ROW_NUMBER() OVER (' . $match[5] . ') AS flourish__row__num ' . $match[3] .
+						') AS original_query WHERE flourish__row__num > ' . $offset . ' AND flourish__row__num <= ' .
+						($limit + $offset) . ' ORDER BY flourish__row__num';
 
 				// Otherwise we just have a limit
 				} else {
-					$replacement = 'SELECT ' . trim($match[1] . $match[3] . $match[5]) . ' FETCH FIRST ' . $limit . ' ROWS ONLY';
+					$replacement = 'SELECT ' . trim($match[1] . $match[3] . $match[5]) . ' FETCH FIRST ' . $limit .
+						' ROWS ONLY';
 				}
 			} else {
 				$replacement = $match[0];

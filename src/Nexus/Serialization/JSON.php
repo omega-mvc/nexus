@@ -14,13 +14,14 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/JSON
  *
  * @version    1.0.0b6
  * @changes    1.0.0b6  Removed `e` flag from preg_replace() calls [wb, 2010-06-08]
  * @changes    1.0.0b5  Added the ::output() method [wb, 2010-03-15]
- * @changes    1.0.0b4  Fixed a bug with ::decode() where JSON objects could lose all but the first key: value pair [wb, 2009-05-06]
- * @changes    1.0.0b3  Updated the class to be consistent with PHP 5.2.9+ for encoding and decoding invalid data [wb, 2009-05-04]
+ * @changes    1.0.0b4  Fixed a bug with ::decode() where JSON objects could lose all but the first key: value pair [wb,
+ * 2009-05-06]
+ * @changes    1.0.0b3  Updated the class to be consistent with PHP 5.2.9+ for encoding and decoding invalid data [wb,
+ * 2009-05-04]
  * @changes    1.0.0b2  Changed @ error suppression operator to `error_reporting()` calls [wb, 2009-01-26]
  * @changes    1.0.0b   The initial implementation [wb, 2008-07-12]
  */
@@ -32,7 +33,8 @@ class JSON
 	 * If the string is not a valid JSON string, `NULL` will be returned.
 	 *
 	 * @param  string  $json   The JSON string to decode
-	 * @param  boolean $assoc  If this is TRUE, JSON objects will be represented as an assocative array instead of a `stdClass` object
+	 * @param  boolean $assoc  If this is TRUE, JSON objects will be represented as an assocative array instead of a
+	 * `stdClass` object
 	 * @return mixed  A PHP equivalent of the JSON string
 	 */
 	public static function decode(string $json, bool $assoc = false): mixed
@@ -99,8 +101,8 @@ class JSON
 	 * @return JSON
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

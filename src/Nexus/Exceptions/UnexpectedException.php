@@ -10,10 +10,10 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/UnexpectedException
  *
  * @version    1.0.0b2
- * @changes    1.0.0b2  Updated ::printMessage() to use an ASCII dash to prevent encoding issues when an output encoding is not specified [wb, 2011-05-09]
+ * @changes    1.0.0b2  Updated ::printMessage() to use an ASCII dash to prevent encoding issues when an output encoding
+ * is not specified [wb, 2011-05-09]
  * @changes    1.0.0b   The initial implementation [wb, 2007-06-14]
  */
 class UnexpectedException extends FlourishException
@@ -27,7 +27,8 @@ class UnexpectedException extends FlourishException
 	{
 		echo '<div class="exception ' . $this->getCSSClass() . '"><p>';
 		echo self::compose(
-			'It appears an error has occurred - we apologize for the inconvenience. The problem may be resolved if you try again.'
+			'It appears an error has occurred - we apologize for the inconvenience. The problem may be resolved if you '
+				. 'try again.'
 		);
 		echo '</p></div>';
 	}

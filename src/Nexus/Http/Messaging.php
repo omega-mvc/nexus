@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Messaging
  *
  * @version    1.0.0b9
  * @changes    1.0.0b9  Messages print in a p tag inside of a div if plain content [wb, 2016-10-29]
@@ -158,7 +157,8 @@ class Messaging
 	 *
 	 * @param  mixed  $name       The name or array of names of the message(s) to show, or `'*'` to show all
 	 * @param  string $recipient  The intended recipient
-	 * @param  string $css_class  Overrides using the `$name` as the CSS class when displaying the message - only used if a single `$name` is specified
+	 * @param  string $css_class  Overrides using the `$name` as the CSS class when displaying the message - only used
+	 * if a single `$name` is specified
 	 * @return boolean  If one or more messages was shown
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -231,8 +231,8 @@ class Messaging
 	 * @return Messaging
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

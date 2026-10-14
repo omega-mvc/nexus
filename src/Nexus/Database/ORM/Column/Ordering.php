@@ -11,27 +11,33 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Ordering
  *
  * @version    1.0.0b19
  * @changes    1.0.0b19  Updated code to work with the new ORM API [wb, 2010-08-06]
- * @changes    1.0.0b18  Changed ::configureOrderingColumn() to ensure the column specified can store negative values [wb, 2010-07-21]
+ * @changes    1.0.0b18  Changed ::configureOrderingColumn() to ensure the column specified can store negative values
+ * [wb, 2010-07-21]
  * @changes    1.0.0b17  Changed validation messages array to use column name keys [wb, 2010-05-26]
  * @changes    1.0.0b16  Updated the class to allow for multiple ordering columns per class [dc-imarc, 2010-05-10]
- * @changes    1.0.0b15  Fixed a bug with ordering columns that are part of a multi-column unique constraint [wb, 2009-11-13]
- * @changes    1.0.0b14  Fixed a bug affecting where conditions with columns that are not null but have a default value [wb, 2009-11-03]
+ * @changes    1.0.0b15  Fixed a bug with ordering columns that are part of a multi-column unique constraint [wb,
+ * 2009-11-13]
+ * @changes    1.0.0b14  Fixed a bug affecting where conditions with columns that are not null but have a default value
+ * [wb, 2009-11-03]
  * @changes    1.0.0b13  Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
- * @changes    1.0.0b12  Changed SQL statements to use value placeholders, identifier escaping and schema support [wb, 2009-10-22]
- * @changes    1.0.0b11  Fixed another bug with deleting records in the middle of a set, added support for reordering multiple records at once [dc-imarc, 2009-07-17]
+ * @changes    1.0.0b12  Changed SQL statements to use value placeholders, identifier escaping and schema support [wb,
+ * 2009-10-22]
+ * @changes    1.0.0b11  Fixed another bug with deleting records in the middle of a set, added support for reordering
+ * multiple records at once [dc-imarc, 2009-07-17]
  * @changes    1.0.0b10  Fixed a bug with deleting multiple in-memory records in the same set [dc-imarc, 2009-07-15]
  * @changes    1.0.0b9   Fixed a bug with using ORM::registerInspectCallback() [wb, 2009-07-15]
  * @changes    1.0.0b8   Updated to use new ORM::registerInspectCallback() method [wb, 2009-07-13]
- * @changes    1.0.0b7   Fixed ::validate() so it properly ignores ordering columns in multi-column unique constraints [wb, 2009-06-17]
+ * @changes    1.0.0b7   Fixed ::validate() so it properly ignores ordering columns in multi-column unique constraints
+ * [wb, 2009-06-17]
  * @changes    1.0.0b6   Updated code for new ORM API [wb, 2009-06-15]
  * @changes    1.0.0b5   Updated class to automatically correct ordering values that are too high [wb, 2009-06-14]
  * @changes    1.0.0b4   Updated code to use new ValidationException::formatField() method [wb, 2009-06-04]
  * @changes    1.0.0b3   Fixed a bug with setting a new record to anywhere but the end of a set [wb, 2009-03-18]
- * @changes    1.0.0b2   Fixed a bug with ::inspect(), 'max_ordering_value' was being returned as 'max_ordering_index' [wb, 2009-03-02]
+ * @changes    1.0.0b2   Fixed a bug with ::inspect(), 'max_ordering_value' was being returned as 'max_ordering_index'
+ * [wb, 2009-03-02]
  * @changes    1.0.0b    The initial implementation [wb, 2008-06-25]
  */
 class Ordering
@@ -79,7 +85,7 @@ class Ordering
 	/**
 	 * Runs a single translated query and returns its Result
 	 *
-	 * @param  Database                 $db      The database to run the query on
+	 * @param  Connection                 $db      The database to run the query on
 	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 * @throws AuthorizationException
@@ -87,7 +93,7 @@ class Ordering
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 */
-	private static function runQuery(Database $db, array $params): Result
+	private static function runQuery(Connection $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -129,7 +135,8 @@ class Ordering
 		$data_type = (isset($info['type']) && is_scalar($info['type'])) ? (string) $info['type'] : '';
 		if ($data_type != 'integer') {
 			throw new ProgrammerException(
-				'The column specified, %1$s, is a %2$s column. It must be an integer column to be set as an ordering column.',
+				'The column specified, %1$s, is a %2$s column. It must be an integer column to be set as an ordering '
+					. 'column.',
 				$column,
 				$data_type
 			);
@@ -138,7 +145,8 @@ class Ordering
 		$min_value = $info['min_value'] ?? null;
 		if ($min_value instanceof Number && $min_value->eq('0')) {
 			throw new ProgrammerException(
-				'The column specified, %1$s, does not allow for negative values. Please adjust the data type to an integer type that allows for negative values.',
+				'The column specified, %1$s, does not allow for negative values. Please adjust the data type to an '
+					. 'integer type that allows for negative values.',
 				$column
 			);
 		}
@@ -156,7 +164,8 @@ class Ordering
 
 		if (!$found) {
 			throw new ProgrammerException(
-				'The column specified, %s, does not appear to be part of a unique key. It must be part of a unique key to be set as an ordering column.',
+				'The column specified, %s, does not appear to be part of a unique key. It must be part of a unique key '
+					. 'to be set as an ordering column.',
 				$column
 			);
 		}
@@ -173,7 +182,8 @@ class Ordering
 
 		ORM::registerReflectCallback($class, array(self::class, 'reflect'));
 
-		ORM::registerActiveRecordMethod($class, 'inspect' . Grammar::camelize($column, true), array(self::class, 'inspect'));
+		ORM::registerActiveRecordMethod($class, 'inspect' . Grammar::camelize($column, true), array(self::class,
+			'inspect'));
 
 		self::$ordering_columns[$class][$column] = $other_columns;
 	}
@@ -183,20 +193,26 @@ class Ordering
 	 * Add params for a `WHERE` clause for the //old// multi-column set a record was part of
 	 *
 	 * @param  Schema $schema         The schema of the database the query will be executed on
-	 * @param  array<array-key, mixed>  $params         The params for the Database::query() call
+	 * @param  array<array-key, mixed>  $params         The params for the Connection::query() call
 	 * @param  string  $table          The table the `WHERE` clause is for
 	 * @param  array<array-key, string>  $other_columns  The other columns in the multi-column unique constraint
 	 * @param  array<array-key, mixed>  &$values        The record's current values
 	 * @param  array<array-key, mixed>  &$old_values    The record's old values
-	 * @return array<array-key, mixed>  The updated params for Database::query()
+	 * @return array<array-key, mixed>  The updated params for Connection::query()
 	 * @throws ValidationException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	private static function addOldOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values, mixed &$old_values): array
-	{
+	private static function addOldOtherFieldsWhereParams(
+		Schema $schema,
+		array $params,
+		string $table,
+		array $other_columns,
+		mixed &$values,
+		mixed &$old_values
+	): array {
 		$column_info = $schema->getColumnInfo($table);
 		$column_info = is_array($column_info) ? $column_info : array();
 
@@ -207,7 +223,11 @@ class Ordering
 			$other_info = $column_info[$other_column] ?? null;
 
 			// This makes sure the query performs the way an insert will
-			if ($value === null && is_array($other_info) && ($other_info['not_null'] ?? null) && ($other_info['default'] ?? null) !== null) {
+			if (
+				$value === null && is_array(
+					$other_info
+				) && ($other_info['not_null'] ?? null) && ($other_info['default'] ?? null) !== null
+			) {
 				$value = $other_info['default'];
 			}
 
@@ -224,22 +244,28 @@ class Ordering
 
 
 	/**
-	 * Adds params for a `WHERE` clause to ensure a database call is only selecting from rows that are part of the same set when an ordering field is in multi-column `UNIQUE` constraint.
+	 * Adds params for a `WHERE` clause to ensure a database call is only selecting from rows that are part of the same
+	 * set when an ordering field is in multi-column `UNIQUE` constraint.
 	 *
 	 * @param  Schema $schema         The schema of the database the query will be executed on
-	 * @param  array<array-key, mixed>  $params         The parameters for the Database::query() call
+	 * @param  array<array-key, mixed>  $params         The parameters for the Connection::query() call
 	 * @param  string  $table          The table the `WHERE` clause is for
 	 * @param  array<array-key, string>  $other_columns  The other columns in the multi-column unique constraint
 	 * @param  array<array-key, mixed>  &$values        The values to match with
-	 * @return array<array-key, mixed>  The updated params for Database::query()
+	 * @return array<array-key, mixed>  The updated params for Connection::query()
 	 * @throws ValidationException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	private static function addOtherFieldsWhereParams(Schema $schema, array $params, string $table, array $other_columns, mixed &$values): array
-	{
+	private static function addOtherFieldsWhereParams(
+		Schema $schema,
+		array $params,
+		string $table,
+		array $other_columns,
+		mixed &$values
+	): array {
 		$column_info = $schema->getColumnInfo($table);
 		$column_info = is_array($column_info) ? $column_info : array();
 
@@ -250,7 +276,11 @@ class Ordering
 			$other_info = $column_info[$other_column] ?? null;
 
 			// This makes sure the query performs the way an insert will
-			if ($value === null && is_array($other_info) && ($other_info['not_null'] ?? null) && ($other_info['default'] ?? null) !== null) {
+			if (
+				$value === null && is_array(
+					$other_info
+				) && ($other_info['not_null'] ?? null) && ($other_info['default'] ?? null) !== null
+			) {
 				$value = $other_info['default'];
 			}
 
@@ -283,8 +313,13 @@ class Ordering
 	 * @throws ValidationException
 	 * @throws NotFoundException
 	 */
-	public static function delete(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function delete(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 		$table = ORM::tablize($class);
 
@@ -328,7 +363,14 @@ class Ordering
 
 			if ($other_columns) {
 				$params[0] .= " AND ";
-				$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+				$params = self::addOldOtherFieldsWhereParams(
+					$schema,
+					$params,
+					$table,
+					$other_columns,
+					$values,
+					$old_values
+				);
 			}
 
 			$res = self::runQuery($db, $params);
@@ -352,7 +394,14 @@ class Ordering
 			);
 			if ($other_columns) {
 				$params[0] .= " AND ";
-				$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+				$params = self::addOldOtherFieldsWhereParams(
+					$schema,
+					$params,
+					$table,
+					$other_columns,
+					$values,
+					$old_values
+				);
 			}
 
 			call_user_func_array($db->translatedQuery(...), $params);
@@ -368,7 +417,14 @@ class Ordering
 			);
 			if ($other_columns) {
 				$params[0] .= " AND ";
-				$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+				$params = self::addOldOtherFieldsWhereParams(
+					$schema,
+					$params,
+					$table,
+					$other_columns,
+					$values,
+					$old_values
+				);
 			}
 
 			call_user_func_array($db->translatedQuery(...), $params);
@@ -394,8 +450,15 @@ class Ordering
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	public static function inspect(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): mixed
-	{
+	public static function inspect(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): mixed {
 		list ($action, $subject) = ORM::parseMethod($method_name);
 
 		$column = Grammar::underscorize($subject);
@@ -446,8 +509,12 @@ class Ordering
 	 * @param  array<array-key, mixed>  &$old_values      The old values of the record
 	 * @return boolean  If the record is part of a new ordering set
 	 */
-	private static function isInNewSet(string $ordering_column, array $other_columns, mixed &$values, mixed &$old_values): bool
-	{
+	private static function isInNewSet(
+		string $ordering_column,
+		array $other_columns,
+		mixed &$values,
+		mixed &$old_values
+	): bool {
 		$value_empty      = !$values[$ordering_column];
 		$old_value_empty  = !ActiveRecord::retrieveOld($old_values, $ordering_column, true);
 		$no_old_value_set = !ActiveRecord::hasOld($old_values, $ordering_column);
@@ -501,7 +568,9 @@ class Ordering
 				$signature .= "/**\n";
 				$signature .= " * Returns metadata about " . $column . "\n";
 				$signature .= " * \n";
-				$signature .= " * @param  string \$element  The element to return. Must be one of: 'type', 'not_null', 'default', 'feature', 'max_ordering_value'.\n";
+				$signature .=
+					" * @param  string \$element  The element to return. Must be one of: 'type', 'not_null', "
+						. "'default', 'feature', 'max_ordering_value'.\n";
 				$signature .= " * @return mixed  The metadata array or a single element\n";
 				$signature .= " */\n";
 			}
@@ -530,8 +599,13 @@ class Ordering
 	 * @throws ValidationException
 	 * @throws NotFoundException
 	 */
-	public static function reorder(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache): void
-	{
+	public static function reorder(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache
+	): void {
 		$class = get_class($object);
 		$table = ORM::tablize($class);
 
@@ -674,7 +748,14 @@ class Ordering
 					);
 					if ($other_columns) {
 						$params[0] .= " AND ";
-						$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+						$params = self::addOldOtherFieldsWhereParams(
+							$schema,
+							$params,
+							$table,
+							$other_columns,
+							$values,
+							$old_values
+						);
 					}
 					call_user_func_array($db->translatedQuery(...), $params);
 				}
@@ -699,7 +780,14 @@ class Ordering
 			// If there was an old set, we need to close the gap
 			if ($object->exists() && $new_set) {
 				$params = array("SELECT MAX(%r) FROM %r WHERE ", $column, $table);
-				$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+				$params = self::addOldOtherFieldsWhereParams(
+					$schema,
+					$params,
+					$table,
+					$other_columns,
+					$values,
+					$old_values
+				);
 
 				$old_set_max = (int) self::runQuery($db, $params)->fetchScalar();
 
@@ -719,7 +807,14 @@ class Ordering
 						$column,
 						$db_value
 					);
-					$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+					$params = self::addOldOtherFieldsWhereParams(
+						$schema,
+						$params,
+						$table,
+						$other_columns,
+						$values,
+						$old_values
+					);
 					call_user_func_array($db->translatedQuery(...), $params);
 
 					if ($current_value == $new_max_value) {
@@ -733,7 +828,14 @@ class Ordering
 						);
 						if ($other_columns) {
 							$params[0] .= " AND ";
-							$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+							$params = self::addOldOtherFieldsWhereParams(
+								$schema,
+								$params,
+								$table,
+								$other_columns,
+								$values,
+								$old_values
+							);
 						}
 						call_user_func_array($db->translatedQuery(...), $params);
 					}
@@ -746,7 +848,14 @@ class Ordering
 						$shift_up,
 						$column
 					);
-					$params = self::addOldOtherFieldsWhereParams($schema, $params, $table, $other_columns, $values, $old_values);
+					$params = self::addOldOtherFieldsWhereParams(
+						$schema,
+						$params,
+						$table,
+						$other_columns,
+						$values,
+						$old_values
+					);
 					call_user_func_array($db->translatedQuery(...), $params);
 				}
 			}
@@ -785,8 +894,14 @@ class Ordering
 	 * @throws ValidationException
 	 * @throws NotFoundException
 	 */
-	public static function validate(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, mixed &$validation_messages): void
-	{
+	public static function validate(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		mixed &$validation_messages
+	): void {
 		$class = get_class($object);
 		$table = ORM::tablize($class);
 
@@ -816,7 +931,12 @@ class Ordering
 			// Remove any previous validation warnings
 			$filtered_messages = array();
 			foreach ($validation_messages as $validation_column => $validation_message) {
-				if (!is_string($validation_column) || !preg_match('#(^|,)' . preg_quote($column, '#') . '(,|$)#D', $validation_column)) {
+				if (
+					!is_string($validation_column) || !preg_match(
+						'#(^|,)' . preg_quote($column, '#') . '(,|$)#D',
+						$validation_column
+					)
+				) {
 					$filtered_messages[$validation_column] = $validation_message;
 				}
 			}
@@ -827,10 +947,19 @@ class Ordering
 				continue;
 			}
 
-			if (!is_numeric($current_value) || strlen((string) (int) $current_value) != strlen((string) $current_value)) {
-				$validation_messages[$column] = self::compose('%sPlease enter an integer', ValidationException::formatField($column_name));
+			if (
+				!is_numeric($current_value)
+				|| strlen((string) (int) $current_value) != strlen((string) $current_value)
+			) {
+				$validation_messages[$column] = self::compose(
+					'%sPlease enter an integer',
+					ValidationException::formatField($column_name)
+				);
 			} elseif ($current_value < 1) {
-				$validation_messages[$column] = self::compose('%sThe value can not be less than 1', ValidationException::formatField($column_name));
+				$validation_messages[$column] = self::compose(
+					'%sThe value can not be less than 1',
+					ValidationException::formatField($column_name)
+				);
 			}
 		}
 	}
@@ -842,8 +971,8 @@ class Ordering
 	 * @return Ordering
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

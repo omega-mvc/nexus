@@ -6,20 +6,20 @@ declare(strict_types=1);
  * Provides string functions for UTF-8 strings
  *
  * This class is implemented to provide a UTF-8 version of almost every built-in
- * PHP string function. For more information about UTF-8, please visit
- * http://flourishlib.com/docs/UTF-8.
+ * PHP string function.
  *
  * @copyright  Copyright (c) 2008-2016 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/UTF8
  *
  * @version    1.0.0b18
- * @changes    1.0.0b18  Updated ::len() to prefer `iconv_strlen()` over `utf8_decode()` and added a regex fallback for PHP 8.2+ where `utf8_decode()` was removed [wb, 2026-07-10]
+ * @changes    1.0.0b18  Updated ::len() to prefer `iconv_strlen()` over `utf8_decode()` and added a regex fallback for
+ * PHP 8.2+ where `utf8_decode()` was removed [wb, 2026-07-10]
  * @changes    1.0.0b17  Use iconv_strlen() if available instead of utf8_decode() [wb, 2016-10-14]
- * @changes    1.0.0b16  Added code to ::clean() to use mbstring if available since recent versions of iconv and `//IGNORE` now return `FALSE` for bad encodings [wb, 2012-09-21]
+ * @changes    1.0.0b16  Added code to ::clean() to use mbstring if available since recent versions of iconv and
+ * `//IGNORE` now return `FALSE` for bad encodings [wb, 2012-09-21]
  * @changes    1.0.0b15  Fixed a bug with using IBM's iconv implementation on AIX [wb, 2011-07-29]
  * @changes    1.0.0b14  Added a workaround for iconv having issues in MAMP 1.9.4+ [wb, 2011-07-26]
  * @changes    1.0.0b13  Fixed notices from being thrown when invalid data is sent to ::clean() [wb, 2011-06-10]
@@ -29,7 +29,8 @@ declare(strict_types=1);
  * @changes    1.0.0b9   Updated class to use Core::startErrorCapture() instead of `error_reporting()` [wb, 2010-08-09]
  * @changes    1.0.0b8   Removed `e` flag from preg_replace() calls [wb, 2010-06-08]
  * @changes    1.0.0b7   Added the methods ::trim(), ::rtrim() and ::ltrim() [wb, 2010-05-11]
- * @changes    1.0.0b6   Fixed ::clean() to work with PHP installs that use an iconv library that doesn't support //IGNORE [wb, 2010-03-02]
+ * @changes    1.0.0b6   Fixed ::clean() to work with PHP installs that use an iconv library that doesn't support
+ * //IGNORE [wb, 2010-03-02]
  * @changes    1.0.0b5   Changed ::ucwords() to also uppercase words right after various punctuation [wb, 2009-09-18]
  * @changes    1.0.0b4   Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
  * @changes    1.0.0b3   Fixed a parameter name in ::rpos() from `$search` to `$needle` [wb, 2009-02-06]
@@ -168,7 +169,8 @@ class UTF8
 	);
 
 	/**
-	 * All lowercase UTF-8 characters not properly handled by [http://php.net/mb_strtoupper mb_strtoupper()] mapped to uppercase characters
+	 * All lowercase UTF-8 characters not properly handled by [http://php.net/mb_strtoupper mb_strtoupper()] mapped to
+	 * uppercase characters
 	 *
 	 * @var array<string, string>
 	 */
@@ -187,7 +189,8 @@ class UTF8
 	);
 
 	/**
-	 * All uppercase UTF-8 characters not properly handled by [http://php.net/mb_strtolower mb_strtolower()] mapped to lowercase characters
+	 * All uppercase UTF-8 characters not properly handled by [http://php.net/mb_strtolower mb_strtolower()] mapped to
+	 * lowercase characters
 	 *
 	 * @var array<string, string>
 	 */
@@ -684,7 +687,8 @@ class UTF8
 
 
 	/**
-	 * Compares strings, with the resulting order having latin characters that are based on ASCII letters placed after the relative ASCII characters
+	 * Compares strings, with the resulting order having latin characters that are based on ASCII letters placed after
+	 * the relative ASCII characters
 	 *
 	 * Please note that this function sorts based on English language sorting
 	 * rules only. Locale-sepcific sorting is done by
@@ -712,7 +716,8 @@ class UTF8
 
 
 	/**
-	 * Converts an offset in characters to an offset in bytes to that we can use the built-in functions for some operations
+	 * Converts an offset in characters to an offset in bytes to that we can use the built-in functions for some
+	 * operations
 	 *
 	 * @param  string  $string  The string to base the offset on
 	 * @param  integer $offset  The character offset to conver to bytes
@@ -777,7 +782,8 @@ class UTF8
 	 * characters being an element in the array.
 	 *
 	 * @param  string  $string     The string to explode
-	 * @param  string  $delimiter  The string to explode on. If `NULL` or `''` this method will return one character per array index.
+	 * @param  string  $delimiter  The string to explode on. If `NULL` or `''` this method will return one character per
+	 * array index.
 	 * @return array<int, string>  The exploded string
 	 */
 	public static function explode(string $string, ?string $delimiter = null): array
@@ -820,7 +826,8 @@ class UTF8
 
 
 	/**
-	 * Compares strings in a case-insensitive manner, with the resulting order having characters that are based on ASCII letters placed after the relative ASCII characters
+	 * Compares strings in a case-insensitive manner, with the resulting order having characters that are based on ASCII
+	 * letters placed after the relative ASCII characters
 	 *
 	 * Please note that this function sorts based on English language sorting
 	 * rules only. Locale-sepcific sorting is done by
@@ -841,7 +848,8 @@ class UTF8
 
 
 	/**
-	 * Compares strings using a natural order algorithm in a case-insensitive manner, with the resulting order having latin characters that are based on ASCII letters placed after the relative ASCII characters
+	 * Compares strings using a natural order algorithm in a case-insensitive manner, with the resulting order having
+	 * latin characters that are based on ASCII letters placed after the relative ASCII characters
 	 *
 	 * Please note that this function sorts based on English language sorting
 	 * rules only. Locale-sepcific sorting is done by
@@ -862,7 +870,8 @@ class UTF8
 
 
 	/**
-	 * Finds the first position (in characters) of the search value in the string - case is ignored when doing performing a match
+	 * Finds the first position (in characters) of the search value in the string - case is ignored when doing
+	 * performing a match
 	 *
 	 * @param  string  $haystack  The string to search in
 	 * @param  string  $needle    The string to search for. This match will be done in a case-insensitive manner.
@@ -935,11 +944,13 @@ class UTF8
 
 
 	/**
-	 * Finds the last position (in characters) of the search value in the string - case is ignored when doing performing a match
+	 * Finds the last position (in characters) of the search value in the string - case is ignored when doing performing
+	 * a match
 	 *
 	 * @param  string  $haystack  The string to search in
 	 * @param  string  $needle    The string to search for. This match will be done in a case-insensitive manner.
-	 * @param  integer $offset    The character position to start searching from. A negative value will stop looking that many characters from the end of the string
+	 * @param  integer $offset    The character position to start searching from. A negative value will stop looking
+	 * that many characters from the end of the string
 	 * @return mixed  The integer character position of the last occurence of the needle or `FALSE` if no match
 	 */
 	public static function irpos(string $haystack, string $needle, int $offset = 0): mixed
@@ -965,14 +976,16 @@ class UTF8
 
 
 	/**
-	 * Matches a string needle in the string haystack, returning a substring from the beginning of the needle to the end of the haystack
+	 * Matches a string needle in the string haystack, returning a substring from the beginning of the needle to the end
+	 * of the haystack
 	 *
 	 * Can optionally return the part of the haystack before the needle. Matching
 	 * is done in a case-insensitive manner.
 	 *
 	 * @param  string  $haystack       The string to search in
 	 * @param  string  $needle         The string to search for. This match will be done in a case-insensitive manner.
-	 * @param  boolean $before_needle  If a substring of the haystack before the needle should be returned instead of the substring from the needle to the end of the haystack
+	 * @param  boolean $before_needle  If a substring of the haystack before the needle should be returned instead of
+	 * the substring from the needle to the end of the haystack
 	 * @return mixed  The specified part of the haystack, or `FALSE` if the needle was not found
 	 */
 	public static function istr(string $haystack, string $needle, bool $before_needle = false): mixed
@@ -1086,7 +1099,8 @@ class UTF8
 
 
 	/**
-	 * Compares strings using a natural order algorithm, with the resulting order having latin characters that are based on ASCII letters placed after the relative ASCII characters
+	 * Compares strings using a natural order algorithm, with the resulting order having latin characters that are based
+	 * on ASCII letters placed after the relative ASCII characters
 	 *
 	 * Please note that this function sorts based on English language sorting
 	 * rules only. Locale-sepcific sorting is done by
@@ -1136,9 +1150,9 @@ class UTF8
 
 			case 2:
 				if (
-                    $b[0] < 0xC2 || $b[0] > 0xDF ||
+					$b[0] < 0xC2 || $b[0] > 0xDF ||
 					  $b[1] < 0x80 || $b[1] > 0xBF
-                ) {
+				) {
 					$invalid = true;
 					break;
 				}
@@ -1148,10 +1162,10 @@ class UTF8
 
 			case 3:
 				if (
-                    $b[0] < 0xE0 || $b[0] > 0xEF ||
+					$b[0] < 0xE0 || $b[0] > 0xEF ||
 					  $b[1] < 0x80 || $b[1] > 0xBF ||
 					  $b[2] < 0x80 || $b[2] > 0xBF
-                ) {
+				) {
 					$invalid = true;
 					break;
 				}
@@ -1162,11 +1176,11 @@ class UTF8
 
 			case 4:
 				if (
-                    $b[0] < 0xF0 || $b[0] > 0xF4 ||
+					$b[0] < 0xF0 || $b[0] > 0xF4 ||
 					  $b[1] < 0x80 || $b[1] > 0xBF ||
 					  $b[2] < 0x80 || $b[2] > 0xBF ||
 					  $b[3] < 0x80 || $b[3] > 0xBF
-                ) {
+				) {
 					$invalid = true;
 					break;
 				}
@@ -1201,8 +1215,12 @@ class UTF8
 	 * @param  string  $pad_type    The type of padding to do: `'left'`, `'right'`, `'both'`
 	 * @return string  The input string padded to the specified character width
 	 */
-	public static function pad(string $string, int $pad_length, string $pad_string = ' ', string $pad_type = 'right'): string
-	{
+	public static function pad(
+		string $string,
+		int $pad_length,
+		string $pad_string = ' ',
+		string $pad_type = 'right'
+	): string {
 		$valid_pad_types = array('right', 'left', 'both');
 		if (!in_array($pad_type, $valid_pad_types)) {
 			throw new ProgrammerException(
@@ -1303,13 +1321,17 @@ class UTF8
 		}
 
 		if (!is_array($value)) {
-			throw new ProgrammerException('The values to search for or replace with must be strings or arrays of strings');
+			throw new
+				ProgrammerException('The values to search for or replace with must be strings or arrays of strings');
 		}
 
 		$strings = array();
 		foreach ($value as $element) {
 			if (!is_scalar($element)) {
-				throw new ProgrammerException('The values to search for or replace with must be strings or arrays of strings');
+				throw new
+					ProgrammerException(
+						'The values to search for or replace with must be strings or arrays of strings'
+					);
 			}
 			$strings[] = (string) $element;
 		}
@@ -1407,7 +1429,8 @@ class UTF8
 	 *
 	 * @param  string  $haystack  The string to search in
 	 * @param  string  $needle    The string to search for.
-	 * @param  integer $offset    The character position to start searching from. A negative value will stop looking that many characters from the end of the string
+	 * @param  integer $offset    The character position to start searching from. A negative value will stop looking
+	 * that many characters from the end of the string
 	 * @return mixed  The integer character position of the last occurence of the needle or `FALSE` if no match
 	 */
 	public static function rpos(string $haystack, string $needle, int $offset = 0): mixed
@@ -1452,13 +1475,15 @@ class UTF8
 
 
 	/**
-	 * Matches a string needle in the string haystack, returning a substring from the beginning of the needle to the end of the haystack
+	 * Matches a string needle in the string haystack, returning a substring from the beginning of the needle to the end
+	 * of the haystack
 	 *
 	 * Can optionally return the part of the haystack before the needle.
 	 *
 	 * @param  string  $haystack       The string to search in
 	 * @param  string  $needle         The string to search for
-	 * @param  boolean $before_needle  If a substring of the haystack before the needle should be returned instead of the substring from the needle to the end of the haystack
+	 * @param  boolean $before_needle  If a substring of the haystack before the needle should be returned instead of
+	 * the substring from the needle to the end of the haystack
 	 * @return mixed  The specified part of the haystack, or `FALSE` if the needle was not found
 	 */
 	public static function str(string $haystack, string $needle, bool $before_needle = false): mixed
@@ -1489,8 +1514,10 @@ class UTF8
 	 * Extracts part of a string
 	 *
 	 * @param  string  $string  The string to extract from
-	 * @param  integer $start   The zero-based starting index to extract from. Negative values will start the extraction that many characters from the end of the string.
-	 * @param  integer $length  The length of the string to extract. If an empty value is provided, the remainder of the string will be returned.
+	 * @param  integer $start   The zero-based starting index to extract from. Negative values will start the extraction
+	 * that many characters from the end of the string.
+	 * @param  integer $length  The length of the string to extract. If an empty value is provided, the remainder of the
+	 * string will be returned.
 	 * @return mixed  The extracted subtring or `FALSE` if the start is out of bounds
 	 */
 	public static function sub(string $string, int $start, ?int $length = null): mixed
@@ -1703,8 +1730,8 @@ class UTF8
 	 * @return UTF8
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

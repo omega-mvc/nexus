@@ -10,24 +10,30 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Cryptography
  *
  * @version    1.0.0b16
- * @changes    1.0.0b16  Guarded `openssl_free_key()` calls with `is_resource()` for PHP 8.0+ compatibility where OpenSSL keys are objects [wb, 2026-07-10]
+ * @changes    1.0.0b16  Guarded `openssl_free_key()` calls with `is_resource()` for PHP 8.0+ compatibility where
+ * OpenSSL keys are objects [wb, 2026-07-10]
  * @changes    1.0.0b15  Added support for bcrypt password hashing in PHP 5.5+ [wb, 2016-10-14]
  * @changes    1.0.0b14  Added the `base36`, `base56` and custom types to ::randomString() [wb, 2011-08-25]
- * @changes    1.0.0b13  Updated documentation about symmetric-key encryption to explicitly state block and key sizes, added base64 type to ::randomString() [wb, 2010-11-06]
+ * @changes    1.0.0b13  Updated documentation about symmetric-key encryption to explicitly state block and key sizes,
+ * added base64 type to ::randomString() [wb, 2010-11-06]
  * @changes    1.0.0b12  Fixed an inline comment that incorrectly references AES-256 [wb, 2010-11-04]
  * @changes    1.0.0b11  Updated class to use Core::startErrorCapture() instead of `error_reporting()` [wb, 2010-08-09]
  * @changes    1.0.0b10  Added a missing parameter to an ProgrammerException in ::randomString() [wb, 2010-07-29]
  * @changes    1.0.0b9   Added ::hashHMAC() [wb, 2010-04-20]
- * @changes    1.0.0b8   Fixed ::seedRandom() to pass a directory instead of a file to [http://php.net/disk_free_space `disk_free_space()`] [wb, 2010-03-09]
- * @changes    1.0.0b7   SECURITY FIX: fixed issue with ::random() and ::randomString() not producing random output on OSX, made ::seedRandom() more robust [wb, 2009-10-06]
- * @changes    1.0.0b6   Changed ::symmetricKeyEncrypt() to throw an ValidationException when the $secret_key is less than 8 characters [wb, 2009-09-30]
- * @changes    1.0.0b5   Fixed a bug where some windows machines would throw an exception when generating random strings or numbers [wb, 2009-06-09]
+ * @changes    1.0.0b8   Fixed ::seedRandom() to pass a directory instead of a file to [http://php.net/disk_free_space
+ * `disk_free_space()`] [wb, 2010-03-09]
+ * @changes    1.0.0b7   SECURITY FIX: fixed issue with ::random() and ::randomString() not producing random output on
+ * OSX, made ::seedRandom() more robust [wb, 2009-10-06]
+ * @changes    1.0.0b6   Changed ::symmetricKeyEncrypt() to throw an ValidationException when the $secret_key is less
+ * than 8 characters [wb, 2009-09-30]
+ * @changes    1.0.0b5   Fixed a bug where some windows machines would throw an exception when generating random strings
+ * or numbers [wb, 2009-06-09]
  * @changes    1.0.0b4   Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b3   Changed @ error suppression operator to `error_reporting()` calls [wb, 2009-01-26]
- * @changes    1.0.0b2   Backwards compatibility break - changed ::symmetricKeyEncrypt() to not encrypt the IV since we are using HMAC on it [wb, 2009-01-26]
+ * @changes    1.0.0b2   Backwards compatibility break - changed ::symmetricKeyEncrypt() to not encrypt the IV since we
+ * are using HMAC on it [wb, 2009-01-26]
  * @changes    1.0.0b    The initial implementation [wb, 2007-11-27]
  */
 class Cryptography
@@ -95,7 +101,8 @@ class Cryptography
 
 		if ($private_key_resource === false) {
 			throw new ValidationException(
-				'The private key file specified, %s, does not appear to be a valid private key or the password provided is incorrect',
+				'The private key file specified, %s, does not appear to be a valid private key or the password '
+					. 'provided is incorrect',
 				$private_key_file
 			);
 		}
@@ -270,7 +277,9 @@ class Cryptography
 			// longer available in OpenSSL 3 - re-encryption is required
 			if (!in_array('RC4', openssl_get_cipher_methods(), true)) {
 				throw new EnvironmentException(
-					'The ciphertext provided was encrypted using the legacy RC4-based %s implementation, which is not supported by the current OpenSSL version. Please re-encrypt the data using the current implementation.',
+					'The ciphertext provided was encrypted using the legacy RC4-based %s implementation, which is not '
+						. 'supported by the current OpenSSL version. Please re-encrypt the data using the current '
+						. 'implementation.',
 					__CLASS__ . '::publicKeyEncrypt()'
 				);
 			}
@@ -318,7 +327,8 @@ class Cryptography
 	 *
 	 * @param  string $plaintext        The content to be encrypted
 	 * @param  string $public_key_file  The path to an X.509 public key certificate
-	 * @return string  A base-64 encoded result containing a Flourish fingerprint and suitable for decryption using ::publicKeyDecrypt()
+	 * @return string  A base-64 encoded result containing a Flourish fingerprint and suitable for decryption using
+	 * ::publicKeyDecrypt()
 	 */
 	public static function publicKeyEncrypt(string $plaintext, string $public_key_file): string
 	{
@@ -329,7 +339,14 @@ class Cryptography
 		$ciphertext     = '';
 		$encrypted_keys = array();
 		$iv             = '';
-		$result = openssl_seal($plaintext, $ciphertext, $encrypted_keys, array($public_key_resource), 'aes-256-cbc', $iv);
+		$result = openssl_seal(
+			$plaintext,
+			$ciphertext,
+			$encrypted_keys,
+			array($public_key_resource),
+			'aes-256-cbc',
+			$iv
+		);
 
 		if ($result === false) {
 			throw new EnvironmentException(
@@ -352,7 +369,9 @@ class Cryptography
 
 		$hmac = self::hashHMAC('sha1', $encrypted_key . $iv . $ciphertext, $plaintext);
 
-		return 'Cryptography::public#' . base64_encode($encrypted_key) . '#' . base64_encode($iv) . '#' . base64_encode($ciphertext) . '#' . $hmac;
+		return 'Cryptography::public#' . base64_encode($encrypted_key) . '#' . base64_encode($iv) . '#' . base64_encode(
+			$ciphertext
+		) . '#' . $hmac;
 	}
 
 
@@ -443,7 +462,8 @@ class Cryptography
 	 * Returns a random string of the type and length specified
 	 *
 	 * @param  integer $length  The length of string to return
-	 * @param  string  $type    The type of string to return: `'base64'`, `'base56'`, `'base36'`, `'alphanumeric'`, `'alpha'`, `'numeric'`, or `'hexadecimal'`, if a different string is provided, it will be used for the alphabet
+	 * @param  string  $type    The type of string to return: `'base64'`, `'base56'`, `'base36'`, `'alphanumeric'`,
+	 * `'alpha'`, `'numeric'`, or `'hexadecimal'`, if a different string is provided, it will be used for the alphabet
 	 * @return string  A random string of the type and length specified
 	 */
 	public static function randomString(int $length, string $type = 'alphanumeric'): string
@@ -575,7 +595,8 @@ class Cryptography
 		// cannot be decrypted on PHP 8.4+ since the mcrypt extension no longer exists
 		if ($elements[0] === 'Cryptography::symmetric') {
 			throw new EnvironmentException(
-				'The ciphertext provided was encrypted using the legacy mcrypt-based %s implementation, which is not supported in PHP 8.4+. Please re-encrypt the data using the current implementation.',
+				'The ciphertext provided was encrypted using the legacy mcrypt-based %s implementation, which is not '
+					. 'supported in PHP 8.4+. Please re-encrypt the data using the current implementation.',
 				'Cryptography::symmetricKeyEncrypt()'
 			);
 		}
@@ -623,7 +644,8 @@ class Cryptography
 	 *
 	 * @param  string $plaintext   The content to be encrypted
 	 * @param  string $secret_key  The secret key to use for encryption - must be at least 8 characters
-	 * @return string  An encrypted and base-64 encoded result containing a Flourish fingerprint and suitable for decryption using ::symmetricKeyDecrypt()
+	 * @return string  An encrypted and base-64 encoded result containing a Flourish fingerprint and suitable for
+	 * decryption using ::symmetricKeyDecrypt()
 	 */
 	public static function symmetricKeyEncrypt(string $plaintext, string $secret_key): string
 	{
@@ -685,8 +707,8 @@ class Cryptography
 	 * @return void
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

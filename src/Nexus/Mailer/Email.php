@@ -9,8 +9,7 @@ declare(strict_types=1);
  * function by default. Developers that are sending multiple emails, or need
  * SMTP support, should use SMTP with this class.
  *
- * This class is implemented to use the UTF-8 character encoding. Please see
- * http://flourishlib.com/docs/UTF-8 for more information.
+ * This class is implemented to use the UTF-8 character encoding.
  *
  * @copyright  Copyright (c) 2008-2011 Will Bond, others
  * @author     Will Bond [wb] <will@flourishlib.com>
@@ -19,38 +18,51 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Email
  *
  * @version    1.0.0b31
- * @changes    1.0.0b31  Guarded `openssl_pkey_free()` call with `is_resource()` for PHP 8.0+ compatibility where OpenSSL keys are objects [wb, 2026-07-10]
+ * @changes    1.0.0b31  Guarded `openssl_pkey_free()` call with `is_resource()` for PHP 8.0+ compatibility where
+ * OpenSSL keys are objects [wb, 2026-07-10]
  * @changes    1.0.0b30  Changed methods to return instance for method chaining [n, 2011-09-12]
- * @changes    1.0.0b29  Changed ::combineNameEmail() to be a static method and to be exposed publicly for use by other classes [wb, 2011-07-26]
- * @changes    1.0.0b28  Fixed ::addAttachment() and ::addRelatedFile() to properly handle duplicate filenames [wb, 2011-05-17]
+ * @changes    1.0.0b29  Changed ::combineNameEmail() to be a static method and to be exposed publicly for use by other
+ * classes [wb, 2011-07-26]
+ * @changes    1.0.0b28  Fixed ::addAttachment() and ::addRelatedFile() to properly handle duplicate filenames [wb,
+ * 2011-05-17]
  * @changes    1.0.0b27  Fixed a bug with generating FQDNs on some Windows machines [wb, 2011-02-24]
  * @changes    1.0.0b26  Added ::addCustomerHeader() [wb, 2011-02-02]
  * @changes    1.0.0b25  Fixed a bug with finding the FQDN on non-Windows machines [wb, 2011-01-19]
- * @changes    1.0.0b24  Backwards Compatibility Break - the `$contents` parameter of ::addAttachment() is now first instead of third, ::addAttachment() will now accept File objects for the `$contents` parameter, added ::addRelatedFile() [wb, 2010-12-01]
- * @changes    1.0.0b23  Fixed a bug on Windows where emails starting with a `.` would have the `.` removed [wb, 2010-09-11]
+ * @changes    1.0.0b24  Backwards Compatibility Break - the `$contents` parameter of ::addAttachment() is now first
+ * instead of third, ::addAttachment() will now accept File objects for the `$contents` parameter, added
+ * ::addRelatedFile() [wb, 2010-12-01]
+ * @changes    1.0.0b23  Fixed a bug on Windows where emails starting with a `.` would have the `.` removed [wb,
+ * 2010-09-11]
  * @changes    1.0.0b22  Revamped the FQDN code and added ::getFQDN() [wb, 2010-09-07]
- * @changes    1.0.0b21  Added a check to prevent permissions warnings when getting the FQDN on Windows machines [wb, 2010-09-02]
- * @changes    1.0.0b20  Fixed ::send() to only remove the name of a recipient when dealing with the `mail()` function on Windows and to leave it when using SMTP [wb, 2010-06-22]
- * @changes    1.0.0b19  Changed ::send() to return the message id for the email, fixed the email regexes to require [] around IPs [wb, 2010-05-05]
+ * @changes    1.0.0b21  Added a check to prevent permissions warnings when getting the FQDN on Windows machines [wb,
+ * 2010-09-02]
+ * @changes    1.0.0b20  Fixed ::send() to only remove the name of a recipient when dealing with the `mail()` function
+ * on Windows and to leave it when using SMTP [wb, 2010-06-22]
+ * @changes    1.0.0b19  Changed ::send() to return the message id for the email, fixed the email regexes to require []
+ * around IPs [wb, 2010-05-05]
  * @changes    1.0.0b18  Fixed the name of the static method ::unindentExpand() [wb, 2010-04-28]
  * @changes    1.0.0b17  Added the static method ::unindentExpand() [wb, 2010-04-26]
  * @changes    1.0.0b16  Added support for sending emails via SMTP [wb, 2010-04-20]
- * @changes    1.0.0b15  Added the `$unindent_expand_constants` parameter to ::setBody(), added ::loadBody() and ::loadHTMLBody(), fixed HTML emails with attachments [wb, 2010-03-14]
- * @changes    1.0.0b14  Changed ::send() to not double `.`s at the beginning of lines on Windows since it seemed to break things rather than fix them [wb, 2010-03-05]
+ * @changes    1.0.0b15  Added the `$unindent_expand_constants` parameter to ::setBody(), added ::loadBody() and
+ * ::loadHTMLBody(), fixed HTML emails with attachments [wb, 2010-03-14]
+ * @changes    1.0.0b14  Changed ::send() to not double `.`s at the beginning of lines on Windows since it seemed to
+ * break things rather than fix them [wb, 2010-03-05]
  * @changes    1.0.0b13  Fixed the class to work when safe mode is turned on [wb, 2009-10-23]
- * @changes    1.0.0b12  Removed duplicate MIME-Version headers that were being included in S/MIME encrypted emails [wb, 2009-10-05]
+ * @changes    1.0.0b12  Removed duplicate MIME-Version headers that were being included in S/MIME encrypted emails [wb,
+ * 2009-10-05]
  * @changes    1.0.0b11  Updated to use the new ValidationException API [wb, 2009-09-17]
  * @changes    1.0.0b10  Fixed a bug with sending both an HTML and a plaintext body [bb-imarc, 2009-06-18]
  * @changes    1.0.0b9   Fixed a bug where the MIME headers were not being set for all emails [wb, 2009-06-12]
  * @changes    1.0.0b8   Added the method ::clearRecipients() [wb, 2009-05-29]
  * @changes    1.0.0b7   Email names with UTF-8 characters are now properly encoded [wb, 2009-05-08]
- * @changes    1.0.0b6   Fixed a bug where <> quoted email addresses in validation messages were not showing [wb, 2009-03-27]
+ * @changes    1.0.0b6   Fixed a bug where <> quoted email addresses in validation messages were not showing [wb,
+ * 2009-03-27]
  * @changes    1.0.0b5   Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b4   The recipient error message in ::validate() no longer contains a typo [wb, 2009-02-09]
- * @changes    1.0.0b3   Fixed a bug with missing content in the ValidationException thrown by ::validate() [wb, 2009-01-14]
+ * @changes    1.0.0b3   Fixed a bug with missing content in the ValidationException thrown by ::validate() [wb,
+ * 2009-01-14]
  * @changes    1.0.0b2   Fixed a few bugs with sending S/MIME encrypted/signed emails [wb, 2009-01-10]
  * @changes    1.0.0b    The initial implementation [wb, 2008-06-23]
  */
@@ -67,13 +79,18 @@ class Email
 	 *
 	 * @var string
 	 */
-	const string EMAIL_REGEX = '~^[ \t]*(                                                                      # Allow leading whitespace
-						   (?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")                       # An "atom" or a quoted string
-						   (?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*    # A . plus another "atom" or a quoted string, any number of times
+	const string EMAIL_REGEX =
+		'~^[ \t]*(                                                                      # Allow leading whitespace
+						   (?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")
+						   # An "atom" or a quoted string
+						   (?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*
+						   # A . plus another "atom" or a quoted string, any number of times
 						 )@(                                                                            # The @ symbol
 						   (?:[a-z0-9\\-]+\.)+[a-z]{2,}|                                                # Domain name
-						   \[(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])\]  # (or) IP addresses
-						 )[ \t]*$~ixD';                                                                 # Allow Trailing whitespace
+						   \[(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])\]
+						   # (or) IP addresses
+						 )[ \t]*$~ixD';
+							# Allow Trailing whitespace
 
 	/**
 	 * A regular expression to match a `name <email>` string, exluding those with comments and folding whitespace
@@ -88,16 +105,26 @@ class Email
 	 *
 	 * @var string
 	 */
-	const string NAME_EMAIL_REGEX = '~^[ \t]*(                                                                            # Allow leading whitespace
-								(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*)                 # An "atom" or a quoted string
-								(?:\.?[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*))*)  # Another "atom" or a quoted string or a . followed by one of those, any number of times
-							  [ \t]*<[ \t]*((                                                                      # The < encapsulating the email address
-								(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")                             # An "atom" or a quoted string
-								(?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*          # A . plus another "atom" or a quoted string, any number of times
-							  )@(                                                                                  # The @ symbol
-								(?:[a-z0-9\\-]+\.)+[a-z]{2,}|                                                      # Domain nam
-								\[(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])\]        # (or) IP addresses
-							  ))[ \t]*>[ \t]*$~ixD';                                                               # Closing > and trailing whitespace
+	const string NAME_EMAIL_REGEX =
+		'~^[ \t]*(                                                                            # Allow leading whitespace
+								(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*)
+								# An "atom" or a quoted string
+								(?:\.?[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+[ \t]*|"[^"\\\\\n\r]+"[ \t]*))*)
+								# Another "atom" or a quoted string or a . followed by one of those, any number of times
+							  [ \t]*<[ \t]*((
+							  # The < encapsulating the email address
+								(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")
+								# An "atom" or a quoted string
+								(?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*
+								# A . plus another "atom" or a quoted string, any number of times
+							  )@(
+							  # The @ symbol
+								(?:[a-z0-9\\-]+\.)+[a-z]{2,}|
+								# Domain nam
+								\[(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])\]
+								# (or) IP addresses
+							  ))[ \t]*>[ \t]*$~ixD';
+								# Closing > and trailing whitespace
 
 
 	/**
@@ -220,11 +247,16 @@ class Email
 		if (!$sendmail_command) {
 			self::$convert_crlf = true;
 			trigger_error(
-				self::compose('The proper fix for sending through qmail is not possible since the sendmail path is not set'),
+				self::compose(
+					'The proper fix for sending through qmail is not possible since the sendmail path is not set'
+				),
 				E_USER_WARNING
 			);
 			trigger_error(
-				self::compose('Trying to fix qmail by converting all \r\n to \n. This will cause invalid (but possibly functioning) email headers to be generated.'),
+				self::compose(
+					'Trying to fix qmail by converting all \r\n to \n. This will cause invalid (but possibly '
+						. 'functioning) email headers to be generated.'
+				),
 				E_USER_WARNING
 			);
 		}
@@ -262,20 +294,32 @@ class Email
 			self::$convert_crlf   = true;
 			if ($safe_mode) {
 				trigger_error(
-					self::compose('The proper fix for sending through qmail is not possible since safe mode is turned on and the sendmail binary is not in one of the paths defined by the safe_mode_exec_dir ini setting'),
+					self::compose(
+						'The proper fix for sending through qmail is not possible since safe mode is turned on and the '
+							. 'sendmail binary is not in one of the paths defined by the safe_mode_exec_dir ini setting'
+					),
 					E_USER_WARNING
 				);
 				trigger_error(
-					self::compose('Trying to fix qmail by converting all \r\n to \n. This will cause invalid (but possibly functioning) email headers to be generated.'),
+					self::compose(
+						'Trying to fix qmail by converting all \r\n to \n. This will cause invalid (but possibly '
+							. 'functioning) email headers to be generated.'
+					),
 					E_USER_WARNING
 				);
 			} else {
 				trigger_error(
-					self::compose('The proper fix for sending through qmail is not possible since the sendmail binary could not be found or is not executable'),
+					self::compose(
+						'The proper fix for sending through qmail is not possible since the sendmail binary could not '
+							. 'be found or is not executable'
+					),
 					E_USER_WARNING
 				);
 				trigger_error(
-					self::compose('Trying to fix qmail by converting all \r\n to \n. This will cause invalid (but possibly functioning) email headers to be generated.'),
+					self::compose(
+						'Trying to fix qmail by converting all \r\n to \n. This will cause invalid (but possibly '
+							. 'functioning) email headers to be generated.'
+					),
 					E_USER_WARNING
 				);
 			}
@@ -309,7 +353,10 @@ class Email
 		}
 
 		if (strpos($fqdn, '.') === false) {
-			$can_exec = !in_array('exec', array_map('trim', explode(',', (string) ini_get('disable_functions')))) && !ini_get('safe_mode');
+			$can_exec = !in_array('exec', array_map('trim', explode(',', (string) ini_get('disable_functions')))) &&
+				!ini_get(
+					'safe_mode'
+				);
 			if (Core::checkOS('linux') && $can_exec) {
 				$hostname = shell_exec('hostname --fqdn');
 				if (is_string($hostname)) {
@@ -330,20 +377,21 @@ class Email
 							if (is_array($adapters)) {
 								foreach ($adapters as $adapter) {
 									if (!is_string($adapter) || $adapter[0] != '{') {
-                                        continue;
-                                    }
+										continue;
+									}
 									try {
 										$domain = $shell->RegRead($tcpip_key . '\Interfaces\\' . $adapter . '\Domain');
 									} catch (com_exception $e) {
 										try {
-											$domain = $shell->RegRead($tcpip_key . '\Interfaces\\' . $adapter . '\DhcpDomain');
+											$domain = $shell->RegRead($tcpip_key . '\Interfaces\\' . $adapter .
+												'\DhcpDomain');
 										} catch (com_exception $e) {
-                                        }
+										}
 									}
 								}
 							}
 						} catch (com_exception $e) {
-                        }
+						}
 					}
 				}
 				if (!empty($domain) && is_string($domain)) {
@@ -366,7 +414,8 @@ class Email
 	 * Encodes a string to UTF-8 encoded-word
 	 *
 	 * @param  string  $content                   The content to encode
-	 * @param  integer $first_line_prefix_length  The length of any prefix applied to the first line of the encoded word - this allows properly accounting for a header name
+	 * @param  integer $first_line_prefix_length  The length of any prefix applied to the first line of the encoded word
+	 * - this allows properly accounting for a header name
 	 * @return string  The encoded string
 	 */
 	private static function makeEncodedWord(string $content, int $first_line_prefix_length): string
@@ -461,7 +510,8 @@ class Email
 
 
 	/**
-	 * Returns `TRUE` for non-empty strings, numbers, objects, empty numbers and string-like numbers (such as `0`, `0.0`, `'0'`)
+	 * Returns `TRUE` for non-empty strings, numbers, objects, empty numbers and string-like numbers (such as `0`,
+	 * `0.0`, `'0'`)
 	 *
 	 * @param  mixed $value  The value to check
 	 * @return boolean  If the value is string-like
@@ -498,12 +548,12 @@ class Email
 		preg_match_all('#\{([a-z][a-z0-9_]*)\}#i', $text, $constants, PREG_SET_ORDER);
 		foreach ($constants as $constant) {
 			if (!defined($constant[1])) {
-                continue;
-            }
+				continue;
+			}
 			$replacement = constant($constant[1]);
 			if (!is_string($replacement) && !is_int($replacement) && !is_float($replacement)) {
-                continue;
-            }
+				continue;
+			}
 			$text = preg_replace('#' . preg_quote($constant[0], '#') . '#', (string) $replacement, $text, 1) ?? $text;
 		}
 
@@ -659,7 +709,8 @@ class Email
 	 */
 	public function __construct()
 	{
-		$this->message_id = '<' . Cryptography::randomString(10, 'hexadecimal') . '.' . time() . '@' . self::getFQDN() . '>';
+		$this->message_id = '<' . Cryptography::randomString(10, 'hexadecimal') . '.' . time() . '@' . self::getFQDN() .
+			'>';
 	}
 
 
@@ -684,7 +735,8 @@ class Email
 	 *
 	 * @param  string|File $contents   The contents of the file
 	 * @param  string       $filename   The name to give the attachement - optional if `$contents` is an File object
-	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if incorrectly detected
+	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if
+	 * incorrectly detected
 	 * @return Email  The email object, to allow for method chaining
 	 * @throws ValidationException
 	 */
@@ -716,7 +768,8 @@ class Email
 	 *
 	 * @param  string|File $contents   The contents of the file
 	 * @param  string       $filename   The name to give the attachement - optional if `$contents` is an File object
-	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if incorrectly detected
+	 * @param  string       $mime_type  The mime type of the file - this allows overriding the mime type of the file if
+	 * incorrectly detected
 	 * @return string  The fully-formed `cid:` URL for use in HTML `src` attributes
 	 * @throws ValidationException
 	 */
@@ -839,10 +892,10 @@ class Email
 		$line  = 1;
 		foreach ($emails as $email) {
 			if ($first) {
-                $first = false;
-            } else {
-                $header .= ', ';
-            }
+				$first = false;
+			} else {
+				$header .= ', ';
+			}
 
 			// Try to stay within the recommended 78 character line limit
 			$last_crlf_pos = (int) strrpos($header, "\r\n");
@@ -1007,7 +1060,8 @@ class Email
 
 		foreach ($this->custom_headers as $header_info) {
 			$header_prefix = $header_info[0] . ': ';
-			$headers      .= $header_prefix . self::makeEncodedWord($header_info[1] ?? '', strlen($header_prefix)) . "\r\n";
+			$headers      .= $header_prefix . self::makeEncodedWord($header_info[1] ?? '', strlen($header_prefix)) .
+				"\r\n";
 		}
 
 		$headers .= "Message-ID: " . $message_id . "\r\n";
@@ -1124,12 +1178,38 @@ class Email
 		// If we are going to sign and encrypt, the best way is to sign, encrypt and then sign again
 		if ($this->smime_encrypt && $this->smime_sign) {
 			openssl_pkcs7_sign($plaintext_file, $ciphertext_file, $senders_smime_cert, $senders_private_key, array());
-			openssl_pkcs7_encrypt($ciphertext_file, $plaintext_file, $recipients_smime_cert, array(), 0, OPENSSL_CIPHER_RC2_128);
-			openssl_pkcs7_sign($plaintext_file, $ciphertext_file, $senders_smime_cert, $senders_private_key, $headers_array);
+			openssl_pkcs7_encrypt(
+				$ciphertext_file,
+				$plaintext_file,
+				$recipients_smime_cert,
+				array(),
+				0,
+				OPENSSL_CIPHER_RC2_128
+			);
+			openssl_pkcs7_sign(
+				$plaintext_file,
+				$ciphertext_file,
+				$senders_smime_cert,
+				$senders_private_key,
+				$headers_array
+			);
 		} elseif ($this->smime_sign) {
-			openssl_pkcs7_sign($plaintext_file, $ciphertext_file, $senders_smime_cert, $senders_private_key, $headers_array);
+			openssl_pkcs7_sign(
+				$plaintext_file,
+				$ciphertext_file,
+				$senders_smime_cert,
+				$senders_private_key,
+				$headers_array
+			);
 		} elseif ($this->smime_encrypt) {
-			openssl_pkcs7_encrypt($plaintext_file, $ciphertext_file, $recipients_smime_cert, $headers_array, 0, OPENSSL_CIPHER_RC2_128);
+			openssl_pkcs7_encrypt(
+				$plaintext_file,
+				$ciphertext_file,
+				$recipients_smime_cert,
+				$headers_array,
+				0,
+				OPENSSL_CIPHER_RC2_128
+			);
 		}
 
 		// It seems that the contents of the ciphertext is not always \r\n line breaks
@@ -1146,8 +1226,17 @@ class Email
 		$new_headers = preg_replace('#^To:[^\n]+\n( [^\n]+\n)*#mi', '', $new_headers) ?? $new_headers;
 		$new_headers = preg_replace('#^Subject:[^\n]+\n( [^\n]+\n)*#mi', '', $new_headers) ?? $new_headers;
 		$new_headers = preg_replace("#^MIME-Version: 1.0\r?\n#mi", '', $new_headers, 1) ?? $new_headers;
-		$new_headers = preg_replace('#^Content-Type:\s+' . preg_quote($headers_array['Content-Type'], '#') . "\r?\n#mi", '', $new_headers) ?? $new_headers;
-		$new_headers = preg_replace('#^Content-Transfer-Encoding:\s+' . preg_quote($headers_array['Content-Transfer-Encoding'], '#') . "\r?\n#mi", '', $new_headers) ?? $new_headers;
+		$new_headers = preg_replace(
+			'#^Content-Type:\s+' . preg_quote($headers_array['Content-Type'], '#') . "\r?\n#mi",
+			'',
+			$new_headers
+		) ?? $new_headers;
+		$new_headers = preg_replace(
+			'#^Content-Transfer-Encoding:\s+' . preg_quote($headers_array['Content-Transfer-Encoding'], '#') .
+				"\r?\n#mi",
+			'',
+			$new_headers
+		) ?? $new_headers;
 
 		unlink($plaintext_file);
 		unlink($ciphertext_file);
@@ -1216,7 +1305,8 @@ class Email
 	 * @param  string|File  $contents   The file to extrapolate the info from
 	 * @param  string|null  $filename   The filename to use for the file, or `NULL` to derive it from an File object
 	 * @param  string|null  $mime_type  The mime type of the file, or `NULL` to derive it from an File object
-	 * @return array{0: string, 1: string, 2: string|null}  `0` => the file contents, `1` => the filename, `2` => the mime type
+	 * @return array{0: string, 1: string, 2: string|null}  `0` => the file contents, `1` => the filename, `2` => the
+	 * mime type
 	 * @throws ValidationException
 	 */
 	private function extrapolateFileInfo(string|File $contents, ?string $filename, ?string $mime_type): array
@@ -1268,13 +1358,14 @@ class Email
 	/**
 	 * Loads the plaintext version of the email body from a file and applies replacements
 	 *
-	 * The should contain either ASCII or UTF-8 encoded text. Please see
-	 * http://flourishlib.com/docs/UTF-8 for more information.
+	 * The should contain either ASCII or UTF-8 encoded text.
 	 *
-	 * @throws ValidationException  When no file was specified, the file does not exist or the path specified is not a file
+	 * @throws ValidationException  When no file was specified, the file does not exist or the path specified is not a
+	 * file
 	 *
 	 * @param  string|File           $file          The plaintext version of the email body
-	 * @param  array<string, string> $replacements  The method will search the contents of the file for each key and replace it with the corresponding value
+	 * @param  array<string, string> $replacements  The method will search the contents of the file for each key and
+	 * replace it with the corresponding value
 	 * @return Email  The email object, to allow for method chaining
 	 */
 	public function loadBody(mixed $file, array $replacements = array()): Email
@@ -1297,13 +1388,14 @@ class Email
 	/**
 	 * Loads the plaintext version of the email body from a file and applies replacements
 	 *
-	 * The should contain either ASCII or UTF-8 encoded text. Please see
-	 * http://flourishlib.com/docs/UTF-8 for more information.
+	 * The should contain either ASCII or UTF-8 encoded text.
 	 *
-	 * @throws ValidationException  When no file was specified, the file does not exist or the path specified is not a file
+	 * @throws ValidationException  When no file was specified, the file does not exist or the path specified is not a
+	 * file
 	 *
 	 * @param  string|File           $file          The plaintext version of the email body
-	 * @param  array<string, string> $replacements  The method will search the contents of the file for each key and replace it with the corresponding value
+	 * @param  array<string, string> $replacements  The method will search the contents of the file for each key and
+	 * replace it with the corresponding value
 	 * @return Email  The email object, to allow for method chaining
 	 */
 	public function loadHTMLBody(mixed $file, array $replacements = array()): Email
@@ -1589,11 +1681,11 @@ class Email
 	/**
 	 * Sets the plaintext version of the email body
 	 *
-	 * This method accepts either ASCII or UTF-8 encoded text. Please see
-	 * http://flourishlib.com/docs/UTF-8 for more information.
+	 * This method accepts either ASCII or UTF-8 encoded text.
 	 *
 	 * @param  string  $plaintext                  The plaintext version of the email body
-	 * @param  boolean $unindent_expand_constants  If this is `TRUE`, the body will be unindented as much as possible and {CONSTANT_NAME} will be replaced with the value of the constant
+	 * @param  boolean $unindent_expand_constants  If this is `TRUE`, the body will be unindented as much as possible
+	 * and {CONSTANT_NAME} will be replaced with the value of the constant
 	 * @return Email  The email object, to allow for method chaining
 	 */
 	public function setBody(string $plaintext, bool $unindent_expand_constants = false): Email
@@ -1619,7 +1711,9 @@ class Email
 	public function setBounceToEmail(string $email): Email|null
 	{
 		if (ini_get('safe_mode') && !Core::checkOS('windows')) {
-			throw new ProgrammerException('It is not possible to set a Bounce-To Email address when safe mode is enabled on a non-Windows server');
+			throw new ProgrammerException(
+				'It is not possible to set a Bounce-To Email address when safe mode is enabled on a non-Windows server'
+			);
 		}
 		if (!$email) {
 			return null;
@@ -1653,8 +1747,7 @@ class Email
 	/**
 	 * Sets the HTML version of the email body
 	 *
-	 * This method accepts either ASCII or UTF-8 encoded text. Please see
-	 * http://flourishlib.com/docs/UTF-8 for more information.
+	 * This method accepts either ASCII or UTF-8 encoded text.
 	 *
 	 * @param  string $html  The HTML version of the email body
 	 * @return Email  The email object, to allow for method chaining
@@ -1711,8 +1804,7 @@ class Email
 	/**
 	 * Sets the subject of the email
 	 *
-	 * This method accepts either ASCII or UTF-8 encoded text. Please see
-	 * http://flourishlib.com/docs/UTF-8 for more information.
+	 * This method accepts either ASCII or UTF-8 encoded text.
 	 *
 	 * @param  string $subject  The subject of the email
 	 * @return Email  The email object, to allow for method chaining
@@ -1733,8 +1825,11 @@ class Email
 	 * @param  string $senders_smime_pk_password  The password for the sender's S/MIME private key
 	 * @return Email  The email object, to allow for method chaining
 	 */
-	public function sign(string $senders_smime_cert_file, string $senders_smime_pk_file, string $senders_smime_pk_password): Email
-	{
+	public function sign(
+		string $senders_smime_cert_file,
+		string $senders_smime_pk_file,
+		string $senders_smime_pk_password
+	): Email {
 		if (!extension_loaded('openssl')) {
 			throw new EnvironmentException(
 				'An S/MIME signature was requested for an email, but the %s extension is not installed',
@@ -1802,7 +1897,8 @@ class Email
 				}
 				if (!preg_match(self::NAME_EMAIL_REGEX, $email) && !preg_match(self::EMAIL_REGEX, $email)) {
 					$validation_messages[] = htmlspecialchars(self::compose(
-						'The %1$s %2$s is not a valid email address. Should be like "John Smith" <name@example.com> or name@example.com.',
+						'The %1$s %2$s is not a valid email address. Should be like "John Smith" <name@example.com> or '
+							. 'name@example.com.',
 						$name,
 						$email
 					), ENT_QUOTES, 'UTF-8');
@@ -1825,7 +1921,8 @@ class Email
 			}
 			if (!preg_match(self::NAME_EMAIL_REGEX, $email) && !preg_match(self::EMAIL_REGEX, $email)) {
 				$validation_messages[] = htmlspecialchars(self::compose(
-					'The %1$s %2$s is not a valid email address. Should be like "John Smith" <name@example.com> or name@example.com.',
+					'The %1$s %2$s is not a valid email address. Should be like "John Smith" <name@example.com> or '
+						. 'name@example.com.',
 					$name,
 					$email
 				), ENT_QUOTES, 'UTF-8');

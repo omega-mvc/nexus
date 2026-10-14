@@ -11,10 +11,10 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Cookie
  *
  * @version    1.0.0b4
- * @changes    1.0.0b4  Added a `function_exists()` guard around `get_magic_quotes_gpc()` for PHP 8.0+ compatibility [wb, 2026-07-10]
+ * @changes    1.0.0b4  Added a `function_exists()` guard around `get_magic_quotes_gpc()` for PHP 8.0+ compatibility
+ * [wb, 2026-07-10]
  * @changes    1.0.0b3  Added the ::delete() method [nt+wb, 2009-09-30]
  * @changes    1.0.0b2  Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b   The initial implementation [wb, 2008-09-01]
@@ -66,8 +66,12 @@ class Cookie
 	 * @param  boolean|null $secure  If the cookie is a secure-only cookie
 	 * @return void
 	 */
-	public static function delete(string $name, ?string $path = null, ?string $domain = null, ?bool $secure = null): void
-	{
+	public static function delete(
+		string $name,
+		?string $path = null,
+		?string $domain = null,
+		?bool $secure = null
+	): void {
 		self::set($name, '', time() - 86400, $path, $domain, $secure);
 	}
 
@@ -128,15 +132,23 @@ class Cookie
 	 *
 	 * @param  string                $name      The name of the cookie to set
 	 * @param  mixed                 $value     The value of the cookie to set
-	 * @param  string|integer|null   $expires   A relative string to be interpreted by [http://php.net/strtotime strtotime()] or an integer unix timestamp
+	 * @param  string|integer|null   $expires   A relative string to be interpreted by [http://php.net/strtotime
+	 * strtotime()] or an integer unix timestamp
 	 * @param  string|null           $path      The path this cookie applies to
 	 * @param  string|null           $domain    The domain this cookie applies to
 	 * @param  boolean|null          $secure    If the cookie should only be transmitted over a secure connection
 	 * @param  boolean|null          $httponly  If the cookie should only be readable by HTTP connection, not javascript
 	 * @return void
 	 */
-	public static function set(string $name, mixed $value, int|string|null $expires = null, ?string $path = null, ?string $domain = null, ?bool $secure = null, ?bool $httponly = null): void
-	{
+	public static function set(
+		string $name,
+		mixed $value,
+		int|string|null $expires = null,
+		?string $path = null,
+		?string $domain = null,
+		?bool $secure = null,
+		?bool $httponly = null
+	): void {
 		if ($expires === null && self::$default_expires !== null) {
 			$expires = self::$default_expires;
 		}
@@ -267,8 +279,8 @@ class Cookie
 	 * @return Cookie
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

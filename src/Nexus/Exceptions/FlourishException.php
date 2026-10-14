@@ -10,17 +10,22 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/FlourishException
  *
  * @version    1.0.0b9
- * @changes    1.0.0b9  Added an `isset()` guard around `$_SERVER['DOCUMENT_ROOT']` access in ::formatTrace() for PHP 8.1 undefined array key compatibility [wb, 2026-07-10]
+ * @changes    1.0.0b9  Added an `isset()` guard around `$_SERVER['DOCUMENT_ROOT']` access in ::formatTrace() for PHP
+ * 8.1 undefined array key compatibility [wb, 2026-07-10]
  * @changes    1.0.0b8  Added a missing line of backtrace to ::formatTrace() [wb, 2009-06-28]
- * @changes    1.0.0b7  Updated ::__construct() to no longer require a message, like the Exception class, and allow for non-integer codes [wb, 2009-06-26]
- * @changes    1.0.0b6  Fixed ::splitMessage() so that the original message is returned if no list items are found, added ::reorderMessage() [wb, 2009-06-02]
- * @changes    1.0.0b5  Added ::splitMessage() to replace CRUD::removeListItems() and CRUD::reorderListItems() [wb, 2009-05-08]
- * @changes    1.0.0b4  Added a check to ::__construct() to ensure that the `$code` parameter is numeric [wb, 2009-05-04]
+ * @changes    1.0.0b7  Updated ::__construct() to no longer require a message, like the Exception class, and allow for
+ * non-integer codes [wb, 2009-06-26]
+ * @changes    1.0.0b6  Fixed ::splitMessage() so that the original message is returned if no list items are found,
+ * added ::reorderMessage() [wb, 2009-06-02]
+ * @changes    1.0.0b5  Added ::splitMessage() to replace CRUD::removeListItems() and CRUD::reorderListItems() [wb,
+ * 2009-05-08]
+ * @changes    1.0.0b4  Added a check to ::__construct() to ensure that the `$code` parameter is numeric [wb,
+ * 2009-05-04]
  * @changes    1.0.0b3  Fixed a bug with ::printMessage() messing up some HTML messages [wb, 2009-03-27]
- * @changes    1.0.0b2  ::compose() more robustly handles `$components` passed as an array, ::__construct() now detects stray `%` characters [wb, 2009-02-05]
+ * @changes    1.0.0b2  ::compose() more robustly handles `$components` passed as an array, ::__construct() now detects
+ * stray `%` characters [wb, 2009-02-05]
  * @changes    1.0.0b   The initial implementation [wb, 2007-06-14]
  */
 abstract class FlourishException extends Exception
@@ -106,41 +111,49 @@ abstract class FlourishException extends Exception
 			// Make the var dump more like a print_r
 			$replaced = preg_replace('#=>\n(  )+(?=[a-zA-Z]|&)#m', ' => ', $output);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
+				$output = $replaced;
+			}
 			$output = str_replace('string(0) ""', '{empty_string}', $output);
 			$replaced = preg_replace('#=> (&)?NULL#', '=> \1{null}', $output);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
+				$output = $replaced;
+			}
 			$replaced = preg_replace('#=> (&)?bool\((false|true)\)#', '=> \1{\2}', $output);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
+				$output = $replaced;
+			}
 			$replaced = preg_replace('#string\(\d+\) "#', '', $output);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
+				$output = $replaced;
+			}
 			$replaced = preg_replace('#"(\n(  )*)(?=\[|\})#', '\1', $output);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
+				$output = $replaced;
+			}
 			$replaced = preg_replace('#(?:float|int)\((-?\d+(?:.\d+)?)\)#', '\1', $output);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
+				$output = $replaced;
+			}
 			$replaced = preg_replace('#((?:  )+)\["(.*?)"\]#', '\1[\2]', $output);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
-			$replaced = preg_replace('#(?:&)?array\(\d+\) \{\n((?:  )*)((?:  )(?=\[)|(?=\}))#', "Array\n\\1(\n\\1\\2", $output);
+				$output = $replaced;
+			}
+			$replaced = preg_replace(
+				'#(?:&)?array\(\d+\) \{\n((?:  )*)((?:  )(?=\[)|(?=\}))#',
+				"Array\n\\1(\n\\1\\2",
+				$output
+			);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
-			$replaced = preg_replace('/object\((\w+)\)#\d+ \(\d+\) {\n((?:  )*)((?:  )(?=\[)|(?=\}))/', "\\1 Object\n\\2(\n\\2\\3", $output);
+				$output = $replaced;
+			}
+			$replaced = preg_replace(
+				'/object\((\w+)\)#\d+ \(\d+\) {\n((?:  )*)((?:  )(?=\[)|(?=\}))/',
+				"\\1 Object\n\\2(\n\\2\\3",
+				$output
+			);
 			if (is_string($replaced)) {
-                $output = $replaced;
-            }
+				$output = $replaced;
+			}
 			$replaced = preg_replace('#^((?:  )+)}(?=\n|$)#m', "\\1)\n", $output);
 			if ($replaced !== null) {
 				$output = $replaced;
@@ -237,10 +250,12 @@ abstract class FlourishException extends Exception
 	 * The following aspects of valid `sprintf()` formatting codes are not
 	 * accepted since they are redundant and restrict the non-formatting use of
 	 * the `%` sign in exception messages:
-	 *  - `% 2d`: Using a literal space as a padding character - a space will be used if no padding character is specified
+	 *  - `% 2d`: Using a literal space as a padding character - a space will be used if no padding character is
+	 * specified
 	 *  - `%'.d`: Providing a padding character but no width - no padding will be applied without a width
 	 *
-	 * @param  string $message    The message for the exception. This accepts a subset of [http://php.net/sprintf `sprintf()`] strings - see method description for more details.
+	 * @param  string $message    The message for the exception. This accepts a subset of [http://php.net/sprintf
+	 * `sprintf()`] strings - see method description for more details.
 	 * @return FlourishException
 	 */
 	/**
@@ -394,15 +409,20 @@ abstract class FlourishException extends Exception
 		}
 		// See if the message has newline characters but not br tags, extracted from HTML to reduce dependencies
 		/** @var string */
-		static $inline_tags_minus_br = '<a><abbr><acronym><b><big><button><cite><code><del><dfn><em><font><i><img><input><ins><kbd><label><q><s><samp><select><small><span><strike><strong><sub><sup><textarea><tt><u><var>';
+		static $inline_tags_minus_br =
+			'<a><abbr><acronym><b><big><button><cite><code><del><dfn><em><font><i><img><input><ins><kbd><label><q><s><s'
+				. 'amp><select><small><span><strike><strong><sub><sup><textarea><tt><u><var>';
 		$content_with_newlines = (strip_tags($content, $inline_tags_minus_br) !== '') ? $content : nl2br($content);
 
 		// Check to see if we have any block-level html, extracted from HTML to reduce dependencies
 		$inline_tags = $inline_tags_minus_br . '<br>';
 		$no_block_html = strip_tags($content, $inline_tags) === $content;
 
-		// This code ensures the output is properly encoded for display in (X)HTML, extracted from HTML to reduce dependencies
-		$reg_exp = "/<\s*\/?\s*[\w:]+(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*\/?\s*>|&(?:#\d+|\w+);|<\!--.*?-->/";
+		// This code ensures the output is properly encoded for display in (X)HTML, extracted from HTML to reduce
+		// dependencies
+		$reg_exp =
+			"/<\s*\/?\s*[\w:]+(?:\s+[\w:]+(?:\s*=\s*(?:\"[^\"]*?\"|'[^']*?'|[^'\">\s]+))?)*\s*\/?\s*>|&(?:#\d+|\w+);|<"
+				. "\!--.*?-->/";
 		preg_match_all($reg_exp, $content, $html_matches, PREG_SET_ORDER);
 		$text_matches = preg_split($reg_exp, $content_with_newlines);
 		if (!is_array($text_matches)) {
@@ -448,7 +468,8 @@ abstract class FlourishException extends Exception
 
 
 	/**
-	 * Prints the backtrace to currently called exception inside of a pre tag with the class being 'exception %THIS_EXCEPTION_CLASS_NAME% trace'
+	 * Prints the backtrace to currently called exception inside of a pre tag with the class being 'exception
+	 * %THIS_EXCEPTION_CLASS_NAME% trace'
 	 *
 	 * @return void
 	 */
@@ -463,7 +484,8 @@ abstract class FlourishException extends Exception
 	/**
 	 * Reorders list items in the message based on simple string matching
 	 *
-	 * @param  string $match  This should be a string to match to one of the list items - whatever the order this is in the parameter list will be the order of the list item in the adjusted message
+	 * @param  string $match  This should be a string to match to one of the list items - whatever the order this is in
+	 * the parameter list will be the order of the list item in the adjusted message
 	 * @param  string ...$more
 	 * @return FlourishException  The exception object, to allow for method chaining
 	 */
@@ -600,8 +622,10 @@ abstract class FlourishException extends Exception
 	 * the returned array will be the existing message and all other array
 	 * values will be an empty string.
 	 *
-	 * @param  array $list_item_matches  An array of strings to filter the list items by, list items will be ordered in the same order as this array
-	 * @return array  This will contain an array of strings corresponding to the parameters passed - see method description for details
+	 * @param  array $list_item_matches  An array of strings to filter the list items by, list items will be ordered in
+	 * the same order as this array
+	 * @return array  This will contain an array of strings corresponding to the parameters passed - see method
+	 * description for details
 	 */
 	/**
 	 * @param array<string> $list_item_matches
@@ -630,7 +654,8 @@ abstract class FlourishException extends Exception
 			// This ensures that we match on the longest string first
 			uasort($matching_array, array(self::class, 'sortMatchingArray'));
 
-			// We may match more than one list item per matching string, so we need a multi-dimensional array to hold them
+			// We may match more than one list item per matching string, so we need a multi-dimensional array to hold
+			// them
 			$matched_list_items = array_fill(0, sizeof($matching_array), array());
 			$found              = false;
 

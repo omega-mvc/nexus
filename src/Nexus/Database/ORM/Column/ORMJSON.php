@@ -10,11 +10,12 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/ORMJSON
  *
  * @version    1.0.0b3
- * @changes    1.0.0b3  Removed the `$pointer` parameter from ::toJSONRecordSet() since RecordSet no longer has a pointer [wb, 2010-09-28]
- * @changes    1.0.0b2  Updated the code to remove the `$associate` parameter for the record set method callback [wb, 2009-06-02]
+ * @changes    1.0.0b3  Removed the `$pointer` parameter from ::toJSONRecordSet() since RecordSet no longer has a
+ * pointer [wb, 2010-09-28]
+ * @changes    1.0.0b2  Updated the code to remove the `$associate` parameter for the record set method callback [wb,
+ * 2009-06-02]
  * @changes    1.0.0b   The initial implementation [wb, 2008-06-25]
  */
 class ORMJSON
@@ -84,8 +85,15 @@ class ORMJSON
 	 * @param  array<int, mixed> $parameters        The parameters passed to the method
 	 * @return string  The JSON object that represents the values of this record
 	 */
-	public static function toJSON(ActiveRecord $object, mixed &$values, mixed &$old_values, mixed &$related_records, mixed &$cache, string $method_name, array $parameters): string
-	{
+	public static function toJSON(
+		ActiveRecord $object,
+		mixed &$values,
+		mixed &$old_values,
+		mixed &$related_records,
+		mixed &$cache,
+		string $method_name,
+		array $parameters
+	): string {
 		$output = array();
 		foreach ($values as $column => $value) {
 			if (is_object($value) && is_callable(array($value, '__toString'))) {
@@ -122,8 +130,8 @@ class ORMJSON
 	 * @return ORMJSON
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

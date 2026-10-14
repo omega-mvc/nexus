@@ -14,18 +14,22 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/URL
  *
  * @version    1.0.0b14
- * @changes    1.0.0b14  Added `isset()` guards around `$_SERVER` access and a `function_exists()` guard around `get_magic_quotes_gpc()` for PHP 8.0+ compatibility, fixed NULL being passed to `strlen()` in ::makeFriendly() [wb, 2026-07-10]
- * @changes    1.0.0b12  ::getDomain() will handle https:// proxies to http:// when the proxied server runs on port 80 [wb, 2022-02-16]
- * @changes    1.0.0b11  ::getDomain() will look for X_FORWARDED_PROTO header to handle servers with a TLS terminator in front [wb, 2016-11-01]
+ * @changes    1.0.0b14  Added `isset()` guards around `$_SERVER` access and a `function_exists()` guard around
+ * `get_magic_quotes_gpc()` for PHP 8.0+ compatibility, fixed NULL being passed to `strlen()` in ::makeFriendly() [wb,
+ * 2026-07-10]
+ * @changes    1.0.0b12  ::getDomain() will handle https:// proxies to http:// when the proxied server runs on port 80
+ * [wb, 2022-02-16]
+ * @changes    1.0.0b11  ::getDomain() will look for X_FORWARDED_PROTO header to handle servers with a TLS terminator in
+ * front [wb, 2016-11-01]
  * @changes    1.0.0b10  Fixed some method signatures [wb, 2011-08-24]
  * @changes    1.0.0b9   Fixed ::redirect() to handle no parameters properly [wb, 2011-06-13]
  * @changes    1.0.0b8   Added the `$delimiter` parameter to ::makeFriendly() [wb, 2011-06-03]
  * @changes    1.0.0b7   Fixed ::redirect() to be able to handle unqualified and relative paths [wb, 2011-03-02]
  * @changes    1.0.0b6   Added the `$max_length` parameter to ::makeFriendly() [wb, 2010-09-19]
- * @changes    1.0.0b5   Updated ::redirect() to not require a URL, using the current URL as the default [wb, 2009-07-29]
+ * @changes    1.0.0b5   Updated ::redirect() to not require a URL, using the current URL as the default [wb,
+ * 2009-07-29]
  * @changes    1.0.0b4   ::getDomain() now includes the port number if non-standard [wb, 2009-05-02]
  * @changes    1.0.0b3   ::makeFriendly() now changes _-_ to - and multiple _ to a single _ [wb, 2009-03-24]
  * @changes    1.0.0b2   Fixed ::makeFriendly() so that _ doesn't appear at the beginning of URLs [wb, 2009-03-22]
@@ -101,7 +105,8 @@ class URL
 
 
 	/**
-	 * Returns the current URL including query string, but without domain name - does not include query string parameters from rewrites
+	 * Returns the current URL including query string, but without domain name - does not include query string
+	 * parameters from rewrites
 	 *
 	 * @return string  The URL with query string
 	 */
@@ -190,8 +195,8 @@ class URL
 				// Resolve ../ relative paths as far as possible
 				while (substr($url, 0, 3) == '../') {
 					if ($prefix == self::getDomain() . '/') {
-                        break;
-                    }
+						break;
+					}
 					$prefix = preg_replace('#(?<=/)[^/]+/?$#D', '', $prefix) ?? $prefix;
 					$url    = substr($url, 3);
 				}
@@ -304,8 +309,8 @@ class URL
 	 * @return URL
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

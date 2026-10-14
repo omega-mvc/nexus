@@ -5,8 +5,7 @@ declare(strict_types=1);
 /**
  * Provides a common API for different databases - will automatically use any installed extension
  *
- * This class is implemented to use the UTF-8 character encoding. Please see
- * http://flourishlib.com/docs/UTF-8 for more information.
+ * This class is implemented to use the UTF-8 character encoding.
  *
  * The following databases are supported:
  *
@@ -49,53 +48,86 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Database
  *
  * @version    1.0.0b42
- * @changes    1.0.0b42  Updated `is_resource()` checks for ibm_db2 and sqlsrv to also accept objects for PHP 8.1+ compatibility [wb, 2026-07-10]
+ * @changes    1.0.0b42  Updated `is_resource()` checks for ibm_db2 and sqlsrv to also accept objects for PHP 8.1+
+ * compatibility [wb, 2026-07-10]
  * @changes    1.0.0b41  Fixed an array to string conversion notice [wb, 2012-09-21]
- * @changes    1.0.0b40  Fixed a bug with notices being triggered when failing to connect to a SQLite database [wb, 2011-06-20]
+ * @changes    1.0.0b40  Fixed a bug with notices being triggered when failing to connect to a SQLite database [wb,
+ * 2011-06-20]
  * @changes    1.0.0b39  Fixed a bug with detecting some MySQL database version numbers [wb, 2011-05-24]
- * @changes    1.0.0b38  Backwards Compatibility Break - callbacks registered to the `extracted` hook via ::registerHookCallback() no longer receive the `$strings` parameter, instead all strings are added into the `$values` parameter - added ::getVersion(), fixed a bug with SQLite messaging, fixed a bug with ::__destruct(), improved handling of transactional queries, added ::close(), enhanced class to throw four different exceptions for different connection errors, silenced PHP warnings upon connection error [wb, 2011-05-09]
- * @changes    1.0.0b37  Fixed usage of the mysqli extension to only call mysqli_set_charset() if it exists [wb, 2011-03-04]
- * @changes    1.0.0b36  Updated ::escape() and methods that use ::escape() to handle float values that don't contain a digit before or after the . [wb, 2011-02-01]
- * @changes    1.0.0b35  Updated the class to replace `LIMIT` and `OFFSET` value placeholders in the SQL with their values before translating since most databases that translate `LIMIT` statements need to move or add values together [wb, 2011-01-11]
+ * @changes    1.0.0b38  Backwards Compatibility Break - callbacks registered to the `extracted` hook via
+ * ::registerHookCallback() no longer receive the `$strings` parameter, instead all strings are added into the `$values`
+ * parameter - added ::getVersion(), fixed a bug with SQLite messaging, fixed a bug with ::__destruct(), improved
+ * handling of transactional queries, added ::close(), enhanced class to throw four different exceptions for different
+ * connection errors, silenced PHP warnings upon connection error [wb, 2011-05-09]
+ * @changes    1.0.0b37  Fixed usage of the mysqli extension to only call mysqli_set_charset() if it exists [wb,
+ * 2011-03-04]
+ * @changes    1.0.0b36  Updated ::escape() and methods that use ::escape() to handle float values that don't contain a
+ * digit before or after the . [wb, 2011-02-01]
+ * @changes    1.0.0b35  Updated the class to replace `LIMIT` and `OFFSET` value placeholders in the SQL with their
+ * values before translating since most databases that translate `LIMIT` statements need to move or add values together
+ * [wb, 2011-01-11]
  * @changes    1.0.0b34  Fixed a bug with creating translated prepared statements [wb, 2011-01-09]
- * @changes    1.0.0b33  Added code to explicitly set the connection encoding for the mysql and mysqli extensions since some PHP installs don't see to fully respect `SET NAMES` [wb, 2010-12-06]
- * @changes    1.0.0b32  Fixed handling auto-incrementing values for Oracle when the trigger was on `INSERT OR UPDATE` instead of just `INSERT` [wb, 2010-12-04]
- * @changes    1.0.0b31  Fixed handling auto-incrementing values for MySQL when the `INTO` keyword is left out of an `INSERT` statement [wb, 2010-11-04]
- * @changes    1.0.0b30  Fixed the pgsql, mssql and mysql extensions to force a new connection instead of reusing an existing one [wb, 2010-08-17]
- * @changes    1.0.0b29  Backwards Compatibility Break - removed ::enableSlowQueryWarnings(), added ability to replicate via ::registerHookCallback() [wb, 2010-08-10]
- * @changes    1.0.0b28  Backwards Compatibility Break - removed ODBC support. Added support for the `pdo_ibm` extension. [wb, 2010-07-31]
- * @changes    1.0.0b27  Fixed a bug with running multiple copies of a SQL statement with string values through a single ::translatedQuery() call [wb, 2010-07-14]
+ * @changes    1.0.0b33  Added code to explicitly set the connection encoding for the mysql and mysqli extensions since
+ * some PHP installs don't see to fully respect `SET NAMES` [wb, 2010-12-06]
+ * @changes    1.0.0b32  Fixed handling auto-incrementing values for Oracle when the trigger was on `INSERT OR UPDATE`
+ * instead of just `INSERT` [wb, 2010-12-04]
+ * @changes    1.0.0b31  Fixed handling auto-incrementing values for MySQL when the `INTO` keyword is left out of an
+ * `INSERT` statement [wb, 2010-11-04]
+ * @changes    1.0.0b30  Fixed the pgsql, mssql and mysql extensions to force a new connection instead of reusing an
+ * existing one [wb, 2010-08-17]
+ * @changes    1.0.0b29  Backwards Compatibility Break - removed ::enableSlowQueryWarnings(), added ability to replicate
+ * via ::registerHookCallback() [wb, 2010-08-10]
+ * @changes    1.0.0b28  Backwards Compatibility Break - removed ODBC support. Added support for the `pdo_ibm`
+ * extension. [wb, 2010-07-31]
+ * @changes    1.0.0b27  Fixed a bug with running multiple copies of a SQL statement with string values through a single
+ * ::translatedQuery() call [wb, 2010-07-14]
  * @changes    1.0.0b26  Updated the class to use new Core functionality [wb, 2010-07-05]
  * @changes    1.0.0b25  Added IBM DB2 support [wb, 2010-04-13]
- * @changes    1.0.0b24  Fixed an auto-incrementing transaction bug with Oracle and debugging issues with all databases [wb, 2010-03-17]
- * @changes    1.0.0b23  Resolved another bug with capturing auto-incrementing values for PostgreSQL and Oracle [wb, 2010-03-15]
+ * @changes    1.0.0b24  Fixed an auto-incrementing transaction bug with Oracle and debugging issues with all databases
+ * [wb, 2010-03-17]
+ * @changes    1.0.0b23  Resolved another bug with capturing auto-incrementing values for PostgreSQL and Oracle [wb,
+ * 2010-03-15]
  * @changes    1.0.0b22  Changed ::clearCache() to also clear the cache on the SQLTranslation [wb, 2010-03-09]
- * @changes    1.0.0b21  Added ::execute() for result-less SQL queries, ::prepare() and ::translatedPrepare() to create Statement objects for prepared statements, support for prepared statements in ::query() and ::unbufferedQuery(), fixed default caching key for ::enableCaching() [wb, 2010-03-02]
- * @changes    1.0.0b20  Added a parameter to ::enableCaching() to provide a key token that will allow cached values to be shared between multiple databases with the same schema [wb, 2009-10-28]
- * @changes    1.0.0b19  Added support for escaping identifiers (column and table names) to ::escape(), added support for database schemas, rewrote internal SQL string spliting [wb, 2009-10-22]
- * @changes    1.0.0b18  Updated the class for the new Result and UnbufferedResult APIs, fixed ::unescape() to not touch NULLs [wb, 2009-08-12]
- * @changes    1.0.0b17  Added the ability to pass an array of all values as a single parameter to ::escape() instead of one value per parameter [wb, 2009-08-11]
- * @changes    1.0.0b16  Fixed PostgreSQL and Oracle from trying to get auto-incrementing values on inserts when explicit values were given [wb, 2009-08-06]
- * @changes    1.0.0b15  Fixed a bug where auto-incremented values would not be detected when table names were quoted [wb, 2009-07-15]
- * @changes    1.0.0b14  Changed ::determineExtension() and ::determineCharacterSet() to be protected instead of private [wb, 2009-07-08]
- * @changes    1.0.0b13  Updated ::escape() to accept arrays of values for insertion into full SQL strings [wb, 2009-07-06]
+ * @changes    1.0.0b21  Added ::execute() for result-less SQL queries, ::prepare() and ::translatedPrepare() to create
+ * Statement objects for prepared statements, support for prepared statements in ::query() and ::unbufferedQuery(),
+ * fixed default caching key for ::enableCaching() [wb, 2010-03-02]
+ * @changes    1.0.0b20  Added a parameter to ::enableCaching() to provide a key token that will allow cached values to
+ * be shared between multiple databases with the same schema [wb, 2009-10-28]
+ * @changes    1.0.0b19  Added support for escaping identifiers (column and table names) to ::escape(), added support
+ * for database schemas, rewrote internal SQL string spliting [wb, 2009-10-22]
+ * @changes    1.0.0b18  Updated the class for the new Result and UnbufferedResult APIs, fixed ::unescape() to not touch
+ * NULLs [wb, 2009-08-12]
+ * @changes    1.0.0b17  Added the ability to pass an array of all values as a single parameter to ::escape() instead of
+ * one value per parameter [wb, 2009-08-11]
+ * @changes    1.0.0b16  Fixed PostgreSQL and Oracle from trying to get auto-incrementing values on inserts when
+ * explicit values were given [wb, 2009-08-06]
+ * @changes    1.0.0b15  Fixed a bug where auto-incremented values would not be detected when table names were quoted
+ * [wb, 2009-07-15]
+ * @changes    1.0.0b14  Changed ::determineExtension() and ::determineCharacterSet() to be protected instead of private
+ * [wb, 2009-07-08]
+ * @changes    1.0.0b13  Updated ::escape() to accept arrays of values for insertion into full SQL strings [wb,
+ * 2009-07-06]
  * @changes    1.0.0b12  Updates to ::unescape() to improve performance [wb, 2009-06-15]
  * @changes    1.0.0b11  Changed replacement values in preg_replace() calls to be properly escaped [wb, 2009-06-11]
- * @changes    1.0.0b10  Changed date/time/timestamp escaping from `strtotime()` to Date/Time/Timestamp for better localization support [wb, 2009-06-01]
- * @changes    1.0.0b9   Fixed a bug with ::escape() where floats that start with a . were encoded as `NULL` [wb, 2009-05-09]
- * @changes    1.0.0b8   Added Oracle support, change PostgreSQL code to no longer cause lastval() warnings, added support for arrays of values to ::escape() [wb, 2009-05-03]
+ * @changes    1.0.0b10  Changed date/time/timestamp escaping from `strtotime()` to Date/Time/Timestamp for better
+ * localization support [wb, 2009-06-01]
+ * @changes    1.0.0b9   Fixed a bug with ::escape() where floats that start with a . were encoded as `NULL` [wb,
+ * 2009-05-09]
+ * @changes    1.0.0b8   Added Oracle support, change PostgreSQL code to no longer cause lastval() warnings, added
+ * support for arrays of values to ::escape() [wb, 2009-05-03]
  * @changes    1.0.0b7   Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b6   Fixed a bug with executing transaction queries when using the mysqli extension [wb, 2009-02-12]
  * @changes    1.0.0b5   Changed @ error suppression operator to `error_reporting()` calls [wb, 2009-01-26]
- * @changes    1.0.0b4   Added a few error suppression operators back in so that developers don't get errors and exceptions [wb, 2009-01-14]
+ * @changes    1.0.0b4   Added a few error suppression operators back in so that developers don't get errors and
+ * exceptions [wb, 2009-01-14]
  * @changes    1.0.0b3   Removed some unnecessary error suppresion operators [wb, 2008-12-11]
- * @changes    1.0.0b2   Fixed a bug with PostgreSQL when using the PDO extension and executing an INSERT statement [wb, 2008-12-11]
+ * @changes    1.0.0b2   Fixed a bug with PostgreSQL when using the PDO extension and executing an INSERT statement [wb,
+ * 2008-12-11]
  * @changes    1.0.0b    The initial implementation [wb, 2007-09-25]
  */
-class Database
+class Connection
 {
 	/**
 	 * Composes text using Text if loaded
@@ -141,7 +173,7 @@ class Database
 	private ?string $cache_prefix = null;
 
 	/**
-	 * Database connection resource or PDO object
+	 * PDO/connection resource or PDO object
 	 *
 	 * @var PDO|mysqli|PgSql\Connection|resource|false|null
 	 */
@@ -288,17 +320,29 @@ class Database
 	 * Passing `NULL` to any parameter other than `$type` and `$database` will
 	 * cause the default value to be used.
 	 *
-	 * @param  string  $type      The type of the database: `'db2'`, `'mssql'`, `'mysql'`, `'oracle'`, `'postgresql'`, `'sqlite'`
+	 * @param  string  $type      The type of the database: `'db2'`, `'mssql'`, `'mysql'`, `'oracle'`, `'postgresql'`,
+	 * `'sqlite'`
 	 * @param  string  $database  Name of the database. If SQLite the path to the database file.
-	 * @param  string  $username  Database username - not used for SQLite
+	 * @param  string  $username  Connection username - not used for SQLite
 	 * @param  string  $password  The password for the username specified - not used for SQLite
-	 * @param  string  $host      Database server host or IP, defaults to localhost - not used for SQLite. MySQL socket connection can be made by entering `'sock:'` followed by the socket path. PostgreSQL socket connection can be made by passing just `'sock:'`.
-	 * @param  integer $port      The port to connect to, defaults to the standard port for the database type specified - not used for SQLite
-	 * @param  integer $timeout   The number of seconds to timeout after if a connection can not be made - not used for SQLite
-	 * @return Database
+	 * @param  string  $host      Database/Connection server host or IP, defaults to localhost - not used for SQLite.
+	 * MySQL socket connection can be made by entering `'sock:'` followed by the socket path. PostgreSQL socket
+	 * connection can be made by passing just `'sock:'`.
+	 * @param  integer $port      The port to connect to, defaults to the standard port for the database type specified
+	 * - not used for SQLite
+	 * @param  integer $timeout   The number of seconds to timeout after if a connection can not be made - not used for
+	 * SQLite
+	 * @return Connection
 	 */
-	public function __construct(string $type, string $database, ?string $username = null, ?string $password = null, ?string $host = null, ?int $port = null, ?int $timeout = null)
-	{
+	public function __construct(
+		string $type,
+		string $database,
+		?string $username = null,
+		?string $password = null,
+		?string $host = null,
+		?int $port = null,
+		?int $timeout = null
+	) {
 		$valid_types = array('db2', 'mssql', 'mysql', 'oracle', 'postgresql', 'sqlite');
 		if (!in_array($type, $valid_types)) {
 			throw new ProgrammerException(
@@ -346,8 +390,8 @@ class Database
 	public function __destruct()
 	{
 		if (!$this->connection) {
-            return;
-        }
+			return;
+		}
 
 		Core::debug('Total query time: ' . $this->query_time . ' seconds', $this->debug ?? false);
 		if ($this->extension == 'ibm_db2') {
@@ -454,12 +498,16 @@ class Database
 	 * Checks to see if an SQL error occured
 	 *
 	 * @param  Result|UnbufferedResult|boolean $result      The result object for the query
-	 * @param  mixed                             $extra_info  The sqlite extension will pass a string error message, the oci8 extension will pass the statement resource
+	 * @param  mixed                             $extra_info  The sqlite extension will pass a string error message, the
+	 * oci8 extension will pass the statement resource
 	 * @param  string                            $sql         The SQL that was executed
 	 * @return void
 	 */
-	private function checkForError(Result|UnbufferedResult|bool $result, mixed $extra_info = null, ?string $sql = null): void
-	{
+	private function checkForError(
+		Result|UnbufferedResult|bool $result,
+		mixed $extra_info = null,
+		?string $sql = null
+	): void {
 		$failed = ($result instanceof Result || $result instanceof UnbufferedResult)
 			? $result->getResult() === false
 			: $result === false;
@@ -488,7 +536,13 @@ class Database
 				$message = pg_last_error($this->pgsqlConnection());
 			} elseif ($this->extension == 'sqlsrv') {
 				$error_info = sqlsrv_errors(SQLSRV_ERR_ALL);
-				if (is_array($error_info) && isset($error_info[0]) && is_array($error_info[0]) && isset($error_info[0]['message']) && is_string($error_info[0]['message'])) {
+				if (
+					is_array($error_info) && isset($error_info[0]) && is_array(
+						$error_info[0]
+					) && isset($error_info[0]['message']) && is_string(
+						$error_info[0]['message']
+					)
+				) {
 					$message = $error_info[0]['message'];
 				}
 			} elseif ($this->extension == 'pdo') {
@@ -575,8 +629,8 @@ class Database
 	{
 		// Don't try to reconnect if we are already connected
 		if ($this->connection) {
-            return;
-        }
+			return;
+		}
 
 		$connection_error     = false;
 		$authentication_error = false;
@@ -595,7 +649,8 @@ class Database
 			}
 
 			if ($this->type == 'db2') {
-				$dsn  = 'ibm:DRIVER={IBM DB2 ODBC DRIVER};DATABASE=' . $this->database . ';HOSTNAME=' . $this->host . ';';
+				$dsn  = 'ibm:DRIVER={IBM DB2 ODBC DRIVER};DATABASE=' . $this->database . ';HOSTNAME=' . $this->host .
+					';';
 				$dsn .= 'PORT=' . ($this->port ? $this->port : 60000) . ';';
 				$dsn .= 'PROTOCOL=TCPIP;UID=' . $username . ';PWD=' . $password . ';';
 				if ($this->timeout !== null) {
@@ -612,7 +667,13 @@ class Database
 				// This driver does not support timeouts so we fake it here
 				if ($this->timeout !== null) {
 					Core::startErrorCapture();
-					$resource = fsockopen($this->host, $this->port ? $this->port : 1433, $errno, $errstr, $this->timeout);
+					$resource = fsockopen(
+						$this->host,
+						$this->port ? $this->port : 1433,
+						$errno,
+						$errstr,
+						$this->timeout
+					);
 					$errors = Core::stopErrorCapture();
 					if ($resource !== false) {
 						fclose($resource);
@@ -632,7 +693,13 @@ class Database
 				// This driver does not support timeouts so we fake it here
 				if ($this->timeout !== null) {
 					Core::startErrorCapture();
-					$resource = fsockopen($this->host, $this->port ? $this->port : 1521, $errno, $errstr, $this->timeout);
+					$resource = fsockopen(
+						$this->host,
+						$this->port ? $this->port : 1521,
+						$errno,
+						$errstr,
+						$this->timeout
+					);
 					$errors = Core::stopErrorCapture();
 					if ($resource !== false) {
 						fclose($resource);
@@ -696,11 +763,32 @@ class Database
 			Core::startErrorCapture();
 
 			if (substr($this->host, 0, 5) == 'sock:') {
-				$result = mysqli_real_connect($connection, 'localhost', $this->username, $this->password, $this->database, $this->port, substr($this->host, 5));
+				$result = mysqli_real_connect(
+					$connection,
+					'localhost',
+					$this->username,
+					$this->password,
+					$this->database,
+					$this->port,
+					substr($this->host, 5)
+				);
 			} elseif ($this->port) {
-				$result = mysqli_real_connect($connection, $this->host, $this->username, $this->password, $this->database, $this->port);
+				$result = mysqli_real_connect(
+					$connection,
+					$this->host,
+					$this->username,
+					$this->password,
+					$this->database,
+					$this->port
+				);
 			} else {
-				$result = mysqli_real_connect($connection, $this->host, $this->username, $this->password, $this->database);
+				$result = mysqli_real_connect(
+					$connection,
+					$this->host,
+					$this->username,
+					$this->password,
+					$this->database
+				);
 			}
 			if (!$result) {
 				$this->connection = false;
@@ -708,11 +796,14 @@ class Database
 
 			$errors = Core::stopErrorCapture();
 
-			if ($this->connection && function_exists('mysqli_set_charset') && !mysqli_set_charset($connection, 'utf8')) {
-                throw new ConnectivityException(
-                	'There was an error setting the database connection to use UTF-8'
-                );
-            }
+			if (
+				$this->connection && function_exists('mysqli_set_charset')
+				&& !mysqli_set_charset($connection, 'utf8')
+			) {
+				throw new ConnectivityException(
+					'There was an error setting the database connection to use UTF-8'
+				);
+			}
 		}
 
 		if ($this->extension == 'oci8') {
@@ -731,7 +822,12 @@ class Database
 			}
 
 			if ($resource) {
-				$this->connection = oci_connect($this->username ?? '', $this->password ?? '', $this->host . ($this->port ? ':' . $this->port : '') . '/' . $this->database, 'AL32UTF8');
+				$this->connection = oci_connect(
+					$this->username ?? '',
+					$this->password ?? '',
+					$this->host . ($this->port ? ':' . $this->port : '') . '/' . $this->database,
+					'AL32UTF8'
+				);
 			}
 
 			$errors = Core::stopErrorCapture();
@@ -839,7 +935,10 @@ class Database
 	protected function determineCharacterSet(): void
 	{
 		$this->schema_info['character_set'] = 'WINDOWS-1252';
-		$result = $this->query("SELECT 'WINDOWS-' + CONVERT(VARCHAR, COLLATIONPROPERTY(CONVERT(NVARCHAR, DATABASEPROPERTYEX(DB_NAME(), 'Collation')), 'CodePage')) AS charset");
+		$result = $this->query(
+			"SELECT 'WINDOWS-' + CONVERT(VARCHAR, COLLATIONPROPERTY(CONVERT(NVARCHAR, DATABASEPROPERTYEX(DB_NAME(), "
+				. "'Collation')), 'CodePage')) AS charset"
+		);
 		if ($result instanceof Result) {
 			$this->schema_info['character_set'] = $result->fetchScalar();
 		}
@@ -874,7 +973,12 @@ class Database
 			case 'mssql':
 				if (extension_loaded('sqlsrv')) {
 					$this->extension = 'sqlsrv';
-				} elseif (class_exists('PDO', false) && (in_array('dblib', PDO::getAvailableDrivers()) || in_array('mssql', PDO::getAvailableDrivers()))) {
+				} elseif (
+					class_exists('PDO', false) && (in_array('dblib', PDO::getAvailableDrivers()) || in_array(
+						'mssql',
+						PDO::getAvailableDrivers()
+					))
+				) {
 					$this->extension = 'pdo';
 				} else {
 					$type = 'MSSQL';
@@ -969,7 +1073,8 @@ class Database
 	 * Sets the schema info to be cached to the Cache object specified
 	 *
 	 * @param  Cache $cache      The cache to cache to
-	 * @param  string $key_token  Internal use only! (this will be used in the cache key to uniquely identify the cache for this Database object)
+	 * @param  string $key_token  Internal use only! (this will be used in the cache key to uniquely identify the cache
+	 * for this Connection object)
 	 * @return void
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -981,7 +1086,7 @@ class Database
 		$this->cache = $cache;
 
 		if ($key_token !== null) {
-			$this->cache_prefix = 'Database::' . $this->type . '::' . $key_token . '::';
+			$this->cache_prefix = 'Connection::' . $this->type . '::' . $key_token . '::';
 		}
 
 		$this->schema_info = $this->cache->get($this->makeCachePrefix() . 'schema_info', array());
@@ -1055,8 +1160,10 @@ class Database
 	 * );
 	 * }}}
 	 *
-	 * @param  string $sql_or_type  This can either be the data type to escape or an SQL string with a data type placeholder - see method description
-	 * @param  mixed  $value        The value to escape - both single values and arrays of values are supported, see method description for details
+	 * @param  string $sql_or_type  This can either be the data type to escape or an SQL string with a data type
+	 * placeholder - see method description
+	 * @param  mixed  $value        The value to escape - both single values and arrays of values are supported, see
+	 * method description for details
 	 * @return mixed  The escaped value/SQL or an array of the escaped values
 	 */
 	public function escape(string $sql_or_type, mixed $value): mixed
@@ -1509,7 +1616,8 @@ class Database
 	 *
 	 * @param string  $sql               The SQL string containing placeholders
 	 * @param array<int, mixed>  $values  An array of values to escape into the SQL
-	 * @param boolean $unescape_percent  If %% should be translated to % - this should only be done once processing of the string is done
+	 * @param boolean $unescape_percent  If %% should be translated to % - this should only be done once processing of
+	 * the string is done
 	 * @return string  The SQL with the values escaped into it
 	 */
 	private function escapeSQL(string $sql, array $values, bool $unescape_percent): string
@@ -1652,7 +1760,8 @@ class Database
 	 * Executes one or more SQL statements (with optional parameters) and returns the result
 	 *
 	 * @param  string|Statement $statement  One or more SQL statements in a string or an Statement prepared statement
-	 * @return Result|UnbufferedResult|null  The result of the executed prepared statement, or `NULL` when a SQL string was executed
+	 * @return Result|UnbufferedResult|null  The result of the executed prepared statement, or `NULL` when a SQL string
+	 * was executed
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 * @throws NoRowsException
@@ -1871,7 +1980,8 @@ class Database
 	 * Will grab the auto incremented value from the last query (if one exists)
 	 *
 	 * @param  Result $result    The result object for the query
-	 * @param  mixed   $resource  Only applicable for `pdo`, `oci8` and `sqlsrv` extentions or `mysqli` prepared statements - this is either the `PDOStatement` object, `mysqli_stmt` object or the `oci8` or `sqlsrv` resource
+	 * @param  mixed   $resource  Only applicable for `pdo`, `oci8` and `sqlsrv` extentions or `mysqli` prepared
+	 * statements - this is either the `PDOStatement` object, `mysqli_stmt` object or the `oci8` or `sqlsrv` resource
 	 * @return void
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
@@ -1880,7 +1990,13 @@ class Database
 	 */
 	private function handleAutoIncrementedValue(Result $result, mixed $resource = null): void
 	{
-		if (!preg_match('#^\s*INSERT\s+(?:INTO\s+)?(?:`|"|\[)?(["\w.]+)(?:`|"|\])?#i', $result->getSQL(), $table_match)) {
+		if (
+			!preg_match(
+				'#^\s*INSERT\s+(?:INTO\s+)?(?:`|"|\[)?(["\w.]+)(?:`|"|\])?#i',
+				$result->getSQL(),
+				$table_match
+			)
+		) {
 			$result->setAutoIncrementedValue(null);
 			return;
 		}
@@ -1937,12 +2053,22 @@ class Database
 				if ($sequence_result instanceof Result) {
 					foreach ($sequence_result as $row) {
 						/** @var array{trigger_body: string, table: string, schema: string} $row */
-						if (preg_match('#SELECT\s+(["\\w.]+).nextval\s+INTO\s+:new\.(\\w+)\s+FROM\s+dual#i', $row['trigger_body'], $matches)) {
+						if (
+							preg_match(
+								'#SELECT\s+(["\\w.]+).nextval\s+INTO\s+:new\.(\\w+)\s+FROM\s+dual#i',
+								$row['trigger_body'],
+								$matches
+							)
+						) {
 							$table_name = $row['table'];
 							if ($row['schema'] != strtolower($this->username ?? '')) {
 								$table_name = $row['schema'] . '.' . $table_name;
 							}
-							$sequences[$table_name] = array('sequence' => $matches[1], 'column' => str_replace('"', '', $matches[2]));
+							$sequences[$table_name] = array('sequence' => $matches[1], 'column' => str_replace(
+								'"',
+								'',
+								$matches[2]
+							));
 						}
 					}
 				}
@@ -1957,10 +2083,22 @@ class Database
 			}
 
 			$sequence_info   = $sequences[$table] ?? null;
-			$sequence_column = (is_array($sequence_info) && isset($sequence_info['column']) && is_string($sequence_info['column'])) ? $sequence_info['column'] : null;
-			$sequence_name   = (is_array($sequence_info) && isset($sequence_info['sequence']) && is_string($sequence_info['sequence'])) ? $sequence_info['sequence'] : '';
+			$sequence_column = (is_array($sequence_info) && isset($sequence_info['column']) && is_string(
+				$sequence_info['column']
+			)) ? $sequence_info['column'] : null;
+			$sequence_name   = (is_array($sequence_info) && isset($sequence_info['sequence']) && is_string(
+				$sequence_info['sequence']
+			)) ? $sequence_info['sequence'] : '';
 
-			if ($sequence_column === null || $sequence_name === '' || preg_match('#INSERT\s+INTO\s+"?' . preg_quote($quoted_table, '#') . '"?\s+\([^\)]*?(\b|")' . preg_quote($sequence_column, '#') . '(\b|")#i', $result->getSQL())) {
+			if (
+				$sequence_column === null || $sequence_name === '' || preg_match(
+					'#INSERT\s+INTO\s+"?' . preg_quote($quoted_table, '#') . '"?\s+\([^\)]*?(\b|")' . preg_quote(
+						$sequence_column,
+						'#'
+					) . '(\b|")#i',
+					$result->getSQL()
+				)
+			) {
 				return;
 			}
 
@@ -1979,7 +2117,8 @@ class Database
 								pg_attribute INNER JOIN
 								pg_class ON pg_attribute.attrelid = pg_class.oid INNER JOIN
 								pg_namespace ON pg_class.relnamespace = pg_namespace.oid INNER JOIN
-								pg_attrdef ON pg_class.oid = pg_attrdef.adrelid AND pg_attribute.attnum = pg_attrdef.adnum
+								pg_attrdef ON pg_class.oid = pg_attrdef.adrelid AND pg_attribute.attnum =
+								pg_attrdef.adnum
 							WHERE
 								NOT pg_attribute.attisdropped AND
 								pg_attrdef.adsrc LIKE 'nextval(%'";
@@ -2009,7 +2148,15 @@ class Database
 
 			$sequence_column = isset($sequences[$table]) && is_string($sequences[$table]) ? $sequences[$table] : null;
 
-			if ($sequence_column === null || preg_match('#INSERT\s+INTO\s+"?' . preg_quote($quoted_table, '#') . '"?\s+\([^\)]*?(\b|")' . preg_quote($sequence_column, '#') . '(\b|")#i', $result->getSQL())) {
+			if (
+				$sequence_column === null || preg_match(
+					'#INSERT\s+INTO\s+"?' . preg_quote($quoted_table, '#') . '"?\s+\([^\)]*?(\b|")' . preg_quote(
+						$sequence_column,
+						'#'
+					) . '(\b|")#i',
+					$result->getSQL()
+				)
+			) {
 				return;
 			}
 		}
@@ -2061,7 +2208,8 @@ class Database
 					$insert_id_statement = $pdo->query("SELECT IDENTITY_VAL_LOCAL() FROM SYSIBM.SYSDUMMY1");
 					if ($insert_id_statement instanceof PDOStatement) {
 						$insert_id_row = $insert_id_statement->fetch(PDO::FETCH_ASSOC);
-						$insert_id     = is_array($insert_id_row) ? self::normalizeInsertId(array_shift($insert_id_row)) : null;
+						$insert_id     = is_array($insert_id_row) ? self::normalizeInsertId(array_shift($insert_id_row))
+							: null;
 						$insert_id_statement->closeCursor();
 					}
 					unset($insert_id_statement);
@@ -2071,7 +2219,8 @@ class Database
 					$insert_id_statement = $pdo->query("SELECT @@IDENTITY AS insert_id");
 					if ($insert_id_statement instanceof PDOStatement) {
 						$insert_id_row = $insert_id_statement->fetch(PDO::FETCH_ASSOC);
-						$insert_id     = is_array($insert_id_row) ? self::normalizeInsertId(array_shift($insert_id_row)) : null;
+						$insert_id     = is_array($insert_id_row) ? self::normalizeInsertId(array_shift($insert_id_row))
+							: null;
 					}
 					break;
 
@@ -2079,7 +2228,8 @@ class Database
 					$insert_id_statement = $pdo->query("SELECT lastval()");
 					if ($insert_id_statement instanceof PDOStatement) {
 						$insert_id_row = $insert_id_statement->fetch(PDO::FETCH_ASSOC);
-						$insert_id     = is_array($insert_id_row) ? self::normalizeInsertId(array_shift($insert_id_row)) : null;
+						$insert_id     = is_array($insert_id_row) ? self::normalizeInsertId(array_shift($insert_id_row))
+							: null;
 						$insert_id_statement->closeCursor();
 					}
 					break;
@@ -2124,15 +2274,22 @@ class Database
 
 		$connection_regexes = array(
 			'db2'        => '#selectForConnectTimeout#',
-			'mssql'      => '#(Connection refused|Can\'t assign requested address|Server is unavailable or does not exist|unable to connect|target machine actively refused it)#i',
-			'mysql'      => '#(Can\'t connect to MySQL server|Lost connection to MySQL server at|Connection refused|Operation timed out|host has failed to respond)#',
+			'mssql'      =>
+				'#(Connection refused|Can\'t assign requested address|Server is unavailable or does not exist|unable '
+					. 'to connect|target machine actively refused it)#i',
+			'mysql'      =>
+				'#(Can\'t connect to MySQL server|Lost connection to MySQL server at|Connection refused|Operation '
+					. 'timed out|host has failed to respond)#',
 			'oracle'     => '#(Connection refused|Can\'t assign requested address|no listener|unable to connect to)#',
-			'postgresql' => '#(Connection refused|timeout expired|Network is unreachable|Can\'t assign requested address)#'
+			'postgresql' =>
+				'#(Connection refused|timeout expired|Network is unreachable|Can\'t assign requested address)#'
 		);
 
 		$authentication_regexes = array(
 			'db2'        => '#USERNAME AND/OR PASSWORD INVALID#',
-			'mssql'      => '#(Login incorrect|Adaptive Server connection failed|Login failed for user(?!.*Cannot open database))#is',
+			'mssql'      =>
+				'#(Login incorrect|Adaptive Server connection failed|Login failed for user(?!.*Cannot open '
+					. 'database))#is',
 			'mysql'      => '#Access denied for user#',
 			'oracle'     => '#invalid username/password#',
 			'postgresql' => '#authentication failed#'
@@ -2140,7 +2297,9 @@ class Database
 
 		$database_regexes = array(
 			'db2'        => '#database alias or database name#',
-			'mssql'      => '#Could not locate entry in sysdatabases for database|Cannot open database|General SQL Server error: Check messages from the SQL Server#',
+			'mssql'      =>
+				'#Could not locate entry in sysdatabases for database|Cannot open database|General SQL Server error: '
+					. 'Check messages from the SQL Server#',
 			'mysql'      => '#Unknown database#',
 			'oracle'     => '#does not currently know of service requested#',
 			'postgresql' => '#database "[^"]+" does not exist#'
@@ -2184,7 +2343,8 @@ class Database
 	 *
 	 * @param  string|Statement &$statement    The SQL to check for a transaction query
 	 * @param  string|null        $result_class  The type of result object to create
-	 * @return Result|UnbufferedResult|bool  `FALSE` if normal processing should continue, TRUE if a transaction statement was handled with no result requested, otherwise an object of the type $result_class
+	 * @return Result|UnbufferedResult|bool  `FALSE` if normal processing should continue, TRUE if a transaction
+	 * statement was handled with no result requested, otherwise an object of the type $result_class
 	 */
 	private function handleTransactionQueries(mixed &$statement, ?string $result_class): Result|UnbufferedResult|bool
 	{
@@ -2254,9 +2414,20 @@ class Database
 			unset($this->schema_info['mysql_lock_tables']);
 
 		// These databases issue implicit commit commands when the following statements are run
-		} elseif ($this->type == 'mysql' && preg_match('#^\s*(ALTER|CREATE(?!\s+TEMPORARY)|DROP|RENAME|TRUNCATE|LOAD|UNLOCK|GRANT|REVOKE|SET\s+PASSWORD|CACHE|ANALYSE|CHECK|OPTIMIZE|REPAIR|FLUSH|RESET)\b#i', $sql)) {
+		} elseif (
+			$this->type == 'mysql' && preg_match(
+				'#^\s*(ALTER|CREATE(?!\s+TEMPORARY)|DROP|RENAME|TRUNCATE|LOAD|UNLOCK|GRANT|REVOKE|SET\s+PASSWORD|CACHE|'
+					. 'ANALYSE|CHECK|OPTIMIZE|REPAIR|FLUSH|RESET)\b#i',
+				$sql
+			)
+		) {
 			$this->inside_transaction = false;
-		} elseif ($this->type == 'oracle' && preg_match('#^\s*(CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|REPLACE|ANALYZE|AUDIT|COMMENT)\b#i', $sql)) {
+		} elseif (
+			$this->type == 'oracle' && preg_match(
+				'#^\s*(CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|REPLACE|ANALYZE|AUDIT|COMMENT)\b#i',
+				$sql
+			)
+		) {
 			$this->inside_transaction = false;
 		} elseif ($this->type == 'db2' && preg_match('#^\s*CALL\s+SYSPROC\.ADMIN_CMD\(\'REORG\s+TABLE\b#i', $sql)) {
 			$this->inside_transaction = false;
@@ -2408,7 +2579,7 @@ class Database
 	private function makeCachePrefix(): string
 	{
 		if (!$this->cache_prefix) {
-			$prefix  = 'Database::' . $this->type . '::';
+			$prefix  = 'Connection::' . $this->type . '::';
 			if ($this->host) {
 				$prefix .= $this->host . '::';
 			}
@@ -2451,7 +2622,10 @@ class Database
 			$result = mysqli_query($this->mysqliConnection(), $statement, MYSQLI_USE_RESULT);
 		} elseif ($this->extension == 'oci8') {
 			$extra  = oci_parse($this->resourceConnection(), $statement);
-			$result = ($extra === false) ? false : oci_execute($extra, $this->inside_transaction ? OCI_DEFAULT : OCI_COMMIT_ON_SUCCESS);
+			$result = ($extra === false) ? false : oci_execute(
+				$extra,
+				$this->inside_transaction ? OCI_DEFAULT : OCI_COMMIT_ON_SUCCESS
+			);
 		} elseif ($this->extension == 'pgsql') {
 			$result = pg_query($this->pgsqlConnection(), $statement);
 		} elseif ($this->extension == 'sqlsrv') {
@@ -2469,7 +2643,12 @@ class Database
 					$result = true;
 					if (preg_match('#^\s*EXEC(UTE)?\s+#i', $statement)) {
 						$error_info = $extra->errorInfo();
-						if (isset($error_info[2]) && is_string($error_info[2]) && strpos($error_info[2], '(null) [0] (severity 0)') !== 0) {
+						if (
+							isset($error_info[2]) && is_string($error_info[2]) && strpos(
+								$error_info[2],
+								'(null) [0] (severity 0)'
+							) !== 0
+						) {
 							$result = false;
 						}
 					}
@@ -2581,9 +2760,19 @@ class Database
 					// pdo_dblib doesn't throw an exception on error when executing
 					// a prepared statement when compiled against FreeTDS, so we have
 					// to manually check the error info to see if something went wrong
-					} elseif ($this->type == 'mssql' && !Core::checkOS('windows') && preg_match('#^\s*EXEC(UTE)?\s+#i', $result->getSQL())) {
+					} elseif (
+						$this->type == 'mssql' && !Core::checkOS('windows') && preg_match(
+							'#^\s*EXEC(UTE)?\s+#i',
+							$result->getSQL()
+						)
+					) {
 						$error_info = $extra->errorInfo();
-						if (isset($error_info[2]) && is_string($error_info[2]) && strpos($error_info[2], '(null) [0] (severity 0)') !== 0) {
+						if (
+							isset($error_info[2]) && is_string($error_info[2]) && strpos(
+								$error_info[2],
+								'(null) [0] (severity 0)'
+							) !== 0
+						) {
 							$returned_rows = false;
 						}
 					} else {
@@ -2593,8 +2782,13 @@ class Database
 					$returned_rows = $extra;
 				}
 
-				// The pdo_pgsql driver likes to return empty rows equal to the number of affected rows for insert and deletes
-				if ($this->type == 'postgresql' && is_array($returned_rows) && $returned_rows !== array() && $returned_rows[0] == array()) {
+				// The pdo_pgsql driver likes to return empty rows equal to the number of affected rows for insert and
+				// deletes
+				if (
+					$this->type == 'postgresql' && is_array(
+						$returned_rows
+					) && $returned_rows !== array() && $returned_rows[0] == array()
+				) {
 					$returned_rows = array();
 				}
 			}
@@ -2691,7 +2885,8 @@ class Database
 	 * a single value can be provided.
 	 *
 	 * @param  string  $sql  The SQL to prepare
-	 * @return Statement  A prepared statement object that can be passed to ::query(), ::unbufferedQuery() or ::execute()
+	 * @return Statement  A prepared statement object that can be passed to ::query(), ::unbufferedQuery() or
+	 * ::execute()
 	 * @throws AuthorizationException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -2771,7 +2966,8 @@ class Database
 			$translated_queries = $this->getSQLTranslation()->translate(array($query));
 			if (count($translated_queries) > 1) {
 				throw new ProgrammerException(
-					'The SQL statement %1$s can not be used as a prepared statement because translation turns it into multiple SQL statements',
+					'The SQL statement %1$s can not be used as a prepared statement because translation turns it into '
+						. 'multiple SQL statements',
 					$untranslated_sql
 				);
 			}
@@ -2813,15 +3009,18 @@ class Database
 
 
 	/**
-	 * Preprocesses SQL by escaping values, spliting queries, cleaning escaped semicolons, fixing backslashed single quotes and translating
+	 * Preprocesses SQL by escaping values, spliting queries, cleaning escaped semicolons, fixing backslashed single
+	 * quotes and translating
 	 *
 	 * @internal
 	 *
 	 * @param  string  $sql                The SQL to process
 	 * @param  array<int, mixed>   $values             Literal values to escape into the SQL
 	 * @param  boolean $translate          If the SQL should be translated
-	 * @param  array<int, string>|null   &$rollback_queries  MySQL doesn't allow transactions around `ALTER TABLE` statements, and some of those require multiple statements, so this is an array of "undo" SQL statements
-	 * @return array<int|string, string>  The split out SQL queries, queries that have been translated will have a string key of a number, `:` and the original SQL, non-translated SQL will have a numeric key
+	 * @param  array<int, string>|null   &$rollback_queries  MySQL doesn't allow transactions around `ALTER TABLE`
+	 * statements, and some of those require multiple statements, so this is an array of "undo" SQL statements
+	 * @return array<int|string, string>  The split out SQL queries, queries that have been translated will have a
+	 * string key of a number, `:` and the original SQL, non-translated SQL will have a numeric key
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 * @throws NoRowsException
@@ -2868,8 +3067,12 @@ class Database
 				continue;
 			}
 
-			$sqlite_ddl   = $this->type == 'sqlite' && preg_match('#^\s*(ALTER\s+TABLE|CREATE\s+TABLE|COMMENT\s+ON)\s+#i', $query);
-			$pieces       = preg_split('#(?<!%)(%[lbdfristp])\b#', $query, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+			$sqlite_ddl   = $this->type == 'sqlite' && preg_match(
+				'#^\s*(ALTER\s+TABLE|CREATE\s+TABLE|COMMENT\s+ON)\s+#i',
+				$query
+			);
+			$pieces       = preg_split('#(?<!%)(%[lbdfristp])\b#', $query, -1, PREG_SPLIT_DELIM_CAPTURE |
+				PREG_SPLIT_NO_EMPTY);
 			if ($pieces === false) {
 				$pieces = array();
 			}
@@ -2942,7 +3145,14 @@ class Database
 				$query = preg_replace('#(?<!\\\\)\\\\;#', ';', $query) ?? $query;
 
 				// Escape the values into the SQL
-				if ($query_values && preg_match_all('#(?<!%)%(\d+)\$([lbdfristp])\b#', $query, $matches, PREG_SET_ORDER)) {
+				if (
+					$query_values && preg_match_all(
+						'#(?<!%)%(\d+)\$([lbdfristp])\b#',
+						$query,
+						$matches,
+						PREG_SET_ORDER
+					)
+				) {
 					// If we translated, we may need to shuffle values around
 					if ($translate) {
 						$new_values = array();
@@ -2972,7 +3182,8 @@ class Database
 	/**
 	 * Executes one or more SQL queries and returns the result(s)
 	 *
-	 * @param  string|Statement $statement  One or more SQL statements in a string or a single Statement prepared statement
+	 * @param  string|Statement $statement  One or more SQL statements in a string or a single Statement prepared
+	 * statement
 	 * @return Result|array<int, Result>  The Result object(s) for the query
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
@@ -3003,19 +3214,21 @@ class Database
 	 * Registers a callback for one of the various query hooks - multiple callbacks can be registered for each hook
 	 *
 	 * The following hooks are available:
-	 *  - `'unmodified'`: The original SQL passed to Database, for prepared statements this is called just once before the Statement object is created
-	 *  - `'extracted'`: The SQL after all non-empty strings have been extracted and replaced with ordered sprintf-style placeholders
+	 *  - `'unmodified'`: The original SQL passed to Connection, for prepared statements this is called just once before
+	 * the Statement object is created
+	 *  - `'extracted'`: The SQL after all non-empty strings have been extracted and replaced with ordered sprintf-style
+	 * placeholders
 	 *  - `'run'`: After the SQL has been run
 	 *
 	 * Methods for the `'unmodified'` hook should have the following signature:
 	 *
-	 *  - **`$database`**:  The Database instance
+	 *  - **`$database`**:  The Connection instance
 	 *  - **`&$sql`**:      The original, unedited SQL
 	 *  - **`&$values`**:   The values to be escaped into the placeholders in the SQL
 	 *
 	 * Methods for the `'extracted'` hook should have the following signature:
 	 *
-	 *  - **`$database`**:  The Database instance
+	 *  - **`$database`**:  The Connection instance
 	 *  - **`&$sql`**:      The SQL with all strings removed and replaced with `%1$s`-style placeholders
 	 *  - **`&$values`**:   The values to be escaped into the placeholders in the SQL
 	 *
@@ -3026,13 +3239,14 @@ class Database
 	 *
 	 * Methods for the `'run'` hook should have the following signature:
 	 *
-	 *  - **`$database`**:    The Database instance
+	 *  - **`$database`**:    The Connection instance
 	 *  - **`$query`**:       The (string) SQL or `array(0 => {Statement object}, 1 => {values array})`
 	 *  - **`$query_time`**:  The (float) number of seconds the query took
 	 *  - **`$result`**       The Result or UnbufferedResult object, or `FALSE` if no result
 	 *
 	 * @param  string   $hook      The hook to register for
-	 * @param  callable(mixed...):mixed $callback  The callback to register - see the method description for details about the method signature
+	 * @param  callable(mixed...):mixed $callback  The callback to register - see the method description for details
+	 * about the method signature
 	 * @return void
 	 */
 	public function registerHookCallback(string $hook, callable $callback): void
@@ -3059,9 +3273,11 @@ class Database
 	 * Runs a single statement and times it, removes any old unbuffered queries before starting
 	 *
 	 * @param  string|Statement $statement    The SQL statement or prepared statement to execute
-	 * @param  'Result'|'UnbufferedResult'|null $result_type  The type of result object to return, Result or UnbufferedResult
+	 * @param  'Result'|'UnbufferedResult'|null $result_type  The type of result object to return, Result or
+	 * UnbufferedResult
 	 * @param  array<int, mixed> $params     The values bound into the statement
-	 * @return ($result_type is 'Result' ? Result : ($result_type is 'UnbufferedResult' ? UnbufferedResult : null))  The result for the query
+	 * @return ($result_type is 'Result' ? Result : ($result_type is 'UnbufferedResult' ? UnbufferedResult : null))  The
+	 * result for the query
 	 * @throws AuthorizationException
 	 * @throws SQLException
 	 * @throws NotFoundException
@@ -3092,7 +3308,8 @@ class Database
 					$result->setSQL($sql);
 					$this->performQuery($statement, $result, $params);
 				} else {
-					$result = new UnbufferedResult($this, $this->type == 'mssql' ? $this->connectionCharacterSet() : null);
+					$result = new UnbufferedResult($this, $this->type == 'mssql' ? $this->connectionCharacterSet() :
+						null);
 					$result->setSQL($sql);
 					$this->performUnbufferedQuery($statement, $result, $params);
 				}
@@ -3101,9 +3318,9 @@ class Database
 			}
 
 			if (
-                ($result instanceof Result || $result instanceof UnbufferedResult)
+				($result instanceof Result || $result instanceof UnbufferedResult)
 				&& $statement instanceof Statement && $statement->getUntranslatedSQL()
-            ) {
+			) {
 				$result->setUntranslatedSQL($statement->getUntranslatedSQL());
 			}
 		}
@@ -3151,7 +3368,8 @@ class Database
 	 * requires more than one query to accomplish many `ALTER TABLE` tasks.
 	 *
 	 * @param  array<int, string>   $rollback_statements  The SQL statements used to rollback `ALTER TABLE` statements
-	 * @param  integer $start_number         The number query that failed - this is used to determine which rollback statements to run
+	 * @param  integer $start_number         The number query that failed - this is used to determine which rollback
+	 * statements to run
 	 * @return void
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
@@ -3200,14 +3418,18 @@ class Database
 	 * Sets the number of rows affected by the query
 	 *
 	 * @param  Result $result    The result object for the query
-	 * @param  mixed   $resource  Only applicable for `ibm_db2`, `pdo`, `oci8` and `sqlsrv` extentions or `mysqli` prepared statements - this is either the `PDOStatement` object, `mysqli_stmt` object or the `oci8` or `sqlsrv` resource
+	 * @param  mixed   $resource  Only applicable for `ibm_db2`, `pdo`, `oci8` and `sqlsrv` extentions or `mysqli`
+	 * prepared statements - this is either the `PDOStatement` object, `mysqli_stmt` object or the `oci8` or `sqlsrv`
+	 * resource
 	 * @return void
 	 */
 	private function setAffectedRows(Result $result, mixed $resource = null): void
 	{
 		if ($this->extension == 'ibm_db2') {
 			$insert_update_delete = preg_match('#^\s*(INSERT|UPDATE|DELETE)\b#i', $result->getSQL());
-			$result->setAffectedRows((!$insert_update_delete || !is_resource($resource)) ? 0 : self::rowCount(db2_num_rows($resource)));
+			$result->setAffectedRows(
+				(!$insert_update_delete || !is_resource($resource)) ? 0 : self::rowCount(db2_num_rows($resource))
+			);
 		} elseif ($this->extension == 'mysqli') {
 			if ($resource instanceof mysqli_stmt) {
 				$result->setAffectedRows(self::rowCount($resource->affected_rows));
@@ -3218,7 +3440,8 @@ class Database
 			$result->setAffectedRows(is_resource($resource) ? self::rowCount(oci_num_rows($resource)) : 0);
 		} elseif ($this->extension == 'pgsql') {
 			$pg_result = $result->getResult();
-			$result->setAffectedRows($pg_result instanceof PgSql\Result ? self::rowCount(pg_affected_rows($pg_result)) : 0);
+			$result->setAffectedRows($pg_result instanceof PgSql\Result ? self::rowCount(pg_affected_rows($pg_result)) :
+				0);
 		} elseif ($this->extension == 'sqlsrv') {
 			$result->setAffectedRows(is_resource($resource) ? self::rowCount(sqlsrv_rows_affected($resource)) : 0);
 		} elseif ($this->extension == 'pdo') {
@@ -3362,7 +3585,8 @@ class Database
 	 * a single value can be provided.
 	 *
 	 * @param  string  $sql  The SQL to prepare
-	 * @return Statement  A prepared statement object that can be passed to ::query(), ::unbufferedQuery() or ::execute()
+	 * @return Statement  A prepared statement object that can be passed to ::query(), ::unbufferedQuery() or
+	 * ::execute()
 	 * @throws AuthorizationException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -3475,7 +3699,9 @@ class Database
 	{
 		if (preg_match('#^\s*(ALTER|COMMENT|CREATE|DROP)\s+#i', $sql)) {
 			throw new ProgrammerException(
-				'The SQL provided, %1$s, appears to be a DDL (data definition language) SQL statement, which can not be run via %2$s because it may result in multiple SQL statements being run. Please use %3$s instead.',
+				'The SQL provided, %1$s, appears to be a DDL (data definition language) SQL statement, which can not '
+					. 'be run via %2$s because it may result in multiple SQL statements being run. Please use %3$s '
+					. 'instead.',
 				$sql,
 				__CLASS__ . '::unbufferedTranslatedQuery()',
 				__CLASS__ . '::translatedExecute()'

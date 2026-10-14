@@ -10,7 +10,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Pagination
  *
  * @version 1.0.0b3
  * @changes 1.0.0b3   Allow setting the template via the __template__ data value [wb, 2016-10-29]
@@ -45,7 +44,8 @@ class Pagination
 				'start'         => '<div class="paginator_list"><ul>',
 				'prev'          => '<li class="prev"><a href="{{ url }}">Prev</a></li>',
 				'prev_disabled' => '',
-				'page'          => '<li class="page {{ first }} {{ last }} {{ current }}"><a href="{{ url }}">{{ page }}</a></li>',
+				'page'          =>
+					'<li class="page {{ first }} {{ last }} {{ current }}"><a href="{{ url }}">{{ page }}</a></li>',
 				'next'          => '<li class="next"><a href="{{ url }}">Next</a></li>',
 				'next_disabled' => '',
 				'end'           => '</ul></div>'
@@ -107,15 +107,18 @@ class Pagination
 	 *  - `inflect`:    if the total number of records is not 1, pluralize the variable - this only works for nouns
 	 *  - `lower`:      converts the contents of the variable to lower case
 	 *  - `url_encode`: encode the value for inclusion in a URL
-	 *  - `humanize`:   converts a `underscore_notation` or `CamelCase` string to a string with spaces between words and in `Title Caps`
+	 *  - `humanize`:   converts a `underscore_notation` or `CamelCase` string to a string with spaces between words and
+	 * in `Title Caps`
 	 *
 	 * Filters can be combined, in which case they are list one after the other
 	 * in the form `{{ variable|filter_1|filter_2 }}`.
 	 *
 	 * @param string  $name    The name of the template
-	 * @param string  $type    The type of pagination: `without_first_last` or `with_first_last` - `with_first_last` always includes links to the first and last pages
+	 * @param string  $type    The type of pagination: `without_first_last` or `with_first_last` - `with_first_last`
+	 * always includes links to the first and last pages
 	 * @param integer $size    The number of pages to show on either side of the current page
-	 * @param array<string, string> $pieces  The chunks of HTML to create the paginator from - see method description for details
+	 * @param array<string, string> $pieces  The chunks of HTML to create the paginator from - see method description
+	 * for details
 	 * @return void
 	 */
 	public static function defineTemplate(string $name, string $type, int $size, array $pieces): void
@@ -197,7 +200,10 @@ class Pagination
 	private static function extendRecordSetInfo(array $data, mixed $class): array
 	{
 		if (is_array($class)) {
-			$record_name = array_map(static fn(string $record_class): string => ORM::getRecordName($record_class), $class);
+			$record_name = array_map(
+				static fn(string $record_class): string => ORM::getRecordName($record_class),
+				$class
+			);
 		} else {
 			$record_name = ORM::getRecordName($class);
 		}
@@ -223,8 +229,13 @@ class Pagination
 	 * @param array<array-key, mixed> $parameters   The parameters passed to the method
 	 * @return void
 	 */
-	public static function printRecordSetInfo(RecordSet $object, mixed $class, mixed &$records, string $method_name, array $parameters): void
-	{
+	public static function printRecordSetInfo(
+		RecordSet $object,
+		mixed $class,
+		mixed &$records,
+		string $method_name,
+		array $parameters
+	): void {
 		list($template, $data) = self::extractTemplateAndData($parameters);
 		$data     = self::extendRecordSetInfo($data, $class);
 		$per_page = $object->getLimit();
@@ -274,8 +285,13 @@ class Pagination
 	 * @param integer $total_records  The total number of records
 	 * @return void
 	 */
-	private static function printTemplatedInfo(string $template, array $data, int $page, int $per_page, int $total_records): void
-	{
+	private static function printTemplatedInfo(
+		string $template,
+		array $data,
+		int $page,
+		int $per_page,
+		int $total_records
+	): void {
 		$total_pages = ceil($total_records / $per_page);
 
 		self::printPiece(
@@ -319,7 +335,8 @@ class Pagination
 					'start'         => '<div class="paginator_list"><ul>',
 					'prev'          => '<li class="prev"><a href="{{ url }}">Prev</a></li>',
 					'prev_disabled' => '',
-					'page'          => '<li class="page {{ first }} {{ last }} {{ current }}"><a href="{{ url }}">{{ page }}</a></li>',
+					'page'          =>
+						'<li class="page {{ first }} {{ last }} {{ current }}"><a href="{{ url }}">{{ page }}</a></li>',
 					'next'          => '<li class="next"><a href="{{ url }}">Next</a></li>',
 					'next_disabled' => '',
 					'end'           => '</ul></div>'
@@ -341,8 +358,13 @@ class Pagination
 	 * @param array<array-key, mixed> $parameters   The parameters passed to the method
 	 * @return boolean  If the links were shown
 	 */
-	public static function showRecordSetLinks(RecordSet $object, mixed $class, mixed &$records, string $method_name, array $parameters): bool
-	{
+	public static function showRecordSetLinks(
+		RecordSet $object,
+		mixed $class,
+		mixed &$records,
+		string $method_name,
+		array $parameters
+	): bool {
 		list($template, $data) = self::extractTemplateAndData($parameters);
 		$data     = self::extendRecordSetInfo($data, $class);
 		$per_page = $object->getLimit();
@@ -365,8 +387,13 @@ class Pagination
 	 * @param integer $total_records  The total number of records
 	 * @return boolean  If the links were shown
 	 */
-	private static function showTemplatedLinks(string $template, array $data, int $page, int $per_page, int $total_records): bool
-	{
+	private static function showTemplatedLinks(
+		string $template,
+		array $data,
+		int $page,
+		int $per_page,
+		int $total_records
+	): bool {
 		if ($total_records <= $per_page) {
 			return false;
 		}
@@ -595,7 +622,8 @@ class Pagination
 			if (!is_scalar($value)) {
 				$value = '';
 			}
-			$piece = preg_replace('#' . preg_quote($match[0], '#') . '#', HTML::encode((string) $value), $piece, 1) ?? $piece;
+			$piece = preg_replace('#' . preg_quote($match[0], '#') . '#', HTML::encode((string) $value), $piece, 1) ??
+				$piece;
 		}
 		echo $piece;
 	}

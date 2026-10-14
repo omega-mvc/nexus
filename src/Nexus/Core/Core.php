@@ -14,38 +14,54 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Core
  *
- * @phpstan-type CapturedError array{number: int, type: string, string: string, file: string, line: int|null, backtrace: string, context: array<array-key, mixed>|null}
- * @phpstan-type TraceEntry    array{file?: string, line?: int, class?: string, type?: string, function?: string, args?: list<mixed>}
+ * @phpstan-type CapturedError array{number: int, type: string, string: string, file: string, line: int|null, backtrace:
+ * string, context: array<array-key, mixed>|null}
+ * @phpstan-type TraceEntry    array{file?: string, line?: int, class?: string, type?: string, function?: string, args?:
+ * list<mixed>}
  *
  * @version    1.0.0b30
- * @changes    1.0.0b30  Added `isset()` guards around `$_SERVER['DOCUMENT_ROOT']` access for PHP 8.1 undefined array key compatibility [wb, 2026-07-10]
+ * @changes    1.0.0b30  Added `isset()` guards around `$_SERVER['DOCUMENT_ROOT']` access for PHP 8.1 undefined array
+ * key compatibility [wb, 2026-07-10]
  * @changes    1.0.0b29  Added a fallback `define()` for `E_STRICT` since it was removed in PHP 8.4 [wb, 2026-07-10]
  * @changes    1.0.0b28  On PHP 7, generate useful backtraces for Error exceptions [wb, 2016-10-21]
  * @changes    1.0.0b27  Use UTF8::len() instead of strlen(utf8_decode()) [wb, 2016-10-17]
  * @changes    1.0.0b26  Added handle_fatal_errors flag to enableErrorHandling [jt, 2013-06-10]
  * @changes    1.0.0b25  exposing ->generateContext() [kh, 2012-12-18]
- * @changes    1.0.0b23  Backwards Compatibility Break - changed the email subject of error/exception emails to include relevant file info, instead of the timestamp, for better email message threading [wb, 2011-06-20]
+ * @changes    1.0.0b23  Backwards Compatibility Break - changed the email subject of error/exception emails to include
+ * relevant file info, instead of the timestamp, for better email message threading [wb, 2011-06-20]
  * @changes    1.0.0b22  Fixed a bug with dumping arrays containing integers [wb, 2011-05-26]
- * @changes    1.0.0b21  Changed ::startErrorCapture() to allow "stacking" it via multiple calls, fixed a couple of bugs with ::dump() mangling strings in the form `int(1)`, fixed mispelling of `occurred` [wb, 2011-05-09]
- * @changes    1.0.0b20  Backwards Compatibility Break - Updated ::expose() to not wrap the data in HTML when running via CLI, and instead just append a newline [wb, 2011-02-24]
+ * @changes    1.0.0b21  Changed ::startErrorCapture() to allow "stacking" it via multiple calls, fixed a couple of bugs
+ * with ::dump() mangling strings in the form `int(1)`, fixed mispelling of `occurred` [wb, 2011-05-09]
+ * @changes    1.0.0b20  Backwards Compatibility Break - Updated ::expose() to not wrap the data in HTML when running
+ * via CLI, and instead just append a newline [wb, 2011-02-24]
  * @changes    1.0.0b19  Added detection of AIX to ::checkOS() [wb, 2011-01-19]
  * @changes    1.0.0b18  Updated ::expose() to be able to accept multiple parameters [wb, 2011-01-10]
- * @changes    1.0.0b17  Fixed a bug with ::backtrace() triggering notices when an argument is not UTF-8 [wb, 2010-08-17]
- * @changes    1.0.0b16  Added the `$types` and `$regex` parameters to ::startErrorCapture() and the `$regex` parameter to ::stopErrorCapture() [wb, 2010-08-09]
+ * @changes    1.0.0b17  Fixed a bug with ::backtrace() triggering notices when an argument is not UTF-8 [wb,
+ * 2010-08-17]
+ * @changes    1.0.0b16  Added the `$types` and `$regex` parameters to ::startErrorCapture() and the `$regex` parameter
+ * to ::stopErrorCapture() [wb, 2010-08-09]
  * @changes    1.0.0b15  Added ::startErrorCapture() and ::stopErrorCapture() [wb, 2010-07-05]
- * @changes    1.0.0b14  Changed ::enableExceptionHandling() to only call FlourishException::printMessage() when the destination is not `html` and no callback has been defined, added ::configureSMTP() to allow using SMTP for error and exception emails [wb, 2010-06-04]
+ * @changes    1.0.0b14  Changed ::enableExceptionHandling() to only call FlourishException::printMessage() when the
+ * destination is not `html` and no callback has been defined, added ::configureSMTP() to allow using SMTP for error and
+ * exception emails [wb, 2010-06-04]
  * @changes    1.0.0b13  Added the `$backtrace` parameter to ::backtrace() [wb, 2010-03-05]
- * @changes    1.0.0b12  Added ::getDebug() to check for the global debugging flag, added more specific BSD checks to ::checkOS() [wb, 2010-03-02]
+ * @changes    1.0.0b12  Added ::getDebug() to check for the global debugging flag, added more specific BSD checks to
+ * ::checkOS() [wb, 2010-03-02]
  * @changes    1.0.0b11  Added ::detectOpcodeCache() [nt+wb, 2009-10-06]
- * @changes    1.0.0b10  Fixed ::expose() to properly display when output includes non-UTF-8 binary data [wb, 2009-06-29]
- * @changes    1.0.0b9   Added ::disableContext() to remove context info for exception/error handling, tweaked output for exceptions/errors [wb, 2009-06-28]
- * @changes    1.0.0b8   ::enableErrorHandling() and ::enableExceptionHandling() now accept multiple email addresses, and a much wider range of emails [wb-imarc, 2009-06-01]
+ * @changes    1.0.0b10  Fixed ::expose() to properly display when output includes non-UTF-8 binary data [wb,
+ * 2009-06-29]
+ * @changes    1.0.0b9   Added ::disableContext() to remove context info for exception/error handling, tweaked output
+ * for exceptions/errors [wb, 2009-06-28]
+ * @changes    1.0.0b8   ::enableErrorHandling() and ::enableExceptionHandling() now accept multiple email addresses,
+ * and a much wider range of emails [wb-imarc, 2009-06-01]
  * @changes    1.0.0b7   ::backtrace() now properly replaces document root with {doc_root} on Windows [wb, 2009-05-02]
- * @changes    1.0.0b6   Fixed a bug with getting the server name for error messages when running on the command line [wb, 2009-03-11]
- * @changes    1.0.0b5   Fixed a bug with checking the error/exception destination when a log file is specified [wb, 2009-03-07]
- * @changes    1.0.0b4   Backwards compatibility break - ::getOS() and ::getPHPVersion() removed, replaced with ::checkOS() and ::checkVersion() [wb, 2009-02-16]
+ * @changes    1.0.0b6   Fixed a bug with getting the server name for error messages when running on the command line
+ * [wb, 2009-03-11]
+ * @changes    1.0.0b5   Fixed a bug with checking the error/exception destination when a log file is specified [wb,
+ * 2009-03-07]
+ * @changes    1.0.0b4   Backwards compatibility break - ::getOS() and ::getPHPVersion() removed, replaced with
+ * ::checkOS() and ::checkVersion() [wb, 2009-02-16]
  * @changes    1.0.0b3   ::handleError() now displays what kind of error occurred as the heading [wb, 2009-02-15]
  * @changes    1.0.0b2   Added ::registerDebugCallback() [wb, 2009-02-07]
  * @changes    1.0.0b    The initial implementation [wb, 2007-09-25]
@@ -204,7 +220,8 @@ class Core
 	 * Creates a nicely formatted backtrace to the the point where this method is called
 	 *
 	 * @param  integer $remove_lines  The number of trailing lines to remove from the backtrace
-	 * @param  list<TraceEntry>|null $backtrace  A backtrace from [http://php.net/backtrace `debug_backtrace()`] to format - this is not usually required or desired
+	 * @param  list<TraceEntry>|null $backtrace  A backtrace from [http://php.net/backtrace `debug_backtrace()`] to
+	 * format - this is not usually required or desired
 	 * @return string  The formatted backtrace
 	 */
 	public static function backtrace(int|float|string|null $remove_lines = 0, array|null $backtrace = null): string
@@ -295,7 +312,8 @@ class Core
 	 * so the callback is returned unchanged.
 	 *
 	 * @param  callable(mixed ...): mixed $callback  The callback to normalize
-	 * @return callable(mixed ...): mixed  The callback, ready for use with [http://php.net/set_error_handler set_error_handler()] and friends
+	 * @return callable(mixed ...): mixed  The callback, ready for use with [http://php.net/set_error_handler
+	 * set_error_handler()] and friends
 	 */
 	public static function callback(callable $callback): callable
 	{
@@ -316,14 +334,20 @@ class Core
 		}
 
 		if (
-            preg_match('~^(?:                                                                         # Allow leading whitespace
-						   (?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")                     # An "atom" or a quoted string
-						   (?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*  # A . plus another "atom" or a quoted string, any number of times
+			preg_match(
+				'~^(?:
+				# Allow leading whitespace
+						   (?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")
+						   # An "atom" or a quoted string
+						   (?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*
+						   # A . plus another "atom" or a quoted string, any number of times
 						  )@(?:                                                                       # The @ symbol
 						   (?:[a-z0-9\\-]+\.)+[a-z]{2,}|                                              # Domain name
-						   (?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])    # (or) IP addresses
+						   (?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])
+						   # (or) IP addresses
 						  )
-						  (?:\s*,\s*                                                                  # Any number of other emails separated by a comma with surrounding spaces
+						  (?:\s*,\s*
+						  # Any number of other emails separated by a comma with surrounding spaces
 						   (?:
 							(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+")
 							(?:\.[ \t]*(?:[^\x00-\x20\(\)<>@,;:\\\\"\.\[\]]+|"[^"\\\\\n\r]+"[ \t]*))*
@@ -331,8 +355,10 @@ class Core
 							(?:[a-z0-9\\-]+\.)+[a-z]{2,}|
 							(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])
 						   )
-						  )*$~xiD', $destination)
-        ) {
+						  )*$~xiD',
+				$destination
+			)
+		) {
 			return 'email';
 		}
 
@@ -539,8 +565,16 @@ class Core
 			$output = preg_replace('#string\(\d+\) "#', '', $output) ?? $output;
 			$output = preg_replace('#"(\n(  )*)(?=\[|\})#', '\1', $output) ?? $output;
 			$output = preg_replace('#((?:  )+)\["(.*?)"\]#', '\1[\2]', $output) ?? $output;
-			$output = preg_replace('#(?:&)?array\(\d+\) \{\n((?:  )*)((?:  )(?=\[)|(?=\}))#', "Array\n\\1(\n\\1\\2", $output) ?? $output;
-			$output = preg_replace('/object\((\w+)\)#\d+ \(\d+\) {\n((?:  )*)((?:  )(?=\[)|(?=\}))/', "\\1 Object\n\\2(\n\\2\\3", $output) ?? $output;
+			$output = preg_replace(
+				'#(?:&)?array\(\d+\) \{\n((?:  )*)((?:  )(?=\[)|(?=\}))#',
+				"Array\n\\1(\n\\1\\2",
+				$output
+			) ?? $output;
+			$output = preg_replace(
+				'/object\((\w+)\)#\d+ \(\d+\) {\n((?:  )*)((?:  )(?=\[)|(?=\}))/',
+				"\\1 Object\n\\2(\n\\2\\3",
+				$output
+			) ?? $output;
 			$output = preg_replace('#^((?:  )+)}(?=\n|$)#m', "\\1)\n", $output) ?? $output;
 			$output = substr($output, 0, -2) . ')';
 
@@ -610,7 +644,8 @@ class Core
 
 
 	/**
-	 * Turns on a feature where undefined constants are automatically created with the string value equivalent to the name
+	 * Turns on a feature where undefined constants are automatically created with the string value equivalent to the
+	 * name
 	 *
 	 * This functionality only works if ::enableErrorHandling() has been
 	 * called first. This functionality may have a very slight performance
@@ -632,7 +667,8 @@ class Core
 
 
 	/**
-	 * Turns on developer-friendly error handling that includes context information including a backtrace and superglobal dumps
+	 * Turns on developer-friendly error handling that includes context information including a backtrace and
+	 * superglobal dumps
 	 *
 	 * All errors that match the current
 	 * [http://php.net/error_reporting error_reporting()] level will be
@@ -655,9 +691,11 @@ class Core
 	 * [enableExceptionHandling() exception handling] are set to the same
 	 * email address, the email will contain both errors and exceptions.
 	 *
-	 * @param  string  $destination          The destination for the errors and context information - an email address, a file path or the string `'html'`
+	 * @param  string  $destination          The destination for the errors and context information - an email address,
+	 * a file path or the string `'html'`
 	 * @param  boolean $handle_fatal_errors  If true, a shutdown function will be registered to handle a fatal error.
-	 *                                       Be aware, other shutdown functions could inadvertantly disable this one or exit the process.
+	 *                                       Be aware, other shutdown functions could inadvertantly disable this one or
+	 * exit the process.
 	 *
 	 * @return void
 	 */
@@ -677,7 +715,8 @@ class Core
 
 
 	/**
-	 * Turns on developer-friendly uncaught exception handling that includes context information including a backtrace and superglobal dumps
+	 * Turns on developer-friendly uncaught exception handling that includes context information including a backtrace
+	 * and superglobal dumps
 	 *
 	 * Any uncaught exception will be redirected to the destination specified,
 	 * and the page will execute the `$closing_code` callback before exiting.
@@ -703,13 +742,19 @@ class Core
 	 * [enableErrorHandling() error handling] are set to the same
 	 * email address, the email will contain both exceptions and errors.
 	 *
-	 * @param  string   $destination   The destination for the exception and context information - an email address, a file path or the string `'html'`
-	 * @param  callable(mixed...):mixed $closing_code  This callback will happen after the exception is handled and before page execution stops. Good for printing a footer. If no callback is provided and the exception extends FlourishException, FlourishException::printMessage() will be called.
+	 * @param  string   $destination   The destination for the exception and context information - an email address, a
+	 * file path or the string `'html'`
+	 * @param  callable(mixed...):mixed $closing_code  This callback will happen after the exception is handled and
+	 * before page execution stops. Good for printing a footer. If no callback is provided and the exception extends
+	 * FlourishException, FlourishException::printMessage() will be called.
 	 * @param  array<array-key, mixed> $parameters    The parameters to send to `$closing_code`
 	 * @return void
 	 */
-	public static function enableExceptionHandling(string $destination, ?callable $closing_code = null, array $parameters = array()): void
-	{
+	public static function enableExceptionHandling(
+		string $destination,
+		?callable $closing_code = null,
+		array $parameters = array()
+	): void {
 		if (!self::checkDestination($destination)) {
 			return;
 		}
@@ -738,7 +783,9 @@ class Core
 		}
 		$trace_entries[] = $final_entry;
 
-		$doc_root_candidate = isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
+		$doc_root_candidate = isset($_SERVER['DOCUMENT_ROOT']) && is_string(
+			$_SERVER['DOCUMENT_ROOT']
+		) ? $_SERVER['DOCUMENT_ROOT'] : '';
 		$doc_root  = realpath($doc_root_candidate) ?: '';
 		$doc_root .= (substr($doc_root, -1) != DIRECTORY_SEPARATOR) ? DIRECTORY_SEPARATOR : '';
 
@@ -777,7 +824,8 @@ class Core
 		}
 		$value = $data;
 		if (PHP_SAPI != 'cli') {
-			echo '<pre class="exposed">' . htmlspecialchars((string) self::dump($value), ENT_QUOTES, 'UTF-8') . '</pre>';
+			echo '<pre class="exposed">' . htmlspecialchars((string) self::dump($value), ENT_QUOTES, 'UTF-8') .
+				'</pre>';
 		} else {
 			echo self::dump($value) . "\n";
 		}
@@ -796,7 +844,11 @@ class Core
 	{
 		$output = '';
 		if (isset($entry['file'])) {
-			$output .= str_replace($doc_root, '{doc_root}' . DIRECTORY_SEPARATOR, $entry['file']) . '(' . ($entry['line'] ?? '') . '): ';
+			$output .= str_replace(
+				$doc_root,
+				'{doc_root}' . DIRECTORY_SEPARATOR,
+				$entry['file']
+			) . '(' . ($entry['line'] ?? '') . '): ';
 		} else {
 			$output .= '[internal function]: ';
 		}
@@ -806,40 +858,40 @@ class Core
 		if (isset($entry['class']) || isset($entry['function'])) {
 			$output .= ($entry['function'] ?? '') . '(';
 				$j = 0;
-            if (!isset($entry['args'])) {
-                $entry['args'] = array();
-            }
-            foreach ($entry['args'] as $arg) {
-                if ($j) {
-                    $output .= ', ';
-                }
-                if (is_bool($arg)) {
-                    $output .= ($arg) ? 'true' : 'false';
-                } elseif (is_null($arg)) {
-                    $output .= 'NULL';
-                } elseif (is_array($arg)) {
-                    $output .= 'Array';
-                } elseif (is_object($arg)) {
-                    $output .= 'Object(' . get_class($arg) . ')';
-                } elseif (is_string($arg)) {
-                    // Shorten the UTF-8 string if it is too long
-                    if (UTF8::len($arg) > 18) {
-                        // If we can't match as unicode, try single byte
-                        if (!preg_match('#^(.{0,15})#us', $arg, $short_arg)) {
-                            preg_match('#^(.{0,15})#s', $arg, $short_arg);
-                        }
-                        $arg  = ($short_arg[0] ?? '') . '...';
-                    }
-                    $output .= "'" . $arg . "'";
-                } elseif (is_int($arg) || is_float($arg)) {
-                    $output .= (string) $arg;
-                } elseif (is_resource($arg)) {
-                    $output .= 'Resource id #' . get_resource_id($arg);
-                } else {
-                    $output .= get_debug_type($arg);
-                }
-                $j++;
-            }
+			if (!isset($entry['args'])) {
+				$entry['args'] = array();
+			}
+			foreach ($entry['args'] as $arg) {
+				if ($j) {
+					$output .= ', ';
+				}
+				if (is_bool($arg)) {
+					$output .= ($arg) ? 'true' : 'false';
+				} elseif (is_null($arg)) {
+					$output .= 'NULL';
+				} elseif (is_array($arg)) {
+					$output .= 'Array';
+				} elseif (is_object($arg)) {
+					$output .= 'Object(' . get_class($arg) . ')';
+				} elseif (is_string($arg)) {
+					// Shorten the UTF-8 string if it is too long
+					if (UTF8::len($arg) > 18) {
+						// If we can't match as unicode, try single byte
+						if (!preg_match('#^(.{0,15})#us', $arg, $short_arg)) {
+							preg_match('#^(.{0,15})#s', $arg, $short_arg);
+						}
+						$arg  = ($short_arg[0] ?? '') . '...';
+					}
+					$output .= "'" . $arg . "'";
+				} elseif (is_int($arg) || is_float($arg)) {
+					$output .= (string) $arg;
+				} elseif (is_resource($arg)) {
+					$output .= 'Resource id #' . get_resource_id($arg);
+				} else {
+					$output .= get_debug_type($arg);
+				}
+				$j++;
+			}
 			$output .= ')';
 		}
 		return $output;
@@ -908,11 +960,18 @@ class Core
 	 * @param  string  $error_string   The message for the error
 	 * @param  string  $error_file     The file the error occurred in
 	 * @param  integer $error_line     The line the error occurred on
-	 * @param  array<array-key, mixed>|null $error_context  A references to all variables in scope at the occurence of the error
-	 * @return bool  Whether the error was handled - returning TRUE suppresses PHP's internal error handling, FALSE lets it proceed
+	 * @param  array<array-key, mixed>|null $error_context  A references to all variables in scope at the occurence of
+	 * the error
+	 * @return bool  Whether the error was handled - returning TRUE suppresses PHP's internal error handling, FALSE lets
+	 * it proceed
 	 */
-	public static function handleError(int $error_number, string $error_string, ?string $error_file = null, ?int $error_line = null, ?array $error_context = null): bool
-	{
+	public static function handleError(
+		int $error_number,
+		string $error_string,
+		?string $error_file = null,
+		?int $error_line = null,
+		?array $error_context = null
+	): bool {
 		if (self::$dynamic_constants && $error_number == E_NOTICE) {
 			if (preg_match("#^Use of undefined constant (\w+) - assumed '\w+'\$#D", $error_string, $matches)) {
 				define($matches[1], $matches[1]);
@@ -927,7 +986,9 @@ class Core
 			return true;
 		}
 
-		$doc_root_candidate = isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
+		$doc_root_candidate = isset($_SERVER['DOCUMENT_ROOT']) && is_string(
+			$_SERVER['DOCUMENT_ROOT']
+		) ? $_SERVER['DOCUMENT_ROOT'] : '';
 		$doc_root  = realpath($doc_root_candidate) ?: '';
 		$doc_root .= (substr($doc_root, -1) != '/' && substr($doc_root, -1) != '\\') ? '/' : '';
 
@@ -940,43 +1001,46 @@ class Core
 
 		switch ($error_number) {
 			case E_WARNING:
-                $type = self::compose('Warning');
-                break;
+				$type = self::compose('Warning');
+				break;
 			case E_NOTICE:
-                $type = self::compose('Notice');
-                break;
+				$type = self::compose('Notice');
+				break;
 			case E_USER_ERROR:
-                $type = self::compose('User Error');
-                break;
+				$type = self::compose('User Error');
+				break;
 			case E_USER_WARNING:
-                $type = self::compose('User Warning');
-                break;
+				$type = self::compose('User Warning');
+				break;
 			case E_USER_NOTICE:
-                $type = self::compose('User Notice');
-                break;
+				$type = self::compose('User Notice');
+				break;
 			case E_RECOVERABLE_ERROR:
-                $type = self::compose('Recoverable Error');
-                break;
+				$type = self::compose('Recoverable Error');
+				break;
 			case E_DEPRECATED:
-                $type = self::compose('Deprecated');
-                break;
+				$type = self::compose('Deprecated');
+				break;
 			case E_USER_DEPRECATED:
-                $type = self::compose('User Deprecated');
-                break;
+				$type = self::compose('User Deprecated');
+				break;
 			case E_CORE_ERROR:
-                $type = self::compose('Fatal Error');
-                break;
+				$type = self::compose('Fatal Error');
+				break;
 			case E_ERROR:
-                $type = self::compose('Fatal Error');
-                break;
+				$type = self::compose('Fatal Error');
+				break;
 			default:
-                $type = self::compose('Error');
-                break;
+				$type = self::compose('Error');
+				break;
 		}
 
 		if ($capturing) {
 			$type_to_capture   = (bool) (self::$captured_error_types[self::$captured_error_level] & $error_number);
-			$string_to_capture = !self::$captured_error_regex[self::$captured_error_level] || preg_match(self::$captured_error_regex[self::$captured_error_level], $error_string);
+			$string_to_capture = !self::$captured_error_regex[self::$captured_error_level] || preg_match(
+				self::$captured_error_regex[self::$captured_error_level],
+				$error_string
+			);
 			if ($type_to_capture && $string_to_capture) {
 				self::$captured_errors[self::$captured_error_level][] = array(
 					'number'    => $error_number,
@@ -997,10 +1061,12 @@ class Core
 				if ($previous_handler === null) {
 					return false;
 				}
-				$result = call_user_func($previous_handler, $error_number, $error_string, (string) $error_file, (int) $error_line);
+				$result = call_user_func($previous_handler, $error_number, $error_string, (string) $error_file, (int)
+					$error_line);
 				return $result !== false;
 
-			// If we get here, this method is the error handler, but we don't want to actually report the error so we return
+			// If we get here, this method is the error handler, but we don't want to actually report the error so we
+			// return
 			} elseif (!$level_match) {
 				return true;
 			}
@@ -1017,7 +1083,8 @@ class Core
 
 
 	/**
-	 * Handles an uncaught exception, creating the necessary context information, sending it to the specified destination and finally executing the closing callback
+	 * Handles an uncaught exception, creating the necessary context information, sending it to the specified
+	 * destination and finally executing the closing callback
 	 *
 	 * @internal
 	 *
@@ -1070,7 +1137,8 @@ class Core
 	/**
 	 * Registers a callback to handle debug messages instead of the default action of calling ::expose() on the message
 	 *
-	 * @param  callable(mixed...):mixed $callback  A callback that accepts a single parameter, the string debug message to handle
+	 * @param  callable(mixed...):mixed $callback  A callback that accepts a single parameter, the string debug message
+	 * to handle
 	 * @return void
 	 */
 	public static function registerDebugCallback(callable $callback): void
@@ -1251,7 +1319,8 @@ class Core
 	/**
 	 * Temporarily enables capturing error messages
 	 *
-	 * @param  integer $types  The error types to capture - this should be as specific as possible - defaults to all (E_ALL)
+	 * @param  integer $types  The error types to capture - this should be as specific as possible - defaults to all
+	 * (E_ALL)
 	 * @param  string  $regex  A PCRE regex to match against the error message
 	 * @return void
 	 */
@@ -1266,7 +1335,8 @@ class Core
 		self::$captured_error_regex[self::$captured_error_level]             = $regex;
 		self::$captured_error_types[self::$captured_error_level]             = $types;
 		self::$captured_errors[self::$captured_error_level]                  = array();
-		self::$captured_errors_previous_handler[self::$captured_error_level] = set_error_handler(array(self::class, 'handleError'));
+		self::$captured_errors_previous_handler[self::$captured_error_level] = set_error_handler(array
+			(self::class, 'handleError'));
 	}
 
 
@@ -1282,10 +1352,30 @@ class Core
 
 		self::$captured_error_level--;
 
-		self::$captured_error_regex             = array_slice(self::$captured_error_regex, 0, self::$captured_error_level, true);
-		self::$captured_error_types             = array_slice(self::$captured_error_types, 0, self::$captured_error_level, true);
-		self::$captured_errors                  = array_slice(self::$captured_errors, 0, self::$captured_error_level, true);
-		self::$captured_errors_previous_handler = array_slice(self::$captured_errors_previous_handler, 0, self::$captured_error_level, true);
+		self::$captured_error_regex             = array_slice(
+			self::$captured_error_regex,
+			0,
+			self::$captured_error_level,
+			true
+		);
+		self::$captured_error_types             = array_slice(
+			self::$captured_error_types,
+			0,
+			self::$captured_error_level,
+			true
+		);
+		self::$captured_errors                  = array_slice(
+			self::$captured_errors,
+			0,
+			self::$captured_error_level,
+			true
+		);
+		self::$captured_errors_previous_handler = array_slice(
+			self::$captured_errors_previous_handler,
+			0,
+			self::$captured_error_level,
+			true
+		);
 
 		restore_error_handler();
 
@@ -1293,8 +1383,8 @@ class Core
 			$new_captures = array();
 			foreach ($captures as $capture) {
 				if (!preg_match($regex, $capture['string'])) {
-                    continue;
-                }
+					continue;
+				}
 				$new_captures[] = $capture;
 			}
 			$captures = $new_captures;
@@ -1310,8 +1400,8 @@ class Core
 	 * @return Core
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

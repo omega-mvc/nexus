@@ -15,7 +15,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Related
  *
  * @version    1.0.0b47
  * @changes    1.0.0b47  Fixed issues with set_null db constraints and one-to-many table relationships [jt, 2013-05-22]
@@ -23,51 +22,78 @@ declare(strict_types=1);
  * @changes    1.0.0b45  Added the `$recursive` parameter to ::populateRecords() [wb, 2011-09-16]
  * @changes    1.0.0b44  Added missing information for has and list methods to ::reflect() [wb, 2011-09-07]
  * @changes    1.0.0b43  Fixed some bugs in handling relationships between PHP 5.3 namespaced classes [wb, 2011-05-26]
- * @changes    1.0.0b42  Fixed a bug with ::associateRecords() not associating record set via primary key [wb, 2011-05-23]
+ * @changes    1.0.0b42  Fixed a bug with ::associateRecords() not associating record set via primary key [wb,
+ * 2011-05-23]
  * @changes    1.0.0b41  Fixed a bug in generating errors messages for many-to-many relationships [wb, 2011-03-07]
  * @changes    1.0.0b40  Updated ::getRelatedRecordName() to use Text if loaded [wb, 2011-02-02]
- * @changes    1.0.0b39  Fixed a bug with ::validate() not properly removing validation messages about a related primary key value not being present yet, if the column and related column names were different [wb, 2010-11-24]
- * @changes    1.0.0b38  Updated ::overrideRelatedRecordName() to prefix any namespace from `$class` to `$related_class` if not already present [wb, 2010-11-24]
+ * @changes    1.0.0b39  Fixed a bug with ::validate() not properly removing validation messages about a related primary
+ * key value not being present yet, if the column and related column names were different [wb, 2010-11-24]
+ * @changes    1.0.0b38  Updated ::overrideRelatedRecordName() to prefix any namespace from `$class` to `$related_class`
+ * if not already present [wb, 2010-11-24]
  * @changes    1.0.0b37  Fixed a documentation typo [wb, 2010-11-04]
  * @changes    1.0.0b36  Fixed ::getPrimaryKeys() to not throw SQL exceptions [wb, 2010-10-20]
- * @changes    1.0.0b35  Backwards Compatibility Break - changed the validation messages array to use nesting for child records [wb-imarc+wb, 2010-10-03]
- * @changes    1.0.0b35  Updated ::getPrimaryKeys() to always return primary keys in a consistent order when no order bys are specified [wb, 2010-07-26]
+ * @changes    1.0.0b35  Backwards Compatibility Break - changed the validation messages array to use nesting for child
+ * records [wb-imarc+wb, 2010-10-03]
+ * @changes    1.0.0b35  Updated ::getPrimaryKeys() to always return primary keys in a consistent order when no order
+ * bys are specified [wb, 2010-07-26]
  * @changes    1.0.0b34  Updated the class to work with fixes in Related [wb, 2010-07-22]
- * @changes    1.0.0b33  Fixed the related table populate action to use the plural underscore_notation version of the related class name [wb, 2010-07-08]
- * @changes    1.0.0b32  Backwards Compatibility Break - related table populate action now use the underscore_notation version of the class name instead of the related table name, allowing for related tables in non-standard schemas [wb, 2010-06-23]
+ * @changes    1.0.0b33  Fixed the related table populate action to use the plural underscore_notation version of the
+ * related class name [wb, 2010-07-08]
+ * @changes    1.0.0b32  Backwards Compatibility Break - related table populate action now use the underscore_notation
+ * version of the class name instead of the related table name, allowing for related tables in non-standard schemas [wb,
+ * 2010-06-23]
  * @changes    1.0.0b31  Fixed ::reflect() to properly show parameters for associate methods [wb, 2010-06-08]
- * @changes    1.0.0b30  Fixed a bug where related record error messages could be overwritten if there were multiple related records with the same error [wb, 2010-05-29]
+ * @changes    1.0.0b30  Fixed a bug where related record error messages could be overwritten if there were multiple
+ * related records with the same error [wb, 2010-05-29]
  * @changes    1.0.0b29  Changed validation messages array to use column name keys [wb, 2010-05-26]
  * @changes    1.0.0b28  Updated ::associateRecords() to accept just a single ActiveRecord [wb, 2010-05-06]
- * @changes    1.0.0b27  Updated the class to force configure classes before peforming actions with them [wb, 2010-03-30]
- * @changes    1.0.0b26  Fixed ::reflect() to show the proper return values for `associate`, `link` and `populate` methods [wb, 2010-03-15]
- * @changes    1.0.0b25  Fixed a bug when storing a one-to-one related record with different column names on each end of the relationship [wb, 2010-03-04]
+ * @changes    1.0.0b27  Updated the class to force configure classes before peforming actions with them [wb,
+ * 2010-03-30]
+ * @changes    1.0.0b26  Fixed ::reflect() to show the proper return values for `associate`, `link` and `populate`
+ * methods [wb, 2010-03-15]
+ * @changes    1.0.0b25  Fixed a bug when storing a one-to-one related record with different column names on each end of
+ * the relationship [wb, 2010-03-04]
  * @changes    1.0.0b24  Added the ability to associate a single record via primary key [wb, 2010-03-03]
  * @changes    1.0.0b23  Fixed a column aliasing issue with SQLite [wb, 2010-01-25]
  * @changes    1.0.0b22  Fixed a bug with associating a non-contiguous array of ActiveRecord objects [wb, 2009-12-17]
- * @changes    1.0.0b21  Added support for the $force_cascade parameter of ActiveRecord::store(), added ::hasRecords() and fixed a bug with creating non-existent one-to-one related records [wb, 2009-12-16]
+ * @changes    1.0.0b21  Added support for the $force_cascade parameter of ActiveRecord::store(), added ::hasRecords()
+ * and fixed a bug with creating non-existent one-to-one related records [wb, 2009-12-16]
  * @changes    1.0.0b20  Updated code for the new ORMDatabase and ORMSchema APIs [wb, 2009-10-28]
- * @changes    1.0.0b19  Internal Backwards Compatibility Break - Added the `$class` parameter to ::storeManyToMany() - also fixed ::countRecords() to work across all databases, changed SQL statements to use value placeholders, identifier escaping and support schemas [wb, 2009-10-22]
- * @changes    1.0.0b18  Fixed a bug in ::countRecords() that would occur when multiple routes existed to the table being counted [wb, 2009-10-05]
+ * @changes    1.0.0b19  Internal Backwards Compatibility Break - Added the `$class` parameter to ::storeManyToMany() -
+ * also fixed ::countRecords() to work across all databases, changed SQL statements to use value placeholders,
+ * identifier escaping and support schemas [wb, 2009-10-22]
+ * @changes    1.0.0b18  Fixed a bug in ::countRecords() that would occur when multiple routes existed to the table
+ * being counted [wb, 2009-10-05]
  * @changes    1.0.0b17  Updated code for new RecordSet API [wb, 2009-09-16]
- * @changes    1.0.0b16  Fixed a bug with ::createRecord() not creating non-existent record when the related value is NULL [wb, 2009-08-25]
- * @changes    1.0.0b15  Fixed a bug with ::createRecord() where foreign keys with a different column and related column name would not load properly [wb, 2009-08-17]
- * @changes    1.0.0b14  Fixed a bug with ::createRecord() when a foreign key constraint is on a column other than the primary key [wb, 2009-08-10]
+ * @changes    1.0.0b16  Fixed a bug with ::createRecord() not creating non-existent record when the related value is
+ * NULL [wb, 2009-08-25]
+ * @changes    1.0.0b15  Fixed a bug with ::createRecord() where foreign keys with a different column and related column
+ * name would not load properly [wb, 2009-08-17]
+ * @changes    1.0.0b14  Fixed a bug with ::createRecord() when a foreign key constraint is on a column other than the
+ * primary key [wb, 2009-08-10]
  * @changes    1.0.0b13  ::setOrderBys() now (properly) only recognizes *-to-many relationships [wb, 2009-07-31]
- * @changes    1.0.0b12  Changed how related record values are set and how related validation messages are ignored because of recursive relationships [wb, 2009-07-29]
+ * @changes    1.0.0b12  Changed how related record values are set and how related validation messages are ignored
+ * because of recursive relationships [wb, 2009-07-29]
  * @changes    1.0.0b11  Fixed some bugs with one-to-one relationships [wb, 2009-07-21]
  * @changes    1.0.0b10  Fixed a couple of bugs with validating related records [wb, 2009-06-26]
- * @changes    1.0.0b9   Fixed a bug where ::store() would not save associations with no related records [wb, 2009-06-23]
- * @changes    1.0.0b8   Changed ::associateRecords() to work for *-to-many instead of just many-to-many relationships [wb, 2009-06-17]
+ * @changes    1.0.0b9   Fixed a bug where ::store() would not save associations with no related records [wb,
+ * 2009-06-23]
+ * @changes    1.0.0b8   Changed ::associateRecords() to work for *-to-many instead of just many-to-many relationships
+ * [wb, 2009-06-17]
  * @changes    1.0.0b7   Updated code for new ORM API, fixed API documentation bugs [wb, 2009-06-15]
  * @changes    1.0.0b6   Updated code to use new ValidationException::formatField() method [wb, 2009-06-04]
- * @changes    1.0.0b5   Added ::getPrimaryKeys() and ::setPrimaryKeys(), renamed ::setRecords() to ::setRecordSet() and ::tallyRecords() to ::setCount() [wb, 2009-06-02]
- * @changes    1.0.0b4   Updated code to handle new association method for related records and new `$related_records` structure, added ::store() and ::validate() [wb, 2009-06-02]
- * @changes    1.0.0b3   ::associateRecords() can now accept an array of records or primary keys instead of only an RecordSet [wb, 2009-06-01]
- * @changes    1.0.0b2   ::populateRecords() now accepts any input field keys instead of sequential ones starting from 0 [wb, 2009-05-03]
+ * @changes    1.0.0b5   Added ::getPrimaryKeys() and ::setPrimaryKeys(), renamed ::setRecords() to ::setRecordSet() and
+ * ::tallyRecords() to ::setCount() [wb, 2009-06-02]
+ * @changes    1.0.0b4   Updated code to handle new association method for related records and new `$related_records`
+ * structure, added ::store() and ::validate() [wb, 2009-06-02]
+ * @changes    1.0.0b3   ::associateRecords() can now accept an array of records or primary keys instead of only an
+ * RecordSet [wb, 2009-06-01]
+ * @changes    1.0.0b2   ::populateRecords() now accepts any input field keys instead of sequential ones starting from 0
+ * [wb, 2009-05-03]
  * @changes    1.0.0b    The initial implementation [wb, 2007-12-30]
  *
- * @phpstan-type RelatedInfo    array{record_set?: RecordSet|null, count?: int, primary_keys?: array<int|string, mixed>|null, associate?: bool}
+ * @phpstan-type RelatedInfo    array{record_set?: RecordSet|null, count?: int, primary_keys?: array<int|string,
+ * mixed>|null, associate?: bool}
  * @phpstan-type RelatedRecords array<string, array<string, RelatedInfo>>
  * @phpstan-type RelatedValues  array<array-key, mixed>
  */
@@ -108,10 +134,14 @@ class Related
 	 * @internal
 	 *
 	 * @param  string                             $class             The class to get the related values for
-	 * @param  RelatedRecords                            &$related_records  The related records existing for the ActiveRecord class
-	 * @param  string                                    $related_class     The class we are associating with the current record
-	 * @param  ActiveRecord|array<array-key, mixed>|string|int|null $record  The record (or primary key of the record) to be associated
-	 * @param  ?string                                   $route             The route to use between the current class and the related class
+	 * @param  RelatedRecords                            &$related_records  The related records existing for the
+	 * ActiveRecord class
+	 * @param  string                                    $related_class     The class we are associating with the
+	 * current record
+	 * @param  ActiveRecord|array<array-key, mixed>|string|int|null $record  The record (or primary key of the record)
+	 * to be associated
+	 * @param  ?string                                   $route             The route to use between the current class
+	 * and the related class
 	 * @return void
 	 * @throws NotFoundException
 	 * @throws ValidationException
@@ -119,8 +149,13 @@ class Related
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	public static function associateRecord(string $class, array &$related_records, string $related_class, mixed $record, ?string $route = null): void
-	{
+	public static function associateRecord(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		mixed $record,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -151,10 +186,14 @@ class Related
 	 * @internal
 	 *
 	 * @param  string            $class                 The class to get the related values for
-	 * @param  RelatedRecords                             &$related_records      The related records existing for the ActiveRecord class
-	 * @param  string                                     $related_class         The class we are associating with the current record
-	 * @param  ActiveRecord|RecordSet|array<array-key, mixed> $records_to_associate  An ActiveRecord, a RecordSet, an array of records, or an array of primary keys of the records to be associated
-	 * @param  ?string                                    $route                 The route to use between the current class and the related class
+	 * @param  RelatedRecords                             &$related_records      The related records existing for the
+	 * ActiveRecord class
+	 * @param  string                                     $related_class         The class we are associating with the
+	 * current record
+	 * @param  ActiveRecord|RecordSet|array<array-key, mixed> $records_to_associate  An ActiveRecord, a RecordSet, an
+	 * array of records, or an array of primary keys of the records to be associated
+	 * @param  ?string                                    $route                 The route to use between the current
+	 * class and the related class
 	 * @return void
 	 * @throws NotFoundException
 	 * @throws NoRowsException
@@ -162,8 +201,13 @@ class Related
 	 * @throws ValidationException
 	 * @throws AuthorizationException
 	 */
-	public static function associateRecords(string $class, array &$related_records, string $related_class, mixed $records_to_associate, ?string $route = null): void
-	{
+	public static function associateRecords(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		mixed $records_to_associate,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -215,8 +259,13 @@ class Related
 	 * @throws AuthorizationException
 	 * @throws ValidationException
 	 */
-	public static function buildRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): RecordSet
-	{
+	public static function buildRecords(
+		string $class,
+		array &$values,
+		array &$related_records,
+		string $related_class,
+		?string $route = null
+	): RecordSet {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -237,7 +286,8 @@ class Related
 		// Determine how we are going to build the sequence
 		if (isset($related_records[$related_table][$route]['primary_keys'])) {
 			$primary_key_column = current($schema->getKeys($related_table, 'primary'));
-			$where_conditions   = array($primary_key_column . '=' => $related_records[$related_table][$route]['primary_keys']);
+			$where_conditions   = array($primary_key_column . '=' =>
+				$related_records[$related_table][$route]['primary_keys']);
 			$order_bys          = self::getOrderBys($class, $related_class, $route);
 			$record_set         = RecordSet::build($related_class, $where_conditions, $order_bys);
 			$related_records[$related_table][$route]['record_set'] = $record_set;
@@ -358,12 +408,12 @@ class Related
 	/**
 	 * Escapes one or more values into a single SQL string
 	 *
-	 * @param  Database  $db       The database to escape against
+	 * @param  Connection  $db       The database to escape against
 	 * @param  string    $sql      The SQL string or data type to escape with
 	 * @param  mixed     ...$values  The value(s) to escape
 	 * @return string  The escaped SQL
 	 */
-	private static function escape(Database $db, string $sql, mixed ...$values): string
+	private static function escape(Connection $db, string $sql, mixed ...$values): string
 	{
 		$escaped = $db->escape($sql, ...$values);
 
@@ -382,7 +432,7 @@ class Related
 	/**
 	 * Runs one or more translated statements and returns the single result
 	 *
-	 * @param  Database     $db      The database to run the statements through
+	 * @param  Connection     $db      The database to run the statements through
 	 * @param  array<array-key, mixed>  $params  The SQL statement and the values to escape into it
 	 * @return Result  The result of the query
 	 * @throws AuthorizationException
@@ -390,7 +440,7 @@ class Related
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 */
-	private static function runQuery(Database $db, array $params): Result
+	private static function runQuery(Connection $db, array $params): Result
 	{
 		$result = call_user_func_array($db->translatedQuery(...), $params);
 
@@ -408,7 +458,7 @@ class Related
 	/**
 	 * Unescapes a value fetched for the column specified
 	 *
-	 * @param  Database  $db      The database to unescape against
+	 * @param  Connection  $db      The database to unescape against
 	 * @param  Schema    $schema  The schema the column belongs to
 	 * @param  string    $table   The table the column belongs to
 	 * @param  string    $column  The column the value was fetched for
@@ -420,8 +470,13 @@ class Related
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 */
-	private static function unescapeValue(Database $db, Schema $schema, string $table, string $column, mixed $value): mixed
-	{
+	private static function unescapeValue(
+		Connection $db,
+		Schema $schema,
+		string $table,
+		string $column,
+		mixed $value
+	): mixed {
 		$data_type = $schema->getColumnInfo($table, $column, 'type');
 
 		if (!is_string($data_type)) {
@@ -494,8 +549,13 @@ class Related
 	 * @throws ValidationException
 	 * @throws NotFoundException
 	 */
-	public static function countRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): int
-	{
+	public static function countRecords(
+		string $class,
+		array &$values,
+		array &$related_records,
+		string $related_class,
+		?string $route = null
+	): int {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -579,8 +639,13 @@ class Related
 	 * @throws NoRowsException
 	 * @throws AuthorizationException
 	 */
-	public static function createRecord(string $class, array $values, array &$related_records, string $related_class, ?string $route = null): ActiveRecord
-	{
+	public static function createRecord(
+		string $class,
+		array $values,
+		array &$related_records,
+		string $related_class,
+		?string $route = null
+	): ActiveRecord {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -669,7 +734,8 @@ class Related
 		$schema        = ORMSchema::retrieve($class);
 		$pk_columns    = $schema->getKeys($related_table, 'primary');
 
-		// If there is a multi-fiend primary key we want to populate based on any field BUT the foreign key to the current class
+		// If there is a multi-fiend primary key we want to populate based on any field BUT the foreign key to the
+		// current class
 		if (sizeof($pk_columns) > 1) {
 			$first_pk_column = null;
 			$relationships   = ORMSchema::getRoutes($schema, $related_table, $table, '*-to-one');
@@ -752,15 +818,22 @@ class Related
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function flagForAssociation(string $class, array &$related_records, string $related_class, ?string $route = null): void
-	{
+	public static function flagForAssociation(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		?string $route = null
+	): void {
 		$table         = ORM::tablize($class);
 		$related_table = ORM::tablize($related_class);
 
 		$schema = ORMSchema::retrieve($class);
 		$route  = ORMSchema::getRouteName($schema, $table, $related_table, $route, '!many-to-one');
 
-		if (!isset($related_records[$related_table][$route]['record_set']) && !isset($related_records[$related_table][$route]['primary_keys'])) {
+		if (
+			!isset($related_records[$related_table][$route]['record_set']) &&
+			!isset($related_records[$related_table][$route]['primary_keys'])
+		) {
 			throw new ProgrammerException(
 				'%1$s can only be called after %2$s or %3$s',
 				__CLASS__ . '::flagForAssociation()',
@@ -780,7 +853,8 @@ class Related
 	 *
 	 * @param  string $class          The class to get the order bys for
 	 * @param  string $related_class  The related class the ordering rules apply to
-	 * @param  string $route          The route to the related table, should be a column name in the current table or a join table name
+	 * @param  string $route          The route to the related table, should be a column name in the current table or a
+	 * join table name
 	 * @return array<string, string>  An array of the order bys - see RecordSet::build() for format
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -796,7 +870,10 @@ class Related
 		$schema = ORMSchema::retrieve($class);
 		$route  = ORMSchema::getRouteName($schema, $table, $related_table, $route);
 
-		if (!isset(self::$order_bys[$table][$related_table]) || !isset(self::$order_bys[$table][$related_table][$route])) {
+		if (
+			!isset(self::$order_bys[$table][$related_table]) ||
+			!isset(self::$order_bys[$table][$related_table][$route])
+		) {
 			return array();
 		}
 
@@ -821,8 +898,13 @@ class Related
 	 * @throws ValidationException
 	 * @throws NotFoundException
 	 */
-	public static function getPrimaryKeys(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): array
-	{
+	public static function getPrimaryKeys(
+		string $class,
+		array &$values,
+		array &$related_records,
+		string $related_class,
+		?string $route = null
+	): array {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -855,7 +937,12 @@ class Related
 				$aliased_related_pk_columns = array();
 				foreach ($related_pk_columns as $related_pk_column) {
 					// We explicitly alias the columns due to SQLite issues
-					$aliased_related_pk_columns[] = self::escape($db, "%r AS %r", $related_table . '.' . $related_pk_column, $related_pk_column);
+					$aliased_related_pk_columns[] = self::escape(
+						$db,
+						"%r AS %r",
+						$related_table . '.' . $related_pk_column,
+						$related_pk_column
+					);
 				}
 
 				if (isset($relationship['join_table'])) {
@@ -903,7 +990,13 @@ class Related
 						$primary_key = array();
 						foreach ($row as $column => $value) {
 							if (is_string($column)) {
-								$primary_key[$column] = self::unescapeValue($db, $schema, $related_table, $column, $value);
+								$primary_key[$column] = self::unescapeValue(
+									$db,
+									$schema,
+									$related_table,
+									$column,
+									$value
+								);
 							}
 						}
 						$primary_keys[] = $primary_key;
@@ -956,10 +1049,10 @@ class Related
 		$route  = ORMSchema::getRouteName($schema, $table, $related_table, $route);
 
 		if (
-            !isset(self::$related_record_names[$table]) ||
+			!isset(self::$related_record_names[$table]) ||
 			  !isset(self::$related_record_names[$table][$related_class]) ||
 			  !isset(self::$related_record_names[$table][$related_class][$route])
-        ) {
+		) {
 			return ORM::getRecordName($related_class);
 		}
 
@@ -992,8 +1085,13 @@ class Related
 	 * @throws ValidationException
 	 * @throws AuthorizationException
 	 */
-	public static function hasRecords(string $class, array &$values, array &$related_records, string $related_class, ?string $route = null): bool
-	{
+	public static function hasRecords(
+		string $class,
+		array &$values,
+		array &$related_records,
+		string $related_class,
+		?string $route = null
+	): bool {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1031,8 +1129,12 @@ class Related
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	public static function linkRecords(string $class, array &$related_records, string $related_class, ?string $route = null): void
-	{
+	public static function linkRecords(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1057,7 +1159,11 @@ class Related
 		$record_set = RecordSet::build(
 			$related_class,
 			array(
-				self::relationshipString($relationship, 'related_column') . '=' => Request::get($field, 'array', array())
+				self::relationshipString($relationship, 'related_column') . '=' => Request::get(
+					$field,
+					'array',
+					array()
+				)
 			)
 		);
 
@@ -1107,8 +1213,12 @@ class Related
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function overrideRelatedRecordName(mixed $class, string $related_class, string $record_name, ?string $route = null): void
-	{
+	public static function overrideRelatedRecordName(
+		mixed $class,
+		string $related_class,
+		string $record_name,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1151,8 +1261,13 @@ class Related
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	public static function populateRecords(string $class, array &$related_records, string $related_class, ?string $route = null, bool $recursive = false): void
-	{
+	public static function populateRecords(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		?string $route = null,
+		bool $recursive = false
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1253,7 +1368,10 @@ class Related
 				$signature .= " * Creates the related " . $related_class . "\n";
 				$signature .= " * \n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return " . $related_class . "  The related object\n";
 				$signature .= " */\n";
@@ -1294,7 +1412,10 @@ class Related
 				$signature .= " * Populates the related " . $related_class . "\n";
 				$signature .= " * \n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
 				$signature .= " */\n";
@@ -1313,9 +1434,14 @@ class Related
 				$signature .= "/**\n";
 				$signature .= " * Associates the related " . $related_class . " to this record\n";
 				$signature .= " * \n";
-				$signature .= " * @param  ActiveRecord|array|string|integer \$record  The record, or the primary key of the record, to associate\n";
+				$signature .=
+					" * @param  ActiveRecord|array|string|integer \$record  The record, or the primary key of the "
+						. "record, to associate\n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
 				$signature .= " */\n";
@@ -1335,7 +1461,10 @@ class Related
 				$signature .= " * Indicates if a related " . $related_class . " exists\n";
 				$signature .= " * \n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return boolean  If a related record exists\n";
 				$signature .= " */\n";
@@ -1387,10 +1516,15 @@ class Related
 					$related_table = ORM::tablize($related_class);
 
 					$signature .= "/**\n";
-					$signature .= " * Calls the ::populate() method for multiple child " . $related_class . " records. Uses request value arrays in the form " . $related_table . "::{column_name}[].\n";
+					$signature .= " * Calls the ::populate() method for multiple child " . $related_class .
+						" records. Uses request value arrays in the form " . $related_table . "::{column_name}[].\n";
 					$signature .= " * \n";
 					if (sizeof($one_to_many_route_names) > 1) {
-						$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $one_to_many_route_names) . "'.\n";
+						$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" .
+							join(
+								"', '",
+								$one_to_many_route_names
+							) . "'.\n";
 					}
 					$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
 					$signature .= " */\n";
@@ -1412,10 +1546,17 @@ class Related
 					$related_table = ORM::tablize($related_class);
 
 					$signature .= "/**\n";
-					$signature .= " * Creates entries in the appropriate joining table to create associations with the specified " . $related_class . " records. Uses request value array(s) in the form " . $related_table . "::{primary_key_column_name(s)}[].\n";
+					$signature .=
+						" * Creates entries in the appropriate joining table to create associations with the specified "
+						. $related_class . " records. Uses request value array(s) in the form " . $related_table .
+						"::{primary_key_column_name(s)}[].\n";
 					$signature .= " * \n";
 					if (sizeof($many_to_many_route_names) > 1) {
-						$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $many_to_many_route_names) . "'.\n";
+						$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" .
+							join(
+								"', '",
+								$many_to_many_route_names
+							) . "'.\n";
 					}
 					$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
 					$signature .= " */\n";
@@ -1435,11 +1576,20 @@ class Related
 					$related_table = ORM::tablize($related_class);
 
 					$signature .= "/**\n";
-					$signature .= " * Creates entries in the appropriate joining table to create associations with the specified " . $related_class . " records\n";
+					$signature .=
+						" * Creates entries in the appropriate joining table to create associations with the specified "
+						. $related_class . " records\n";
 					$signature .= " * \n";
-					$signature .= " * @param  RecordSet|array \$records_to_associate  The records to associate - should be a RecordSet, an array of records or an array of primary keys\n";
+					$signature .=
+						" * @param  RecordSet|array \$records_to_associate  The records to associate - should be a "
+							. "RecordSet, an array of records or an array of primary keys\n";
 					if (sizeof($many_to_many_route_names) > 1) {
-						$signature .= " * @param  string           \$route  The route to the related class. Must be one of: '" . join("', '", $many_to_many_route_names) . "'.\n";
+						$signature .=
+							" * @param  string           \$route  The route to the related class. Must be one of: '" .
+							join(
+								"', '",
+								$many_to_many_route_names
+							) . "'.\n";
 					}
 					$signature .= " * @return ActiveRecord  The record object, to allow for method chaining\n";
 					$signature .= " */\n";
@@ -1461,7 +1611,10 @@ class Related
 				$signature .= " * Builds an RecordSet of the related " . $related_class . " objects\n";
 				$signature .= " * \n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return RecordSet  A record set of the related " . $related_class . " objects\n";
 				$signature .= " */\n";
@@ -1481,7 +1634,10 @@ class Related
 				$signature .= " * Indicates if related " . $related_class . " objects exist\n";
 				$signature .= " * \n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return boolean  If related " . $related_class . " objects exist\n";
 				$signature .= " */\n";
@@ -1498,10 +1654,14 @@ class Related
 			$signature = '';
 			if ($include_doc_comments) {
 				$signature .= "/**\n";
-				$signature .= " * Returns an array of the primary keys for the related " . $related_class . " objects\n";
+				$signature .= " * Returns an array of the primary keys for the related " . $related_class .
+					" objects\n";
 				$signature .= " * \n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return array  The primary keys of the related " . $related_class . " objects\n";
 				$signature .= " */\n";
@@ -1522,7 +1682,10 @@ class Related
 				$signature .= " * Counts the number of related " . $related_class . " objects\n";
 				$signature .= " * \n";
 				if (sizeof($route_names) > 1) {
-					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join("', '", $route_names) . "'.\n";
+					$signature .= " * @param  string \$route  The route to the related class. Must be one of: '" . join(
+						"', '",
+						$route_names
+					) . "'.\n";
 				}
 				$signature .= " * @return integer  The number related " . $related_class . " objects\n";
 				$signature .= " */\n";
@@ -1547,7 +1710,8 @@ class Related
 	 *
 	 * @param string|ActiveRecord $class          The class to register the method for
 	 * @param string               $related_class  The related class to register the method for
-	 * @param string               $method         The method to be called on the related class that will return the name
+	 * @param string               $method         The method to be called on the related class that will return the
+	 * name
 	 * @param ?string              $route          The route to the related class
 	 * @return void
 	 * @throws NoRowsException
@@ -1556,8 +1720,12 @@ class Related
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function registerValidationNameMethod(mixed $class, string $related_class, string $method, ?string $route = null): void
-	{
+	public static function registerValidationNameMethod(
+		mixed $class,
+		string $related_class,
+		string $method,
+		?string $route = null
+	): void {
 		$class         = ORM::getClass($class);
 		$table         = ORM::tablize($class);
 		$related_table = ORM::tablize($related_class);
@@ -1595,8 +1763,10 @@ class Related
 	 *
 	 * @param  mixed  $class           The class name or instance of the class this ordering rule applies to
 	 * @param  string $related_class   The related class we are getting info from
-	 * @param  array<string, string>  $order_bys       An array of the order bys for this table.column combination - see RecordSet::build() for format
-	 * @param  string $route           The route to the related table, this should be a column name in the current table or a join table name
+	 * @param  array<string, string>  $order_bys       An array of the order bys for this table.column combination - see
+	 * RecordSet::build() for format
+	 * @param  string $route           The route to the related table, this should be a column name in the current table
+	 * or a join table name
 	 * @return void
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
@@ -1604,8 +1774,12 @@ class Related
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function setOrderBys(mixed $class, string $related_class, array $order_bys, ?string $route = null): void
-	{
+	public static function setOrderBys(
+		mixed $class,
+		string $related_class,
+		array $order_bys,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1647,8 +1821,13 @@ class Related
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function setCount(string $class, array &$related_records, string $related_class, int $count, ?string $route = null): void
-	{
+	public static function setCount(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		int $count,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1693,8 +1872,13 @@ class Related
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function setPrimaryKeys(string $class, array &$related_records, string $related_class, array $primary_keys, ?string $route = null): void
-	{
+	public static function setPrimaryKeys(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		array $primary_keys,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1735,8 +1919,13 @@ class Related
 	 * @throws NotFoundException
 	 * @throws ValidationException
 	 */
-	public static function setRecordSet(string $class, array &$related_records, string $related_class, RecordSet $records, ?string $route = null): void
-	{
+	public static function setRecordSet(
+		string $class,
+		array &$related_records,
+		string $related_class,
+		RecordSet $records,
+		?string $route = null
+	): void {
 		ActiveRecord::validateClass($related_class);
 		ActiveRecord::forceConfigure($related_class);
 
@@ -1768,7 +1957,8 @@ class Related
 	 * @param  string  $class             The class to store the related records for
 	 * @param  RelatedValues   &$values           The current values for the main record being stored
 	 * @param  RelatedRecords   &$related_records  The related records array
-	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related records that are being deleted
+	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related
+	 * records that are being deleted
 	 * @return void
 	 * @throws ValidationException
 	 * @throws NotFoundException
@@ -1807,8 +1997,10 @@ class Related
 	 *
 	 * @param  string $class         The class the relationship is being stored for
 	 * @param  RelatedValues  &$values       The current values for the main record being stored
-	 * @param  array<string, mixed>  $relationship  The information about the relationship between this object and the records in the record set
-	 * @param  RelatedInfo  $related_info  An array containing the keys `'record_set'`, `'count'`, `'primary_keys'` and `'associate'`
+	 * @param  array<string, mixed>  $relationship  The information about the relationship between this object and the
+	 * records in the record set
+	 * @param  RelatedInfo  $related_info  An array containing the keys `'record_set'`, `'count'`, `'primary_keys'` and
+	 * `'associate'`
 	 * @return void
 	 * @throws NotFoundException
 	 * @throws AuthorizationException
@@ -1816,8 +2008,12 @@ class Related
 	 * @throws NoRemainingException
 	 * @throws ValidationException
 	 */
-	public static function storeManyToMany(string $class, array &$values, array $relationship, array $related_info): void
-	{
+	public static function storeManyToMany(
+		string $class,
+		array &$values,
+		array $relationship,
+		array $related_info
+	): void {
 		$db     = ORMDatabase::retrieve($class, 'write');
 		$schema = ORMSchema::retrieve($class);
 
@@ -1828,7 +2024,13 @@ class Related
 		$join_column       = self::relationshipString($relationship, 'join_column');
 
 		$params = array(
-			"DELETE FROM %r WHERE " . ORMDatabase::makeCondition($schema, $join_table, $join_column, '=', $column_value),
+			"DELETE FROM %r WHERE " . ORMDatabase::makeCondition(
+				$schema,
+				$join_table,
+				$join_column,
+				'=',
+				$column_value
+			),
 			$join_table,
 			$join_column,
 			$column_value
@@ -1856,7 +2058,10 @@ class Related
 			if (!$record_set instanceof RecordSet) {
 				$related_class = ORM::classize($related_table);
 				$related_class = ORM::getRelatedClass($class, $related_class);
-				$record_set    = RecordSet::build($related_class, array($related_pk_columns[0] . '=' => ($related_info['primary_keys'] ?? null)));
+				$record_set    = RecordSet::build(
+					$related_class,
+					array($related_pk_columns[0] . '=' => ($related_info['primary_keys'] ?? null))
+				);
 			}
 
 			$get_related_method_name = 'get' . Grammar::camelize($related_column, true);
@@ -1874,7 +2079,8 @@ class Related
 
 		foreach ($related_column_values as $related_column_value) {
 			$params = array(
-				"INSERT INTO %r (%r, %r) VALUES (" . $join_column_placeholder . ", " . $related_column_placeholder . ")",
+				"INSERT INTO %r (%r, %r) VALUES (" . $join_column_placeholder . ", " . $related_column_placeholder .
+					")",
 				$join_table,
 				$join_column,
 				$join_related_column,
@@ -1897,15 +2103,22 @@ class Related
 	 * @param  RelatedRecords   &$related_records  The related records array
 	 * @param  string  $related_class     The related class being stored
 	 * @param  string  $route             The route to the related class
-	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related records that are being deleted
+	 * @param  boolean $force_cascade     This flag will be passed to the ActiveRecord::delete() method on related
+	 * records that are being deleted
 	 * @return void
 	 * @throws NotFoundException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	public static function storeOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route, bool $force_cascade): void
-	{
+	public static function storeOneToStar(
+		string $class,
+		array &$values,
+		array &$related_records,
+		string $related_class,
+		string $route,
+		bool $force_cascade
+	): void {
 		ActiveRecord::validateClass($related_class);
 
 		$table         = ORM::tablize($class);
@@ -1951,7 +2164,11 @@ class Related
 		$set_method_name = 'set' . Grammar::camelize($related_column, true);
 
 		$first_pk_column = self::determineFirstPKColumn($class, $related_class, $route);
-		$filter          = self::determineRequestFilter(ORM::classize(self::relationshipString($relationship, 'table')), $related_class, $route);
+		$filter          = self::determineRequestFilter(
+			ORM::classize(self::relationshipString($relationship, 'table')),
+			$related_class,
+			$route
+		);
 		$pk_field        = $filter . $first_pk_column;
 		$pk_input        = Request::get($pk_field, 'array', array());
 		$input_keys      = is_array($pk_input) ? array_keys($pk_input) : array();
@@ -1977,7 +2194,8 @@ class Related
 	 * @param  string $class             The class to validate the related records for
 	 * @param  RelatedValues  &$values           The values for the object
 	 * @param  RelatedRecords  &$related_records  The related records for the object
-	 * @return array<string, string|array{name: string, errors: array<string, string>}>  The validation messages for the related records
+	 * @return array<string, string|array{name: string, errors: array<string, string>}>  The validation messages for the
+	 * related records
 	 * @throws ValidationException
 	 * @throws NotFoundException
 	 * @throws NoRemainingException
@@ -2005,7 +2223,13 @@ class Related
 				if (isset($relationship['join_table'])) {
 					$related_messages = self::validateManyToMany($class, $related_class, $route, $related_info);
 				} else {
-					$related_messages = self::validateOneToStar($class, $values, $related_records, $related_class, $route);
+					$related_messages = self::validateOneToStar(
+						$class,
+						$values,
+						$related_records,
+						$related_class,
+						$route
+					);
 				}
 
 				$validation_messages = array_merge($validation_messages, $related_messages);
@@ -2031,8 +2255,13 @@ class Related
 	 * @throws NoRowsException
 	 * @throws AuthorizationException
 	 */
-	private static function validateOneToStar(string $class, array &$values, array &$related_records, string $related_class, string $route): array
-	{
+	private static function validateOneToStar(
+		string $class,
+		array &$values,
+		array &$related_records,
+		string $related_class,
+		string $route
+	): array {
 		$schema              = ORMSchema::retrieve($class);
 		$table               = ORM::tablize($class);
 		$related_table       = ORM::tablize($related_class);
@@ -2067,17 +2296,23 @@ class Related
 				// Ignore validation messages about the primary key, non-string keys and
 				// non-string messages since they cannot be matched up to a field
 				if ($column == $related_column || !is_string($column) || !is_string($record_message)) {
-				    continue;
+					continue;
 				}
 
 				if ($one_to_one) {
 					$token_field           = ValidationException::formatField('__TOKEN__');
-					$extract_message_regex = '#' . str_replace('__TOKEN__', '(.*?)', preg_quote($token_field, '#')) . '(.*)$#D';
+					$extract_message_regex = '#' . str_replace('__TOKEN__', '(.*?)', preg_quote($token_field, '#')) .
+						'(.*)$#D';
 
 					$column_name  = $related_record_name;
 					$message_text = $record_message;
 
-					if (preg_match($extract_message_regex, $record_message, $matches) && isset($matches[1], $matches[2])) {
+					if (
+						preg_match($extract_message_regex, $record_message, $matches) && isset(
+							$matches[1],
+							$matches[2]
+						)
+					) {
 						$column_name  = self::compose(
 							'%1$s %2$s',
 							$related_record_name,
@@ -2134,8 +2369,12 @@ class Related
 	 * @throws NoRemainingException
 	 * @throws AuthorizationException
 	 */
-	private static function validateManyToMany(string $class, string $related_class, string $route, array $related_info): array
-	{
+	private static function validateManyToMany(
+		string $class,
+		string $related_class,
+		string $route,
+		array $related_info
+	): array {
 		$related_record_name = self::getRelatedRecordName($class, $related_class, $route);
 		$record_number = 1;
 
@@ -2174,8 +2413,8 @@ class Related
 	 * @return Related
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

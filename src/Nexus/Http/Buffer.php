@@ -3,17 +3,18 @@
 declare(strict_types=1);
 
 /**
- * Provides a single, simplified interface for [http://php.net/outcontrol output buffering] to prevent nested buffering issues and provide a more logical API
+ * Provides a single, simplified interface for [http://php.net/outcontrol output buffering] to prevent nested buffering
+ * issues and provide a more logical API
  *
  * @copyright  Copyright (c) 2008-2010 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Buffer
  *
  * @version    1.0.0b3
- * @changes    1.0.0b3  Added a check to ensure the zlib extension is installd when doing gzipped buffering [wb, 2010-05-20]
+ * @changes    1.0.0b3  Added a check to ensure the zlib extension is installd when doing gzipped buffering [wb,
+ * 2010-05-20]
  * @changes    1.0.0b2  Added the `$gzip` parameter to ::start() [wb, 2010-05-19]
  * @changes    1.0.0b   The initial implementation [wb, 2008-03-16]
  */
@@ -141,7 +142,8 @@ class Buffer
 	/**
 	 * Starts output buffering
 	 *
-	 * @param  boolean $gzip  If the buffered output should be gzipped using [http://php.net/ob_gzhandler `ob_gzhandler()`]
+	 * @param  boolean $gzip  If the buffered output should be gzipped using [http://php.net/ob_gzhandler
+	 * `ob_gzhandler()`]
 	 * @return void
 	 */
 	public static function start(bool $gzip = false): void
@@ -168,7 +170,8 @@ class Buffer
 
 
 	/**
-	 * Starts capturing output, should be used with ::stopCapture() to grab output from code that does not offer an option of returning a value instead of outputting it
+	 * Starts capturing output, should be used with ::stopCapture() to grab output from code that does not offer an
+	 * option of returning a value instead of outputting it
 	 *
 	 * @return void
 	 */
@@ -238,8 +241,8 @@ class Buffer
 	 * @return Buffer
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

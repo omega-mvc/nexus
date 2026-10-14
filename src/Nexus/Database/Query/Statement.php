@@ -3,21 +3,23 @@
 declare(strict_types=1);
 
 /**
- * Representation of a prepared statement for use with the Database class
+ * Representation of a prepared statement for use with the Connection class
  *
  * @copyright  Copyright (c) 2010-2011 Will Bond
  * @author     Will Bond [wb] <will@flourishlib.com>
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Statement
  *
  * @version    1.0.0b7
- * @changes    1.0.0b7  Fixed handling of arrays of values for ::execute(), ::executeQuery() and ::executeUnbufferedQuery(), fixed escaping of values that become `NULL` [wb, 2011-05-09]
+ * @changes    1.0.0b7  Fixed handling of arrays of values for ::execute(), ::executeQuery() and
+ * ::executeUnbufferedQuery(), fixed escaping of values that become `NULL` [wb, 2011-05-09]
  * @changes    1.0.0b6  Added ::getUntranslatedSQL() [wb, 2011-01-09]
- * @changes    1.0.0b5  Fixed an edge case where the mysqli extension would leak memory when fetching a `TEXT` or `BLOB` column [wb, 2010-08-28]
+ * @changes    1.0.0b5  Fixed an edge case where the mysqli extension would leak memory when fetching a `TEXT` or `BLOB`
+ * column [wb, 2010-08-28]
  * @changes    1.0.0b4  Updated class to use Core::startErrorCapture() instead of `error_reporting()` [wb, 2010-08-09]
- * @changes    1.0.0b3  Backwards Compatibility Break - removed ODBC support. Fixed UTF-8 support for the `pdo_dblib` extension. [wb, 2010-07-31]
+ * @changes    1.0.0b3  Backwards Compatibility Break - removed ODBC support. Fixed UTF-8 support for the `pdo_dblib`
+ * extension. [wb, 2010-07-31]
  * @changes    1.0.0b2  Added IBM DB2 support [wb, 2010-04-13]
  * @changes    1.0.0b   The initial implementation [wb, 2010-03-02]
  */
@@ -33,9 +35,9 @@ class Statement
 	/**
 	 * The database the statement was created from
 	 *
-	 * @var Database
+	 * @var Connection
 	 */
-	private Database $database;
+	private Connection $database;
 
 	/**
 	 * The identifier for this statement - only used by the pgsql extension
@@ -97,9 +99,9 @@ class Statement
 	 */
 	public function __construct(mixed $database, mixed $query, mixed $placeholders, mixed $untranslated_sql)
 	{
-		if (!$database instanceof Database) {
+		if (!$database instanceof Connection) {
 			throw new ProgrammerException(
-				'The database object provided does not appear to be a descendant of Database'
+				'The database object provided does not appear to be a descendant of Connection'
 			);
 		}
 
@@ -251,7 +253,11 @@ class Statement
 
 				case 'sqlsrv':
 					$error_info = sqlsrv_errors(SQLSRV_ERR_ALL);
-					if (is_array($error_info) && isset($error_info[0]) && is_array($error_info[0]) && isset($error_info[0]['message'])) {
+					if (
+						is_array($error_info) && isset($error_info[0]) && is_array(
+							$error_info[0]
+						) && isset($error_info[0]['message'])
+					) {
 						$message = $error_info[0]['message'];
 					}
 					break;
@@ -358,7 +364,7 @@ class Statement
 	 *
 	 * @param  array<int, mixed> $params     The parameters for the statement
 	 * @param  mixed   &$extra     A variable to place extra information needed by some database extensions
-	 * @param  boolean $different  If this statement is different than the last statement run on the Database instance
+	 * @param  boolean $different  If this statement is different than the last statement run on the Connection instance
 	 * @return mixed  The (usually boolean) result of the extension function/method call
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
@@ -404,7 +410,8 @@ class Statement
 
 			case 'oci8':
 				if (is_resource($statement)) {
-					$result = oci_execute($statement, $this->database->isInsideTransaction() ? OCI_DEFAULT : OCI_COMMIT_ON_SUCCESS);
+					$result = oci_execute($statement, $this->database->isInsideTransaction() ? OCI_DEFAULT :
+						OCI_COMMIT_ON_SUCCESS);
 					$extra  = $this->statement;
 				}
 				break;
@@ -459,7 +466,7 @@ class Statement
 	 * @param  Result $result     The object to place the result into
 	 * @param  array<int, mixed> $params     The parameters for the statement
 	 * @param  mixed   &$extra     A variable to place extra information needed by some database extensions
-	 * @param  boolean $different  If this statement is different than the last statement run on the Database instance
+	 * @param  boolean $different  If this statement is different than the last statement run on the Connection instance
 	 * @return Result  The result object that was populated
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
@@ -622,8 +629,12 @@ class Statement
 							$returned_rows = $extra->fetchAll(PDO::FETCH_ASSOC);
 						}
 
-						// The pdo_pgsql driver likes to return empty rows equal to the number of affected rows for insert and deletes
-						if ($this->database->getType() == 'postgresql' && $returned_rows && $returned_rows[0] == array()) {
+						// The pdo_pgsql driver likes to return empty rows equal to the number of affected rows for
+						// insert and deletes
+						if (
+							$this->database->getType() == 'postgresql' && $returned_rows && $returned_rows[0] ==
+							array()
+						) {
 							$returned_rows = array();
 						}
 					}
@@ -653,15 +664,20 @@ class Statement
 	 * @param  UnbufferedResult $result     The object to place the result into
 	 * @param  array<int, mixed> $params     The parameters for the statement
 	 * @param  mixed             &$extra     A variable to place extra information needed by some database extensions
-	 * @param  boolean           $different  If this statement is different than the last statement run on the Database instance
+	 * @param  boolean           $different  If this statement is different than the last statement run on the
+	 * Connection instance
 	 * @return UnbufferedResult  The result object that was populated
 	 * @throws AuthorizationException
 	 * @throws NotFoundException
 	 * @throws NoRowsException
 	 * @throws NoRemainingException
 	 */
-	public function executeUnbufferedQuery(UnbufferedResult $result, array $params, mixed &$extra, bool $different): UnbufferedResult
-	{
+	public function executeUnbufferedQuery(
+		UnbufferedResult $result,
+		array $params,
+		mixed &$extra,
+		bool $different
+	): UnbufferedResult {
 		if (count($params) == 1 && is_array($params[0]) && count($this->placeholders) > 1) {
 			$params = array_values($params[0]);
 		}
@@ -714,7 +730,10 @@ class Statement
 
 			case 'oci8':
 				if (is_resource($statement)) {
-					$result->setResult(oci_execute($statement, $this->database->isInsideTransaction() ? OCI_DEFAULT : OCI_COMMIT_ON_SUCCESS));
+					$result->setResult(
+						oci_execute($statement, $this->database->isInsideTransaction() ? OCI_DEFAULT :
+							OCI_COMMIT_ON_SUCCESS)
+					);
 				}
 				break;
 
@@ -811,7 +830,8 @@ class Statement
 			// Prepared statements don't support multi-value params
 			if (is_array($param)) {
 				throw new ProgrammerException(
-					'The value passed for placeholder #%s is an array, however multiple values are not supported with prepared statements',
+					'The value passed for placeholder #%s is an array, however multiple values are not supported with '
+						. 'prepared statements',
 					$i + 1
 				);
 			}
@@ -835,7 +855,8 @@ class Statement
 				} else {
 					// Dates, times, timestamps and some booleans need to be unquoted
 					$date_time_types = in_array($placeholder, array('%d', '%t', '%p'));
-					$bool_types      = ($type == 'mssql' || $type == 'sqlite' || $type == 'db2') && $placeholder == '%b';
+					$bool_types      = ($type == 'mssql' || $type == 'sqlite' || $type == 'db2') && $placeholder ==
+						'%b';
 					if ($date_time_types || $bool_types) {
 						$escaped = $params[$i];
 						$params[$i] = is_string($escaped) ? substr($escaped, 1, -1) : $escaped;
@@ -847,7 +868,7 @@ class Statement
 				}
 
 			// For strings and blobs we need to manually cast objects
-			// This is done in Database::escape() for all other types
+			// This is done in Connection::escape() for all other types
 			} else {
 				if (is_object($params[$i]) && is_callable(array($params[$i], '__toString'))) {
 					$params[$i] = $params[$i]->__toString();
@@ -929,20 +950,27 @@ class Statement
 					}
 					switch ($placeholder) {
 						case '%l':
-							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL : PDO::PARAM_LOB);
+							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL :
+								PDO::PARAM_LOB);
 							break;
 						case '%b':
-							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL : PDO::PARAM_BOOL);
+							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL :
+								PDO::PARAM_BOOL);
 							break;
 						case '%i':
-							$statement->bindParam($i + 1, $params[$i], $params[$i] === null && $type != 'db2' ? PDO::PARAM_NULL : PDO::PARAM_INT);
+							$statement->bindParam(
+								$i + 1,
+								$params[$i],
+								$params[$i] === null && $type != 'db2' ? PDO::PARAM_NULL : PDO::PARAM_INT
+							);
 							break;
 						case '%d':
 						case '%f': // For some reason float are supposed to be bound as strings
 						case '%s':
 						case '%t':
 						case '%p':
-							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+							$statement->bindParam($i + 1, $params[$i], $params[$i] === null ? PDO::PARAM_NULL :
+								PDO::PARAM_STR);
 							break;
 					}
 					break;

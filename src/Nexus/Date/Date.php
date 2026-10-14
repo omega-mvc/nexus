@@ -10,15 +10,17 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Date
  *
  * @version    1.0.0b11
  * @changes    1.0.0b11  Fixed a method signature [wb, 2011-08-24]
- * @changes    1.0.0b10  Fixed a bug with the constructor not properly handling unix timestamps that are negative integers [wb, 2011-06-02]
+ * @changes    1.0.0b10  Fixed a bug with the constructor not properly handling unix timestamps that are negative
+ * integers [wb, 2011-06-02]
  * @changes    1.0.0b9   Changed the `$date` attribute to be protected [wb, 2011-03-20]
  * @changes    1.0.0b8   Added the `$simple` parameter to ::getFuzzyDifference() [wb, 2010-03-15]
- * @changes    1.0.0b7   Added a call to Timestamp::callUnformatCallback() in ::__construct() for localization support [wb, 2009-06-01]
- * @changes    1.0.0b6   Backwards compatibility break - Removed ::getSecondsDifference(), added ::eq(), ::gt(), ::gte(), ::lt(), ::lte() [wb, 2009-03-05]
+ * @changes    1.0.0b7   Added a call to Timestamp::callUnformatCallback() in ::__construct() for localization support
+ * [wb, 2009-06-01]
+ * @changes    1.0.0b6   Backwards compatibility break - Removed ::getSecondsDifference(), added ::eq(), ::gt(),
+ * ::gte(), ::lt(), ::lte() [wb, 2009-03-05]
  * @changes    1.0.0b5   Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b4   Fixed ::__construct() to properly handle the 5.0 to 5.1 change in strtotime() [wb, 2009-01-21]
  * @changes    1.0.0b3   Added support for CURRENT_TIMESTAMP and CURRENT_DATE SQL keywords [wb, 2009-01-11]
@@ -83,7 +85,10 @@ class Date
 				$date = (string) $date;
 			}
 			if (!is_string($date)) {
-				throw new ProgrammerException('The date specified, %s, can not be converted to a string', get_debug_type($date));
+				throw new ProgrammerException(
+					'The date specified, %s, can not be converted to a string',
+					get_debug_type($date)
+				);
 			}
 
 			$date = Timestamp::callUnformatCallback($date);
@@ -172,7 +177,8 @@ class Date
 	 *
 	 * @throws ValidationException  When a non-date formatting character is included in `$format`
 	 *
-	 * @param  string $format  The [http://php.net/date date()] function compatible formatting string, or a format name from Timestamp::defineFormat()
+	 * @param  string $format  The [http://php.net/date date()] function compatible formatting string, or a format name
+	 * from Timestamp::defineFormat()
 	 * @return string  The formatted date
 	 */
 	public function format(string $format): string
@@ -222,8 +228,10 @@ class Date
 	 *  - `6 days` would be represented as `1 week`, however `5 days` would not
 	 *  - `29 days` would be represented as `1 month`, but `21 days` would be shown as `3 weeks`
 	 *
-	 * @param  boolean|Date|object|string|integer $other_date  The date to create the difference with, `NULL` is interpreted as today
-	 * @param  boolean                     $simple      When `TRUE`, the returned value will only include the difference in the two dates, but not `from now`, `ago`, `after` or `before`
+	 * @param  boolean|Date|object|string|integer $other_date  The date to create the difference with, `NULL` is
+	 * interpreted as today
+	 * @param  boolean                     $simple      When `TRUE`, the returned value will only include the difference
+	 * in the two dates, but not `from now`, `ago`, `after` or `before`
 	 * @return string  The fuzzy difference in time between the this date and the one provided
 	 * @throws ValidationException
 	 */
@@ -266,8 +274,8 @@ class Date
 
 		foreach ($break_points as $break_point => $unit_info) {
 			if (abs($diff) > $break_point) {
-                continue;
-            }
+				continue;
+			}
 
 			$unit_diff = round(abs($diff) / $unit_info[0]);
 			$units     = Grammar::inflectOnQuantity($unit_diff, $unit_info[1], $unit_info[2]);
@@ -368,13 +376,14 @@ class Date
 	 *  - `'Y-m-t'` to change the date to the last of the month
 	 *  - `'Y-\W5-N'` to change the date to the 5th week of the year
 	 *
-	 * @param  string $format  The current date will be formatted with this string, and the output used to create a new object
+	 * @param  string $format  The current date will be formatted with this string, and the output used to create a new
+	 * object
 	 * @return Date  The new date
 	 * @throws ValidationException
 	 */
 	public function modify(string $format): Date
 	{
-        return new Date($this->format($format));
+		return new Date($this->format($format));
 	}
 }
 

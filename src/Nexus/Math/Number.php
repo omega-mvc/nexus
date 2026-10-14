@@ -10,7 +10,6 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Number
  *
  * @version    1.0.0b3
  * @changes    1.0.0b3  Added the `$remove_zero_fraction` parameter to ::format() [wb, 2011-02-02]
@@ -60,7 +59,8 @@ class Number
 
 		if (!ctype_xdigit($number)) {
 			throw new ProgrammerException(
-				'The number specified, %s, does not appear to be a positive integer. Negative numbers and fractions are not supported due the different encoding schemes that can be used.',
+				'The number specified, %s, does not appear to be a positive integer. Negative numbers and fractions '
+					. 'are not supported due the different encoding schemes that can be used.',
 				$number
 			);
 		}
@@ -76,7 +76,7 @@ class Number
 
 		if ($to_base < 2 || $to_base > 16) {
 			throw new ProgrammerException(
-                'The to base specified, %1$s, is not valid base between %2$s and %3$s',
+				'The to base specified, %1$s, is not valid base between %2$s and %3$s',
 				$from_base,
 				'2',
 				'16'
@@ -142,7 +142,8 @@ class Number
 	 *
 	 * @param  string $number1  The first number to compare
 	 * @param  string $number2  The second number to compare
-	 * @return integer  Less than `0` if `$number1` is less than `$number2`, `0` if equal, greater than `0` if `$number1` is greater than `$number2`
+	 * @return integer  Less than `0` if `$number1` is less than `$number2`, `0` if equal, greater than `0` if
+	 * `$number1` is greater than `$number2`
 	 */
 	private static function cmp(string $number1, string $number2): int
 	{
@@ -409,8 +410,12 @@ class Number
 	 * @param  integer $scale       The number of digits to return after the decimal
 	 * @return string  The quotient
 	 */
-	private static function performDiv(string $dividend, string $divisor, mixed &$remainder = '', ?int $scale = null): string
-	{
+	private static function performDiv(
+		string $dividend,
+		string $divisor,
+		mixed &$remainder = '',
+		?int $scale = null
+	): string {
 		list ($dividend, $divisor) = self::normalize($dividend, $divisor);
 
 		$dividend = self::stripLeadingZeroes($dividend);
@@ -419,7 +424,7 @@ class Number
 		if (self::isZero($dividend)) {
 			$remainder = '+0';
 			return self::setScale('+0', $scale);
-            ;
+			;
 		}
 
 		if (self::isZero($divisor)) {
@@ -503,9 +508,15 @@ class Number
 				}
 
 				$uj2 = (isset($u[$j + 2])) ? $u[$j + 2] : '0';
-				if (((int) $v[2]) * $q > ((((((int) $u[$j]) * 10) + (int) $uj1) - ($q * ((int) $v[1]))) * 10) + (int) $uj2) {
+				if (
+					((int) $v[2]) * $q > ((((((int) $u[$j]) * 10) + (int) $uj1) - ($q * ((int) $v[1]))) * 10) + (int)
+					$uj2
+				) {
 					$q -= 1;
-					if (((int) $v[2]) * $q > ((((((int) $u[$j]) * 10) + (int) $uj1) - ($q * ((int) $v[1]))) * 10) + (int) $uj2) {
+					if (
+						((int) $v[2]) * $q > ((((((int) $u[$j]) * 10) + (int) $uj1) - ($q * ((int) $v[1]))) * 10) +
+						(int) $uj2
+					) {
 						$q -= 1;
 					}
 				}
@@ -638,7 +649,8 @@ class Number
 	/**
 	 * Calculates the integer power of a number
 	 *
-	 * @throws ValidationException  When `$number` or `$power` is not a valid number or when `$power` is outside of the normal 32-bit integer range
+	 * @throws ValidationException  When `$number` or `$power` is not a valid number or when `$power` is outside of the
+	 * normal 32-bit integer range
 	 *
 	 * @param  string $number     The number to raise to the power
 	 * @param  string $power      The power to raise to, must be between `−2,147,483,648` and `2,147,483,647`
@@ -651,7 +663,8 @@ class Number
 
 		if (self::cmp($power, '-2147483648') < 0 || self::cmp($power, '+2147483647') > 0) {
 			throw new ValidationException(
-				'The power specified, %1$s, is beyond the range of supported powers. Only powers between %2$s and %3$s are supported.',
+				'The power specified, %1$s, is beyond the range of supported powers. Only powers between %2$s and %3$s '
+					. 'are supported.',
 				$power,
 				'-2147483648',
 				'2147483647'
@@ -670,7 +683,10 @@ class Number
 		if ($power64 % 2 == 0) {
 			$product = self::performPow(self::performMul($number, $number), (string) ($power64 / 2));
 		} else {
-			$product = self::performMul($number, self::performPow(self::performMul($number, $number), (string) floor($power64 / 2)));
+			$product = self::performMul(
+				$number,
+				self::performPow(self::performMul($number, $number), (string) floor($power64 / 2))
+			);
 		}
 
 		if ($negative_power) {
@@ -751,7 +767,12 @@ class Number
 	public static function pi(int $scale): Number
 	{
 		/** @var string */
-		static $pi_places = '14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881097566593344612847564823378678316527120190914564856692346034861045432664821339360726024914127372458700660631558817488152092096282925409171536436789259036001133053054882046652138414695194151160943305727036575959195309218611738193261179310511854807446237996274956735188575272489122793818301194912';
+		static $pi_places =
+			'1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480'
+				. '8651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881'
+				. '0975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587'
+				. '0066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572'
+				. '7036575959195309218611738193261179310511854807446237996274956735188575272489122793818301194912';
 
 		if ($scale < 0 || $scale > 500) {
 			throw new ProgrammerException(
@@ -778,7 +799,8 @@ class Number
 	 *
 	 * The callback should return a string, the formatted `$value`.
 	 *
-	 * @param  callable(mixed...):mixed $callback  The callback to pass the \Number value to - see method description for parameters
+	 * @param  callable(mixed...):mixed $callback  The callback to pass the \Number value to - see method description
+	 * for parameters
 	 * @return void
 	 */
 	public static function registerFormatCallback(callable $callback): void
@@ -787,16 +809,21 @@ class Number
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
-			throw new ProgrammerException('The format callback specified, %s, is not callable.', implode('::', $callback));
+			throw new ProgrammerException('The format callback specified, %s, is not callable.', implode(
+				'::',
+				$callback
+			));
 		}
 		self::$format_callback = $callback;
 	}
 
 
 	/**
-	 * Allows setting a callback to clean any formatted values so they can be properly parsed - useful for languages where `,` is used as the decimal point
+	 * Allows setting a callback to clean any formatted values so they can be properly parsed - useful for languages
+	 * where `,` is used as the decimal point
 	 *
-	 * @param  callable(mixed...):mixed $callback  The callback to pass formatted strings to. Should accept a formatted string and return a string the is a valid number using `.` as the decimal point.
+	 * @param  callable(mixed...):mixed $callback  The callback to pass formatted strings to. Should accept a formatted
+	 * string and return a string the is a valid number using `.` as the decimal point.
 	 * @return void
 	 */
 	public static function registerUnformatCallback(callable $callback): void
@@ -805,7 +832,10 @@ class Number
 			$callback = explode('::', $callback);
 		}
 		if (!is_callable($callback)) {
-			throw new ProgrammerException('The unformat callback specified, %s, is not callable.', implode('::', $callback));
+			throw new ProgrammerException('The unformat callback specified, %s, is not callable.', implode(
+				'::',
+				$callback
+			));
 		}
 		self::$unformat_callback = $callback;
 	}
@@ -899,7 +929,8 @@ class Number
 	 *
 	 * @throws ValidationException  When `$value` is not a valid number
 	 *
-	 * @param  int|float|string  $value  The value for the number - any valid PHP integer or float format including values with `e` exponents
+	 * @param  int|float|string  $value  The value for the number - any valid PHP integer or float format including
+	 * values with `e` exponents
 	 * @param  int|null  $scale  The number of digits after the decimal place, defaults to number of digits in `$value`
 	 * @return \Number
 	 */
@@ -1151,7 +1182,8 @@ class Number
 	/**
 	 * Formats the number to include thousands separators
 	 *
-	 * @param  boolean $remove_zero_fraction  If `TRUE` and all digits after the decimal place are `0`, the decimal place and all zeros are removed
+	 * @param  boolean $remove_zero_fraction  If `TRUE` and all digits after the decimal place are `0`, the decimal
+	 * place and all zeros are removed
 	 * @return string  The formatted value
 	 */
 	public function format(bool $remove_zero_fraction = false): string
@@ -1456,7 +1488,8 @@ class Number
 
 
 	/**
-	 * Rounds this number to the specified number of digits after the decimal - negative scales round the number by places to the left of the decimal
+	 * Rounds this number to the specified number of digits after the decimal - negative scales round the number by
+	 * places to the left of the decimal
 	 *
 	 * @param  integer $scale  The number of places after (or before if negative) the decimal to round to
 	 * @return \Number  The rounded result
@@ -1639,7 +1672,8 @@ class Number
 
 
 	/**
-	 * Scales (truncates or expands) the number to the specified number of digits after the decimal - negative scales round the number by places to the left of the decimal
+	 * Scales (truncates or expands) the number to the specified number of digits after the decimal - negative scales
+	 * round the number by places to the left of the decimal
 	 *
 	 * @param  integer $scale  The number of places after (or before if negative) the decimal
 	 * @return \Number  The square root

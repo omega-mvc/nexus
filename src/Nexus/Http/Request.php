@@ -5,8 +5,7 @@ declare(strict_types=1);
 /**
  * Provides request-related methods
  *
- * This class is implemented to use the UTF-8 character encoding. Please see
- * http://flourishlib.com/docs/UTF-8 for more information.
+ * This class is implemented to use the UTF-8 character encoding.
  *
  * Please also note that using this class in a PUT or DELETE request will
  * cause the php://input stream to be consumed, and thus no longer available.
@@ -20,31 +19,42 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Request
  *
  * @version    1.0.0b23
- * @changes    1.0.0b23  Added a `function_exists()` guard around `get_magic_quotes_gpc()` for PHP 8.0+ compatibility [wb, 2026-07-10]
+ * @changes    1.0.0b23  Added a `function_exists()` guard around `get_magic_quotes_gpc()` for PHP 8.0+ compatibility
+ * [wb, 2026-07-10]
  * @changes    1.0.0b22  Added non-array support to ::filter() [jt, 2013-09-25]
- * @changes    1.0.0b21  Fixed problem where Accept headers are spaced out and mime-types won't match (mainly from IE) [mjs, 2012-12-10]
+ * @changes    1.0.0b21  Fixed problem where Accept headers are spaced out and mime-types won't match (mainly from IE)
+ * [mjs, 2012-12-10]
  * @changes    1.0.0b20  Added ::isHead(), fixed ability to call ::set() on `HEAD` requests [wb-imarc, 2011-11-23]
  * @changes    1.0.0b19  Added the `$use_default_for_blank` parameter to ::get() [wb, 2011-06-03]
- * @changes    1.0.0b18  Backwards Compatibility Break - ::getBestAcceptType() and ::getBestAcceptLanguage() now return either `NULL`, `FALSE` or a string instead of `NULL` or a string, both methods are more robust in handling edge cases [wb, 2011-02-06]
- * @changes    1.0.0b17  Fixed support for 3+ dimensional input arrays, added a fixed for the PHP DoS float bug #53632, added support for type-casted arrays in ::get() [wb, 2011-01-09]
- * @changes    1.0.0b16  Backwards Compatibility Break - changed ::get() to remove binary characters when casting to a `string`, changed `int` and `integer` to cast to a real integer when possible, added new types of `binary` and `integer!` [wb, 2010-11-30]
- * @changes    1.0.0b15  Added documentation about `[sub-key]` syntax, added `[sub-key]` support to ::check() [wb, 2010-09-12]
+ * @changes    1.0.0b18  Backwards Compatibility Break - ::getBestAcceptType() and ::getBestAcceptLanguage() now return
+ * either `NULL`, `FALSE` or a string instead of `NULL` or a string, both methods are more robust in handling edge cases
+ * [wb, 2011-02-06]
+ * @changes    1.0.0b17  Fixed support for 3+ dimensional input arrays, added a fixed for the PHP DoS float bug #53632,
+ * added support for type-casted arrays in ::get() [wb, 2011-01-09]
+ * @changes    1.0.0b16  Backwards Compatibility Break - changed ::get() to remove binary characters when casting to a
+ * `string`, changed `int` and `integer` to cast to a real integer when possible, added new types of `binary` and
+ * `integer!` [wb, 2010-11-30]
+ * @changes    1.0.0b15  Added documentation about `[sub-key]` syntax, added `[sub-key]` support to ::check() [wb,
+ * 2010-09-12]
  * @changes    1.0.0b14  Rewrote ::set() to not require recursion for array syntax [wb, 2010-09-12]
  * @changes    1.0.0b13  Fixed ::set() to work with `PUT` requests [wb, 2010-06-30]
  * @changes    1.0.0b12  Fixed a bug with ::getBestAcceptLanguage() returning the second-best language [wb, 2010-05-27]
  * @changes    1.0.0b11  Added ::isAjax() [al, 2010-03-15]
  * @changes    1.0.0b10  Fixed ::get() to not truncate integers to the 32bit integer limit [wb, 2010-03-05]
  * @changes    1.0.0b9   Updated class to use new Session API [wb, 2009-10-23]
- * @changes    1.0.0b8   Casting to an integer or string in ::get() now properly casts when the `$key` isn't present in the request, added support for date, time, timestamp and `?` casts [wb, 2009-08-25]
+ * @changes    1.0.0b8   Casting to an integer or string in ::get() now properly casts when the `$key` isn't present in
+ * the request, added support for date, time, timestamp and `?` casts [wb, 2009-08-25]
  * @changes    1.0.0b7   Fixed a bug with ::filter() not properly creating new `$_FILES` entries [wb, 2009-07-02]
- * @changes    1.0.0b6   ::filter() now works with empty prefixes and filtering the `$_FILES` superglobal has been fixed [wb, 2009-07-02]
- * @changes    1.0.0b5   Changed ::filter() so that it can be called multiple times for multi-level filtering [wb, 2009-06-02]
+ * @changes    1.0.0b6   ::filter() now works with empty prefixes and filtering the `$_FILES` superglobal has been fixed
+ * [wb, 2009-07-02]
+ * @changes    1.0.0b5   Changed ::filter() so that it can be called multiple times for multi-level filtering [wb,
+ * 2009-06-02]
  * @changes    1.0.0b4   Added the HTML escaping functions ::encode() and ::prepare() [wb, 2009-05-27]
  * @changes    1.0.0b3   Updated class to use new Session API [wb, 2009-05-08]
- * @changes    1.0.0b2   Added ::generateCSRFToken() from CRUD::generateRequestToken() and ::validateCSRFToken() from CRUD::validateRequestToken() [wb, 2009-05-08]
+ * @changes    1.0.0b2   Added ::generateCSRFToken() from CRUD::generateRequestToken() and ::validateCSRFToken() from
+ * CRUD::validateRequestToken() [wb, 2009-05-08]
  * @changes    1.0.0b    The initial implementation [wb, 2007-06-14]
  */
 class Request
@@ -223,7 +233,10 @@ class Request
 			} else {
 				$value = (bool)$value;
 			}
-		} elseif (($cast_to == 'int' || $cast_to == 'integer') && is_string($value) && preg_match('#^-?\d+$#D', $value)) {
+		} elseif (
+			($cast_to == 'int' || $cast_to == 'integer') && is_string($value)
+			&& preg_match('#^-?\d+$#D', $value)
+		) {
 			// Only explicitly cast integers than can be represented by a real
 			// PHP integer to prevent truncation due to 32 bit integer limits
 			if (strval(intval($value)) == $value) {
@@ -245,7 +258,8 @@ class Request
 
 
 	/**
-	 * Indicated if the parameter specified is set in the `$_GET` or `$_POST` superglobals or in the post data of a `PUT` or `DELETE` request
+	 * Indicated if the parameter specified is set in the `$_GET` or `$_POST` superglobals or in the post data of a
+	 * `PUT` or `DELETE` request
 	 *
 	 * @param  string $key  The key to check - array elements can be checked via `[sub-key]` syntax
 	 * @return boolean  If the parameter is set
@@ -290,9 +304,11 @@ class Request
 	/**
 	 * Gets a value from ::get() and passes it through HTML::encode()
 	 *
-	 * @param  string      $key            The key to get the value of - array elements can be accessed via `[sub-key]` syntax
+	 * @param  string      $key            The key to get the value of - array elements can be accessed via `[sub-key]`
+	 * syntax
 	 * @param  string|null $cast_to        Cast the value to this data type
-	 * @param  mixed       $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead
+	 * @param  mixed       $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or
+	 * `$_GET`, use this value instead
 	 * @return string  The encoded value
 	 * @throws ValidationException
 	 */
@@ -304,7 +320,8 @@ class Request
 
 
 	/**
-	 * Parses through `$_FILES`, `$_GET`, `$_POST` and the `PUT`/`DELETE` post data and filters out everything that doesn't match the prefix and key, also removes the prefix from the field name
+	 * Parses through `$_FILES`, `$_GET`, `$_POST` and the `PUT`/`DELETE` post data and filters out everything that
+	 * doesn't match the prefix and key, also removes the prefix from the field name
 	 *
 	 * @internal
 	 *
@@ -329,14 +346,22 @@ class Request
 		foreach ($files_backup as $field => $value) {
 			$field_string   = (string) $field;
 			$prefix_matches = ($prefix === '' || strpos($field_string, $prefix) === 0);
-			if ($prefix_matches && is_array($value) && is_array($value['name'] ?? null) && (is_int($key) || is_string($key)) && isset($value['name'][$key])) {
+			if (
+				$prefix_matches && is_array($value) && is_array($value['name'] ?? null) && (is_int($key) || is_string(
+					$key
+				)) && isset($value['name'][$key])
+			) {
 				$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
 				$_FILES[$new_field]             = array();
 				$_FILES[$new_field]['name']     = $value['name'][$key];
-				$_FILES[$new_field]['type']     = is_array($value['type'] ?? null) ? ($value['type'][$key] ?? null) : null;
-				$_FILES[$new_field]['tmp_name'] = is_array($value['tmp_name'] ?? null) ? ($value['tmp_name'][$key] ?? null) : null;
-				$_FILES[$new_field]['error']    = is_array($value['error'] ?? null) ? ($value['error'][$key] ?? null) : null;
-				$_FILES[$new_field]['size']     = is_array($value['size'] ?? null) ? ($value['size'][$key] ?? null) : null;
+				$_FILES[$new_field]['type']     = is_array($value['type'] ?? null) ? ($value['type'][$key] ?? null) :
+					null;
+				$_FILES[$new_field]['tmp_name'] = is_array($value['tmp_name'] ?? null) ? ($value['tmp_name'][$key] ??
+					null) : null;
+				$_FILES[$new_field]['error']    = is_array($value['error'] ?? null) ? ($value['error'][$key] ?? null) :
+					null;
+				$_FILES[$new_field]['size']     = is_array($value['size'] ?? null) ? ($value['size'][$key] ?? null) :
+					null;
 			}
 		}
 
@@ -355,7 +380,10 @@ class Request
 				foreach ($backup_array as $field => $value) {
 					$field_string   = (string) $field;
 					$prefix_matches = ($prefix === '' || strpos($field_string, $prefix) === 0);
-					if ($prefix_matches && (is_int($key) || is_string($key)) && is_array($value) && isset($value[$key])) {
+					if (
+						$prefix_matches && (is_int($key) || is_string($key))
+						&& is_array($value) && isset($value[$key])
+					) {
 						$new_field = preg_replace($regex, '', $field_string) ?? $field_string;
 						$refs['array'][$new_field] = $value[$key];
 					} elseif ($prefix_matches && $key === null) {
@@ -369,7 +397,8 @@ class Request
 
 
 	/**
-	 * Returns a request token that should be placed in each HTML form to prevent [http://en.wikipedia.org/wiki/Cross-site_request_forgery cross-site request forgery]
+	 * Returns a request token that should be placed in each HTML form to prevent
+	 * [http://en.wikipedia.org/wiki/Cross-site_request_forgery cross-site request forgery]
 	 *
 	 * This method will return a random 15 character string that should be
 	 * placed in a hidden `input` element on every HTML form. When the form
@@ -447,15 +476,22 @@ class Request
 	 * integer, which may cause truncation of the value, by passing `integer!`
 	 * as the `$cast_to`.
 	 *
-	 * @param  string  $key                    The key to get the value of - array elements can be accessed via `[sub-key]` syntax
+	 * @param  string  $key                    The key to get the value of - array elements can be accessed via
+	 * `[sub-key]` syntax
 	 * @param  string  $cast_to                Cast the value to this data type - see method description for details
-	 * @param  mixed   $default_value          If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead. This value will get cast if a `$cast_to` is specified.
-	 * @param  boolean $use_default_for_blank  If the request value is a blank string and `$default_value` is specified, this flag will cause the `$default_value` to be returned
+	 * @param  mixed   $default_value          If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or
+	 * `$_GET`, use this value instead. This value will get cast if a `$cast_to` is specified.
+	 * @param  boolean $use_default_for_blank  If the request value is a blank string and `$default_value` is specified,
+	 * this flag will cause the `$default_value` to be returned
 	 * @return mixed  The value
 	 * @throws ValidationException
 	 */
-	public static function get(string $key, ?string $cast_to = null, mixed $default_value = null, bool $use_default_for_blank = false): mixed
-	{
+	public static function get(
+		string $key,
+		?string $cast_to = null,
+		mixed $default_value = null,
+		bool $use_default_for_blank = false
+	): mixed {
 		self::initPutDelete();
 
 		$value = $default_value;
@@ -506,7 +542,8 @@ class Request
 	/**
 	 * Returns the HTTP `Accept-Language`s sorted by their `q` values (from high to low)
 	 *
-	 * @return array<string, float>  An associative array of `{language} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
+	 * @return array<string, float>  An associative array of `{language} => {q value}` sorted (in a stable-fashion) from
+	 * highest to lowest `q` - if no header was sent, an empty array will be returned
 	 */
 	public static function getAcceptLanguages(): array
 	{
@@ -517,7 +554,8 @@ class Request
 	/**
 	 * Returns the HTTP `Accept` types sorted by their `q` values (from high to low)
 	 *
-	 * @return array<string, float>  An associative array of `{type} => {q value}` sorted (in a stable-fashion) from highest to lowest `q` - if no header was sent, an empty array will be returned
+	 * @return array<string, float>  An associative array of `{type} => {q value}` sorted (in a stable-fashion) from
+	 * highest to lowest `q` - if no header was sent, an empty array will be returned
 	 */
 	public static function getAcceptTypes(): array
 	{
@@ -531,11 +569,15 @@ class Request
 	 * Special conditions affecting the return value:
 	 *  - If no `$filter` is provided and the client does not send the `Accept-Language` header, `NULL` will be returned
 	 *  - If no `$filter` is provided and the client specifies `*` with the highest `q`, `NULL` will be returned
-	 *  - If `$filter` contains one or more values, but the `Accept-Language` header does not match any, `FALSE` will be returned
-	 *  - If `$filter` contains one or more values, but the client does not send the `Accept-Language` header, the first entry from `$filter` will be returned
-	 *  - If `$filter` contains two or more values, and two of the values have the same `q` value, the one listed first in `$filter` will be returned
+	 *  - If `$filter` contains one or more values, but the `Accept-Language` header does not match any, `FALSE` will be
+	 * returned
+	 *  - If `$filter` contains one or more values, but the client does not send the `Accept-Language` header, the first
+	 * entry from `$filter` will be returned
+	 *  - If `$filter` contains two or more values, and two of the values have the same `q` value, the one listed first
+	 * in `$filter` will be returned
 	 *
-	 * @return string|NULL|FALSE  The best language listed in the `Accept-Language` header - see method description for edge cases
+	 * @return string|NULL|FALSE  The best language listed in the `Accept-Language` header - see method description for
+	 * edge cases
 	 */
 	public static function getBestAcceptLanguage(mixed $filter = array()): mixed
 	{
@@ -553,8 +595,10 @@ class Request
 	 *  - If no `$filter` is provided and the client does not send the `Accept` header, `NULL` will be returned
 	 *  - If no `$filter` is provided and the client specifies `{@*}*` with the highest `q`, `NULL` will be returned
 	 *  - If `$filter` contains one or more values, but the `Accept` header does not match any, `FALSE` will be returned
-	 *  - If `$filter` contains one or more values, but the client does not send the `Accept` header, the first entry from `$filter` will be returned
-	 *  - If `$filter` contains two or more values, and two of the values have the same `q` value, the one listed first in `$filter` will be returned
+	 *  - If `$filter` contains one or more values, but the client does not send the `Accept` header, the first entry
+	 * from `$filter` will be returned
+	 *  - If `$filter` contains two or more values, and two of the values have the same `q` value, the one listed first
+	 * in `$filter` will be returned
 	 *
 	 * @return string|NULL|FALSE  The best type listed in the `Accept` header - see method description for edge cases
 	 */
@@ -568,10 +612,12 @@ class Request
 
 
 	/**
-	 * Gets a value from the `DELETE`/`PUT` post data, `$_POST` or `$_GET` superglobals (in that order), restricting to a specific set of values
+	 * Gets a value from the `DELETE`/`PUT` post data, `$_POST` or `$_GET` superglobals (in that order), restricting to
+	 * a specific set of values
 	 *
 	 * @param  string $key           The key to get the value of - array elements can be accessed via `[sub-key]` syntax
-	 * @param  array<int|string, mixed>  $valid_values  The array of values that are permissible, if one is not selected, picks first
+	 * @param  array<int|string, mixed>  $valid_values  The array of values that are permissible, if one is not
+	 * selected, picks first
 	 * @return mixed  The value
 	 * @throws ValidationException
 	 */
@@ -684,12 +730,14 @@ class Request
 
 
 	/**
-	 * Overrides the value of `'action'` in the `DELETE`/`PUT` post data, `$_POST` or `$_GET` superglobals based on the `'action::{action_name}'` value
+	 * Overrides the value of `'action'` in the `DELETE`/`PUT` post data, `$_POST` or `$_GET` superglobals based on the
+	 * `'action::{action_name}'` value
 	 *
 	 * This method is primarily intended to be used for hanlding multiple
 	 * submit buttons.
 	 *
-	 * @param  string $redirect  The url to redirect to if the action is overriden. `%action%` will be replaced with the overridden action.
+	 * @param  string $redirect  The url to redirect to if the action is overriden. `%action%` will be replaced with the
+	 * overridden action.
 	 * @return void
 	 */
 	public static function overrideAction(?string $redirect = null): void
@@ -719,11 +767,13 @@ class Request
 
 
 	/**
-	 * Returns the best HTTP `Accept-*` header item match (based on `q` value), optionally filtered by an array of options
+	 * Returns the best HTTP `Accept-*` header item match (based on `q` value), optionally filtered by an array of
+	 * options
 	 *
 	 * @param  string $header_name  The key in `$_SERVER` that contains the `Accept-*` header to pick the best item from
 	 * @param  array<int, mixed> $options      A list of supported options to pick the best from
-	 * @return string|null  The best accept item, `FALSE` if an options array is specified and none are valid, `NULL` if anything is accepted
+	 * @return string|null  The best accept item, `FALSE` if an options array is specified and none are valid, `NULL` if
+	 * anything is accepted
 	 */
 	private static function pickBestAcceptItem(string $header_name, array $options): ?string
 	{
@@ -753,7 +803,10 @@ class Request
 		$top_item = false;
 
 		foreach ($options as $option) {
-			if (!is_string($option) && !is_int($option) && !is_float($option) && !is_bool($option) && $option !== null) {
+			if (
+				!is_string($option) && !is_int($option) && !is_float($option)
+				&& !is_bool($option) && $option !== null
+			) {
 				continue;
 			}
 			$optionStr = (string) $option;
@@ -795,9 +848,11 @@ class Request
 	/**
 	 * Gets a value from ::get() and passes it through HTML::prepare()
 	 *
-	 * @param  string $key            The key to get the value of - array elements can be accessed via `[sub-key]` syntax
+	 * @param  string $key            The key to get the value of - array elements can be accessed via `[sub-key]`
+	 * syntax
 	 * @param  string $cast_to        Cast the value to this data type
-	 * @param  mixed  $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`, use this value instead
+	 * @param  mixed  $default_value  If the parameter is not set in the `DELETE`/`PUT` post data, `$_POST` or `$_GET`,
+	 * use this value instead
 	 * @return string  The prepared value
 	 * @throws ValidationException
 	 */
@@ -812,7 +867,8 @@ class Request
 	 * Returns an array of values from one of the HTTP `Accept-*` headers
 	 *
 	 * @param  string $header_name  The key in `$_SERVER` to get the header value from
-	 * @return array<string, float>  An associative array of `{value} => {quality}` sorted (in a stable-fashion) from highest to lowest `q` - an empty array is returned if the header is empty
+	 * @return array<string, float>  An associative array of `{value} => {quality}` sorted (in a stable-fashion) from
+	 * highest to lowest `q` - an empty array is returned if the header is empty
 	 */
 	private static function processAcceptHeader(string $header_name): array
 	{
@@ -873,7 +929,8 @@ class Request
 
 
 	/**
-	 * Sets a value into the appropriate `$_GET` or `$_POST` superglobal, or the local `PUT`/`DELETE` post data based on what HTTP method was used for the request
+	 * Sets a value into the appropriate `$_GET` or `$_POST` superglobal, or the local `PUT`/`DELETE` post data based on
+	 * what HTTP method was used for the request
 	 *
 	 * @param  string $key    The key to set the value to - array elements can be modified via `[sub-key]` syntax
 	 * @param  mixed  $value  The value to set
@@ -933,7 +990,8 @@ class Request
 
 
 	/**
-	 * Returns `$_GET`, `$_POST` and `$_FILES` and the `PUT`/`DELTE` post data to the state they were at before ::filter() was called
+	 * Returns `$_GET`, `$_POST` and `$_FILES` and the `PUT`/`DELTE` post data to the state they were at before
+	 * ::filter() was called
 	 *
 	 * @internal
 	 *
@@ -1008,8 +1066,8 @@ class Request
 	 * @return Request
 	 */
 	private function __construct()
-    {
-    }
+	{
+	}
 }
 
 

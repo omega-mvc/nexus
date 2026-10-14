@@ -11,19 +11,24 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Validation
  *
  * @version    1.0.0b13
  * @changes    1.0.0b13  Fixed return bug in ::checkConditionalRules [kg, 2010-06-19]
  * @changes    1.0.0b12  Fixed some method signatures [wb, 2011-08-24]
  * @changes    1.0.0b11  Fixed ::addCallbackRule() to be able to handle multiple rules per field [wb, 2011-06-02]
  * @changes    1.0.0b10  Fixed ::addRegexRule() to be able to handle multiple rules per field [wb, 2010-08-30]
- * @changes    1.0.0b9   Enhanced all of the add fields methods to accept one field per parameter, or an array of fields [wb, 2010-06-24]
+ * @changes    1.0.0b9   Enhanced all of the add fields methods to accept one field per parameter, or an array of fields
+ * [wb, 2010-06-24]
  * @changes    1.0.0b8   Added/fixed support for array-syntax fields names [wb, 2010-06-09]
- * @changes    1.0.0b7   Added the ability to pass an array of replacements to ::addRegexReplacement() and ::addStringReplacement() [wb, 2010-05-31]
- * @changes    1.0.0b6   BackwardsCompatibilityBreak - moved one-or-more required fields from ::addRequiredFields() to ::addOneOrMoreRule(), moved conditional required fields from ::addRequiredFields() to ::addConditionalRule(), changed returned messages array to have field name keys - added lots of functionality [wb, 2010-05-26]
- * @changes    1.0.0b5   Added the `$return_messages` parameter to ::validate() and updated code for new ValidationException API [wb, 2009-09-17]
- * @changes    1.0.0b4   Changed date checking from `strtotime()` to Timestamp for better localization support [wb, 2009-06-01]
+ * @changes    1.0.0b7   Added the ability to pass an array of replacements to ::addRegexReplacement() and
+ * ::addStringReplacement() [wb, 2010-05-31]
+ * @changes    1.0.0b6   BackwardsCompatibilityBreak - moved one-or-more required fields from ::addRequiredFields() to
+ * ::addOneOrMoreRule(), moved conditional required fields from ::addRequiredFields() to ::addConditionalRule(), changed
+ * returned messages array to have field name keys - added lots of functionality [wb, 2010-05-26]
+ * @changes    1.0.0b5   Added the `$return_messages` parameter to ::validate() and updated code for new
+ * ValidationException API [wb, 2009-09-17]
+ * @changes    1.0.0b4   Changed date checking from `strtotime()` to Timestamp for better localization support [wb,
+ * 2009-06-01]
  * @changes    1.0.0b3   Updated for new Core API [wb, 2009-02-16]
  * @changes    1.0.0b2   Added support for validating date and URL fields [wb, 2009-01-23]
  * @changes    1.0.0b    The initial implementation [wb, 2007-06-14]
@@ -103,7 +108,8 @@ class Validation
 
 
 	/**
-	 * Returns `TRUE` for non-empty strings, numbers, objects, empty numbers and string-like numbers (such as `0`, `0.0`, `'0'`)
+	 * Returns `TRUE` for non-empty strings, numbers, objects, empty numbers and string-like numbers (such as `0`,
+	 * `0.0`, `'0'`)
 	 *
 	 * @param  mixed $value  The value to check
 	 * @return boolean  If the value is string-like
@@ -149,7 +155,8 @@ class Validation
 	/**
 	 * Rules for conditionally requiring fields
 	 *
-	 * @var array<int, array{main_fields: array<int, string>, conditional_values: array<int, mixed>|null, conditional_fields: array<int, string>}>
+	 * @var array<int, array{main_fields: array<int, string>, conditional_values: array<int, mixed>|null,
+	 * conditional_fields: array<int, string>}>
 	 */
 	private array $conditional_rules = array();
 
@@ -266,7 +273,8 @@ class Validation
 	 * Adds a callback validation of a field, with a custom error message
 	 *
 	 * @param  string   $field     The field to test with the callback
-	 * @param  callable(mixed...):mixed $callback  The callback to test the value with - this callback should accept a single string parameter and return a boolean
+	 * @param  callable(mixed...):mixed $callback  The callback to test the value with - this callback should accept a
+	 * single string parameter and return a boolean
 	 * @param  string   $message   The error message to return if the regular expression does not match the value
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
@@ -288,16 +296,22 @@ class Validation
 	 * Adds fields to be conditionally required if another field has any value, or specific values
 	 *
 	 * @param  string|array<int,string>  $main_fields          The fields(s) to check for a value
-	 * @param  mixed                    $conditional_values   If `NULL`, any value in the main field(s) will trigger the conditional field(s), otherwise the value must match this scalar value or be present in the array of values
+	 * @param  mixed                    $conditional_values   If `NULL`, any value in the main field(s) will trigger the
+	 * conditional field(s), otherwise the value must match this scalar value or be present in the array of values
 	 * @param  string|array<int,string>  $conditional_fields  The field(s) that are to be required
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addConditionalRule(string|array $main_fields, mixed $conditional_values, string|array $conditional_fields): Validation
-	{
+	public function addConditionalRule(
+		string|array $main_fields,
+		mixed $conditional_values,
+		string|array $conditional_fields
+	): Validation {
 		$main_fields      = array_values(is_array($main_fields) ? $main_fields : array($main_fields));
-		$conditional_fields = array_values(is_array($conditional_fields) ? $conditional_fields : array($conditional_fields));
+		$conditional_fields = array_values(is_array($conditional_fields) ? $conditional_fields :
+			array($conditional_fields));
 		if ($conditional_values !== null) {
-			$conditional_values = array_values(is_array($conditional_values) ? $conditional_values : array($conditional_values));
+			$conditional_values = array_values(is_array($conditional_values) ? $conditional_values :
+				array($conditional_values));
 		}
 
 		$this->conditional_rules[] = array(
@@ -373,8 +387,11 @@ class Validation
 	 * @param  Upload|null           $uploader   The uploader to validate the field with
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
-	public function addFileUploadRule(string $field, string|int|Upload|null $index = null, ?Upload $uploader = null): Validation
-	{
+	public function addFileUploadRule(
+		string $field,
+		string|int|Upload|null $index = null,
+		?Upload $uploader = null
+	): Validation {
 		if ($uploader === null && $index instanceof Upload) {
 			$uploader = $index;
 			$index    = null;
@@ -472,7 +489,8 @@ class Validation
 	 * removed from the list of messages.
 	 *
 	 * @param  string $search   The PCRE regex to search for - see http://php.net/pcre for details
-	 * @param  string $replace  The string to replace with - all $ and \ are used in back references and must be escaped with a \ when meant literally
+	 * @param  string $replace  The string to replace with - all $ and \ are used in back references and must be escaped
+	 * with a \ when meant literally
 	 * @return Validation  The validation object, to allow for method chaining
 	 */
 	public function addRegexReplacement(string $search, ?string $replace = null): Validation
@@ -554,7 +572,8 @@ class Validation
 		$ip_regex       = '(?:(?:[01]?\d?\d|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d?\d|2[0-4]\d|25[0-5])';
 		$hostname_regex = '[a-z]+(?:[a-z0-9\-]*[a-z0-9]\.?|\.)*';
 		$domain_regex   = '([a-z]+([a-z0-9\-]*[a-z0-9])?\.)+[a-z]{2,}';
-		$regex          = '#^(https?://(' . $ip_regex . '|' . $hostname_regex . ')(?=/|$)|' . $domain_regex . '(?=/|$)|/)#i';
+		$regex          = '#^(https?://(' . $ip_regex . '|' . $hostname_regex . ')(?=/|$)|' . $domain_regex .
+			'(?=/|$)|/)#i';
 
 		foreach (array_merge(array($field), $fields) as $arg) {
 			$this->addRegexRule($arg, $regex, 'Please enter a URL in the form http://www.example.com/page');
@@ -647,7 +666,10 @@ class Validation
 			$check_for_missing_values = false;
 
 			foreach ($rule['main_fields'] as $main_field) {
-				$matches_conditional_value = $rule['conditional_values'] !== null && in_array(Request::get($main_field), $rule['conditional_values']);
+				$matches_conditional_value = $rule['conditional_values'] !== null && in_array(
+					Request::get($main_field),
+					$rule['conditional_values']
+				);
 				$has_some_value            = $rule['conditional_values'] === null && self::hasValue($main_field);
 				if ($matches_conditional_value || $has_some_value) {
 					$check_for_missing_values = true;
@@ -661,8 +683,8 @@ class Validation
 
 			foreach ($rule['conditional_fields'] as $conditional_field) {
 				if (self::hasValue($conditional_field)) {
-                    continue;
-                }
+					continue;
+				}
 				$messages[$conditional_field] = self::compose(
 					'%sPlease enter a value',
 					ValidationException::formatField($this->makeFieldName($conditional_field))
@@ -683,7 +705,9 @@ class Validation
 	{
 		foreach ($this->date_fields as $date_field) {
 			$request_value = Request::get($date_field);
-			$value = trim(is_string($request_value) ? $request_value : (is_scalar($request_value) ? (string) $request_value : ''));
+			$value = trim(
+				is_string($request_value) ? $request_value : (is_scalar($request_value) ? (string) $request_value : '')
+			);
 			if (self::stringlike($value)) {
 				try {
 					new Timestamp($value);
@@ -763,7 +787,10 @@ class Validation
 					if ($found) {
 						$messages[join(',', $fields)] = self::compose(
 							'%sPlease enter a value for only one',
-							ValidationException::formatField(join(', ', array_map(array($this, 'makeFieldName'), $fields)))
+							ValidationException::formatField(join(', ', array_map(
+								array($this, 'makeFieldName'),
+								$fields
+							)))
 						);
 						continue 2;
 					}
@@ -987,14 +1014,17 @@ class Validation
 	 *
 	 * @throws ValidationException  When one of the options set for the object is violated
 	 *
-	 * @param  boolean $return_messages     If an array of validation messages should be returned instead of an exception being thrown
-	 * @param  boolean $remove_field_names  If field names should be removed from the returned messages, leaving just the message itself
-	 * @return ?array<string, string>  NULL when validation passes, otherwise an array of validation messages when $return_messages is TRUE
+	 * @param  boolean $return_messages     If an array of validation messages should be returned instead of an
+	 * exception being thrown
+	 * @param  boolean $remove_field_names  If field names should be removed from the returned messages, leaving just
+	 * the message itself
+	 * @return ?array<string, string>  NULL when validation passes, otherwise an array of validation messages when
+	 * $return_messages is TRUE
 	 */
 	public function validate(bool $return_messages = false, bool $remove_field_names = false): ?array
 	{
 		if (
-            !$this->callback_rules &&
+			!$this->callback_rules &&
 			  !$this->conditional_rules &&
 			  !$this->date_fields &&
 			  !$this->file_upload_rules &&
@@ -1003,7 +1033,7 @@ class Validation
 			  !$this->regex_rules &&
 			  !$this->required_fields &&
 			  !$this->valid_values_rules
-        ) {
+		) {
 			throw new ProgrammerException(
 				'No fields or rules have been added for validation'
 			);

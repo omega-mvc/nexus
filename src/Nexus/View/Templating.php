@@ -12,28 +12,37 @@ declare(strict_types=1);
  * @license    http://flourishlib.com/license
  *
  * @package    Flourish
- * @link       http://flourishlib.com/Templating
  *
  * @version    1.0.0b24
  * @changes    1.0.0b24  Added getRootPath() to retrieve the path Templating was instantiated with [jt, 2012-10-24]
  * @changes    1.0.0b23  Added a default `$name` for ::retrieve() to mirror ::attach() [wb, 2011-08-31]
- * @changes    1.0.0b22  Backwards Compatibility Break - removed the static method ::create(), added the static method ::attach() to fill its place [wb, 2011-08-31]
- * @changes    1.0.0b21  Fixed a bug in ::enableMinification() where the minification cache directory was sometimes not properly converted to a web path [wb, 2011-08-31]
- * @changes    1.0.0b20  Fixed a bug in CSS minification that would reduce multiple zeros that are part of a hex color code, fixed minification of `+ ++` and similar constructs in JS [wb, 2011-08-31]
- * @changes    1.0.0b19  Corrected a bug in ::enablePHPShortTags() that would prevent proper translation inside of HTML tag attributes [wb, 2011-01-09]
+ * @changes    1.0.0b22  Backwards Compatibility Break - removed the static method ::create(), added the static method
+ * ::attach() to fill its place [wb, 2011-08-31]
+ * @changes    1.0.0b21  Fixed a bug in ::enableMinification() where the minification cache directory was sometimes not
+ * properly converted to a web path [wb, 2011-08-31]
+ * @changes    1.0.0b20  Fixed a bug in CSS minification that would reduce multiple zeros that are part of a hex color
+ * code, fixed minification of `+ ++` and similar constructs in JS [wb, 2011-08-31]
+ * @changes    1.0.0b19  Corrected a bug in ::enablePHPShortTags() that would prevent proper translation inside of HTML
+ * tag attributes [wb, 2011-01-09]
  * @changes    1.0.0b18  Fixed a bug with CSS minification and black hex codes [wb, 2010-10-10]
- * @changes    1.0.0b17  Backwards Compatibility Break - ::delete() now returns the values of the element or elements that were deleted instead of returning the Templating instance [wb, 2010-09-19]
+ * @changes    1.0.0b17  Backwards Compatibility Break - ::delete() now returns the values of the element or elements
+ * that were deleted instead of returning the Templating instance [wb, 2010-09-19]
  * @changes    1.0.0b16  Fixed another bug with minifying JS regex literals [wb, 2010-09-13]
  * @changes    1.0.0b15  Fixed a bug with minifying JS regex literals that occur after a reserved word [wb, 2010-09-12]
  * @changes    1.0.0b14  Added documentation about `[sub-key]` syntax [wb, 2010-09-12]
- * @changes    1.0.0b13  Backwards Compatibility Break - ::add(), ::delete(), ::get() and ::set() now interpret `[` and `]` as array shorthand and thus they can not be used in element names, renamed ::remove() to ::filter() - added `$beginning` parameter to ::add() and added ::remove() method [wb, 2010-09-12]
- * @changes    1.0.0b12  Added ::enableMinification(), ::enablePHPShortTags(), the ability to be able to place child Templating objects via a new magic element `__main__` and the `$main_element` parameter for ::__construct() [wb, 2010-08-31]
+ * @changes    1.0.0b13  Backwards Compatibility Break - ::add(), ::delete(), ::get() and ::set() now interpret `[` and
+ * `]` as array shorthand and thus they can not be used in element names, renamed ::remove() to ::filter() - added
+ * `$beginning` parameter to ::add() and added ::remove() method [wb, 2010-09-12]
+ * @changes    1.0.0b12  Added ::enableMinification(), ::enablePHPShortTags(), the ability to be able to place child
+ * Templating objects via a new magic element `__main__` and the `$main_element` parameter for ::__construct() [wb,
+ * 2010-08-31]
  * @changes    1.0.0b11  Fixed a bug with the elements not being initialized to a blank array [wb, 2010-08-12]
  * @changes    1.0.0b10  Updated ::place() to ignore URL query strings when detecting an element type [wb, 2010-07-26]
  * @changes    1.0.0b9   Added the methods ::delete() and ::remove() [wb+mn, 2010-07-15]
  * @changes    1.0.0b8   Fixed a bug with placing absolute file paths on Windows [wb, 2010-07-09]
  * @changes    1.0.0b7   Removed `e` flag from preg_replace() calls [wb, 2010-06-08]
- * @changes    1.0.0b6   Changed ::set() and ::add() to return the object for method chaining, changed ::set() and ::get() to accept arrays of elements [wb, 2010-06-02]
+ * @changes    1.0.0b6   Changed ::set() and ::add() to return the object for method chaining, changed ::set() and
+ * ::get() to accept arrays of elements [wb, 2010-06-02]
  * @changes    1.0.0b5   Added ::encode() [wb, 2010-05-20]
  * @changes    1.0.0b4   Added ::create() and ::retrieve() for named Templating instances [wb, 2010-05-11]
  * @changes    1.0.0b3   Fixed an issue with placing relative file path [wb, 2010-04-23]
@@ -161,8 +170,10 @@ class Templating
 	/**
 	 * Initializes this templating engine
 	 *
-	 * @param  string $root          The filesystem path to use when accessing relative files, defaults to `$_SERVER['DOCUMENT_ROOT']`
-	 * @param  string $main_element  The value for the `__main__` element - this is used when calling ::place() without an element, or when placing Templating objects as children
+	 * @param  string $root          The filesystem path to use when accessing relative files, defaults to
+	 * `$_SERVER['DOCUMENT_ROOT']`
+	 * @param  string $main_element  The value for the `__main__` element - this is used when calling ::place() without
+	 * an element, or when placing Templating objects as children
 	 * @return Templating
 	 */
 	public function __construct(?string $root = null, mixed $main_element = null)
@@ -209,7 +220,8 @@ class Templating
 	 */
 	public function __destruct()
 	{
-		// The __destruct method can't throw unhandled exceptions intelligently, so we will always catch here just in case
+		// The __destruct method can't throw unhandled exceptions intelligently, so we will always catch here just in
+		// case
 		try {
 			$this->placeBuffered();
 		} catch (Exception $e) {
@@ -235,7 +247,8 @@ class Templating
 	/**
 	 * Adds a value to an array element
 	 *
-	 * @param  string  $element    The element to add to - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string  $element    The element to add to - array elements can be modified via `[sub-key]` syntax, and
+	 * thus `[` and `]` can not be used in element names
 	 * @param  mixed   $value      The value to add
 	 * @param  boolean $beginning  If the value should be added to the beginning of the element
 	 * @return Templating  The template object, to allow for method chaining
@@ -290,7 +303,8 @@ class Templating
 
 
 	/**
-	 * Enables buffered output, allowing ::set() and ::add() to happen after a ::place() but act as if they were done before
+	 * Enables buffered output, allowing ::set() and ::add() to happen after a ::place() but act as if they were done
+	 * before
 	 *
 	 * Please note that using buffered output will affect the order in which
 	 * code is executed since the elements are not actually ::place()'ed until
@@ -320,9 +334,11 @@ class Templating
 	/**
 	 * Deletes an element from the template
 	 *
-	 * @param  string|list<string>|array<string, mixed> $element  The element to delete - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string|list<string>|array<string, mixed> $element  The element to delete - array elements can be modified
+	 * via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
 	 * @param  mixed  $default_value  The value to return if the `$element` is not set
-	 * @return mixed  The value of the `$element` that was deleted - an associative array of deleted elements will be returned if an array of `$elements` was specified
+	 * @return mixed  The value of the `$element` that was deleted - an associative array of deleted elements will be
+	 * returned if an array of `$elements` was specified
 	 */
 	public function delete(string|array $element, mixed $default_value = null): mixed
 	{
@@ -331,7 +347,10 @@ class Templating
 			foreach ($element as $key => $value) {
 				if (is_int($key)) {
 					if (!is_string($value)) {
-						throw new ProgrammerException('The elements to delete must be a list of strings or an array of string keys');
+						throw new
+							ProgrammerException(
+								'The elements to delete must be a list of strings or an array of string keys'
+							);
 					}
 					$elements[$value] = null;
 				} else {
@@ -419,13 +438,20 @@ class Templating
 	 * This functionality will be inherited by all child Templating objects
 	 * that do not have their own explicit minification settings.
 	 *
-	 * @param  string             $mode             The compilation mode - `'development'` means that file modification times will be checked on each load, `'production'` means that the cache files will only be regenerated when missing
-	 * @param  Directory|string  $cache_directory  The directory to cache the compiled files into - this needs to be inside the document root or a path added to Filesystem::addWebPathTranslation()
-	 * @param  Directory|string  $path_prefix      The directory to prepend to all CSS and JS paths to load the files from the filesystem - this defaults to `$_SERVER['DOCUMENT_ROOT']`
+	 * @param  string             $mode             The compilation mode - `'development'` means that file modification
+	 * times will be checked on each load, `'production'` means that the cache files will only be regenerated when
+	 * missing
+	 * @param  Directory|string  $cache_directory  The directory to cache the compiled files into - this needs to be
+	 * inside the document root or a path added to Filesystem::addWebPathTranslation()
+	 * @param  Directory|string  $path_prefix      The directory to prepend to all CSS and JS paths to load the files
+	 * from the filesystem - this defaults to `$_SERVER['DOCUMENT_ROOT']`
 	 * @return void
 	 */
-	public function enableMinification(string $mode, Directory|string $cache_directory, Directory|string|null $path_prefix = null): void
-	{
+	public function enableMinification(
+		string $mode,
+		Directory|string $cache_directory,
+		Directory|string|null $path_prefix = null
+	): void {
 		$valid_modes = array('development', 'production');
 		if (!in_array($mode, $valid_modes)) {
 			throw new ProgrammerException(
@@ -435,7 +461,8 @@ class Templating
 			);
 		}
 
-		$cache_directory = $cache_directory instanceof Directory ? $cache_directory->getPath() : realpath($cache_directory);
+		$cache_directory = $cache_directory instanceof Directory ? $cache_directory->getPath() :
+			realpath($cache_directory);
 		if ($cache_directory === false || !is_writable($cache_directory)) {
 			throw new EnvironmentException(
 				'The cache directory specified, %s, is not writable',
@@ -466,8 +493,11 @@ class Templating
 	 * This functionality will be inherited by all child Templating objects
 	 * that do not have their own explicit short tag settings.
 	 *
-	 * @param  string             $mode             The compilation mode - `'development'` means that file modification times will be checked on each load, `'production'` means that the cache files will only be regenerated when missing
-	 * @param  Directory|string  $cache_directory  The directory to cache the compiled files into - this directory should not be accessible from the web
+	 * @param  string             $mode             The compilation mode - `'development'` means that file modification
+	 * times will be checked on each load, `'production'` means that the cache files will only be regenerated when
+	 * missing
+	 * @param  Directory|string  $cache_directory  The directory to cache the compiled files into - this directory
+	 * should not be accessible from the web
 	 * @return void
 	 */
 	public function enablePHPShortTags(string $mode, Directory|string $cache_directory): void
@@ -502,9 +532,11 @@ class Templating
 	/**
 	 * Gets the value of an element and runs it through HTML::encode()
 	 *
-	 * @param  string $element        The element to get - array elements can be accessed via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string $element        The element to get - array elements can be accessed via `[sub-key]` syntax, and
+	 * thus `[` and `]` can not be used in element names
 	 * @param  mixed  $default_value  The value to return if the element has not been set
-	 * @return mixed  The value of the element specified run through HTML::encode(), or the default value if it has not been set
+	 * @return mixed  The value of the element specified run through HTML::encode(), or the default value if it has not
+	 * been set
 	 */
 	public function encode(string $element, mixed $default_value = null): mixed
 	{
@@ -519,8 +551,10 @@ class Templating
 	/**
 	 * Removes a value from an array element
 	 *
-	 * @param string $element  The element to remove from - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
-	 * @param mixed  $value    The value to remove - compared in a non-strict manner, such that removing `0` will remove a blank string and false also
+	 * @param string $element  The element to remove from - array elements can be modified via `[sub-key]` syntax, and
+	 * thus `[` and `]` can not be used in element names
+	 * @param mixed  $value    The value to remove - compared in a non-strict manner, such that removing `0` will remove
+	 * a blank string and false also
 	 * @return Templating  The template object, to allow for method chaining
 	 */
 	public function filter(string $element, mixed $value): Templating
@@ -601,7 +635,12 @@ class Templating
 			$cache_path = $this->short_tag_directory . sha1($real_value) . '.php';
 
 			$fixed_paths[] = $cache_path;
-			if (file_exists($cache_path) && ($this->short_tag_mode == 'production' || filemtime($cache_path) >= filemtime($real_value))) {
+			if (
+				file_exists($cache_path) && ($this->short_tag_mode == 'production' || filemtime($cache_path) >=
+					filemtime(
+						$real_value
+					))
+			) {
 				continue;
 			}
 
@@ -662,8 +701,16 @@ class Templating
 				// This makes sure that __FILE__ and __DIR__ stay as the
 				// original value since the cached file will be in a different
 				// place with a different filename
-				$part = preg_replace('#(?<=[^a-zA-Z0-9]|^)__FILE__(?=[^a-zA-Z0-9]|$)#iD', "'" . $real_value . "'", $part) ?? $part;
-				$part = preg_replace('#(?<=[^a-zA-Z0-9]|^)__DIR__(?=[^a-zA-Z0-9]|$)#iD', "'" . dirname($real_value) . "'", $part) ?? $part;
+				$part = preg_replace(
+					'#(?<=[^a-zA-Z0-9]|^)__FILE__(?=[^a-zA-Z0-9]|$)#iD',
+					"'" . $real_value . "'",
+					$part
+				) ?? $part;
+				$part = preg_replace(
+					'#(?<=[^a-zA-Z0-9]|^)__DIR__(?=[^a-zA-Z0-9]|$)#iD',
+					"'" . dirname($real_value) . "'",
+					$part
+				) ?? $part;
 
 				$output .= $part;
 
@@ -683,7 +730,8 @@ class Templating
 	/**
 	 * Gets the value of an element
 	 *
-	 * @param  string|list<string>|array<string, mixed> $element  The element to get - array elements can be accessed via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string|list<string>|array<string, mixed> $element  The element to get - array elements can be accessed
+	 * via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
 	 * @param  mixed  $default_value  The value to return if the element has not been set
 	 * @return mixed  The value of the element(s) specified, or the default value(s) if it has not been set
 	 */
@@ -694,7 +742,10 @@ class Templating
 			foreach ($element as $key => $value) {
 				if (is_int($key)) {
 					if (!is_string($value)) {
-						throw new ProgrammerException('The elements to get must be a list of strings or an array of string keys');
+						throw new
+							ProgrammerException(
+								'The elements to get must be a list of strings or an array of string keys'
+							);
 					}
 					$elements[$value] = null;
 				} else {
@@ -858,7 +909,8 @@ class Templating
 	 * Please see the ::place() method for more details about functionality.
 	 *
 	 * @param  string $file_path  The file to place
-	 * @param  string $file_type  Will force the file to be placed as this type of file instead of auto-detecting the file type. Valid types include: `'css'`, `'js'`, `'php'` and `'rss'`.
+	 * @param  string $file_type  Will force the file to be placed as this type of file instead of auto-detecting the
+	 * file type. Valid types include: `'css'`, `'js'`, `'php'` and `'rss'`.
 	 * @return void
 	 */
 	public function inject(string $file_path, ?string $file_type = null): void
@@ -1015,15 +1067,21 @@ class Templating
 					$chunk = str_replace(';}', '}', $chunk);
 
 					// All zero units are reduces to just 0
-					$chunk = preg_replace('#((?<!\d|\.|\#|\w)0+(\.0+)?|(?<!\d)\.0+)(?=\D|$)((%|in|cm|mm|em|ex|pt|pc|px)(\b|$))?#iD', '0', $chunk) ?? $chunk;
+					$chunk = preg_replace(
+						'#((?<!\d|\.|\#|\w)0+(\.0+)?|(?<!\d)\.0+)(?=\D|$)((%|in|cm|mm|em|ex|pt|pc|px)(\b|$))?#iD',
+						'0',
+						$chunk
+					) ?? $chunk;
 					// All .0 decimals are removed
 					$chunk = preg_replace('#(\d+)\.0+(?=\D)#iD', '\1', $chunk) ?? $chunk;
 					// All leading zeros are removed
 					$chunk = preg_replace('#(?<!\d)0+(\.\d+)(?=\D)#iD', '\1', $chunk) ?? $chunk;
 					// All measurements that contain the same value 4 times are reduced to a single
-					$chunk = preg_replace('#(?<!\d|\.)([\d\.]+(?:%|in|cm|mm|em|ex|pt|pc|px))(\s*\1){3}#i', '\1', $chunk) ?? $chunk;
+					$chunk = preg_replace('#(?<!\d|\.)([\d\.]+(?:%|in|cm|mm|em|ex|pt|pc|px))(\s*\1){3}#i', '\1', $chunk)
+						?? $chunk;
 					// Hex color codes are reduced if possible
-					$chunk = preg_replace('@#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3(?!\d)@iD', '#\1\2\3', $chunk) ?? $chunk;
+					$chunk = preg_replace('@#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3(?!\d)@iD', '#\1\2\3', $chunk) ??
+						$chunk;
 					$chunk = str_ireplace('! important', '!important', $chunk);
 				} else {
 					// This handles an IE6 edge-case
@@ -1098,7 +1156,8 @@ class Templating
 	 * }}}
 	 *
 	 * @param  string $element    The element to place
-	 * @param  string $file_type  Will force the element to be placed as this type of file instead of auto-detecting the file type. Valid types include: `'css'`, `'js'`, `'php'` and `'rss'`.
+	 * @param  string $file_type  Will force the element to be placed as this type of file instead of auto-detecting the
+	 * file type. Valid types include: `'css'`, `'js'`, `'php'` and `'rss'`.
 	 * @return void
 	 */
 	public function place(string $element = '__main__', ?string $file_type = null): void
@@ -1120,7 +1179,8 @@ class Templating
 	/**
 	 * Prints a CSS `link` HTML tag to the output
 	 *
-	 * @param  mixed $info  The path or array containing the `'path'` to the CSS file. Array can also contain a key `'media'`.
+	 * @param  mixed $info  The path or array containing the `'path'` to the CSS file. Array can also contain a key
+	 * `'media'`.
 	 * @return void
 	 */
 	protected function placeCSS(mixed $info): void
@@ -1178,7 +1238,10 @@ class Templating
 			$path     = is_array($value) ? $value['path'] : $value;
 			$location = is_string($path) && preg_match('#^https?://#', $path) ? 'http' : 'local';
 
-			if ($current_group === null || $type != $last_type || $location != $last_location || $media != $last_media) {
+			if (
+				$current_group === null || $type != $last_type
+				|| $location != $last_location || $media != $last_media
+			) {
 				if ($current_group !== null) {
 					$value_groups[] = $current_group;
 				}
@@ -1324,7 +1387,8 @@ class Templating
 	/**
 	 * Prints an RSS `link` HTML tag to the output
 	 *
-	 * @param  mixed $info  The path or array containing the `'path'` to the RSS xml file. May also contain a `'title'` key for the title of the RSS feed.
+	 * @param  mixed $info  The path or array containing the `'path'` to the RSS xml file. May also contain a `'title'`
+	 * key for the title of the RSS feed.
 	 * @return void
 	 */
 	protected function placeRSS(mixed $info): void
@@ -1402,9 +1466,11 @@ class Templating
 	/**
 	 * Gets the value of an element and runs it through HTML::prepare()
 	 *
-	 * @param  string $element        The element to get - array elements can be access via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string $element        The element to get - array elements can be access via `[sub-key]` syntax, and thus
+	 * `[` and `]` can not be used in element names
 	 * @param  mixed  $default_value  The value to return if the element has not been set
-	 * @return mixed  The value of the element specified run through HTML::prepare(), or the default value if it has not been set
+	 * @return mixed  The value of the element specified run through HTML::prepare(), or the default value if it has not
+	 * been set
 	 */
 	public function prepare(string $element, mixed $default_value = null): mixed
 	{
@@ -1419,7 +1485,8 @@ class Templating
 	/**
 	 * Removes and returns the value from the end of an array element
 	 *
-	 * @param  string  $element    The element to remove from to - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string  $element    The element to remove from to - array elements can be modified via `[sub-key]`
+	 * syntax, and thus `[` and `]` can not be used in element names
 	 * @param  boolean $beginning  If the value should be removed from the beginning of the element
 	 * @return mixed  The value that was removed
 	 */
@@ -1473,7 +1540,9 @@ class Templating
 	/**
 	 * Sets the value for an element
 	 *
-	 * @param  string|array<string, mixed> $element    The element to set - the magic element `__main__` is used for placing the current Templating object as a child of another Templating object - array elements can be modified via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
+	 * @param  string|array<string, mixed> $element    The element to set - the magic element `__main__` is used for
+	 * placing the current Templating object as a child of another Templating object - array elements can be modified
+	 * via `[sub-key]` syntax, and thus `[` and `]` can not be used in element names
 	 * @param  mixed  $value      The value for the element
 	 * @return Templating  The template object, to allow for method chaining
 	 */
@@ -1575,7 +1644,8 @@ class Templating
 
 		if (!in_array($extension, array('css', 'js', 'php', 'rss'))) {
 			throw new ProgrammerException(
-				'The element specified, %1$s, has a value whose path, %2$s, does not end with a recognized file extension: %3$s.',
+				'The element specified, %1$s, has a value whose path, %2$s, does not end with a recognized file '
+					. 'extension: %3$s.',
 				$element,
 				$path,
 				'.css, .inc, .js, .php, .php5, .rss, .xml'
